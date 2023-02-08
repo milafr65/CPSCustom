@@ -1,0 +1,22 @@
+< IS PROD\PDLIB\HREMPDFT
+391,408d390
+<            IF (HREMP-DATE-OF-DEATH-FN = ZEROES)
+<                MOVE "BN"               TO DB-SYSTEM 
+<                MOVE 7                  TO DB-RELEASE
+<                MOVE 2                  TO DB-REL-LEVEL 
+<                MOVE "HR11"             TO DB-KEY1
+<                MOVE HREMP-COMPANY      TO DB-KEY2
+<                MOVE HREMP-EMPLOYEE     TO DB-KEY3
+<                MOVE HUTSET1-KEY3       TO WS-DB-BEG-RNG
+<                PERFORM 850-FIND-BEGRNG-HUTSET1
+<                IF  (HRUTILITY-FOUND)
+<                    MOVE HUT-DATA (1:8) TO HREMPWS-DATE-OF-DEATH-A
+<                    MOVE HREMPWS-DATE-OF-DEATH
+<                                        TO HREMP-DATE-OF-DEATH
+<                ELSE
+<                    MOVE ZEROES         TO HREMP-DATE-OF-DEATH
+<                END-IF.
+<  
+< 
+457d438
+<                                               HREMP-DATE-OF-DEATH-FN

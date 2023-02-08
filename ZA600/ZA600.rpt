@@ -1,0 +1,77 @@
+******* ZA600.rpt 3 <4019987346>
+
+******************************************************************
+$PROGRAM   ZA600
+******************************************************************
+
+****************************************************
+$REPORT    ZA600
+****************************************************
+
+**************************************
+$GROUP     GN1-EMP-COMPANY
+**************************************
+$PREFIX    G1-
+$PGBRK
+$LEVEL     A
+$FORMAT
+ZA600 Date Z9/99/99                                Company ZZZZ - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                        Page ZZZZ
+      |  ; A1                                      |     ; B1     C1                                                    |  ; D1
+      Time 99.99                                   New Employee CRP Calc                             
+      |  ; E1                                      |                   ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    PRS-COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+$ENDFLDS
+
+$ENDGRP
+
+
+**************************************
+$GROUP     GN2H-HRH-EMPLOYEE     
+**************************************
+$PREFIX    G2-  
+$LEVEL     B
+$FORMAT
+%
+     Employee                                        Effective Date
+     |                                 ;             |            ;
+     ----------------------------------------------- --------------
+     |                                 ;|          ; |            ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2D-EMP-EMPLOYEE    
+**************************************
+$PREFIX    G2-
+$LEVEL     D
+$FORMAT
+     ZZZZZZZZZ XXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXX
+     A         B                  C                  D
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     EMP-EMPLOYEE                          
+ B     EMP-FIRST-NAME                  
+ C     EMP-LAST-NAME
+ D     EFFECT-DATE                                
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

@@ -1,0 +1,2653 @@
+000100******************************************************************
+      * 11-11-05 ADDED LOGIC TO CHECK THE EMP-STATUS (1060- PARAGRAPH)
+000100******************************************************************
+      * 11-18-05 TOOK OUT LOGIC THAT CHECKES THE EMP-STATUS            
+      *  IF THE PAY-GRADE IS NOT 1 AND THE WORKER'S PREVIOUS POSITION
+      *  HAS A PAY-GRADE = 1, THEN CHECK THE EMP-STATUS TO DETERMINE
+      *  WHETHER TO WAIT 120 DAYS OR SEND THE TERM DATE ON THIS FILE 
+000100******************************************************************
+      * 11-28-05 ADDED LOGIC TO BY-PASS RECORDS WITH AN ALPHA PROC LVL
+000100******************************************************************
+      * 11-29-05 CHANGED THE LOGIC TO SEND THE HIRE-DATE RATHER THAN THE
+      *   ADJ-HIRE-DATE  PER VON 
+000100******************************************************************
+      * 11-2005  ADDED LOGIC TO SET THE TERM DATE AND ELEGIBLE IND      
+      * FOR WORKERS NOT IN THE PLAN
+      *=============================================================
+      *  12/09/05 PER KEN J.  ALWAYS SEND THE PAEMPPOS EFFECT DATE
+      *=============================================================
+      *  12/13/05 PARAGRAPH 1070 ADDED LOGIC TO FIND THE MOST RECENT
+      * PARTICIPATION DATE   
+      *==============================================================
+      * 12-14-2005  ADDED LOGIC TO EXCLUDE WORKERS WITH PARTICIPATION
+      * DATES MORE THEN 6 WEEKS AWAY
+      *==============================================================
+      * 12-15-2005  ADDED LOGIC TO EXCLUDE WORKERS WITH STATUS = TA  
+      *==============================================================
+      * 12-19-2005  IF THE MOST RECENT PARTICIPATION DATE IS BEFORE  
+      * 01/01/2006, MAKE IT 01/01/2006 
+      *==============================================================
+      * 12-27-2005  IF THE MOST RECENT PARTICIPATION DATE IS AFTER   
+      * 01/01/2006, MAKE IT (MM + 1)/01/YEAR (ADJUSTED FOR MM=12)
+      *==============================================================
+      * 07-14-2006  CHANGED CHECK   (WS-DATE-MM-SL-N = 1)               
+      * TO BE (WS-DATE-MM-SL-N = 13) AFTER 1 IS ADDED.  PER 12-27-2005
+      *==============================================================
+      * 09-14-2006  IF THE PROCESS LEVEL IS NON-NUMERIC AND IS DISW,    
+      * THEN THE RECORD WILL BE PROCESSED                             
+      *==============================================================
+      * 12-2006  ADDED LOGIC TO READ AN EXCEPTION FILE TO DETERMINE  
+      * IF THE RECORD SHOULD BE SENT ON THE INDICATIVE FILE           
+      *==============================================================
+      * 11-2007  ADDED LOGIC TO READ THE POSITION HISTORY FOR THE    
+      * PREVIOUS NUMERIC POSITIN FOR DISW & ITP            
+      *=================================================================
+      * 12-14-07 CHANGED THE LOGIC TO SEND THE ADJ-HIRE-DATE RATHER THAN 
+      *   DATE-HIRE  PER KEN/VON 
+      *=================================================================
+      * 02-25-08 PUT THE CRSP PLAN CODE TABLE IN WBPCRSP4B TABLE.   
+      *   THE LOGIC TO READ THE TABLE
+      *=================================================================
+      * WO#6137
+      * 06-25-08 ADDED LOGIC TO COMPARE THE TERM DATE AND THE ADJ-HIRE
+      *   IF THE TERM DATE IS >= ADJ HIRE DATE, USER THE HIRE-DATE
+      *=================================================================
+      * 08-12-08 ADDED LOGIC TO WRITE A REPORT OF WORKERS WHEN THE    
+      *   THE TERM DATE IS BEFORE THE ADJ HIRE DATE AND WHEN THE   
+      *   WORKER TRANSFERRED OUT OF THE PLAN OR THE EMPLOYER GOT OUT OF 
+      *   THE PLAN
+      *===============================================================
+      * 09-2008 ADDED LOGIC TO CHECK FOR 120 BEFORE SENDING THE TERM 
+      *   DATE FOR WORKERS WHO WENT FROM IN-PLAN TO OUT-OF-PLAN BUT 
+      *   EMP-TERM-DATE IS BLANK                                         
+      *===============================================================
+      * 09-30-2008 ADDED LOGIC TO CHECK THE HIRE DATE BEFORE THE RECORD 
+      *   IS WRITTEN SO THAT THE HIRE/ADJ-HIRE DATE GREATER THAN SYSTEM
+      *   DATE WILL NOT BE SENT                                          
+120620*===============================================================
+120620* 04-2012 ADDED LOGIC TO 1110-CHECK-IND TO LOOK AT THE PAEMPPOS
+120620*   TABLE MORE THAN JUST ONE RECORD BACK AND CHECK FOR           
+120620*   PAY-GRADE = 1                                                  
+WO2005*===============================================================
+WO2005* 07/31/2012  WO#2005  MLF
+WO2005*   MOVE OUT TERM DATE IF PAY-GRADE = 1 AND 
+WO2005*   PROCESS LEVEL IS NOT NUMERIC
+000100******************************************************************
+WO2582* 10/19/2012  WO#2582  MLF
+WO2582*   EXPANDS PAEMPPOS READS TO RETURN PROPER NUMERIC
+WO2582*   PROCESS LEVELS FOR TERMED EMPLOYEES
+      ******************************************************************
+WO3313* 02/06/2013  WO#3313  MLF
+WO3313*   APPENDS LAWSON EMPLOYEE# TO OUTPUT RECORD
+      ******************************************************************
+WO3742* 04/25/2013  WO#3742  MLF
+WO3742*   CREATE ADDITIONAL OUTPUT FILE IN CSV FORMAT
+WO3742*    FOR SMART NOTIFICATION
+WO3742******************************************************************
+WO5117* 01/17/2014  WO#5117  MLF
+WO5117*   ADD 2C AND 3C AS VALID PAY GRADES
+WO5117******************************************************************
+WO7330* 06/23/2015  WO#7330  MLF
+WO7330*   MAJOR REVISION - CRSP CHANGED TO FIDELITY AS PROVIDER
+WO7330*   CREATION OF INDICATIVE FILE TO FIDELITY ADDED WITHIN
+WO7330*   THE STRUCTURE OF THE EXISTING METLIFE PROGRAM
+WO7330******************************************************************
+WO8022*
+WO8022* 10/08/2015  WO#8022, 8046, 8085, 8175, 8265   MLF
+WO8022*    INCLUDE PART TIME EMPLOYEES
+WO8022*    DO NOT INCLUDE STATUS AW UNLESS PART TIME PAY GRADE (*CP)
+WO8022*    FIDELITY 11-RECORD STATUS UPDATES
+WO8022*    DO NOT SEND TERM DATE TO FIDELITY FOR 120 DAYS
+WO8046*    UPDATE LCMS PLAN ID
+WO8085*    MAKE AB-STATUS EMPLOYEES ELIGIBLE FOR CRSP IMMEDIATELY
+WO8085*      (DO NOT HAVE TO WAIT TILL FIRST OF FOLLOWING MONTH)
+WO8175*    IF EMP IS ACTIVE WITH CRSP BALANCE BUT NOT AT A CRSP EMPLOYER,
+WO8175*       SET STATUS IN FIDELITY 11 RECORD TO I
+WO8265*    ADD SUFFIX (JR/SR/III) TO LAST NAME
+WO8022******************************************************************
+SR0704* 03/04/2016  SR0704  MLF
+SR0704*    DO NOT PASS STATUS CHANGES FOR 120 DAYS FOR TERMS
+SR0704******************************************************************
+SR1044* 04/25/2016  SR1044  MLF
+SR1044*    FIX LOCATION (DIV-NBR) PROBLEM FOR EBSO FILE RECORDS
+SR1044*     WHEN EMPLOYEE IS IN EMPCODES
+SR1044******************************************************************
+SR1067* 05/20/2016  SR1067  MLF
+SR1067*     FIDELITY CHANGES:
+SR1067*     02D - DO NOT SEND TERM DATE IF > CURRENT DATE
+SR1067*     11  - STATUS CHANGES FOR EMP-STATUS DA AND
+SR1067*           JOB CODES E-ADJUNCT, E-SHAREDT
+SR1067******************************************************************
+SR1067* 06/10/2016  SR1067  MLF
+SR1067*     ADDITIONAL REQUIRED FIDELITY CHANGES:
+SR1067*     61 - DO NOT SEND TERM DATE IF > CURRENT DATE
+SR1067*     11 - DO NOT SEND STATUS R IF TERM DATE > CURRENT DATE
+SR1067*          (DEFAULT TO A)
+SR1067*     CORRECTS PAPOSITION LOOKUP FOR PART-TIME EMPLOYEES
+SR1067*      SET UP IN EMPCODES TABLE (2300)
+SR1067******************************************************************
+SR1067* 07/08/2016  SR1067  MLF
+SR1067*     ADDITIONAL REQUIRED CHANGE:
+SR1067*     11 - DO NOT SEND STATUS T IF TERM DATE > CURRENT DATE
+SR1067*           (DEFAULT TO A)
+SR1067******************************************************************
+SR1067* 07/25/2016  SR1067  MLF
+SR1067*     FIX FEE CODE BUG FOR FUTURE DATED TERMS AND RETIREMENTS
+SR1067******************************************************************
+SR1044* 08/08/2016  SR1044  MLF
+SR1044*     REACTIVATED TWO LINES OF CODE:
+SR1044*     WHEN MEMBER IS IN EMPCODES TABLE, SET ELIG FLAG TO Y
+SR1044*     AND BLANK OUT TERM DATE
+SR1044******************************************************************
+SR1611* 09/23/2016  SR1611  MLF
+SR1611*     SEND DECEASED STATUS (LAWSON STATUS TD)
+SR1611*     ACTIVE EMPLOYEE NOT IN CRSP BUT WITH CRSP BALANCE IS NOW
+SR1611*        FIDELITY STATUS T INSTEAD OF I. IF A WORKER EXITS CRSP
+SR1611*        OR THEIR EMPLOYER EXITS CRSP, IT WILL BE SENT TO FIDELITY
+SR1611*        AS A TERM THOUGH THEY ARE AN ACTIVE EMPLOYEE ON LAWSON.
+SR1611******************************************************************
+SR161A* 02/17/2017  SR1611 MLF
+SR161A*     IMPLEMENTS THE PARTS OF THIS REQUEST NOT ORIGINALLY 
+SR161A*     IMPLEMENTED SEP 2016:
+SR161A*     * WORKERS OVER 55 WHO TERM FROM CRSP ARE SENT AS FIDELITY
+SR161A*       STATUS R (WITH 120 DAY WAIT)
+SR161A*     * FEE CODE LOGIC WAS REWRITTEN (PARS 2080 - 2084) TO
+SR161A*       ELIMINATE POSSIBLE BUGS, ESP. WITH ZERO BALANCES
+SR161A*     * EXCLUDES SEMINARY STUDENTS
+SR161A*     * LEFT SOME DISPLAYS IN FOR FUTURE USE
+SR161A******************************************************************
+SR2505* 2/17/2017   SR2505 MLF (REF ALSO SR2486)
+SR2505*     ADD VESTING DATE TO 02D RECORD
+SR2505******************************************************************
+SR2121* 03/31/2017  SR2121 MLF
+SR2121*     CREATE FEE CODE AUDIT FILE
+SR2121******************************************************************
+SR3086* 06/25/2017  SR3086 MLF
+SR3086*             MOVE FEE CODE TO NEW 07X RECORD
+SR3086******************************************************************
+SR3487* 10/16/2017  SR3487 MLF
+SR3487*             MEMBERS LEAVING CRSP EMPLOYERS DID NOT TERM FROM
+SR3487*             FROM FIDELITY FILE IF THEY HAD NO CODA BALANCE
+SR3487******************************************************************
+181220* 12/20/2018  MLF
+181220*             ADD 'TO' TO TERMINATED STATUSES
+CB2707******************************************************************
+CB2707* 10/06/2020  MLF  CAB #2707 
+CB2707*             ADD FOREIGN ADDRESS PROCESSING
+181220******************************************************************
+CB3606* 11/03/2020  MLF  CAB #3606                                      
+CB3606*             ADDING CPH EMPLOYEES TO CRSP.
+CB3606*             ACTIVE CPH EMPLOYEES DO NOT RECEIVE A FEE CODE.
+CB3606*             CPH ALSO HAS ITS OWN VESTING DATE CALCULATION.
+CB3606******************************************************************
+US0220* 01/14/2021  MLF  USER STORY #0220
+US0220*                  ADD REMITTER SOURCE CODE
+US0220******************************************************************
+US1479* 02/25/2021  MLF  USER STORY #1479
+US1479*                  THE NO-FEE-CODE LOGIC FOR CPH MEMBERS HAD TO
+US1479*                  BE CHANGED TO WORK AROUND ISSUES WITH THE CODA
+US1479*                  TABLE NOT BEING UP TO DATE.
+US1479******************************************************************
+US1791* 05/21/2021  MLF  USER STORY #1791
+US1791*             ADD IF10 LOOKUP THAT ALLOWS A PROC LEVEL TO        *
+US1791*             REPORT AS A DIFFERENT PROC LEVEL (07015/07058)     *
+US1791******************************************************************
+US2270* 07/21/2021  MLF  USER STORY #2270                              *
+US2270*             ZIP LENGTH FLAG NEEDS TO BE INITIALIZED            *
+US2270*             IT CAUSED FORMATTING ERRORS IN US ADDRESSES        *
+US2270*             AFTER BEING SET TO Y BY FOREIGN ADDRESS LOGIC      *
+US2270******************************************************************
+US2392* 09/29/2021  MLF  USER STORY # 2392                             *
+US2392*             FEE CODES WERE FOUND TO BE INCORRECT IN INSTANCES  *
+US2392*             WHERE SHIFT CODE DID NOT HAVE TO BE LOOKED UP IN   *
+US2392*             PAPOSITION; EMP-SHIFT WAS NOT BEING STORED         *
+US2392*             (TERMED EMPLOYEES AT NUMERIC ERS)                  *
+US2901******************************************************************
+US2901* 10/06/2021  MLF  USER STORY #2392                              *
+US2901*             ALSO DETERMINED THAT CODA BALANCE IS NOT READ      *
+US2901*             FOR TERMED EMPLOYEES AT NUMERIC ERS, WHICH WOULD   *
+US2901*             ALLOW DROPPING THE RECORD IF TERM DATE WAS         *
+US2901*             IN RANGE OF PRM-TERM-DATE. WE DO NOT WANT TO DROP  *
+US2901*             ANY MEMBER WITH A BALANCE.                         *
+      ******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+000500
+000600     IF (PRM-COMPANY NOT = ZEROES)
+000700         MOVE PRM-COMPANY        TO DB-COMPANY
+000800         MOVE SPACES             TO DB-PROCESS-LEVEL
+000900         PERFORM 840-FIND-PRSSET1
+001000         IF (PRSYSTEM-NOTFOUND)
+001100             MOVE PRM-COMPANY    TO CRT-ERR-VAR1
+001200             MOVE 050                         TO CRT-ERROR-NBR
+001300             MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+001400             PERFORM 780-PRINT-ERROR-MSG
+001500             GO TO 050-END.
+001600
+WO7330     MOVE WS-SYSTEM-DATE-YMD     TO WS-SAVE-SYSTEM-DATE. 
+WO7330    
+WO7330     MOVE WS-SYSTEM-DATE-YMD     TO WSDR-FR-DATE.
+WO7330     PERFORM 900-DATE-TO-JULIAN.
+WO7330     SUBTRACT 6                  FROM WSDR-JULIAN-DAYS.
+WO7330     PERFORM 900-JULIAN-TO-DATE.
+WO7330     MOVE WSDR-FR-DATE           TO WS-START-WEEK-DATE.
+
+009100     IF  (PRM-TERM-DATE = ZEROES)
+                MOVE 9999  TO PRM-TERM-DATE.
+
+001700 050-END.
+001800
+001900******************************************************************
+002000 100-PROGRAM-CONTROL             SECTION 10.
+002100******************************************************************
+002200 100-START.
+002300
+002400     MOVE 051                    TO CRT-MSG-NBR.
+002500     PERFORM 780-DISPLAY-MSG.
+003600     PERFORM 800-OPENOUTPUTCSV-ZH211WRK.
+WO3742     PERFORM 800-OPENOUTPUTCSV-ZH211CSV.
+WO3742     PERFORM 800-ALLUSEDCSV-ZH211CSV.
+SR2121     PERFORM 800-OPENOUTPUTCSV-ZH211FEE.
+SR2121     PERFORM 800-ALLUSEDCSV-ZH211FEE.
+SR2121
+SR2121     DISPLAY "RUNNING: ZH211PD V2.14 ZH211WS V2.07".
+WO7330     OPEN OUTPUT FIDELITY-FILE.
+WO7330* WRITE HEADER RECORD TO FIDELITY FILE
+WO7330     MOVE WS-FC-PLAN-NUMBER      TO WS-HDR-PLAN-NUMBER.
+WO7330     WRITE FIDELITY-REC          FROM WS-FID-HEADER-REC.
+WO7330* ZH211R2 IS EXCEPTION REPORT FOR FIDELITY PROCESSING
+WO7330     OPEN OUTPUT ZH211R2-FILE.
+002600
+002700     PERFORM 1000-DO-REPORT.
+
+005900     PERFORM 800-CLOSECSV-ZH211WRK.
+WO3742     PERFORM 800-CLOSECSV-ZH211CSV.
+SR2121     PERFORM 800-CLOSECSV-ZH211FEE.
+WO7330     CLOSE FIDELITY-FILE.
+WO7330     CLOSE ZH211R2-FILE.
+002800
+002900 100-END.
+003000
+003100******************************************************************
+003200 1000-DO-REPORT                  SECTION 50.
+003300******************************************************************
+003400 1000-START.
+003500
+003600     PERFORM 800-OPENINPUTCSV-ZH211IN.
+002600
+           MOVE 0 TO WS-MAX-TBL.
+
+      *===========================================================
+      * 12-2006  ADDED LOGIC TO READ AN EXCEPTION FILE TO DETERMINE  
+      * IF THE RECORD SHOULD BE SENT ON THE INDICATIVE FILE           
+      *===========================================================            
+SDB        PERFORM 1200-LOAD-EXCEPTION-TABLE 
+SDB           THRU 1200-END.
+
+005900     PERFORM 800-CLOSECSV-ZH211IN.
+
+003600     MOVE ZEROES                 TO RPT-PAGE-COUNT (ZH211-R1).
+003800     MOVE GN1H-EMP-EMPLOYEE      TO RPT-GROUP-REQUEST.
+003900     PERFORM 700-PRINT-RPT-GRP.
+WO7330
+WO7330* EXCEPTION REPORT TITLE HEADER
+WO7330     MOVE ZEROES                 TO RPT-PAGE-COUNT (ZH211-R2).
+WO7330     MOVE PRM-COMPANY            TO G2-BEN-COMPANY.
+WO7330     MOVE PRS-NAME               TO G2-PRS-NAME.
+WO7330     MOVE WS-START-WEEK-DATE     TO G2-PRM-START-DATE.
+WO7330     MOVE WS-SAVE-SYSTEM-DATE    TO G2-PRM-STOP-DATE.
+WO7330     MOVE GN2H-FID-COMPANY-GRP   TO RPT-GROUP-REQUEST.
+WO7330     PERFORM 700-PRINT-RPT-GRP.
+WO7330     
+WO7330* EXCEPTION REPORT SUBHEADER
+WO7330     MOVE GN2S-FID-EMPLOYEE      TO RPT-GROUP-REQUEST.
+WO7330     PERFORM 700-PRINT-RPT-GRP.
+003700
+004100     MOVE PRM-COMPANY            TO DB-COMPANY.
+004200     MOVE SPACES                 TO DB-PROCESS-LEVEL.
+004300     MOVE ZEROES                 TO DB-EMPLOYEE.
+004400     PERFORM 850-FIND-NLT-EMPSET7.
+004500
+004600     IF (PRM-COMPANY NOT = ZEROES)
+004700         PERFORM 1020-DO-EMP-COMPANY
+004800         THRU    1020-END
+004900             UNTIL (EMPLOYEE-NOTFOUND)
+005000             OR    (EMP-COMPANY NOT = PRM-COMPANY)
+005100     ELSE
+005200         PERFORM 1020-DO-EMP-COMPANY
+005300         THRU    1020-END
+005400             UNTIL (EMPLOYEE-NOTFOUND).
+005500
+005600     GO TO 1000-END.
+005700
+005800******************************************************************
+005900 1020-DO-EMP-COMPANY.
+006000******************************************************************
+006100
+006200     MOVE EMP-COMPANY            TO WS-EMP-COMPANY.
+006300
+006400     PERFORM 1040-DO-EMP-PROCESS-LEVEL
+006500     THRU    1040-END
+006600         UNTIL (EMPLOYEE-NOTFOUND)
+006700         OR    (EMP-COMPANY NOT = WS-EMP-COMPANY).
+006800
+006900 1020-END.
+007000
+007100******************************************************************
+007200 1040-DO-EMP-PROCESS-LEVEL.
+007300******************************************************************
+007400
+007500     MOVE EMP-PROCESS-LEVEL      TO WS-EMP-PROCESS-LEVEL.
+007600
+007900     PERFORM 1060-DO-EMP-EMPLOYEE
+008000     THRU    1060-END
+008100         UNTIL (EMPLOYEE-NOTFOUND)
+008200         OR    (EMP-COMPANY       NOT = WS-EMP-COMPANY)
+008300         OR    (EMP-PROCESS-LEVEL NOT = WS-EMP-PROCESS-LEVEL).
+008400
+008500 1040-END.
+008600
+008700******************************************************************
+008800 1060-DO-EMP-EMPLOYEE.
+008900******************************************************************
+009000
+      *===========================================================        
+      * 12-15-05 EXCLUDE EMP-STATUS = "TA"
+      *=========================================================== 
+SR161A
+SR161A*     IF (EMP-EMPLOYEE NOT = 351611)
+SR161A*          GO TO 1060-NEXT-EMPLOYEE.
+SR161A
+           IF  (EMP-EMP-STATUS = "TA")
+                  GO TO 1060-NEXT-EMPLOYEE.       
+SR161A            
+SR161A* EXCLUDE SEMINARY STUDENTS
+SR161A     IF  (EMP-EMP-STATUS (1:1) = "2")
+SR161A            GO TO 1060-NEXT-EMPLOYEE.
+SR161A                    
+      *===========================================================
+      * 09-15-06 EXCLUDE EMP-POSITION = "VOIDS" (PER FC)     
+      *===========================================================        
+           IF  (EMP-POSITION = "VOIDS")
+                  GO TO 1060-NEXT-EMPLOYEE.               
+      *==========================================================
+      * HIRE DATE > SYSTEM DATE   ==>  SKIP RECORD   
+      *==========================================================        
+           IF (EMP-DATE-HIRED > WS-SAVE-SYSTEM-DATE)
+WO7330*        DISPLAY "**** SKIP RECORD *** " EMP-EMPLOYEE " " 
+WO7330*                                        EMP-DATE-HIRED  
+              INITIALIZE          WS-PEP-END-DATE                        
+                                  WS-PROC-LEVEL                                
+US2392                            WS-SHIFT
+                                  WS-PAY-GRADE
+                                  PEM-BIRTHDATE                                
+              IF (EMP-EMP-STATUS(1:1) = "A")
+              OR (EMP-EMP-STATUS(1:1) = "I")
+                PERFORM 1275-FORMAT-REPORT 
+                   THRU 1275-END 
+                MOVE GN1D-EMP-EMPLOYEE      TO RPT-GROUP-REQUEST 
+                PERFORM 700-PRINT-RPT-GRP 
+                GO TO 1060-NEXT-EMPLOYEE 
+             ELSE
+                GO TO 1060-NEXT-EMPLOYEE.
+
+      *==========================================================
+WO5117* THE EMPLOYER PARTICIPATES ==>  
+WO7330* PAY-GRADE = 1, 2C, 3C, 4C, 5C,
+WO7330*             1CP, 2CP, 3CP, 4CP, 5CP
+      *==========================================================        
+WO7330* WS-PAY-GRADE IS USED AS A SAVED VALUE, SO SEPARATE
+WO7330* VARIABLE WS-CRSP-GRADE WAS SET UP STRICTLY TO
+WO7330* EVALUATE PAY GRADE AND MAKE IF STMTS LESS UGLY
+      
+           MOVE EMP-TERM-DATE      TO WS-PEP-END-DATE.
+           MOVE EMP-PROCESS-LEVEL  TO WS-PROC-LEVEL. 
+WO7330     MOVE EMP-PAY-GRADE      TO WS-PAY-GRADE,
+WO7330                                WS-CRSP-GRADE.
+           MOVE SPACES             TO WRK-ELIGIBILITY-CODE.
+           MOVE SPACES             TO WS-WRITE-TERM-DATE.
+SR3487     MOVE SPACES             TO WS-SENT-EBSO-TERM-FLAG.
+           MOVE EMP-EMPLOYEE       TO WS-PEP-EMPLOYEE.
+US2392     MOVE EMP-SHIFT          TO WS-SHIFT.
+WO7330     MOVE ZEROES             TO WS-CODA-BALANCE.
+
+US2901* MOVED THIS READ OUT OF 1100 TO MAKE SURE IT IS
+US2901* PERFORMED FOR EVERY MEMBER
+US2901     
+US2901* READ CODA TABLE TO DETERMINE IF WORKER HAS BALANCE
+US2901* WORKERS WITH BALANCES HIT FIDELITY FILE REGARDLESS
+US2901* OF TERM DATE
+US2901     MOVE EMP-COMPANY    TO DB-COMPANY.
+US2901     MOVE EMP-EMPLOYEE   TO DB-EMPLOYEE.
+US2901     MOVE "DC"           TO DB-PLAN-TYPE.
+US2901     MOVE "403B"         TO DB-PLAN-CODE.
+US2901     MOVE SPACES         TO DB-PROCESS-LEVEL,
+US2901                            DB-BUS-NBR-GRP,
+US2901                            DB-QC-ENT-NBR-GRP.
+US2901     PERFORM 850-FIND-NLT-CODSET1.
+US2901     IF  (CODA-FOUND)
+US2901     AND (COD-COMPANY = EMP-COMPANY)
+US2901     AND (COD-EMPLOYEE = EMP-EMPLOYEE)
+US2901     AND (COD-PLAN-TYPE = "DC")
+US2901     AND (COD-PLAN-CODE = "403B")
+US2901          MOVE COD-AMOUNT-YTD (1) TO WS-CODA-BALANCE
+US2901     END-IF.
+US2901        
+
+WO8022*===========================================================
+WO8022* AW EMP STATUS MUST BE PART TIME PAY GRADE
+WO8022*===========================================================
+WO8022     IF  (EMP-EMP-STATUS = "AW")
+WO8022     AND (NOT WS-CRSP-PT-MEMBER)
+WO8022          GO TO 1060-NEXT-EMPLOYEE
+WO8022     END-IF.
+WO8022
+WO8022* IF YOU ARE IN EMPCODES, WE WANT THE (NOT WS-CRSP-MEMBER)
+WO8022* CONDITION NOT TO MATTER.
+WO8022
+WO8022     PERFORM 2200-DETERMINE-PT-STATUS
+WO8022        THRU 2200-END.
+WO8022
+WO7330     IF  (NOT WS-CRSP-MEMBER)  
+              MOVE "N"              TO WRK-ELIGIBILITY-CODE             
+              MOVE SPACES TO WS-WRITE-TERM-DATE
+              MOVE SPACES TO WS-WRITE-REPORT 
+              PERFORM 1100-DETERMINE-IF-TERM
+                 THRU 1100-END 
+              IF  (WS-WRITE-TERM-DATE NOT = "Y")
+              AND (WS-WRITE-TERM-DATE NOT = "L")
+              AND (WS-WRITE-TERM-DATE NOT = "F")
+              AND (WS-WRITE-TERM-DATE NOT = "G")
+                  MOVE " "           TO WRK-ELIGIBILITY-CODE 
+                  MOVE SPACES        TO WS-WRITE-REPORT
+WO8022            IF (WS-PART-TIME-EMP-FLAG = "N")
+WO8022                GO TO 1060-NEXT-EMPLOYEE 
+WO8022            END-IF
+              END-IF
+           ELSE                                                                
+      *===========================================================
+      * 12-2006  ADDED LOGIC TO READ AN EXCEPTION FILE TO DETERMINE  
+      * IF THE RECORD SHOULD BE SENT ON THE INDICATIVE FILE           
+      *===========================================================
+           MOVE SPACES TO WS-EXCPT-SW
+SDB        PERFORM 1250-SEARCH-EXCPT-FILE
+              THRU 1250-END
+           IF  (WS-EXCPT-SW = "Y")
+               GO TO 1060-NEXT-EMPLOYEE 
+           END-IF.                         
+                                                       
+           IF (WS-PROC-LEVEL     = "DISW")
+              MOVE "N"              TO WRK-ELIGIBILITY-CODE
+              PERFORM 1180-FIND-PROC-LEVEL               
+                 THRU 1180-END 
+           ELSE
+           IF (WS-PROC-LEVEL     = "ITP")        
+              MOVE "Y"              TO WRK-ELIGIBILITY-CODE
+              PERFORM 1180-FIND-PROC-LEVEL               
+                 THRU 1180-END 
+           END-IF.                   
+
+WO7330* CODA BALANCE WAS LOOKED UP IN 1100
+WO7330* FIDELITY FILE NEEDS TO INCLUDE MEMBERS WITH 403B BALANCES
+WO7330* EVEN IF THEIR EMPLOYER DOES NOT CURRENTLY OFFER 403B
+WO7330* AND REGARDLESS OF TERM DATE
+WO7330
+WO7330*===========================================================
+WO7330* 11-2007 EXCLUDE EMP-TERM-DATE < PARM-TERM-DATE YEAR 
+WO7330* THIS CHECK HAD TO BE MOVED DOWN TO AFTER THE CODA LOOKUP
+WO7330* IN ORDER TO CATCH BALANCES OF DECEASED WORKERS
+WO7330*===========================================================  
+ 
+WO8022* IF YOU ARE ON THE EMPCODES TABLE, WE DON'T WANT THESE
+WO8022* NEXT TWO IF STMTS TO MATTER.
+      
+WO7330     IF  (EMP-TERM-DATE(1:4) > ZEROS)
+WO7330     AND (EMP-TERM-DATE(1:4) < PRM-TERM-DATE(1:4))
+WO7330     AND (EMP-EMP-STATUS(1:1) NOT = "A")
+WO7330     AND (EMP-EMP-STATUS(1:1) NOT = "I")
+WO7330     AND (WS-CODA-BALANCE = 0)
+WO8022            IF (WS-PART-TIME-EMP-FLAG = "N")
+WO8022                GO TO 1060-NEXT-EMPLOYEE
+WO8022            END-IF
+WO8022     END-IF.           
+WO7330
+           IF  (WS-PEP-END-DATE(1:4) > ZEROS)
+           AND (WS-PEP-END-DATE(1:4) < PRM-TERM-DATE(1:4))
+WO7330     AND (WS-CODA-BALANCE = 0)
+WO8022            IF (WS-PART-TIME-EMP-FLAG = "N")     
+WO7330                GO TO 1060-NEXT-EMPLOYEE
+WO8022            END-IF
+WO8022     END-IF.
+WO7330            
+WO7330* FLAG MEMBER IF NOT ACTIVE WITH BALANCE FOR 2080
+SR1611* NOT ACTIVE IN THIS CASE MEANS NOT AT A CRSP EMPLOYER
+WO7330     MOVE EMP-PAY-GRADE     TO WS-CRSP-GRADE.
+WO7330     MOVE "N"               TO WS-NOT-ACTIVE-WBAL.
+WO7330     IF  (WS-CODA-BALANCE > 0) 
+WO7330     AND (NOT WS-CRSP-MEMBER)
+WO7330          MOVE "Y"          TO WS-NOT-ACTIVE-WBAL
+SR161A*          DISPLAY "1060: EMPLOYEE", EMP-EMPLOYEE,
+SR161A*          " NOT ACTIVE ", WS-CRSP-GRADE,
+SR161A*          " WITH BALANCE = ", WS-CODA-BALANCE
+WO7330     END-IF.
+
+SR1611* WITH PROGRAM CHANGING TO SEND NOT-ACTIVE-WITH-BALANCE
+SR1611* TO FIDELITY WITH STATUS T INSTEAD OF I, THIS APPLIES THE EDIT
+SR1611* NOT TO INCLUDE MEMBERS TERMED BEFORE THE PARAMETER
+SR1611* SCREEN TERM DATE
+SR1611* CPS WILL NOT INITIALLY APPLY THIS EDIT AND MAY NEVER
+SR1611*     IF  (WS-PEP-END-DATE(1:4) > ZEROS)
+SR1611*     AND (WS-PEP-END-DATE(1:4) < PRM-TERM-DATE(1:4))
+SR1611*     AND (WS-NOT-ACTIVE-WBAL = "Y")
+SR1611*          GO TO 1060-NEXT-EMPLOYEE
+SR1611*     END-IF.
+
+WO2005*=========================================================
+WO2005* 07-2012  MOST OF THE TIME, NON-NUMERIC PROC LEVELS WILL
+WO2005* BE SKIPPED HERE, BUT IF THERE IS A TERM DATE, A RECORD
+WO2005* NEEDS TO BE WRITTEN OUT WITH THE TERM DATE
+WO2005*========================================================= 
+WO2582* SINCE THE CURRENT PROCESS LEVEL CAN BE NON-NUMERIC AT
+WO2582* THIS POINT, 1110 NEEDS TO BE CALLED TO RETURN A PROC-LVL
+WO7330* WITH A CRSP PAY-GRADE (1, 1CP.... 5C, 5CP)
+ 
+WO2005      MOVE WS-PROC-LEVEL     TO WS-DIV-NBR-A.
+WO2005      IF (WS-DIV-NBR-A IS NUMERIC) OR
+WO2005         ((WS-DIV-NBR-A IS NOT NUMERIC) AND
+WO2005          (EMP-TERM-DATE > ZEROES))
+WO2005             MOVE "Y"           TO WRK-ELIGIBILITY-CODE
+WO2005      ELSE
+WO2005             MOVE SPACES        TO WRK-ELIGIBILITY-CODE
+WO2005             MOVE SPACES        TO WS-WRITE-REPORT
+WO2005             GO TO 1060-NEXT-EMPLOYEE
+WO2005      END-IF. 
+WO2005      
+WO2005     IF (WS-DIV-NBR-A IS NOT NUMERIC) AND
+WO2005        (EMP-TERM-DATE > ZEROES)
+WO2582              MOVE EMP-COMPANY       TO DB-COMPANY
+WO2582              MOVE EMP-EMPLOYEE      TO DB-EMPLOYEE
+WO2582              MOVE 01                TO DB-POS-LEVEL
+WO2582              MOVE 99999999          TO DB-EFFECT-DATE
+WO2582              PERFORM 850-FIND-NLT-PEPSET3
+WO2582              IF  (PAEMPPOS-FOUND)
+WO2582              AND (PEP-EMPLOYEE = EMP-EMPLOYEE)
+WO2582                  PERFORM 860-FIND-NEXT-PEPSET3                 
+WO2582                  IF  (PAEMPPOS-FOUND)
+WO2582                  AND (PEP-EMPLOYEE  = EMP-EMPLOYEE)
+WO2582                       PERFORM 1110-CHECK-IND
+WO2582                       THRU 1110-END
+WO2582                       UNTIL
+WO2582                      (PAEMPPOS-NOTFOUND)
+WO2582                   OR (PEP-EMPLOYEE NOT = EMP-EMPLOYEE)
+WO2582                   OR (WS-WRITE-TERM-DATE = "Y")
+WO2582                  END-IF
+WO2582              END-IF                   
+WO2582     END-IF.
+
+WO2582* THE PREVIOUS LOGIC CAN STILL RETURN A PROCESS LEVEL OF
+WO2582* DISW OR ITP, SO THOSE VALUES NEED TO BE CHECKED AGAIN.
+WO2582* 1180 WILL RETURN THE PREVIOUS PROC-LVL; IT IS CALLED
+WO7330* HERE IN A WAY THAT WILL NOT REQUIRE A CRSP PAY-GRADE 
+WO2582
+WO2582     IF (WS-PROC-LEVEL     = "DISW")
+WO2582        MOVE "N"              TO WRK-ELIGIBILITY-CODE
+WO2582        MOVE "Y"              TO WS-NN-TERM-FLAG
+WO2582        PERFORM 1180-FIND-PROC-LEVEL               
+WO2582           THRU 1180-END 
+WO2582        MOVE "N"              TO WS-NN-TERM-FLAG
+WO2582        IF (WS-FOUND = "Y")
+WO2582            CONTINUE
+WO2582        ELSE
+WO2582            GO TO 1060-NEXT-EMPLOYEE
+WO2582        END-IF
+WO2582     ELSE
+WO2582     IF (WS-PROC-LEVEL     = "ITP")        
+WO2582        MOVE "Y"              TO WRK-ELIGIBILITY-CODE
+WO2582        MOVE "Y"              TO WS-NN-TERM-FLAG
+WO2582        PERFORM 1180-FIND-PROC-LEVEL               
+WO2582           THRU 1180-END 
+WO2582        MOVE "N"              TO WS-NN-TERM-FLAG
+WO2582        IF (WS-FOUND = "Y")
+WO2582            CONTINUE
+WO2582        ELSE
+WO2582            GO TO 1060-NEXT-EMPLOYEE
+WO2582        END-IF
+WO2582     END-IF.                   
+
+           IF  (WS-WRITE-TERM-DATE = "F")
+               MOVE "Y" TO WRK-ELIGIBILITY-CODE
+           END-IF.
+           IF  (WS-WRITE-TERM-DATE = "G")
+           OR  (WS-WRITE-TERM-DATE = "L")
+               MOVE "N" TO WRK-ELIGIBILITY-CODE
+           END-IF.
+           IF  (WS-WRITE-TERM-DATE = "Y")
+             MOVE SPACES TO WS-WRITE-TERM-DATE 
+             IF  (WS-PEP-END-DATE NOT > WS-SAVE-SYSTEM-DATE)            
+               MOVE "N"           TO WRK-ELIGIBILITY-CODE 
+               MOVE WS-PEP-END-DATE        TO WS-DATE-REFORMAT 
+               MOVE WS-DATE-MM             TO WS-DATE-MM-SL 
+               MOVE WS-DATE-DD             TO WS-DATE-DD-SL 
+               MOVE WS-DATE-CCYY           TO WS-DATE-CCYY-SL                           
+00             MOVE WS-DATE-SLASH          TO WRK-TERM-DATE-ML
+               MOVE SPACES TO WS-WRITE-TERM-DATE 
+SR3487* THIS IS AN ON/OFF FLAG THAT WILL TELL 2000- PARAS
+SR3487* IF MEMBER IS TERMED ON EBSO FILE. THAT PERSON SHOULD
+SR3487* ALSO BE TERMED ON THE FIDELITY FILE.
+SR3487         MOVE "Y" TO WS-SENT-EBSO-TERM-FLAG
+             ELSE  
+              MOVE "Y"           TO WRK-ELIGIBILITY-CODE 
+              INITIALIZE                     WS-DATE-REFORMAT 
+              MOVE WS-DATE-MM             TO WS-DATE-MM-SL 
+              MOVE WS-DATE-DD             TO WS-DATE-DD-SL 
+              MOVE WS-DATE-CCYY           TO WS-DATE-CCYY-SL                           
+00            MOVE WS-DATE-SLASH          TO WRK-TERM-DATE-ML.
+018100
+019600     MOVE EMP-COMPANY            TO DB-COMPANY.
+019700     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+019800     PERFORM 840-FIND-PEMSET1.
+019900     IF (PAEMPLOYEE-FOUND)
+020000         CONTINUE                                    
+020300     ELSE
+020700         MOVE ZEROES             TO PEM-BIRTHDATE
+020800         MOVE SPACES             TO PEM-SEX
+020900         MOVE SPACES             TO PEM-TRUE-MAR-STAT.
+021000
+017500     MOVE EMP-FICA-NBR           TO WRK-FICA-NBR-ML.
+
+WO8046     MOVE WS-LCMS-ID             TO WRK-PLAN-ML.
+           MOVE EMP-COMPANY            TO DB-COMPANY.   
+           MOVE WS-PROC-LEVEL          TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-WB5SET1.
+                                                                                                                         
+017600     MOVE EMP-LAST-NAME          TO WRK-LAST-NAME.
+017700     MOVE EMP-FIRST-NAME         TO WRK-FIRST-NAME-ML.
+017800     MOVE EMP-MIDDLE-INIT        TO WRK-MIDDLE-INIT-ML.
+017900     MOVE EMP-NAME-SUFFIX        TO WRK-NAME-SUFFIX-ML.
+
+SR1044* PART-TIME-EMP-FLAG = R MEANS EMPLOYEE IS IN THE 
+SR1044* EMPCODES TABLE, AND THEIR PROC LEVEL NEEDS TO COME FROM THERE
+SR1044* IT WAS READ WHEN 2200 PERFORMED
+SR1044* (R IS A REHIRE OF A PREVIOUSLY-TERMINATED EMPLOYEE)
+SR1044* EMPLOYEE'S PRESENCE IN EMPCODES ALSO INDICATES ANY TERM
+SR1044* DATE OR ELIGIBILITY OF N SHOULD BE OVERRIDDEN
+SR1044     IF (WS-PART-TIME-EMP-FLAG = "R")
+SR1044        MOVE WS-EPC-DESCRIPTION (1:5) TO WRK-DIV-NBR
+SR1044        MOVE "Y" TO WRK-ELIGIBILITY-CODE
+SR1044        MOVE SPACES TO WRK-TERM-DATE-ML
+SR1044     ELSE
+SR1044        MOVE WS-PROC-LEVEL       TO WRK-DIV-NBR
+SR1044     END-IF.
+
+US1791     MOVE SPACES                     TO WS-REMITTER-LOC.
+US1791     MOVE EMP-COMPANY                TO DB-LVL-1-KEY.
+US1791     MOVE "PROCESS-LEVEL"            TO DB-LVL-2-KEY.
+US1791     MOVE "REMITTER-LOC"             TO DB-LVL-3-KEY.
+US1791     MOVE  WRK-DIV-NBR               TO DB-DTL-KEY.
+US1791     PERFORM 840-FIND-IF1SET1.
+US1791     IF (LUPTBLDTL-NOTFOUND)
+US1791         MOVE SPACES                 TO WS-REMITTER-LOC
+US1791     ELSE
+US1791         MOVE IF1-DTL-VALUE          TO WS-REMITTER-LOC
+US1791     END-IF.
+US1791     IF (WS-REMITTER-LOC NOT = SPACES)
+US1791         MOVE WS-REMITTER-LOC        TO WRK-DIV-NBR
+US1791     END-IF.
+US1791     MOVE WRK-DIV-NBR            TO WS-HOLD-WRK-DIV-NBR.
+
+00         MOVE PEM-BIRTHDATE          TO WS-DATE-REFORMAT.
+           MOVE WS-DATE-MM             TO WS-DATE-MM-SL.
+           MOVE WS-DATE-DD             TO WS-DATE-DD-SL.
+           MOVE WS-DATE-CCYY           TO WS-DATE-CCYY-SL.                          
+00         MOVE WS-DATE-SLASH          TO WRK-BIRTH-DATE-ML.
+
+00         MOVE PEM-SEX                TO WRK-GENDER.
+00         MOVE PEM-TRUE-MAR-STAT      TO WRK-MARITAL-STAT.
+018000     MOVE EMP-ADDR1              TO WRK-ADDRESS1.
+           MOVE EMP-ADDR2              TO WRK-ADDRESS2.
+           MOVE EMP-CITY               TO WRK-CITY-ML.
+           MOVE EMP-STATE              TO WRK-STATE.  
+           MOVE EMP-ZIP                TO WRK-ZIP.
+           
+CB2707* HOME ADDRESS OVERRIDE
+CB2707     IF (PEM-SUPP-CNTRY-CD NOT = SPACES)
+CB2707     AND (PEM-SUPP-CNTRY-CD NOT = "US")
+CB2707     AND ((EMP-ADDR1 = "1333 S KIRKWOOD RD") OR
+CB2707          (EMP-ADDR2 = "1333 S KIRKWOOD RD"))
+CB2707*         DISPLAY "1120:ADDRESS OVERRIDE", ZNPOA-EMPLOYEE
+CB2707         MOVE PEM-SUPP-ADDR1     TO WRK-ADDRESS1
+CB2707         MOVE PEM-SUPP-ADDR2     TO WRK-ADDRESS2
+CB2707         MOVE PEM-SUPP-CITY      TO WRK-CITY-ML
+CB2707         MOVE PEM-SUPP-STATE     TO WRK-STATE
+CB2707         MOVE PEM-SUPP-ZIP       TO WRK-ZIP
+CB2707     END-IF.
+            
+           IF (PEM-HM-PHONE-NBR(4:1) = "-")
+               MOVE PEM-HM-PHONE-NBR       TO WS-PHONE-WITH-SLASH
+               MOVE WS-AREA-CODE           TO WS-AREA-CODE-NBR 
+               MOVE WS-EXCHANGE            TO WS-EXCHANGE-NBR 
+               MOVE WS-LOCAL               TO WS-LOCAL-NBR  
+               MOVE WS-PHONE-NBR           TO WRK-HOME-PHONE-NBR 
+           ELSE
+           IF  (PEM-HM-PHONE-NBR(1:1) = "(")
+               MOVE PEM-HM-PHONE-NBR (2:3)   TO WS-AREA-CODE-NBR
+               MOVE PEM-HM-PHONE-NBR (7:3)   TO WS-EXCHANGE-NBR
+               MOVE PEM-HM-PHONE-NBR (11:4)  TO WS-LOCAL-NBR
+               MOVE WS-PHONE-NBR           TO WRK-HOME-PHONE-NBR 
+           ELSE   
+               MOVE PEM-HM-PHONE-NBR       TO WRK-HOME-PHONE-NBR.
+
+           IF (PEM-WK-PHONE-NBR(4:1) = "-")
+               MOVE PEM-WK-PHONE-NBR       TO WS-PHONE-WITH-SLASH 
+               MOVE WS-AREA-CODE           TO WS-AREA-CODE-NBR 
+               MOVE WS-EXCHANGE            TO WS-EXCHANGE-NBR 
+               MOVE WS-LOCAL               TO WS-LOCAL-NBR  
+               MOVE WS-PHONE-NBR           TO WRK-WORK-PHONE-NBR 
+           ELSE
+          IF  (PEM-WK-PHONE-NBR(1:1) = "(")
+               MOVE PEM-WK-PHONE-NBR (2:3)   TO WS-AREA-CODE-NBR
+               MOVE PEM-WK-PHONE-NBR (7:3)   TO WS-EXCHANGE-NBR
+               MOVE PEM-WK-PHONE-NBR (11:4)  TO WS-LOCAL-NBR
+               MOVE WS-PHONE-NBR             TO WRK-WORK-PHONE-NBR 
+ 
+           ELSE
+               MOVE PEM-WK-PHONE-NBR       TO WRK-WORK-PHONE-NBR.
+
+           MOVE PEM-WK-PHONE-EXT       TO WRK-WORK-PHONE-EXT.
+           MOVE EMP-COUNTRY-CODE       TO WRK-COUNTRY-CODE.
+           
+WO3313     MOVE EMP-EMPLOYEE           TO WRK-EMPLOYEE-NBR.
+
+      *=========================================================
+      * 11-29-05 CHANGED FROM ADJ-HIRE-DATE TO HIRE-DATE                   
+      * 12-14-07 CHANGED FROM DATE-HIRED TO ADJ-HIRE-DATE
+      *=========================================================
+      *    MOVE EMP-DATE-HIRED         TO WS-DATE-REFORMAT.
+        
+           MOVE EMP-ADJ-HIRE-DATE      TO WS-DATE-REFORMAT. 
+           MOVE "A"                    TO WS-HIRE-DATE-SW.  
+           IF  (WRK-TERM-DATE-ML(6:4) > SPACES)
+            IF  (WS-PEP-END-DATE NOT > EMP-ADJ-HIRE-DATE)  
+      *    IF  (WRK-TERM-DATE-ML NOT > EMP-ADJ-HIRE-DATE)  
+              MOVE EMP-DATE-HIRED      TO WS-DATE-REFORMAT 
+              MOVE "H"                 TO WS-HIRE-DATE-SW
+              IF (EMP-EMP-STATUS(1:1) = "A")
+              OR (EMP-EMP-STATUS(1:1) = "I")
+                MOVE "Y"                 TO WS-WRITE-REPORT
+              END-IF
+           END-IF.
+
+           MOVE WS-DATE-MM             TO WS-DATE-MM-SL.
+           MOVE WS-DATE-DD             TO WS-DATE-DD-SL.
+           MOVE WS-DATE-CCYY           TO WS-DATE-CCYY-SL.                     
+00         MOVE WS-DATE-SLASH          TO WRK-HIRE-DATE-ML.
+
+      *=========================================================
+      * SKIP RECORD IF WRK-HIRE-DATE-ML > SYSTEM DATE                      
+      *=========================================================
+           IF  (WS-HIRE-DATE-SW   = "A")
+           AND (EMP-ADJ-HIRE-DATE > WS-SAVE-SYSTEM-DATE)
+              MOVE "Y"                 TO WS-WRITE-REPORT
+WO7330*        DISPLAY "**** 2 SKIP RECORD *** " EMP-EMPLOYEE " " 
+                                              WRK-HIRE-DATE-ML
+      *       IF (EMP-EMP-STATUS(1:1) = "A")
+      *       OR (EMP-EMP-STATUS(1:1) = "I")
+                PERFORM 1275-FORMAT-REPORT 
+                   THRU 1275-END 
+                MOVE GN1D-EMP-EMPLOYEE      TO RPT-GROUP-REQUEST 
+                PERFORM 700-PRINT-RPT-GRP 
+                GO TO 1060-NEXT-EMPLOYEE.
+
+      *============================================================
+      *  IF CURRENT DATE NOT >  01/01/2006
+      *      THEN PARTICIPATION-DATE = 01/01/2006         
+      *  ELSE  PARTICIPATION-DATE = 
+      *                       (ADJ-HIRE-MONTH + 1)/01/ADJ-HIRE-YEAR
+      *  IF MONTH = 12, THEN THE YEAR MUST BE ADJUSTED ALSO. 
+      *=============================================================
+      *==12/09/05 PER KEN J.  ALWAYS SEND THE PAEMPPOS EFFECT DATE
+      *=============================================================
+           PERFORM 1070-DETERMINE-PARTIC-DATE
+              THRU 1070-END.                
+      *==============================================================
+      * 12-14-2005  ADDED LOGIC TO EXCLUDE WORKERS WITH PARTICIPATION
+      * DATES MORE THEN 6 WEEKS AWAY
+      *==============================================================
+      * 09-29-2006  COMMENTED OUT THE LOGIC FOR YEAR END              
+      *==============================================================
+08530***   MOVE WS-SAVE-SYSTEM-DATE        TO WSDR-FR-DATE.
+0854 ***   PERFORM 900-DATE-TO-JULIAN.
+08550***   ADD      49            TO WSDR-JULIAN-DAYS.
+08560***   PERFORM 900-JULIAN-TO-DATE.
+
+           IF (WRK-PARTICIPATION-DATE-ML = ZEROS)
+           OR (WRK-PARTICIPATION-DATE-ML = SPACES)
+                 MOVE SPACES TO WS-WRITE-REPORT
+                 GO TO 1060-NEXT-EMPLOYEE.
+
+           IF  (WRK-PARTICIPATION-DATE-ML(3:1) = "/")
+             MOVE WRK-PARTICIPATION-DATE-ML  TO WS-DATE-SLASH      
+             MOVE WS-DATE-MM-SL-N    TO WS-PARTIC-MM
+             MOVE WS-DATE-DD-SL-N    TO WS-PARTIC-DD
+             MOVE WS-DATE-CCYY-SL-N  TO WS-PARTIC-CCYY.
+      *    IF  (WS-PARTIC-DATE-NBR  NOT > WSDR-FR-DATE)
+      *        NEXT SENTENCE
+      *    ELSE
+      *        INITIALIZE WRK-ZH211WRK-REC 
+      *        GO TO 1060-NEXT-EMPLOYEE.
+
+      *==============================================================
+      * 12-19-2005  IF THE MOST RECENT PARTICIPATION DATE IS BEFORE  
+      * 01/01/2006, MAKE IT 01/01/2006 
+      *==============================================================
+           
+           IF  (WS-PARTIC-DATE-NBR = ZEROS)
+           OR  (WS-PARTIC-DATE-NBR = SPACES)
+               GO TO 1060-NEXT-EMPLOYEE.
+
+           
+           IF  (WS-PARTIC-DATE-NBR < 20060101)
+                MOVE "01/01/2006" TO WRK-PARTICIPATION-DATE-ML.
+
+      *==============================================================
+      * 12-27-2005  IF THE MOST RECENT PARTICIPATION DATE IS AFTER   
+      * 01/01/2006, MAKE IT (MM + 1)/01/YEAR (ADJUSTED FOR MM=12)
+000100******************************************************************
+           IF  (WS-PARTIC-DATE-NBR > 20060101)
+           AND (WS-DATE-DD-SL NOT = "01")
+               ADD   1     TO WS-DATE-MM-SL-N
+               MOVE "01"   TO WS-DATE-DD-SL
+               IF  (WS-DATE-MM-SL-N = 13)                    
+                   MOVE "01" TO WS-DATE-MM-SL                      
+                   ADD  1  TO WS-DATE-CCYY-SL-N
+               END-IF
+               MOVE WS-DATE-SLASH  TO WRK-PARTICIPATION-DATE-ML.
+
+           IF  (WRK-PARTICIPATION-DATE-ML = WRK-HIRE-DATE-ML)
+               MOVE WRK-PARTICIPATION-DATE-ML TO WS-DATE-SLASH  
+               IF (WS-DATE-DD-SL NOT = "01")     
+               OR (WS-DATE-CCYY-SL < "2019")         
+                   ADD   1     TO WS-DATE-MM-SL-N
+               END-IF
+               MOVE "01"   TO WS-DATE-DD-SL
+               IF  (WS-DATE-MM-SL-N = 13)                    
+                   MOVE "01" TO WS-DATE-MM-SL                      
+                   ADD  1  TO WS-DATE-CCYY-SL-N
+               END-IF
+               MOVE WS-DATE-SLASH  TO WRK-PARTICIPATION-DATE-ML
+           END-IF.
+
+WO8085* EMPLOYEES HAVING AB STATUS ARE ELIGIBLE FOR CRSP
+WO8085* IMMEDIATELY AND ARE NOT REQUIRED TO WAIT FOR THE START OF
+WO8085* THE NEXT MONTH.
+WO8085* THIS CAN OVERRIDE THE PARTICIPATION DATE.
+WO8085
+WO8085     IF (EMP-EMP-STATUS = "AB")
+WO8085
+WO8085* MOVE WRK-PARTICIPATION-DATE-ML BACK INTO A NUMERIC FIELD
+WO8085* COMPARE IT TO EMP-ADJ-HIRE-DATE
+WO8085* ONLY MOVE EMP-ADJ-HIRE-DATE OUT IF IT'S EARLIER
+WO8085
+WO8085         MOVE WRK-PARTICIPATION-DATE-ML TO WS-DATE-SLASH
+WO8085         MOVE WS-DATE-MM-SL-N  TO WS-PARTIC-MM
+WO8085         MOVE WS-DATE-DD-SL-N  TO WS-PARTIC-DD
+WO8085         MOVE WS-DATE-CCYY-SL-N TO WS-PARTIC-CCYY
+WO8085         IF (EMP-ADJ-HIRE-DATE < WS-PARTIC-DATE-NBR)
+WO8085             MOVE EMP-ADJ-HIRE-DATE TO WS-PARTIC-DATE-N
+WO8085             MOVE WS-PARTIC-CCYY    TO WS-DATE-CCYY-SL-N
+WO8085             MOVE WS-PARTIC-MM      TO WS-DATE-MM-SL-N
+WO8085             MOVE WS-PARTIC-DD      TO WS-DATE-DD-SL-N
+WO8085             MOVE WS-DATE-SLASH     TO 
+WO8085                  WRK-PARTICIPATION-DATE-ML
+WO8085         END-IF
+WO8085     END-IF.              
+
+      *    DISPLAY "EMP/PROC LVL " EMP-EMPLOYEE " " WRK-DIV-NBR.
+           MOVE WRK-DIV-NBR  TO WS-DIV-NBR-A.
+WO2005     IF (WS-DIV-NBR-A IS NUMERIC) OR
+WO2005        ((WS-DIV-NBR-A IS NOT NUMERIC) AND
+WO2005         (EMP-TERM-DATE > ZEROES))
+WO2005             PERFORM 800-WRITECSV-ZH211WRK
+WO3742             MOVE WRK-ZH211WRK-REC TO
+WO3742                  CSV-ZH211CSV-REC
+WO3742             PERFORM 800-WRITECSV-ZH211CSV
+WO7330             PERFORM 2000-WRITE-FIDELITY-RECS
+WO7330                THRU 2000-END
+WO2005             INITIALIZE WRK-ZH211WRK-REC
+WO3742             INITIALIZE CSV-ZH211CSV-REC
+WO2005     ELSE
+WO2005             INITIALIZE WRK-ZH211WRK-REC
+WO3742             INITIALIZE CSV-ZH211CSV-REC
+WO2005     END-IF.
+           IF (WS-WRITE-REPORT = "Y")
+              IF (EMP-EMP-STATUS(1:1) = "A")
+              OR (EMP-EMP-STATUS(1:1) = "I")
+                  MOVE SPACES TO WS-WRITE-REPORT
+                  PERFORM 1275-FORMAT-REPORT
+                     THRU 1275-END
+018500            MOVE GN1D-EMP-EMPLOYEE      TO RPT-GROUP-REQUEST 
+018600            PERFORM 700-PRINT-RPT-GRP. 
+
+021400 1060-NEXT-EMPLOYEE.
+021500     PERFORM 860-FIND-NEXT-EMPSET7.
+021600
+021700 1060-END.
+      *============================================================
+       1070-DETERMINE-PARTIC-DATE. 
+      *============================================================
+           MOVE EMP-COMPANY       TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE      TO DB-EMPLOYEE.
+           MOVE 01                TO DB-POS-LEVEL.
+           MOVE 99999999          TO DB-EFFECT-DATE.                              
+027300     PERFORM 850-FIND-NLT-PEPSET3.
+           PERFORM UNTIL (PAEMPPOS-NOTFOUND)
+                      OR (PEP-EMPLOYEE NOT = EMP-EMPLOYEE)
+      *                OR (PEP-EFFECT-DATE(1:4) = 2005)         
+027400       IF  (PAEMPPOS-FOUND)
+             AND (PEP-EMPLOYEE = EMP-EMPLOYEE)
+WO7330       MOVE PEP-PAY-GRADE   TO WS-CRSP-GRADE
+
+WO7330         IF  (WS-CRSP-MEMBER)
+                   MOVE PEP-EFFECT-DATE TO WS-DATE-REFORMAT     
+                   MOVE WS-DATE-MM      TO WS-DATE-MM-SL 
+                   MOVE WS-DATE-DD      TO WS-DATE-DD-SL 
+                   MOVE WS-DATE-CCYY    TO WS-DATE-CCYY-SL                      
+                   MOVE WS-DATE-SLASH   TO WRK-PARTICIPATION-DATE-ML 
+WO8082         ELSE
+WO8082           IF (WS-PART-TIME-EMP-FLAG = "R")
+WO8082             MOVE WS-EPC-DATE-ACQUIRED
+WO8082               TO WS-DATE-REFORMAT     
+WO8082             MOVE WS-DATE-MM      TO WS-DATE-MM-SL 
+WO8082             MOVE WS-DATE-DD      TO WS-DATE-DD-SL 
+WO8082             MOVE WS-DATE-CCYY    TO WS-DATE-CCYY-SL                      
+WO8082             MOVE WS-DATE-SLASH   TO WRK-PARTICIPATION-DATE-ML 
+WO8082           END-IF
+               END-IF   
+               PERFORM 860-FIND-NEXT-PEPSET3             
+             END-IF   
+           END-PERFORM. 
+021800 1070-END.
+      *==============================================================
+       1100-DETERMINE-IF-TERM.
+      *==============================================================
+WO7330* THE EMPLOYEE HAD NON-CRSP PAY-GRADE 
+      *   1. EMPLOYER WITHDREW - CHECK THE POSITION HISTORY(PA13)
+      *   2. EMPLOYEE TRANSFERED TO NON-PARTICIPATING EMPLOYER(PA13)
+      *   3. EMPLOYEE TERMINATED.  WAIT 120 DAYS BEFORE SENDING            
+      *   4. EMPLOYEE IS ON LONG TERM DISABILITY.
+      *==============================================================
+           MOVE EMP-COMPANY       TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE      TO DB-EMPLOYEE.
+           MOVE 01                TO DB-POS-LEVEL.
+           MOVE 99999999          TO DB-EFFECT-DATE.                              
+027300     PERFORM 850-FIND-NLT-PEPSET3.
+027400     IF  (PAEMPPOS-FOUND)
+           AND (PEP-EMPLOYEE = EMP-EMPLOYEE)
+                PERFORM 860-FIND-NEXT-PEPSET3                 
+                IF  (PAEMPPOS-FOUND)
+                AND (PEP-EMPLOYEE  = EMP-EMPLOYEE)
+120620             PERFORM 1110-CHECK-IND
+120620                THRU 1110-END
+120620             UNTIL
+120620              (PAEMPPOS-NOTFOUND)
+120620              OR (PEP-EMPLOYEE NOT = EMP-EMPLOYEE)
+120620              OR (WS-WRITE-TERM-DATE = "Y")
+                 ELSE
+                       GO TO 1100-END.
+      *==============================================================
+      *  WS-WRITE-TERM-DATE = "Y" => RETIRED
+      *                              WORKER HAS TERM'D & WAS IN CRSP
+      *                              THE TERM DATE WILL BE SENT  
+      *  WS-WRITE-TERM-DATE = "Y" => WORKER IS >= AGE 55             
+      *                              WORKER HAS TERM'D & WAS IN CRSP
+      *                              THE TERM DATE WILL BE SENT  
+      *  WS-WRITE-TERM-DATE = "F" => RETIRED
+      *                              WORKER HAS FUTURE TERM DATE 
+      *                              THE TERM DATE WILL NOT BE SENT  
+      *                              OR AN "L" SITUATION BUT THE
+      *                              TERM DATE IS IN THE FUTURE.   
+      *REMOVED  WS-WRITE-TERM-DATE = "G" => RETIRED
+      *                              WORKER HAS TERM DATE THAT IS NOT
+      *                              AT LEAST 15 DAYS PRIOR TO THE   
+      *                              RUN DATE.  WORKER IS NOT ELIGIBLE
+      *                              TERM DATE WILL NOT BE SENT
+      *                              TERM DATE IS IN THE FUTURE.   
+      *  WS-WRITE-TERM-DATE = "Y" => WORKER TERM'D 120 DAYS AGO
+      *                              & WAS IN CRSP      
+      *                              THE TERM DATE WILL BE SENT  
+      *  WS-WRITE-TERM-DATE = "L" => WORKER TERM'D BUT 120 DAYS IS IN
+      *                              THE FUTURE, WAS IN CRSP
+      *                              NOT ELIGIBLE     
+      *                              THE TERM DATE WILL NOT BE SENT  
+      *  WS-WRITE-TERM-DATE = " " => TERM DATE WILL NOT BE SENT
+      *                              WORKER WAS NOT IN CRSP PRE TERM   
+      *==============================================================
+      *    IF  (WS-WRITE-TERM-DATE NOT = "Y") 
+      *    AND (EMP-EMP-STATUS = "TD") 
+      *        READ THE PAEMPPOS TABLE UNTIL YEAR = 2005 TO SEE
+      *        IF WORKER WAS EVER IN CRSP
+      *==============================================================
+           IF  (WS-WRITE-TERM-DATE = "Y")
+             IF  (EMP-EMP-STATUS = "TD")
+             OR  (EMP-EMP-STATUS = "RE")
+             OR  (EMP-EMP-STATUS = "RD")
+             OR  (EMP-EMP-STATUS = "RN")
+             OR  (EMP-EMP-STATUS = "RT")
+             OR  (EMP-EMP-STATUS = "RP")
+                 IF (EMP-TERM-DATE > WS-SAVE-SYSTEM-DATE)
+                   MOVE "F"    TO WS-WRITE-TERM-DATE
+                 ELSE
+                    NEXT SENTENCE
+     ***            PERFORM 1120-CALC-15-DAYS
+     ***               THRU 1120-END
+             ELSE
+WO7330*         IF (EMP-TERM-DATE > ZEROS)
+WO7330*        DISPLAY "EMP/EMP-POS TERM DATE " 
+WO7330*            EMP-EMPLOYEE " " EMP-TERM-DATE " " WS-PEP-END-DATE
+WO7330*         END-IF                                    
+               PERFORM 1130-DETERMINE-AGE
+                  THRU 1130-END
+      *           DISPLAY "EMP/AGE " EMP-EMPLOYEE " " WS-AGE
+     ***          IF  (WS-AGE NOT < 55)
+     ***            PERFORM 1120-CALC-15-DAYS
+     ***               THRU 1120-END
+     ***          ELSE
+               IF (WS-AGE < 55)
+085300             MOVE WS-PEP-END-DATE    TO WSDR-FR-DATE
+5400               PERFORM 900-DATE-TO-JULIAN
+5500               ADD      120            TO WSDR-JULIAN-DAYS
+5600               PERFORM 900-JULIAN-TO-DATE
+                   IF  (WSDR-FR-DATE > WS-SAVE-SYSTEM-DATE)            
+      *                DISPLAY "FR DATE/SYSTEM DATE " 
+      *                  WSDR-FR-DATE " " WS-SAVE-SYSTEM-DATE
+                      MOVE "L"    TO WS-WRITE-TERM-DATE  
+                      IF  (WS-PEP-END-DATE > WS-SAVE-SYSTEM-DATE)
+                        MOVE "F"    TO WS-WRITE-TERM-DATE
+                      END-IF
+                   ELSE
+                       MOVE "Y"    TO WS-WRITE-TERM-DATE.                
+           IF (WS-WRITE-TERM-DATE = "Y")
+              IF (EMP-EMP-STATUS(1:1) = "A")
+              OR (EMP-EMP-STATUS(1:1) = "I")
+                MOVE "Y"                 TO WS-WRITE-REPORT
+              END-IF.
+  
+           MOVE PEP-COMPANY       TO WS-PEP-COMPANY.
+           MOVE PEP-EMPLOYEE      TO WS-PEP-EMPLOYEE.
+WO7330* FIELDS NEED TO BE SAVED FOR FIDELITY FILE PROCESSING.
+US2392     MOVE PEP-SHIFT         TO WS-SHIFT.
+WO7330     MOVE PEP-PAY-GRADE     TO WS-PAY-GRADE.
+           MOVE PEP-EFFECT-DATE   TO WS-PEP-EFFECT-DATE.                       
+           MOVE PEP-END-DATE      TO WS-PEP-END-DATE.  
+
+       1100-END.
+021900******************************************************************
+      *  WAS THE PREVIOUS POSITION IN THE PLAN?
+021900******************************************************************
+       1110-CHECK-IND.
+WO7330     MOVE PEP-PAY-GRADE     TO WS-CRSP-GRADE.
+WO7330     IF  (WS-CRSP-MEMBER)
+120620     AND ((PEP-PROCESS-LEVEL IS NUMERIC) OR
+120620          (PEP-PROCESS-LEVEL = "DISW"  ) OR
+120620          (PEP-PROCESS-LEVEL = "ITP"   ))
+120620       MOVE "Y"    TO WS-WRITE-TERM-DATE
+120620       MOVE PEP-PROCESS-LEVEL TO WS-PROC-LEVEL 
+120620       MOVE PEP-END-DATE      TO WS-PEP-END-DATE  
+US2392       MOVE PEP-SHIFT         TO WS-SHIFT
+WO7330       MOVE PEP-PAY-GRADE     TO WS-PAY-GRADE
+120620       MOVE "Y"    TO WS-WRITE-REPORT
+WO7330*    DISPLAY "EE/FICA/END DATE " PEP-EMPLOYEE " "   
+WO7330*          EMP-FICA-NBR " " PEP-END-DATE  " " WS-PROC-LEVEL         
+120620     ELSE   
+120620       PERFORM 860-FIND-NEXT-PEPSET3.                
+
+       1110-END.
+021900******************************************************************
+      *  11-2007 THIS LOGIC WAS REMOVED
+      *  IF THE EMP-TERM DATE IS AT LEAST 15 DAYS PRIOR TO THE RUN
+      *  DATE THEN SEND THE TERM DATE, ELSE MOVE IN "G"
+      *=================================================================
+       1120-CALC-15-DAYS.
+      *    DISPLAY "1120- EMP " EMP-EMPLOYEE.       
+           IF (EMP-TERM-DATE > ZEROS)
+085300       MOVE EMP-TERM-DATE      TO WSDR-FR-DATE
+085400       PERFORM 900-DATE-TO-JULIAN
+085500       ADD      15            TO WSDR-JULIAN-DAYS
+085600       PERFORM 900-JULIAN-TO-DATE
+      *      DISPLAY "+15 DATE " WSDR-FR-DATE
+      *       DISPLAY "SYS DATE " WS-SAVE-SYSTEM-DATE
+             IF  (WSDR-FR-DATE  > WS-SAVE-SYSTEM-DATE) 
+                   MOVE "G"    TO WS-WRITE-TERM-DATE.
+      *   DISPLAY "WS-WRITE-TERM-DATE " WS-WRITE-TERM-DATE.   
+      *   DISPLAY "EMP TERM DATE " EMP-TERM-DATE.
+       1120-END.
+021900******************************************************************
+       1130-DETERMINE-AGE.
+008000******************************************************************
+           MOVE EMP-COMPANY        TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE.
+           PERFORM 840-FIND-PEMSET1.
+           IF (PAEMPLOYEE-NOTFOUND)
+               MOVE "PAEMPLOYEE NOT FOUND" TO CRT-MESSAGE
+               GO TO 1130-END.
+
+           INITIALIZE     WS-AGE,
+                          WS-BIRTHDATE,
+                          WS-SYS-DATE.
+
+           MOVE PEM-BIRTHDATE      TO WS-BIRTHDATE.
+           MOVE WS-SYSTEM-DATE-YMD TO WS-SYS-DATE.
+           COMPUTE WS-AGE = (WS-SYS-YYYY - WS-BIRTHDATE-YYYY).
+            
+           IF (WS-SYS-MM < WS-BIRTHDATE-MM)
+               SUBTRACT 1 FROM WS-AGE
+           ELSE
+               IF (WS-SYS-MM = WS-BIRTHDATE-MM)
+                   IF (WS-SYS-DD < WS-BIRTHDATE-DD)
+                         SUBTRACT 1 FROM WS-AGE
+                   END-IF
+               END-IF
+           END-IF.
+       1130-END.
+021900******************************************************************
+      *  11-2007 FIND THE FIRST NUMERIC POSITION FOR DISW/ITP
+021900******************************************************************
+       1180-FIND-PROC-LEVEL.
+           MOVE WS-PEP-COMPANY       TO DB-COMPANY.
+           MOVE WS-PEP-EMPLOYEE      TO DB-EMPLOYEE.
+           MOVE 01                   TO DB-POS-LEVEL.
+      *    MOVE WS-PEP-EFFECT-DATE   TO DB-EFFECT-DATE.                              
+           MOVE 99999999             TO DB-EFFECT-DATE.                              
+027300     PERFORM 850-FIND-NLT-PEPSET3.
+           MOVE SPACES TO WS-FOUND.
+027400     IF  (PAEMPPOS-FOUND)
+           AND (PEP-EMPLOYEE = EMP-EMPLOYEE)
+            PERFORM UNTIL (WS-FOUND = "Y")
+                       OR (PAEMPPOS-NOTFOUND)
+                       OR (PEP-EMPLOYEE NOT = EMP-EMPLOYEE) 
+                IF  (PAEMPPOS-FOUND)
+                AND (PEP-EMPLOYEE  = EMP-EMPLOYEE)
+                  MOVE PEP-POSITION  TO  WS-DIV-NBR-A
+WO7330            MOVE PEP-PAY-GRADE TO  WS-CRSP-GRADE
+                  IF  (WS-DIV-NBR-A NUMERIC)
+WO7330            AND ((WS-CRSP-MEMBER)
+WO2582                 OR (WS-NN-TERM-FLAG = "Y"))
+                    MOVE "Y"          TO WS-FOUND
+                    MOVE PEP-POSITION TO WS-PROC-LEVEL
+                  END-IF
+                  PERFORM 860-FIND-NEXT-PEPSET3                 
+                END-IF 
+           END-PERFORM.
+       1180-END.
+
+021900******************************************************************
+       1200-LOAD-EXCEPTION-TABLE. 
+      *    DISPLAY "1200 ".  
+           PERFORM 800-READCSV-ZH211IN.
+           PERFORM VARYING WS-I-N FROM 1 BY 1
+             UNTIL (WS-I-N > 50)
+                OR (ZH211IN-NOTFOUND)
+             MOVE IN-COMPANY       TO WS-EXC-CO(WS-I-N)
+             MOVE IN-PROCESS-LEVEL TO WS-EXC-PL(WS-I-N)
+             MOVE IN-BEGIN-DATE    TO WS-EXC-BEGIN-DT(WS-I-N)
+             MOVE IN-END-DATE      TO WS-EXC-END-DT(WS-I-N)
+      *       DISPLAY "PROC LVL " WS-EXC-PL(WS-I-N)
+             ADD 1 TO WS-MAX-TBL
+             PERFORM 800-READCSV-ZH211IN 
+          END-PERFORM.
+          IF (WS-I-N > 50)                                     
+            DISPLAY "EXCEPTION TBL SIZE MUST BE INCREASED".
+
+       1200-END.
+021900******************************************************************
+       1250-SEARCH-EXCPT-FILE.
+      *     DISPLAY "MAX TBL " WS-MAX-TBL.
+      *     DISPLAY "WS-EXCPT-SW " WS-EXCPT-SW.
+           IF (WS-MAX-TBL = ZERO)
+             GO TO 1250-END.
+
+           PERFORM VARYING WS-I-N FROM 1 BY 1
+             UNTIL (WS-I-N > WS-MAX-TBL)
+                OR (WS-EXCPT-SW = "Y")
+      *         DISPLAY "EXC PL " WS-EXC-PL(WS-I-N)
+     ***        IF (WS-EXC-PL(WS-I-N) = EMP-PROCESS-LEVEL)
+                IF (WS-EXC-PL(WS-I-N) = WS-PROC-LEVEL)
+      *           DISPLAY "WS-I-N " WS-I-N
+                    MOVE "Y"  TO WS-EXCPT-SW                             
+           END-PERFORM.                                   
+           IF (WS-EXCPT-SW = "Y")
+            SUBTRACT 1 FROM WS-I-N
+             IF  (WS-EXC-BEGIN-DT(WS-I-N) NOT = ZEROS)     
+             AND (WS-EXC-BEGIN-DT(WS-I-N)     > WS-SYSTEM-DATE-YMD)
+                 MOVE SPACES TO WS-EXCPT-SW
+             END-IF
+             IF  (WS-EXC-END-DT(WS-I-N) NOT = ZEROS)
+             AND (WS-EXC-END-DT(WS-I-N) NOT > WS-SYSTEM-DATE-YMD)                                                                                         
+                  MOVE SPACES TO WS-EXCPT-SW                                                             
+             END-IF.
+       1250-END.
+       1275-FORMAT-REPORT.
+017500     MOVE EMP-EMP-STATUS         TO G1-EMP-EMP-STATUS.
+017600     MOVE EMP-LAST-NAME          TO G1-EMP-LAST-NAME.
+017700     MOVE EMP-FIRST-NAME         TO G1-EMP-FIRST-NAME.
+017800     MOVE EMP-MIDDLE-INIT        TO G1-EMP-MIDDLE-INIT.
+017900     MOVE EMP-NAME-SUFFIX        TO G1-EMP-NAME-SUFFIX.
+018000     MOVE EMP-EMPLOYEE           TO G1-EMP-EMPLOYEE.
+           MOVE EMP-DATE-HIRED         TO G1-EMP-DATE-HIRED.
+           MOVE EMP-ADJ-HIRE-DATE      TO G1-EMP-ADJ-HIRE-DATE.
+           MOVE WS-PEP-END-DATE        TO G1-EMP-TERM-DATE.
+           MOVE EMP-PROCESS-LEVEL      TO G1-EMP-PROCESS-LEVEL.
+007700     MOVE WS-PROC-LEVEL          TO G1-PREV-PROCESS-LVL.
+           MOVE PEM-BIRTHDATE          TO G1-PEM-BIRTH-DATE.
+       1275-END.
+       
+WO7330* MAJOR REVISION
+WO7330* PARAGRAPHS 2000 - 2110 PROCESS THE FIDELITY INDICATIVE FILE
+
+      ******************************************************************
+       2000-WRITE-FIDELITY-RECS.
+      ******************************************************************
+US2392* THESE PARAGRAPHS USE WS-PROC-LEVEL, WS-SHIFT AND WS-PAY-GRADE
+      * INSTEAD OF THEIR CORRESPONDING FIELDS RIGHT OUT OF EMPLOYEE
+      * OR PAEMPPOS.
+      * THE WS VALUES ARE HELD OVER FROM METLIFE INDICATIVE PROCESSING
+      * (SHIFT AND PAY GRADE SAVES WERE ADDED TO THAT SECTION)
+      * AND SHOULD BE THE VALUES RELATED TO THE MEMBER'S LAST
+      * EMPLOYER WHERE THEY WERE CLASS 1/2C ETC.      
+      
+WO8082* WS-WRITE-TERM-DATE FLAG WILL ALSO CARRY OVER FROM INDICATIVE
+WO8082* PROCESSING TO ENFORCE 120 DAY WAIT ON SENDING TERM DATE TO
+WO8082* FIDELITY
+
+US1791* WRK-DIV-NBR WILL ALSO CARRY OVER FROM THE EBSO FILE
+US1791* ("INDICATIVE PROCESSING").
+      
+CB2707     MOVE "N" TO WS-FOREIGN-ADDR-FLAG.
+CB2707     IF  (PEM-SUPP-CNTRY-CD NOT = SPACES)
+CB2707     AND (PEM-SUPP-CNTRY-CD NOT = "US")
+CB2707     AND ((EMP-ADDR1 = "1333 S KIRKWOOD RD") OR
+CB2707          (EMP-ADDR2 = "1333 S KIRKWOOD RD"))
+CB2707         MOVE "Y" TO WS-FOREIGN-ADDR-FLAG
+CB2707     END-IF.
+CB2707     
+CB2707* THIS SHOULD GENERATE FOREIGN ADDRESSES ONLY     
+CB2707*     IF (WS-FOREIGN-ADDR-FLAG = "N")
+CB2707*         GO TO 2000-END.
+           
+           PERFORM 2010-WRITE-F11-REC.
+
+
+           IF (WS-F11-EMP-STATUS = "X")
+              MOVE "11"                TO G2-DTL-REC-TYPE
+              MOVE EMP-EMPLOYEE        TO G2-DTL-EMPLOYEE
+              MOVE EMP-FICA-NBR        TO G2-DTL-FICA-NBR
+SR0704        MOVE WS-EMP-EMP-STATUS   TO G2-DTL-EMP-STATUS
+              MOVE "EMPLOYEE STATUS ERROR" TO G2-DTL-ERROR-MSG
+              MOVE GN2D-FID-EMPLOYEE   TO RPT-GROUP-REQUEST 
+              PERFORM 700-PRINT-RPT-GRP 
+           ELSE
+              PERFORM 2020-WRITE-F01-REC
+              PERFORM 2030-WRITE-F02D-REC
+              PERFORM 2040-WRITE-F02E-REC
+              PERFORM 2050-WRITE-F03-REC
+              PERFORM 2060-WRITE-F04-REC
+CB2707        IF (WS-FOREIGN-ADDR-FLAG = "Y")
+CB2707            PERFORM 2065-WRITE-F05-REC
+CB2707        END-IF
+              PERFORM 2070-WRITE-F06-REC
+SR3086        PERFORM 2080-WRITE-F07X-REC
+SR161A           THRU 2080-END
+SR3086        PERFORM 2085-WRITE-F36-REC
+              PERFORM 2090-WRITE-F60-REC
+              PERFORM 2100-WRITE-F61-REC
+              PERFORM 2110-WRITE-FEA-REC
+SR2121        PERFORM 3000-WRITE-FEEFILE
+           END-IF.
+           
+      ******************************************************************
+       2000-END.
+      ******************************************************************
+      
+      ******************************************************************
+       2010-WRITE-F11-REC.
+      ******************************************************************
+      
+      * THE F11 RECORD WILL BE PROCESSED FIRST, BECAUSE IF THE
+      * EMPLOYEE DOESN'T HAVE A VALID STATUS, NONE OF THE RECORDS 
+      * SHOULD BE WRITTEN
+
+           MOVE SPACES                 TO WS-F11-RECORD.
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F11-PLAN-NUMBER.
+           MOVE EMP-FICA-NBR           TO WS-F11-SSN.
+           MOVE "11"                   TO WS-F11-RECORD-ID.
+           MOVE "X"                    TO WS-F11-EMP-STATUS.
+SR1611     MOVE "00000000"             TO WS-F11-EMP-STATUS-DT.
+
+SR0704     MOVE EMP-EMP-STATUS         TO WS-EMP-EMP-STATUS.
+SR1067     MOVE WS-PAY-GRADE           TO WS-CRSP-GRADE.
+SR0704
+SR0704* THIS FLAG IS INHERITED FROM 1100
+SR0704* TERM STATUS WILL NOT BE SENT ON FIDELITY FILE 
+SR0704*  FOR 120 DAYS
+SR0704
+SR0704* UNTIL 120 DAYS RUNS OUT, SEND THE EMPLOYEE STATUS
+SR0704* AND LOCATION AS IF THEY ARE STILL AT THEIR PRIOR CRSP
+SR0704* LOCATION. 2400 RETURNS THEIR PRE-TERMINATION STATUS.
+SR0704* THE FIRST 1180 RETURNS THEIR CURRENT EMPLOYER SO
+SR0704* NOT-ACTIVE-WITH-BALANCE CONDITION CAN BE DETERMINED 
+SR0704* CORRECTLY. THE 2ND 1180 RETURNS THEIR LAST CRSP
+SR0704* EMPLOYER TO KEEP THE CORRECT EMPLOYER# IN
+SR0704* THE 06 AND 60 RECORDS.
+SR0704
+SR0704     IF (WS-WRITE-TERM-DATE = "F")
+SR0704     OR (WS-WRITE-TERM-DATE = "L")
+SR0704         PERFORM 2400-EMP-STATUS-HIST
+SR0704            THRU 2400-END  
+SR0704         MOVE "Y"           TO WS-NN-TERM-FLAG
+SR0704         PERFORM 1180-FIND-PROC-LEVEL               
+SR0704            THRU 1180-END 
+SR0704         MOVE "N"           TO WS-NOT-ACTIVE-WBAL
+SR0704         IF  (WS-CODA-BALANCE > 0) 
+SR0704         AND (NOT WS-CRSP-MEMBER)
+SR0704              MOVE "Y"      TO WS-NOT-ACTIVE-WBAL
+SR161A*         DISPLAY "2010: EMPLOYEE", EMP-EMPLOYEE,
+SR161A*         " NOT ACTIVE ", WS-CRSP-GRADE,
+SR161A*         " WITH BALANCE = ", WS-CODA-BALANCE
+SR0704         END-IF
+SR0704         MOVE "N"           TO WS-NN-TERM-FLAG
+SR0704         PERFORM 1180-FIND-PROC-LEVEL
+SR0704            THRU 1180-END
+SR0704     END-IF.
+SR0704
+SR1611     MOVE "N"                    TO WS-ACTIVE-WORKER-TERM-FLAG.
+SR0704     IF (WS-EMP-EMP-STATUS (1:1) = "A")
+SR0704     OR (WS-EMP-EMP-STATUS (1:1) = "2")
+SR0704     OR (WS-EMP-EMP-STATUS = "IT")
+SR0704     OR (WS-EMP-EMP-STATUS = "PA")
+SR0704     OR (WS-EMP-EMP-STATUS = "TP")
+               MOVE "A "                TO WS-F11-EMP-STATUS
+SR3487         IF (WS-SENT-EBSO-TERM-FLAG = "Y")
+SR3487             MOVE "Y" TO WS-ACTIVE-WORKER-TERM-FLAG
+SR3487         END-IF
+WO8175* THIS IS THE FIX FOR EMPLOYEE 308024
+WO8175         IF (WS-NOT-ACTIVE-WBAL = "Y")
+SR3487     OR (WS-ACTIVE-WORKER-TERM-FLAG = "Y")
+SR1611* THIS WAS I PRIOR TO SR1611
+SR161A* FIDELITY R STATUS HERE APPLIES EVEN TO NON-RETIRED EMPLOYEES
+SR161A* THE R STATUS GIVES THEM IMMEDIATE ACCESS TO THEIR FUND
+SR161A* OTHERWISE FIDELITY WOULD MAKE THEM WAIT 120 DAYS
+SR1611             IF (WS-AGE < 55)
+SR161A                 MOVE "T "        TO WS-F11-EMP-STATUS
+SR161A                 IF (WS-WRITE-TERM-DATE = "F")
+SR161A                 OR (WS-WRITE-TERM-DATE = "L")
+SR161A                     MOVE "A "    TO WS-F11-EMP-STATUS
+SR161A                 END-IF
+SR161A             ELSE
+SR161A                 MOVE "R "        TO WS-F11-EMP-STATUS
+SR161A             END-IF
+               END-IF
+           END-IF.
+           
+SR1067* CAN OVERRIDE THE PREVIOUS IF STMT
+SR1067     IF  (WS-EMP-EMP-STATUS (1:1) = "A")
+SR1067     AND (WS-CRSP-MEMBER)
+SR1067     AND (
+SR1067            (EMP-JOB-CODE = "E-ADJUNCT")
+SR1067         OR (EMP-JOB-CODE = "E-SHAREDT")
+SR1067         )
+SR1067            MOVE "I"              TO WS-F11-EMP-STATUS
+SR1067     END-IF.
+SR1067     
+SR0704     IF (WS-EMP-EMP-STATUS (1:1) = "D")
+WO8022         MOVE "M "                TO WS-F11-EMP-STATUS
+WO8022     END-IF.
+SR1067
+SR1067* CAN OVERRIDE THE PREVIOUS IF STMT
+SR1067     IF (WS-EMP-EMP-STATUS = "DA")
+SR1067        IF (EMP-TERM-DATE <= WS-DB-NULL-DATE) 
+SR1067            MOVE "A"              TO WS-F11-EMP-STATUS
+SR1067        ELSE
+SR1067          IF (WS-AGE < 55) 
+SR1067             MOVE "T"             TO WS-F11-EMP-STATUS
+SR1067          ELSE
+SR1067             MOVE "R"             TO WS-F11-EMP-STATUS
+SR1067          END-IF
+SR1067        END-IF
+SR1067     END-IF.
+WO8022     
+SR0704     IF (WS-EMP-EMP-STATUS (1:1) = "L")
+SR0704     OR (WS-EMP-EMP-STATUS       = "2L")
+WO8022         MOVE "L "                TO WS-F11-EMP-STATUS
+WO8022     END-IF.
+WO8022     
+SR0704     IF (WS-EMP-EMP-STATUS (1:1) = "R")
+SR1067         IF (EMP-TERM-DATE > WS-SAVE-SYSTEM-DATE)
+SR1067            MOVE "A "             TO WS-F11-EMP-STATUS
+SR1067         ELSE
+SR1067            MOVE "R "             TO WS-F11-EMP-STATUS
+SR1067         END-IF
+WO8022     END-IF.
+
+SR1611     IF (WS-EMP-EMP-STATUS = "TD")
+SR1611         MOVE "D "           TO WS-F11-EMP-STATUS
+SR1611         MOVE EMP-DEATH-DATE TO WS-F11-EMP-STATUS-DT
+SR1611     END-IF.
+WO8022     
+SR0704     IF (WS-EMP-EMP-STATUS = "TM")
+181220     OR (WS-EMP-EMP-STATUS = "TO")
+SR0704     OR (WS-EMP-EMP-STATUS = "TR")
+SR0704     OR (WS-EMP-EMP-STATUS = "TV")
+SR0704     OR (WS-EMP-EMP-STATUS = "TW")
+WO8022         MOVE "T "       TO WS-F11-EMP-STATUS
+SR1067* OVERRIDE INTENDED FOR FUTURE TERM DATES
+SR1067         IF (EMP-TERM-DATE > WS-SAVE-SYSTEM-DATE)
+SR1067             MOVE "A "           TO WS-F11-EMP-STATUS
+SR1067         END-IF
+WO8022     END-IF.
+WO8022     
+WO8022*     PERFORM 2200-DETERMINE-PT-STATUS
+WO8022*        THRU 2200-END.
+WO8022        
+WO8022     IF (WS-PART-TIME-EMP-FLAG = "Y")
+WO8022     OR (WS-PART-TIME-EMP-FLAG = "R")
+WO8022         MOVE "C"                TO WS-F11-EMP-STATUS
+WO8022     END-IF.
+WO8022     
+           IF (WS-F11-EMP-STATUS NOT = "X")
+               WRITE FIDELITY-REC      FROM WS-F11-RECORD
+           END-IF.
+       
+      ******************************************************************
+       2020-WRITE-F01-REC.
+      ******************************************************************
+      
+           MOVE SPACES                 TO WS-F01-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F01-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F01-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F01-SSN.
+ 
+           MOVE "01"                   TO WS-F01-RECORD-ID.
+           
+WO8265     IF (EMP-NAME-SUFFIX > SPACES)
+WO8265         MOVE EMP-LAST-NAME      TO WS-LAST-NAME
+WO8265         PERFORM
+WO8265         VARYING I FROM 20 BY -1
+WO8265         UNTIL (WS-LAST-NAME (I:1) NOT = SPACES)
+WO8265            OR (I = 0)
+WO8265              CONTINUE
+WO8265         END-PERFORM
+WO8265         IF (I < 15)
+WO8265             ADD 2 TO I
+WO8265             MOVE EMP-NAME-SUFFIX TO WS-LAST-NAME (I:4)
+WO8265         ELSE
+WO8265             MOVE EMP-NAME-SUFFIX TO WS-LAST-NAME (17:4)
+WO8265         END-IF
+WO8265         MOVE WS-LAST-NAME       TO WS-F01-LAST-NAME           
+WO8265     ELSE
+WO8265         MOVE EMP-LAST-NAME      TO WS-F01-LAST-NAME
+WO8265     END-IF.
+WO8265     
+           MOVE EMP-FIRST-NAME         TO WS-F01-FIRST-NAME.
+           MOVE "000000000"            TO WS-F01-RESERVED.
+           IF (PEM-TRUE-MAR-STAT = "M")
+           OR (PEM-TRUE-MAR-STAT = "L")
+           OR (PEM-TRUE-MAR-STAT = "R")
+               MOVE "M"                TO WS-F01-MAR-STAT
+           ELSE
+               MOVE "S"                TO WS-F01-MAR-STAT
+           END-IF.
+           MOVE PEM-SEX                TO WS-F01-GENDER.
+           
+           WRITE FIDELITY-REC          FROM WS-F01-RECORD.
+            
+      ******************************************************************
+       2030-WRITE-F02D-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F02D-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F02D-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F02D-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F02D-SSN.
+ 
+           MOVE "02"                   TO WS-F02D-RECORD-ID.
+           MOVE "D"                    TO WS-F02D-FIELD-TYPE.
+           
+SR2505* HIRE DATE
+           MOVE EMP-DATE-HIRED         TO WS-DATE-REFORMAT.
+           MOVE WS-DATE-CCYY-N         TO WS-DATE-MDY-YYYY.
+           MOVE WS-DATE-MM-N           TO WS-DATE-MDY-MM.
+           MOVE WS-DATE-DD-N           TO WS-DATE-MDY-DD.
+           MOVE WS-DATE-MDY            TO WS-F02D-HIRE-DATE.
+           
+SR2505* VESTING DATE (FOR MOST EMPLOYEES)
+SR2505     IF (PEM-BEN-DATE-2 > WS-DB-NULL-DATE)
+SR2505         MOVE PEM-BEN-DATE-2     TO WS-DATE-REFORMAT
+SR2505     ELSE 
+SR2505         MOVE EMP-ADJ-HIRE-DATE  TO WS-DATE-REFORMAT
+SR2505     END-IF.
+
+CB3606* VESTING DATE FOR CPH EMPLOYEES
+CB3606* ADJ HIRE DATE IF THE FIRST OF THE MONTH, OTHERWISE,
+CB3606* FIRST OF THE FOLLOWING MONTH
+US0220     IF (WS-PROC-LEVEL = "07216")
+CB3606       MOVE EMP-ADJ-HIRE-DATE  TO WS-DATE-REFORMAT
+CB3606       IF (WS-DATE-DD-N NOT = 01)
+CB3606           MOVE EMP-ADJ-HIRE-DATE TO WSDR-FR-DATE
+CB3606           PERFORM 900-GET-DATE-EOM
+CB3606           MOVE WSDR-TO-DATE TO WSDR-FR-DATE
+CB3606           MOVE 1 TO WSDR-DAY-INCR
+CB3606           PERFORM 900-INCREMENT-DATE
+CB3606           MOVE WSDR-TO-DATE TO WS-DATE-REFORMAT
+CB3606     END-IF.
+
+SR2505     MOVE WS-DATE-CCYY-N         TO WS-DATE-MDY-YYYY.
+SR2505     MOVE WS-DATE-MM-N           TO WS-DATE-MDY-MM.
+SR2505     MOVE WS-DATE-DD-N           TO WS-DATE-MDY-DD.
+SR2505     MOVE WS-DATE-MDY            TO WS-F02D-VEST-DATE.
+SR2505     
+SR2505* BIRTH DATE
+           MOVE PEM-BIRTHDATE          TO WS-DATE-REFORMAT.
+           MOVE WS-DATE-CCYY-N         TO WS-DATE-MDY-YYYY.
+           MOVE WS-DATE-MM-N           TO WS-DATE-MDY-MM.
+           MOVE WS-DATE-DD-N           TO WS-DATE-MDY-DD.
+           MOVE WS-DATE-MDY            TO WS-F02D-BIRTH-DATE.
+           
+SR1611* MOVES TERM DATE OUT FOR A TERMED EMPLOYEE
+WO7330     MOVE "00000000"             TO WS-F02D-TERM-DATE.
+WO8022* THIS FLAG IS INHERITED FROM 1100
+WO8022* TERM DATE WILL NOT BE SENT ON FIDELITY FILE 
+WO8022*  FOR 120 DAYS
+WO8022     IF (WS-WRITE-TERM-DATE = "F")
+WO8022     OR (WS-WRITE-TERM-DATE = "L")
+SR1067     OR (EMP-TERM-DATE > WS-SAVE-SYSTEM-DATE)
+WO8022         MOVE "00000000"        TO WS-F02D-TERM-DATE
+WO8022     ELSE
+WO8022        IF (EMP-TERM-DATE > WS-DB-NULL-DATE)
+WO8022           MOVE EMP-TERM-DATE    TO WS-DATE-REFORMAT
+WO8022           MOVE WS-DATE-CCYY-N   TO WS-DATE-MDY-YYYY
+WO8022           MOVE WS-DATE-MM-N     TO WS-DATE-MDY-MM
+WO8022           MOVE WS-DATE-DD-N     TO WS-DATE-MDY-DD
+WO8022           MOVE WS-DATE-MDY      TO WS-F02D-TERM-DATE
+WO8022        END-IF
+           END-IF.
+           
+SR1611* MOVES TERM DATE OUT FOR INACTIVE MEMBER WITH BALANCE.
+SR1611* 1100 HAS ALREADY CALCULATED WHEN THE MEMBER LEFT
+SR1611* THE PLAN 
+SR1611
+SR3487* THIS CHECK HAD TO BE MODIFIED AFTER WE FOUND IT
+SR3487* IT COULD PASS THROUGH CRSP-INACTIVE WORKERS AS
+SR3487* ACTIVE IF THEY HAD NO CODA BALANCE
+SR3487*
+SR3487*     IF (WS-NOT-ACTIVE-WBAL = "Y")
+SR3487      IF (WS-ACTIVE-WORKER-TERM-FLAG = "Y")
+SR1611        IF (WS-WRITE-TERM-DATE = "F")
+SR1611        OR (WS-WRITE-TERM-DATE = "L")
+SR1611        OR (WS-PEP-END-DATE > WS-SAVE-SYSTEM-DATE)
+SR1611           MOVE "00000000"       TO WS-F02D-TERM-DATE
+SR1611              DISPLAY "EMPLOYEE ", EMP-EMPLOYEE,
+SR1611              " TO BE TERMED FROM CRSP ", WS-PEP-END-DATE
+SR1611        ELSE
+SR1611           IF (WS-PEP-END-DATE > WS-DB-NULL-DATE)
+SR1611              MOVE WS-PEP-END-DATE TO WS-DATE-REFORMAT
+SR1611              MOVE WS-DATE-CCYY-N  TO WS-DATE-MDY-YYYY
+SR1611              MOVE WS-DATE-MM-N    TO WS-DATE-MDY-MM
+SR1611              MOVE WS-DATE-DD-N    TO WS-DATE-MDY-DD
+SR1611              MOVE WS-DATE-MDY     TO WS-F02D-TERM-DATE
+SR1611              
+SR1611              DISPLAY "EMPLOYEE ", EMP-EMPLOYEE,
+SR1611              " TERMED FROM CRSP ", WS-PEP-END-DATE
+SR1611              
+SR1611           END-IF
+SR1611        END-IF
+SR1611     END-IF.
+       
+           MOVE SPACES                 TO WS-F02D-DATE-SW.
+      * CHECK PERSACTHST TABLE FOR REHIRE
+           MOVE EMP-COMPANY            TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE "REHIRE"               TO DB-ACTION-CODE.
+WO7330     MOVE WS-SAVE-SYSTEM-DATE    TO DB-EFFECT-DATE.
+WO7330     MOVE 9999                   TO DB-ACTION-NBR.
+WO7330     PERFORM 850-FIND-NLT-PAHSET4.
+           IF (PERSACTHST-FOUND)
+           AND (PAH-COMPANY = DB-COMPANY)
+           AND (PAH-EMPLOYEE = DB-EMPLOYEE)
+           AND (PAH-ACTION-CODE = DB-ACTION-CODE)
+           AND (PAH-DATE-STAMP NOT < WS-START-WEEK-DATE)
+                DISPLAY "REHIRE ACTION FOUND FOR EMPLOYEE ",
+                         PAH-EMPLOYEE
+                MOVE "5"               TO WS-F02D-DATE-SW
+WO7330          MOVE "00000000"        TO WS-F02D-TERM-DATE
+           END-IF.
+           
+WO8022     IF (WS-PART-TIME-EMP-FLAG = "R")
+WO8022         MOVE "5"                TO WS-F02D-DATE-SW
+WO8022         MOVE SPACES             TO WS-F02D-TERM-DATE
+WO8022     END-IF.
+WO8022     
+           WRITE FIDELITY-REC          FROM WS-F02D-RECORD.
+           
+      ******************************************************************
+       2040-WRITE-F02E-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F02E-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F02E-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F02E-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F02E-SSN.
+ 
+           MOVE "02"                   TO WS-F02E-RECORD-ID.
+           MOVE "E"                    TO WS-F02E-FIELD-TYPE.
+           
+           MOVE EMP-EMPLOYEE           TO WS-EMPLOYEE-X.
+           INSPECT WS-EMPLOYEE-X REPLACING LEADING ZEROES BY SPACES.
+           MOVE WS-EMPLOYEE-X          TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE             TO WS-F02E-EMPLOYEE.
+           
+           WRITE FIDELITY-REC          FROM WS-F02E-RECORD.
+
+      ******************************************************************
+       2050-WRITE-F03-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F03-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F03-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F03-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F03-SSN.
+ 
+           MOVE "03"                   TO WS-F03-RECORD-ID.
+           MOVE "P"                    TO WS-F03-FIELD-TYPE.
+           
+CB2707     MOVE SPACES TO WS-ADDRESS-WORK-AREA,
+CB2707                    WS-FOREIGN-CITY-WORK-AREA.
+US2270     MOVE "N"    TO WS-ZIP-OVER-FLAG.
+CB2707     MOVE SPACES TO WS-EMP-ADDR1,
+CB2707                    WS-EMP-ADDR2,
+CB2707                    WS-EMP-ADDR3.
+CB2707                    
+CB2707     IF (WS-FOREIGN-ADDR-FLAG = "Y")
+CB2707         MOVE PEM-SUPP-ADDR1     TO WS-EMP-ADDR1
+CB2707         MOVE PEM-SUPP-ADDR2     TO WS-EMP-ADDR2
+CB2707         MOVE PEM-SUPP-ADDR3     TO WS-EMP-ADDR3
+CB2707*        FORMULATE FOREIGN CITY HERE
+CB2707*        IF FOREIGN CITY GOES OVER 20 CHARS,
+CB2707*        THE EXCESS HAS TO GO INTO ONE OF THESE LINES
+CB2707         PERFORM 2500-FOREIGN-CITY
+CB2707            THRU 2500-END
+CB2707     ELSE
+CB2707         MOVE EMP-ADDR1          TO WS-EMP-ADDR1
+CB2707         MOVE EMP-ADDR2          TO WS-EMP-ADDR2
+CB2707         MOVE EMP-ADDR3          TO WS-EMP-ADDR3
+CB2707     END-IF.
+CB2707     
+CB2707     MOVE WS-EMP-ADDR1(1:32)     TO WS-ADDRESS-WORK-DATA-1.
+CB2707     MOVE WS-EMP-ADDR1(33:24)    TO WS-ADDRESS-WORK-DATA-2.
+CB2707     IF (WS-ADDRESS-WORK-DATA-2 > SPACES)
+CB2707          MOVE WS-EMP-ADDR2      TO WS-ADDRESS-WORK-DATA-3
+CB2707     ELSE
+CB2707          MOVE WS-EMP-ADDR2      TO WS-ADDRESS-WORK-DATA-2
+CB2707          MOVE WS-EMP-ADDR3      TO WS-ADDRESS-WORK-DATA-3
+CB2707     END-IF.
+CB2707
+CB2707     IF (WS-ZIP-OVER-FLAG = "Y")
+CB2707         IF (WS-ADDRESS-WORK-DATA-2 = SPACES)
+CB2707             MOVE PEM-SUPP-ZIP TO
+CB2707                  WS-ADDRESS-WORK-DATA-2
+CB2707         ELSE
+CB2707           IF (WS-ADDRESS-WORK-DATA-3 = SPACES)
+CB2707               MOVE PEM-SUPP-ZIP TO
+CB2707                    WS-ADDRESS-WORK-DATA-3
+CB2707           END-IF
+CB2707         END-IF
+           END-IF.
+
+CB2707     INSPECT WS-ADDRESS-WORK-DATA-1
+CB2707     REPLACING ALL """" BY SPACE.
+
+CB2707     INSPECT WS-ADDRESS-WORK-DATA-1
+CB2707     CONVERTING "!@$%^{}\*_;><~?+=[]"
+CB2707     TO         "                   ".
+           
+           MOVE "01"                   TO WS-F03-ADDR-LINE-NO.
+           MOVE WS-ADDRESS-WORK-DATA-1 TO WS-F03-ADDRESS.
+           WRITE FIDELITY-REC          FROM WS-F03-RECORD.
+           
+CB2707     INSPECT WS-ADDRESS-WORK-DATA-2
+CB2707     REPLACING ALL """" BY SPACE.
+
+CB2707     INSPECT WS-ADDRESS-WORK-DATA-2
+CB2707     CONVERTING "!@$%^{}\*_;><~?+=[]"
+CB2707     TO         "                   ".           
+
+           MOVE "02"                   TO WS-F03-ADDR-LINE-NO.
+           MOVE WS-ADDRESS-WORK-DATA-2 TO WS-F03-ADDRESS.
+           WRITE FIDELITY-REC          FROM WS-F03-RECORD.
+
+CB2707     INSPECT WS-ADDRESS-WORK-DATA-3
+CB2707     REPLACING ALL """" BY SPACE.
+
+CB2707     INSPECT WS-ADDRESS-WORK-DATA-3
+CB2707     CONVERTING "!@$%^{}\*_;><~?+=[]"
+CB2707     TO         "                   ".
+           
+           MOVE "03"                   TO WS-F03-ADDR-LINE-NO.
+           MOVE WS-ADDRESS-WORK-DATA-3 TO WS-F03-ADDRESS.
+           WRITE FIDELITY-REC          FROM WS-F03-RECORD.
+
+      ******************************************************************
+       2060-WRITE-F04-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F04-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F04-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F04-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F04-SSN.
+ 
+           MOVE "04"                   TO WS-F04-RECORD-ID.
+           MOVE "P"                    TO WS-F04-FIELD-TYPE.
+                      
+CB2707     IF (WS-FOREIGN-ADDR-FLAG = "Y")
+CB2707         MOVE WS-FOREIGN-CITY-20 TO WS-F04-CITY
+CB2707         MOVE SPACES             TO WS-F04-STATE
+CB2707         MOVE SPACES             TO WS-ZIP-CODE-IN
+CB2707     ELSE
+CB2707         MOVE EMP-CITY           TO WS-F04-CITY
+CB2707         MOVE EMP-STATE          TO WS-F04-STATE
+CB2707
+CB2707         MOVE EMP-ZIP            TO WS-ZIP-CODE-IN
+CB2707     END-IF.
+
+           MOVE WS-ZIP-5-IN            TO WS-F04-ZIP.
+           IF ( WS-ZIP-CONTAINS-DASH )
+               MOVE WS-ZIP-4-IN        TO WS-F04-ZIP-4
+           ELSE
+               MOVE SPACES             TO WS-F04-ZIP-4
+           END-IF.
+           
+           WRITE FIDELITY-REC          FROM WS-F04-RECORD.
+
+      ******************************************************************
+       2065-WRITE-F05-REC.
+      ******************************************************************
+CB2707* NEW PARAGRAPH
+
+           MOVE SPACES                 TO WS-F05-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F05-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F05-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F05-SSN.
+ 
+           MOVE "05"                   TO WS-F05-RECORD-ID.
+           MOVE "P"                    TO WS-F05-FIELD-TYPE.
+           MOVE "Y"                    TO WS-F05-SPEC-HNDL.
+           MOVE "N"                    TO WS-F05-MAIL-IND.
+
+           MOVE PEM-SUPP-CNTRY-CD      TO WS-F05-COUNTRY.
+           
+           WRITE FIDELITY-REC          FROM WS-F05-RECORD. 
+
+
+      ******************************************************************
+       2070-WRITE-F06-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F06-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F06-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F06-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F06-SSN.
+ 
+           MOVE "06"                   TO WS-F06-RECORD-ID.
+           
+US1791     MOVE WS-HOLD-WRK-DIV-NBR(1:5)
+US1791       TO WS-F06-DIVISION-ID(1:5).
+
+           WRITE FIDELITY-REC          FROM WS-F06-RECORD.
+           
+      ******************************************************************
+       2080-WRITE-F07X-REC.
+      ******************************************************************
+SR3086* NEW PARAGRAPH, LOGIC FROM THE OLD F36 PARAGRAPH
+
+           MOVE SPACES                 TO WS-F07X-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F07X-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F07X-SSN.
+                      
+           MOVE EMP-FICA-NBR           TO WS-F07X-SSN.
+
+           MOVE "07"                   TO WS-F07X-RECORD-ID.
+           MOVE "X"                    TO WS-F07X-FIELD-TYPE.
+           MOVE "04"                   TO WS-F07X-FIELD-NBR.
+           
+           MOVE "H"                    TO WS-F07X-FEE-CODE.
+           
+           MOVE EMP-EMPLOYEE           TO WS-EMP-IN-PPPT-IND.
+           
+           IF (WS-EMP-IN-PPPT)
+               MOVE "I"                TO WS-F07X-FEE-CODE
+               GO TO 2080-WRITE-REC
+           END-IF.
+                     
+           IF (WS-NOT-ACTIVE-WBAL = "Y")
+               MOVE "F"                TO WS-F07X-FEE-CODE
+                DISPLAY "2080: EMPLOYEE", EMP-EMPLOYEE,
+                " NOT ACTIVE ", WS-CRSP-GRADE,
+                " WITH BALANCE = ", WS-CODA-BALANCE
+               GO TO 2080-WRITE-REC
+           END-IF.
+
+      * LOOK UP CODA BALANCE
+      * THIS IS DONE IN EBSO PROCESSING BUT NOT FOR EVERY EMPLOYEE
+      
+      * WS-COD-READ-FLAG VERIFIES THAT WE GOT A GOOD CODA TABLE READ
+      * -AND- THAT IT MATCHES THE EMP-EMPLOYEE. JUST CHECKING 
+      * CODA-FOUND CAN RETURN A FALSE POSITIVE. IF EMP-EMPLOYEE IS
+      * NOT IN CODA IT CAN RETURN A DIFFERENT EMPLOYEE.
+      
+           MOVE 0                      TO WS-CODA-BALANCE.
+           MOVE "N"                    TO WS-COD-READ-FLAG.
+           MOVE EMP-COMPANY            TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE "DC"                   TO DB-PLAN-TYPE.
+           MOVE "403B"                 TO DB-PLAN-CODE.
+           MOVE SPACES                 TO DB-PROCESS-LEVEL,
+                                          DB-BUS-NBR-GRP,
+                                          DB-QC-ENT-NBR-GRP.
+           PERFORM 850-FIND-NLT-CODSET1.
+           IF (CODA-FOUND)
+           AND (COD-COMPANY = EMP-COMPANY)
+           AND (COD-EMPLOYEE = EMP-EMPLOYEE)
+           AND (COD-PLAN-TYPE = "DC")
+           AND (COD-PLAN-CODE = "403B")
+      *          DISPLAY "CODA FOUND?"
+                MOVE COD-AMOUNT-YTD (1) TO WS-CODA-BALANCE
+                MOVE "Y"                TO WS-COD-READ-FLAG
+           END-IF.
+           
+      *     DISPLAY "WS-CODA-BALANCE=", WS-CODA-BALANCE.
+      *     DISPLAY "WS-COD-READ-FLAG=", WS-COD-READ-FLAG.
+      *     DISPLAY "WS-EMP-EMP-STATUS=", WS-EMP-EMP-STATUS.
+      *     DISPLAY "WS-F11-EMP-STATUS=", WS-F11-EMP-STATUS.
+      *     DISPLAY "WS-PAY-GRADE=", WS-PAY-GRADE.
+      *     DISPLAY "WS-WRITE-TERM-DATE=", WS-WRITE-TERM-DATE.
+      *     DISPLAY "WS-SHIFT=", WS-SHIFT.
+      
+      * PART-TIME FLAG CARRIES OVER FROM EBSO
+      * SEE 2200 PARAGRAPH
+      
+           IF (WS-PART-TIME-EMP-FLAG = "Y")
+           OR (WS-PART-TIME-EMP-FLAG = "R")
+              IF (WS-CODA-BALANCE > 30000)
+                 MOVE "E"              TO WS-F07X-FEE-CODE
+                 GO TO 2080-WRITE-REC
+              END-IF
+           END-IF.
+           
+      * DO NOT EVALUATE AW WITH THE REST OF THE ACTIVE STATUSES
+           IF (WS-EMP-EMP-STATUS = "AW")
+               GO TO 2080-WRITE-REC
+           END-IF.
+           
+      * 12/13/2016 TESTING
+      * THIS MAY NEED TO BE CHECKED BEFORE THE OTHER TWO CONDITIONS
+      * SO EMP STATUS DA COMES OUT CORRECTLY
+      * APPLIES TO LAWSON ACTIVE AND FIDELITY ACTIVE
+           IF ((WS-EMP-EMP-STATUS (1:1) = "A")
+           OR  (WS-EMP-EMP-STATUS (1:1) = "D")
+           OR  (WS-EMP-EMP-STATUS (1:1) = "L")
+           OR  (WS-EMP-EMP-STATUS = "IT")
+           OR  (WS-EMP-EMP-STATUS = "PA")
+           OR  (WS-EMP-EMP-STATUS = "TP")
+      * 7/25/2016 LAST CONDITION PICKS UP FUTURE-DATED TERMS
+      * AND RETIREMENTS. THEY WILL COME OUT OF THE F11 PARAGRAPH 
+      * AS STATUS A
+           OR (WS-F11-EMP-STATUS = "A "))
+US1479     AND ((WS-COD-READ-FLAG = "Y")
+US1479           OR (WS-PROC-LEVEL = "07216"))         
+      *         DISPLAY "FLAG F3", WS-EMP-EMP-STATUS,
+      *         WS-F11-EMP-STATUS, WS-COD-READ-FLAG
+               PERFORM 2082-FEE-SCHEDULE-ACTIVE
+                  THRU 2082-END
+               GO TO 2080-WRITE-REC
+           END-IF.     
+           
+      * APPLIES TO LAWSON RETIRED/TERM AND
+      * NOT ACTIVE IN FIDELITY
+           IF ((WS-EMP-EMP-STATUS (1:1) = "T")
+           OR (WS-EMP-EMP-STATUS (1:1) = "R"))
+           AND (WS-F11-EMP-STATUS NOT = "A ")
+US1479     AND ((WS-COD-READ-FLAG = "Y")
+US1479          OR (WS-PROC-LEVEL = "07216"))
+      *          DISPLAY "FLAG F1", WS-EMP-EMP-STATUS,
+      *          WS-F11-EMP-STATUS, WS-COD-READ-FLAG
+                PERFORM 2084-FEE-SCHEDULE-TERM-RET
+                   THRU 2084-END
+                GO TO 2080-WRITE-REC
+           END-IF.
+
+      * APPLIES TO FIDELITY RETIRED/TERMED
+      * AND LAWSON ACTIVE
+           IF ((WS-F11-EMP-STATUS = "T   ")
+           OR  (WS-F11-EMP-STATUS = "R   "))
+US1479     AND ((WS-COD-READ-FLAG = "Y")
+US1479          OR (WS-PROC-LEVEL = "07216"))
+      *         DISPLAY "FLAG F2", WS-F11-EMP-STATUS,
+      *         WS-COD-READ-FLAG
+               PERFORM 2084-FEE-SCHEDULE-TERM-RET
+                  THRU 2084-END
+               GO TO 2080-WRITE-REC
+           END-IF.
+           
+       2080-WRITE-REC. 
+          
+           WRITE FIDELITY-REC          FROM WS-F07X-RECORD.
+           
+       2080-END.
+       
+      ******************************************************************
+       2082-FEE-SCHEDULE-ACTIVE.
+      ******************************************************************
+SR161A* NEW PARAGRAPH
+
+US1479      IF (WS-PROC-LEVEL = "07216")
+US1479          MOVE " "               TO WS-F07X-FEE-CODE
+US1479          GO TO 2082-END
+US1479      END-IF.
+
+            IF (WS-PAY-GRADE = "1")
+            OR (WS-PAY-GRADE = "1CP")
+            OR (WS-PAY-GRADE = "2C")
+            OR (WS-PAY-GRADE = "2CP")
+                IF (WS-CODA-BALANCE > 7500)
+SR3086              MOVE "A"           TO WS-F07X-FEE-CODE
+                END-IF
+            ELSE
+            IF (WS-PAY-GRADE = "3C")
+            OR (WS-PAY-GRADE = "3CP")
+                IF (WS-CODA-BALANCE > 7500)
+SR3086              MOVE "B"           TO WS-F07X-FEE-CODE
+                END-IF
+            ELSE
+            IF (WS-PAY-GRADE = "4C")
+            OR (WS-PAY-GRADE = "4CP")
+                IF (WS-CODA-BALANCE > 30000)
+SR3086              MOVE "C"           TO WS-F07X-FEE-CODE
+                END-IF
+            ELSE
+            IF (WS-PAY-GRADE = "5C")
+            OR (WS-PAY-GRADE = "5CP")
+                IF (WS-CODA-BALANCE > 30000)
+SR3086              MOVE "D"           TO WS-F07X-FEE-CODE
+                END-IF
+            END-IF.
+                         
+       2082-END.
+       
+      ******************************************************************
+       2084-FEE-SCHEDULE-TERM-RET.
+      ******************************************************************
+SR161A* NEW PARAGRAPH
+      * IF EMPLOYEE HAS A ZERO-BALANCE RECORD IN CODA, THEY SHOULD
+      * HAVE DEFAULTED TO FEE CODE H, AND WE DON'T WANT TO OVERRIDE
+      * THAT. WE MAY EVEN FORCE AN H CODE RIGHT HERE BUT IT SHOULDN'T
+      * BE NECESSARY.
+      
+US1479      IF (WS-PROC-LEVEL = "07216")
+US1479          MOVE " "               TO WS-F07X-FEE-CODE
+US1479          GO TO 2084-END
+US1479      END-IF.
+      
+            IF (WS-CODA-BALANCE = 0)
+                GO TO 2084-END
+            END-IF.
+
+            IF (WS-PAY-GRADE = "2")
+            OR (WS-PAY-GRADE = "3")
+            OR (WS-PAY-GRADE = "4")
+                IF (WS-WRITE-TERM-DATE = "F")
+                OR (WS-WRITE-TERM-DATE = "L")
+SR3086              MOVE "F"             TO WS-F07X-FEE-CODE
+                    GO TO 2084-END
+                END-IF
+            END-IF.
+
+US2392      IF (WS-SHIFT = 1)
+US2392      OR (WS-SHIFT = 3)
+SR3086          MOVE "F"                 TO WS-F07X-FEE-CODE
+            ELSE
+US2392      IF (WS-SHIFT = 2)
+SR3086          MOVE "G"                 TO WS-F07X-FEE-CODE
+            END-IF.
+            
+       2084-END.
+               
+
+      *******************************************************************
+      * 2080-WRITE-F36-REC.
+      *******************************************************************
+      * THIS IS THE OLD 2080
+      *     MOVE SPACES                 TO WS-F36-RECORD.
+      *     
+      *     MOVE WS-FC-PLAN-NUMBER      TO WS-F36-PLAN-NUMBER.
+      *
+      *     MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+      *     MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+      *     MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+      *     MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+      *     MOVE WS-FICA-NBR-OUT        TO WS-F36-SSN.
+      *     
+      *     MOVE EMP-FICA-NBR           TO WS-F36-SSN.
+      * 
+      *     MOVE "36"                   TO WS-F36-RECORD-ID.
+      *     
+      *     MOVE "H   "                 TO WS-F36-DIVISION-ID.
+      *     
+      *     MOVE EMP-EMPLOYEE           TO WS-EMP-IN-PPPT-IND.
+      *     IF (WS-EMP-IN-PPPT)
+      *         MOVE "I   "             TO WS-F36-DIVISION-ID
+      *     ELSE
+WO7330*     IF (WS-NOT-ACTIVE-WBAL = "Y")
+WO7330*         MOVE "F   "             TO WS-F36-DIVISION-ID
+WO7330*     ELSE
+SR0704*     IF (WS-EMP-EMP-STATUS (1:1) = "A")
+SR0704*     OR (WS-EMP-EMP-STATUS (1:1) = "D")
+SR0704*     OR (WS-EMP-EMP-STATUS (1:1) = "L")
+SR0704*     OR (WS-EMP-EMP-STATUS = "IT")
+SR0704*     OR (WS-EMP-EMP-STATUS = "PA")
+SR0704*     OR (WS-EMP-EMP-STATUS = "TP")
+SR1067** 7/25/2016 THIS IS TO PICK UP FUTURE-DATED TERMS
+SR1067** AND RETIREMENTS. THEY WILL COME OUT
+SR1067** OF THE F11 PARAGRAPH AS STATUS A
+SR1067*     OR (WS-F11-EMP-STATUS = "A ")
+      *         MOVE EMP-COMPANY    TO DB-COMPANY
+      *         MOVE EMP-EMPLOYEE   TO DB-EMPLOYEE
+      *         MOVE "DC"           TO DB-PLAN-TYPE
+      *         MOVE "403B"         TO DB-PLAN-CODE
+      *         MOVE SPACES         TO DB-PROCESS-LEVEL,
+      *                                DB-BUS-NBR-GRP,
+      *                                DB-QC-ENT-NBR-GRP
+      *         PERFORM 850-FIND-NLT-CODSET1
+      *         IF  (CODA-FOUND)
+      *         AND (COD-COMPANY = EMP-COMPANY)
+      *         AND (COD-EMPLOYEE = EMP-EMPLOYEE)
+      *         AND (COD-PLAN-TYPE = "DC")
+      *         AND (COD-PLAN-CODE = "403B")
+      *
+SR0704*         IF (WS-EMP-EMP-STATUS = "AW")
+      *            IF (COD-AMOUNT-YTD (1) > 30000)
+      *               MOVE "E   "       TO WS-F36-DIVISION-ID
+      *            END-IF
+      *         ELSE
+      *            IF (WS-PAY-GRADE = "1")
+WO7330*            OR (WS-PAY-GRADE = "1CP")
+      *            OR (WS-PAY-GRADE = "2C")
+WO7330*            OR (WS-PAY-GRADE = "2CP")
+      *               IF (COD-AMOUNT-YTD (1) > 7500)
+      *                 MOVE "A   "     TO WS-F36-DIVISION-ID
+      *               END-IF
+      *            ELSE
+      *            IF (WS-PAY-GRADE = "3C")
+WO7330*            OR (WS-PAY-GRADE = "3CP")
+      *               IF (COD-AMOUNT-YTD (1) > 7500)
+      *                 MOVE "B   "     TO WS-F36-DIVISION-ID
+      *               END-IF
+      *            ELSE
+      *            IF (WS-PAY-GRADE = "4C")
+WO7330*            OR (WS-PAY-GRADE = "4CP")
+      *               IF (COD-AMOUNT-YTD (1) > 30000)
+      *                 MOVE "C   "     TO WS-F36-DIVISION-ID
+      *               END-IF
+      *            ELSE
+      *            IF (WS-PAY-GRADE = "5C")
+WO7330*            OR (WS-PAY-GRADE = "5CP")
+      *               IF (COD-AMOUNT-YTD (1) > 30000)
+      *                 MOVE "D   "     TO WS-F36-DIVISION-ID
+      *               END-IF
+      *            END-IF
+      *         END-IF
+      *         END-IF
+      *     ELSE
+SR1067*         IF ((WS-EMP-EMP-STATUS (1:1) = "T")
+SR1067*         OR (WS-EMP-EMP-STATUS (1:1) = "R"))
+SR1067*         AND (WS-F11-EMP-STATUS NOT = "A ")
+      *            IF (WS-PEP-SHIFT = 1)
+      *            OR (WS-PEP-SHIFT = 3)
+      *               MOVE "F   "       TO WS-F36-DIVISION-ID
+      *            ELSE
+      *            IF (WS-PEP-SHIFT = 2)
+      *               MOVE "G   "       TO WS-F36-DIVISION-ID
+      *            END-IF
+      *         END-IF
+WO7330*     END-IF
+      *     END-IF
+      *     END-IF.
+      *     
+      *     MOVE "N"                    TO WS-F36-DIVISION-IND.
+      *     
+      *     WRITE FIDELITY-REC          FROM WS-F36-RECORD.
+
+      ******************************************************************
+       2085-WRITE-F36-REC.
+      ******************************************************************
+SR3086* NEW PARAGRAPH
+
+           MOVE SPACES                 TO WS-F36-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F36-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F36-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F36-SSN.
+           
+US0220     MOVE "90DB"                 TO WS-F36-DIVISION-ID.
+US0220     
+US0220*--- Use IF10 Lookup for Status Code, Leave Type
+US0220     MOVE EMP-COMPANY                TO DB-LVL-1-KEY.
+US0220     MOVE "PROCESS-LEVEL"            TO DB-LVL-2-KEY.
+US0220     MOVE "REMITTER-SRC"             TO DB-LVL-3-KEY.
+US0220     MOVE  WS-PROC-LEVEL             TO DB-DTL-KEY.
+US0220     PERFORM 840-FIND-IF1SET1.
+US0220     IF (LUPTBLDTL-NOTFOUND)
+US0220         MOVE SPACES                 TO WS-REMITTER-SRC
+US0220     ELSE
+US0220         MOVE IF1-DTL-VALUE          TO WS-REMITTER-SRC
+US0220     END-IF.
+US0220     
+US0220     IF  ((WS-REMITTER-SRC NOT = "90DB")
+US0220     AND (WS-REMITTER-SRC NOT = SPACES)) 
+US0220* EXCEPTION FOR CPH     
+US0220     OR  (WS-PROC-LEVEL = "07216")
+US0220         MOVE WS-PROC-LEVEL(2:5) TO WS-F36-DIVISION-ID
+US0220     END-IF.
+           
+           MOVE "N"                    TO WS-F36-DIVISION-IND.
+ 
+           MOVE "36"                   TO WS-F36-RECORD-ID.
+           
+           WRITE FIDELITY-REC          FROM WS-F36-RECORD.
+
+
+      ******************************************************************
+       2090-WRITE-F60-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F60-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F60-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F60-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F60-SSN.
+ 
+           MOVE "60"                   TO WS-F60-RECORD-ID.
+           
+SR0704     IF (WS-EMP-EMP-STATUS = "AW")
+WO8022     OR (WS-PART-TIME-EMP-FLAG = "Y")
+WO8022     OR (WS-PART-TIME-EMP-FLAG = "R")
+               MOVE "P"                TO WS-F60-PAR-CLASS
+           ELSE 
+               MOVE "F"                TO WS-F60-PAR-CLASS
+           END-IF.
+           
+           MOVE WS-PAY-GRADE           TO WS-F60-PAY-GRADE.
+           
+WO8022     IF (WS-PART-TIME-EMP-FLAG = "R")
+WO8022       PERFORM 2300-POS-PAY-GRADE
+WO8022          THRU 2300-END
+WO8022       MOVE WS-POS-PAY-GRADE     TO WS-F60-PAY-GRADE
+WO8022     END-IF.
+WO8022     
+
+US1791     MOVE WS-HOLD-WRK-DIV-NBR(1:5)
+US1791       TO WS-F60-PAR-DEPT(1:5).
+
+           MOVE SPACES                 TO WS-F60-PAR-LOC.
+           
+      * CHECK IF PROCESS LEVEL IS IN WBPCRSP4B TABLE,
+      * MOVE IT TO WS-F60-PAR-LOC IF IT IS.
+           MOVE EMP-COMPANY            TO DB-COMPANY.
+US1791     MOVE WS-HOLD-WRK-DIV-NBR(1:5) TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-WB5SET1.
+           IF (WBPCRSP4B-FOUND)
+US1791         MOVE WS-HOLD-WRK-DIV-NBR(1:5)
+US1791           TO WS-F60-PAR-LOC
+           END-IF.
+      
+      * LOOK UP ROSTER CODE FROM USER FIELD 97 IN HRUSERFLDS
+      * IF FIRST 4 = ORDM, WS-F60-PAR-UNION = "P"
+      *    IF NOT ORDM BUT CHAR #4 STILL = "M", MOVE "R"
+      *    IF NOT ORDM AND CHAR #4 NOT M, MOVE "L"
+      
+           MOVE SPACES                 TO WS-ROSTER-STATUS.
+           MOVE 97                     TO DB-FIELD-KEY.
+           MOVE EMP-COMPANY            TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           INITIALIZE                  DB-EMP-APP.
+           PERFORM 840-FIND-HEUSET1.
+           IF (HREMPUSF-FOUND)
+               MOVE  HEU-A-FIELD       TO WS-ROSTER-STATUS
+           END-IF.
+           
+           IF (WS-ROSTER-STATUS (1:4) = "ORDM")
+               MOVE "P"                TO WS-F60-PAR-UNION
+           ELSE
+               IF (WS-ROSTER-STATUS (4:1) = "M")
+                   MOVE "R"            TO WS-F60-PAR-UNION
+               ELSE
+                   MOVE "L"            TO WS-F60-PAR-UNION
+               END-IF
+           END-IF.
+           
+           WRITE FIDELITY-REC          FROM WS-F60-RECORD.
+      
+      ******************************************************************
+       2100-WRITE-F61-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-F61-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-F61-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-F61-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-F61-SSN.
+ 
+           MOVE "61"                   TO WS-F61-RECORD-ID.
+           
+           MOVE SPACES                 TO WS-F61-RETIRE-DT.
+SR0704     IF (WS-EMP-EMP-STATUS (1:1) = "R")
+SR1067     AND (EMP-TERM-DATE <= WS-SAVE-SYSTEM-DATE)
+              MOVE EMP-TERM-DATE       TO WS-DATE-REFORMAT
+              MOVE WS-DATE-CCYY-N      TO WS-DATE-MDY-YYYY
+              MOVE WS-DATE-MM-N        TO WS-DATE-MDY-MM
+              MOVE WS-DATE-DD-N        TO WS-DATE-MDY-DD
+              MOVE WS-DATE-MDY         TO WS-F61-RETIRE-DT
+           END-IF.
+           
+      * ADJUSTED HIRE DATE IS ONLY MOVED OUT FOR REHIRES
+      * CHECK 02D RECORD TO DETERMINE IF EMPLOYEE IS REHIRE
+      
+           MOVE SPACES                 TO WS-F61-ADJ-HIRE-DT.
+           IF (WS-F02D-DATE-SW = "5")
+              MOVE EMP-ADJ-HIRE-DATE   TO WS-DATE-REFORMAT
+              MOVE WS-DATE-CCYY-N      TO WS-DATE-MDY-YYYY
+              MOVE WS-DATE-MM-N        TO WS-DATE-MDY-MM
+              MOVE WS-DATE-DD-N        TO WS-DATE-MDY-DD
+              MOVE WS-DATE-MDY         TO WS-F61-ADJ-HIRE-DT
+           END-IF.
+           
+WO8022     IF (WS-PART-TIME-EMP-FLAG = "R")
+WO8022        MOVE WS-EPC-DATE-ACQUIRED TO WS-DATE-REFORMAT
+WO8022        MOVE WS-DATE-CCYY-N      TO WS-DATE-MDY-YYYY
+WO8022        MOVE WS-DATE-MM-N        TO WS-DATE-MDY-MM
+WO8022        MOVE WS-DATE-DD-N        TO WS-DATE-MDY-DD
+WO8022        MOVE WS-DATE-MDY         TO WS-F61-ADJ-HIRE-DT
+WO8022        
+WO8022        MOVE SPACES              TO WS-F61-RETIRE-DT
+WO8022     END-IF.
+WO8022     
+           MOVE "00000"                TO WS-F61-RESERVED.
+           
+           IF (WS-F61-RETIRE-DT > SPACES)
+           OR (WS-F61-ADJ-HIRE-DT > SPACES)
+               WRITE FIDELITY-REC      FROM WS-F61-RECORD
+           END-IF.
+
+      ******************************************************************
+       2110-WRITE-FEA-REC.
+      ******************************************************************
+
+           MOVE SPACES                 TO WS-FEA-RECORD.
+           
+           MOVE WS-FC-PLAN-NUMBER      TO WS-FEA-PLAN-NUMBER.
+
+           MOVE EMP-FICA-NBR           TO WS-FICA-NBR-IN.
+           MOVE WS-FICA-3-IN           TO WS-FICA-3-OUT.
+           MOVE WS-FICA-2-IN           TO WS-FICA-2-OUT.
+           MOVE WS-FICA-4-IN           TO WS-FICA-4-OUT.
+           MOVE WS-FICA-NBR-OUT        TO WS-FEA-SSN.
+           
+           MOVE EMP-FICA-NBR           TO WS-FEA-SSN.
+ 
+           MOVE "EA"                   TO WS-FEA-RECORD-ID.
+           
+           MOVE "ER"                   TO WS-FEA-EMAIL-TYPE.
+
+           MOVE SPACES                 TO WS-EMAIL-WORK-AREA.
+           MOVE "1"                    TO WS-FEA-SEQ-NUMBER.
+           MOVE EMP-EMAIL-ADDRESS      TO WS-EMAIL-WORK-AREA.
+           MOVE WS-EMAIL-WORK-DATA-1   TO WS-FEA-EMAIL-ADDR.
+           IF (WS-EMAIL-WORK-DATA-1 NOT = SPACES)
+               MOVE "A"                TO WS-FEA-STATUS
+           ELSE 
+               MOVE "I"                TO WS-FEA-STATUS
+           END-IF.
+           WRITE FIDELITY-REC          FROM WS-FEA-RECORD.
+                             
+           IF (WS-EMAIL-WORK-DATA-2 NOT = SPACES)
+               MOVE "2"                TO WS-FEA-SEQ-NUMBER
+               MOVE WS-EMAIL-WORK-DATA-2 TO WS-FEA-EMAIL-ADDR
+               WRITE FIDELITY-REC      FROM WS-FEA-RECORD
+           END-IF.
+           
+           IF (WS-EMAIL-WORK-DATA-3 NOT = SPACES)
+               MOVE "3"                TO WS-FEA-SEQ-NUMBER
+               MOVE WS-EMAIL-WORK-DATA-3 TO WS-FEA-EMAIL-ADDR
+               WRITE FIDELITY-REC      FROM WS-FEA-RECORD
+           END-IF.
+           
+      ******************************************************************
+       2200-DETERMINE-PT-STATUS.
+      ******************************************************************
+WO8022* ADDED NEW PARAGRAPH
+
+      * USE **CURRENT** EMPLOYEE STATUS AND GRADE TO DETERMINE
+      * IF EMPLOYEE IS PART TIME. READ EMPCODES TABLE IF EMPLOYEE
+      * IS NOT INDICATED AS PART-TIME BY FIRST CHECK OF EMPLOYEE TABLE. 
+      
+           MOVE "N"                    TO WS-PART-TIME-EMP-FLAG.
+           MOVE ZEROES                 TO WS-EPC-DATE-ACQUIRED.
+           
+           IF  (EMP-EMP-STATUS = "AW")
+           AND (WS-CRSP-PT-MEMBER)
+                MOVE "Y"               TO WS-PART-TIME-EMP-FLAG
+                GO TO 2200-END
+           END-IF.
+           
+           MOVE EMP-COMPANY            TO DB-COMPANY.
+           MOVE "CN"                   TO DB-TYPE.
+           MOVE 0                      TO DB-EMP-APP.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE "PARTTIME"             TO DB-CODE.
+           MOVE SPACES                 TO DB-SUBJECT.
+           MOVE 0                      TO DB-SEQ-NBR.
+           
+           PERFORM 850-FIND-NLT-EPCSET1.
+           
+           PERFORM UNTIL (EMPCODES-NOTFOUND)
+                      OR (EPC-EMPLOYEE NOT = EMP-EMPLOYEE)
+                      OR (EPC-TYPE NOT = "CN")
+                      OR (EPC-COMPANY NOT = EMP-COMPANY)
+                      OR (EPC-CODE NOT = "PARTTIME")
+                      
+                   IF (EPC-DATE-RETURNED <= WS-DB-NULL-DATE)
+                      MOVE "R"         TO WS-PART-TIME-EMP-FLAG
+                      MOVE EPC-DATE-ACQUIRED TO
+                           WS-EPC-DATE-ACQUIRED
+                      MOVE EPC-DESCRIPTION TO
+                           WS-EPC-DESCRIPTION
+                   ELSE
+                      MOVE "N"         TO WS-PART-TIME-EMP-FLAG
+                   END-IF
+                   
+                   PERFORM 860-FIND-NEXT-EPCSET1
+                   
+           END-PERFORM.
+                     
+       2200-END.
+       
+      ******************************************************************
+       2300-POS-PAY-GRADE.
+      ******************************************************************
+WO8022* ADDED NEW PARAGRAPH
+
+      * PAY GRADE WILL BE THE GRADE LOOKED UP IN PAPOSITION
+      * FOR THE PROCESS LEVEL IN EPC-DESCRIPTION         
+      
+           MOVE SPACES                 TO WS-POS-PAY-GRADE.
+SR1067     MOVE "N"                    TO WS-POS-SCAN-FLAG.
+      
+           MOVE EMP-COMPANY            TO DB-COMPANY.
+           MOVE WS-EPC-DESCRIPTION (1:5) TO DB-POSITION.
+SR1067*     MOVE WS-SYSTEM-DATE-YMD     TO DB-EFFECT-DATE.
+SR1067     MOVE WS-DB-HIGH-DATE        TO DB-EFFECT-DATE.
+           
+           PERFORM 850-FIND-NLT-POSSET2.
+SR1067     PERFORM 2350-SCAN-PAPOSITION
+SR1067        THRU 2350-END 
+SR1067       UNTIL (POS-COMPANY NOT = EMP-COMPANY)
+                OR (POS-POSITION NOT = WS-EPC-DESCRIPTION (1:5))
+SR1067          OR (WS-POS-SCAN-FLAG = "Y").
+                
+           IF (WS-POS-SCAN-FLAG = "N")
+              MOVE "60"                TO G2-DTL-REC-TYPE
+              MOVE EMP-EMPLOYEE        TO G2-DTL-EMPLOYEE
+              MOVE EMP-FICA-NBR        TO G2-DTL-FICA-NBR
+              MOVE WS-EMP-EMP-STATUS   TO G2-DTL-EMP-STATUS
+              MOVE "POSITION XXXXX NOT FOUND" TO G2-DTL-ERROR-MSG
+              INSPECT G2-DTL-ERROR-MSG
+                 REPLACING ALL "XXXXX"
+                 BY WS-EPC-DESCRIPTION (1:5)
+              MOVE GN2D-FID-EMPLOYEE   TO RPT-GROUP-REQUEST 
+              PERFORM 700-PRINT-RPT-GRP 
+           END-IF.
+
+                
+       2300-END.
+       
+      ******************************************************************
+       2350-SCAN-PAPOSITION.
+      ****************************************************************** 
+
+SR1067* NEW PARAGRAPH FOR 6/10/2016 RELEASE
+
+           IF  (POS-EFFECT-DATE <= WS-SYSTEM-DATE-YMD)
+           AND ((POS-END-DATE   =  WS-DB-NULL-DATE)
+                OR (POS-END-DATE = ZEROES)
+                OR (POS-END-DATE >= WS-SYSTEM-DATE-YMD))
+           
+                MOVE POS-PAY-GRADE     TO WS-POS-PAY-GRADE
+                MOVE "Y"               TO WS-POS-SCAN-FLAG
+                GO TO 2350-END
+           
+           END-IF.
+
+           PERFORM 860-FIND-NEXT-POSSET2.
+           
+       2350-END.
+
+      ******************************************************************
+       2400-EMP-STATUS-HIST.
+      ******************************************************************
+
+SR0704* NEW PARAGRAPH
+      
+      * BORROWED FROM ZN715 - 3300-FIND-HRHIST-EFF-DATE
+       
+      * IF EMPLOYEE STATUS IS TERMINATED, 
+      * READ BACKWARD UNTIL IT HITS A RECORD
+      * WITH NON-TERMINATED OR NON-RETIRED STATUS
+
+        MOVE EMP-COMPANY               TO DB-COMPANY.
+        MOVE EMP-EMPLOYEE              TO DB-EMPLOYEE.
+        MOVE 0                         TO DB-OBJ-ID.
+        MOVE WS-HRH-DATAITEM-STATUS    TO DB-FLD-NBR.
+        MOVE WS-SAVE-SYSTEM-DATE       TO DB-BEG-DATE,
+                                          WS-DB-BEG-DATE.
+        MOVE 9999                   TO DB-SEQ-NBR.
+        PERFORM 850-FIND-NLT-HRHSET1.
+        IF (HRH-EMPLOYEE = EMP-EMPLOYEE)
+            IF (HRH-FLD-NBR = WS-HRH-DATAITEM-STATUS)
+               IF (HRH-BEG-DATE > WS-DB-BEG-DATE)
+                   PERFORM 870-FIND-PREV-HRHSET1
+               END-IF
+            ELSE
+                 IF (HRH-FLD-NBR > WS-HRH-DATAITEM-STATUS)
+                     PERFORM 870-FIND-PREV-HRHSET1
+                 END-IF
+            END-IF
+        ELSE
+            IF (HRH-EMPLOYEE > EMP-EMPLOYEE)
+                PERFORM 870-FIND-PREV-HRHSET1
+            END-IF
+        END-IF.
+        
+      * WHEN TERMINATED STATUS, WE NEED STATUS FROM THE
+      * PREVIOUS RECORD TO CORRECTLY ASSIGN SUBGROUP.
+           MOVE HRH-A-VALUE           TO WS-HIST-EMP-STATUS.
+          
+           IF (WS-HIST-TERM-STATUS)  
+               PERFORM 2450-READ-EMP-STATUS-HIST
+                  THRU 2450-END
+                 UNTIL (NOT WS-HIST-TERM-STATUS) OR
+                       (HRH-EMPLOYEE NOT = EMP-EMPLOYEE)
+               MOVE WS-HIST-EMP-STATUS TO WS-EMP-EMP-STATUS
+           END-IF.
+           
+       2400-END.
+
+      ******************************************************************
+       2450-READ-EMP-STATUS-HIST.
+      ******************************************************************
+
+SR0704* NEW PARAGRAPH
+           
+           PERFORM 870-FIND-PREV-HRHSET1.
+           IF (HRH-COMPANY = EMP-COMPANY) AND
+              (HRH-EMPLOYEE = EMP-EMPLOYEE) AND
+              (HRH-FLD-NBR = WS-HRH-DATAITEM-STATUS) 
+               MOVE HRH-A-VALUE            TO WS-HIST-EMP-STATUS.
+      
+       2450-END.
+
+      ******************************************************************
+       2500-FOREIGN-CITY.
+      ******************************************************************
+CB2707* NEW PARAGRAPH
+
+US2270*     DISPLAY "2500-FOREIGN-CITY".
+
+      *     DISPLAY PEM-SUPP-CITY.
+      *     DISPLAY PEM-SUPP-STATE.
+      *     DISPLAY PEM-SUPP-ZIP.
+
+           MOVE "N"                    TO WS-ZIP-OVER-FLAG.
+
+           PERFORM
+           VARYING WS-CITY-LENGTH FROM 20 BY -1
+           UNTIL (PEM-SUPP-CITY (WS-CITY-LENGTH:1) NOT = SPACES)
+           OR (WS-CITY-LENGTH = 0)
+               CONTINUE
+           END-PERFORM.
+           
+      *     DISPLAY "WS-CITY-LENGTH = ", WS-CITY-LENGTH.
+
+           PERFORM
+           VARYING WS-ZIP-LENGTH FROM 10 BY -1
+           UNTIL (PEM-SUPP-ZIP (WS-ZIP-LENGTH:1) NOT = SPACES)
+           OR (WS-ZIP-LENGTH = 0)
+               CONTINUE
+           END-PERFORM.
+
+           MOVE PEM-SUPP-CITY (1:WS-CITY-LENGTH)
+             TO WS-FOREIGN-CITY-WORK-AREA.
+      *     DISPLAY WS-FOREIGN-CITY-WORK-AREA.
+           ADD 2 TO WS-CITY-LENGTH.
+      *     DISPLAY WS-CITY-LENGTH.
+           MOVE PEM-SUPP-STATE (1:2) 
+             TO WS-FOREIGN-CITY-WORK-AREA (WS-CITY-LENGTH:2).
+      *     DISPLAY WS-FOREIGN-CITY-WORK-AREA.
+           ADD 3 TO WS-CITY-LENGTH.
+      *     DISPLAY WS-CITY-LENGTH.
+
+           IF (WS-CITY-LENGTH + WS-ZIP-LENGTH > 20)
+               MOVE "Y"                TO WS-ZIP-OVER-FLAG
+           ELSE
+               MOVE PEM-SUPP-ZIP
+               TO WS-FOREIGN-CITY-WORK-AREA (WS-CITY-LENGTH:20)
+           END-IF.
+              
+      *     DISPLAY WS-FOREIGN-CITY-WORK-AREA.   
+       
+
+       2500-END. 
+SR2121 
+SR2121******************************************************************
+SR2121 3000-WRITE-FEEFILE.
+SR2121******************************************************************
+SR2121
+SR2121      MOVE WS-F11-SSN                TO FEE-IDF-SSN.
+SR2121      MOVE WS-F02E-EMPLOYEE          TO FEE-IDF-EMPLOYEE.
+SR2121      MOVE WS-F11-EMP-STATUS         TO FEE-IDF-STATUS.
+SR3086      MOVE WS-F07X-FEE-CODE          TO FEE-IDF-FEE-CODE.
+SR2121      MOVE WS-F60-PAY-GRADE          TO FEE-IDF-GRADE.
+SR2121      MOVE WS-F02D-TERM-DATE         TO FEE-IDF-TERM-DATE.
+SR2121      MOVE WS-EMP-EMP-STATUS         TO FEE-LAWSON-STATUS.
+SR2121      MOVE WS-CODA-BALANCE           TO FEE-LAWSON-BALANCE.
+SR2121
+SR2121      PERFORM 800-WRITECSV-ZH211FEE.
+SR2121
+SR2121 3000-END.
+
+021900******************************************************************
+022000 1000-END.
+022100******************************************************************
+022200

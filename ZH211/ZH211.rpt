@@ -1,0 +1,131 @@
+******************************************************************
+$PROGRAM   ZH211
+******************************************************************
+
+****************************************************
+$REPORT    ZH211-R1
+****************************************************
+
+**************************************
+$GROUP     GN1H-EMP-EMPLOYEE
+**************************************
+$PREFIX    G1-
+$LEVEL     A
+$DELAY
+$FORMAT
+Employee  Last Name                      First Name             Procl Prev  St Datehire  Adj Hire Termdate Birth
+|       ; |                            ; |                    ; |         ; |           ;        ;        ;
+$ENDFMT
+
+$ENDGRP
+
+**************************************
+$GROUP     GN1D-EMP-EMPLOYEE
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$FORMAT
+ZZZZZZZZ9 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX X XXXX XXXXX XXXXX XX ZZ/ZZ/ZZ  ZZ/ZZ/ZZ ZZ/ZZ/ZZ ZZ/ZZ/ZZ
+A         B                              C               D E    F     K     G  H         I        J        L
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     EMP-EMPLOYEE
+ B     EMP-LAST-NAME
+ C     EMP-FIRST-NAME
+ D     EMP-MIDDLE-INIT
+ E     EMP-NAME-SUFFIX
+ F     EMP-PROCESS-LEVEL
+ K     PREV-PROCESS-LVL
+ G     EMP-EMP-STATUS
+ H     EMP-DATE-HIRED                         CD
+ I     EMP-ADJ-HIRE-DATE                      CD
+ J     EMP-TERM-DATE                          CD
+ L     PEM-BIRTH-DATE                         CD
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+****************************************************
+$REPORT    ZH211-R2
+****************************************************
+$PRINTFILE ZH211R2
+$PAGESIZE  53        
+
+**************************************
+$GROUP     GN2H-FID-COMPANY-GRP
+**************************************
+$PREFIX    G2-
+$LEVEL     A
+$FORMAT
+ZH211 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                 Fidelity Indicative File Error Report
+      |  ; E1                                     |                            ;   
+                                               For the Period Z9/99/99 Thru Z9/99/99
+                                               |            ; F1       |  ; G1
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    BEN-COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+ F1    PRM-START-DATE                         CD
+ G1    PRM-STOP-DATE                          CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN2S-FID-EMPLOYEE
+**************************************
+$PREFIX    G2-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+   Rec                              Emp
+   | ;                              | ;
+   Type     Employee   FICA Nbr    Status     Error Message
+   |  ;    |       ;   |      ;    |    ;     |           ;
+   ----    ---------  -----------  ------     --------------------------------------------------
+   | ;     |       ;  |         ;  |    ;     |                                                ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN2D-FID-EMPLOYEE
+**************************************
+$PREFIX    G2-
+$LEVEL     C
+$FORMAT                    1
+   XXX     ZZZZZZZZZ  XXXXXXXXXXX    XX       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+   A       B          C              D        E      
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-REC-TYPE
+ B     DTL-EMPLOYEE
+ C     DTL-FICA-NBR
+ D     DTL-EMP-STATUS
+ E     DTL-ERROR-MSG
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+
+$ENDPGM

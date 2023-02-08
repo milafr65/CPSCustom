@@ -1,0 +1,142 @@
+2,11d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  AI0030  03/24/03  MODIFY TO ALL PLAN TYPE OF HL AND DL.       *
+<       *  SEN999  04/04/03  Fix std lawson bug                          *
+<       *  CR0305  07/24/03  ADD LOGIC FOR RETIREE BENEFICIARY           *
+<       ******************************************************************
+< 
+87c77
+< 008600             AND  (BEN-PLAN-TYPE = 
+---
+> 008600             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB"))
+88d77
+< AI0030                    "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL"))
+90c79
+< 008800             AND  (BEN-PLAN-TYPE =
+---
+> 008800             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB"))
+91d79
+< AI0030                    "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL"))
+93c81
+< 009000             AND  (BEN-PLAN-TYPE =
+---
+> 009000             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB")).
+94d81
+< AI0030                   "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL")).
+101c88
+< 009700             AND  (BEN-PLAN-TYPE = 
+---
+> 009700             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB"))
+102d88
+< AI0030                    "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL"))
+104c90
+< 009900             AND  (BEN-PLAN-TYPE =
+---
+> 009900             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB"))
+105d90
+< AI0030                    "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL"))
+107c92
+< 010100             AND  (BEN-PLAN-TYPE = 
+---
+> 010100             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB")).
+108d92
+< AI0030                   "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL")).
+147,149c131,133
+< CR0305             SET BENEFIT-NOTFOUND             TO TRUE  
+< CR0305             MOVE ZERO                        TO DB-PARTICIPNT
+< CR0305             MOVE 99999999                    TO DB-START-DATE
+---
+> 007700             MOVE 106                         TO CRT-ERROR-NBR
+> 007800             MOVE BN47F1-BEN-PLAN-CODE-FN     TO CRT-FIELD-NBR
+> 007900             GO TO 210-END.
+150,159d133
+< CR0305             PERFORM 850-FIND-NLT-PTBSET4
+< CR0305             IF (PARTBEN-NOTFOUND)
+< CR0305             OR (PTB-COMPANY    NOT = DB-COMPANY)
+< CR0305             OR (PTB-EMPLOYEE   NOT = DB-EMPLOYEE)
+< CR0305             OR (PTB-PLAN-TYPE  NOT = DB-PLAN-TYPE)
+< CR0305             OR (PTB-PLAN-CODE  NOT = DB-PLAN-CODE)
+< CR0305             OR (PTB-PARTICIPNT NOT = ZERO)
+< 007700                 MOVE 106                         TO CRT-ERROR-NBR
+< 007800                 MOVE BN47F1-BEN-PLAN-CODE-FN     TO CRT-FIELD-NBR
+< 007900                 GO TO 210-END.
+208c182
+< 018100             AND   (BEN-PLAN-TYPE = 
+---
+> 018100             AND   (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB"))
+209d182
+< AI0030                    "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL"))
+215c188
+< 018700             AND  (BEN-PLAN-TYPE = 
+---
+> 018700             AND  (BEN-PLAN-TYPE = "EL" OR "DI" OR "DC" OR "DB")).
+216d188
+< AI0030                   "EL" OR "DI" OR "DC" OR "DB" OR "HL" OR "DL")).
+414d385
+< SEN999         MOVE ZEROS                   TO DB-PRIM-CNTGNT
+428,430c399,401
+< CR0305             PERFORM 840-FIND-BNFSET1.
+< CR0305****     ELSE
+< CR0305****          MOVE "+"                   TO BN47F1-FC.
+---
+>                    PERFORM 840-FIND-BNFSET1
+>                ELSE
+> 047800              MOVE "+"                   TO BN47F1-FC.
+437,447d407
+< 
+< SEN999     IF (BN47F1-FC       = "I" OR "+" OR "-")
+< SEN999         IF  (BENEFICRY-NOTFOUND)
+< SEN999         OR  (BNF-COMPANY        NOT = DB-COMPANY)
+< SEN999         OR  (BNF-EMPLOYEE       NOT = DB-EMPLOYEE)
+< SEN999         OR  (BNF-PLAN-TYPE      NOT = DB-PLAN-TYPE)
+< SEN999         OR  (BNF-PLAN-CODE      NOT = DB-PLAN-CODE)
+< SEN999             MOVE 11                          TO CRT-ERROR-NBR
+< SEN999             MOVE BN47F1-FC-FN                TO CRT-FIELD-NBR
+< SEN999             GO TO 480-END.
+< 
+454,459d413
+< 049000             IF (BN47F1-FC  = "-")
+< SEN999                 MOVE BN47F1-BNF-PRIM-CNTGNT (1)
+< SEN999                            TO BN47F1-PT-BNF-PRIM-CNTGNT
+< 049100                 MOVE BN47F1-BNF-SEQ-NBR (1) 
+< 049200                            TO BN47F1-PT-BNF-SEQ-NBR
+< 049300             ELSE 
+462,463c416,417
+< P08732             MOVE 11                          TO CRT-MSG-NBR
+< P08732             PERFORM                                            
+---
+> P08732             MOVE 11                          TO CRT-ERROR-NBR
+> P08732             MOVE BN47F1-FC-FN                TO CRT-FIELD-NBR
+464,467d417
+< 049800                 VARYING I1 FROM 1 BY 1
+< 049900                 UNTIL  (I1 > 3)
+< 050000                     INITIALIZE BN47F1-DETAIL-LINE (I1)
+< 050100             END-PERFORM
+474,476d423
+< SEN999         MOVE BN47F1-BNF-PRIM-CNTGNT (1)
+< SEN999                            TO BN47F1-PT-BNF-PRIM-CNTGNT
+< 050500         MOVE BN47F1-BNF-SEQ-NBR (1) TO BN47F1-PT-BNF-SEQ-NBR
+532,535c479,482
+< 055500     IF (BENEFIT-FOUND)                              
+< 055600     OR (BENEFIT-KFOUND)                                
+< 055700         MOVE BEN-COMPANY        TO BN47F1-BEN-COMPANY
+< 055800         MOVE BEN-EMPLOYEE       TO BN47F1-BEN-EMPLOYEE
+---
+> 055500     MOVE BEN-COMPANY            TO BN47F1-BEN-COMPANY.
+> 055600     MOVE BEN-EMPLOYEE           TO BN47F1-BEN-EMPLOYEE.
+> 055700     MOVE BEN-PLAN-TYPE          TO BN47F1-BEN-PLAN-TYPE.
+> 055800     MOVE BEN-PLAN-CODE          TO BN47F1-BEN-PLAN-CODE.
+536,542d482
+< 055700         MOVE BEN-PLAN-TYPE      TO BN47F1-BEN-PLAN-TYPE
+< 055800         MOVE BEN-PLAN-CODE      TO BN47F1-BEN-PLAN-CODE
+< CR0305     ELSE
+< CR0305         MOVE PTB-COMPANY        TO BN47F1-BEN-COMPANY
+< CR0305         MOVE PTB-EMPLOYEE       TO BN47F1-BEN-EMPLOYEE
+< CR0305         MOVE PTB-PLAN-TYPE      TO BN47F1-BEN-PLAN-TYPE
+< CR0305         MOVE PTB-PLAN-CODE      TO BN47F1-BEN-PLAN-CODE.
+589d528
+< SEN999*****IF (BN47F1-FC = "+")

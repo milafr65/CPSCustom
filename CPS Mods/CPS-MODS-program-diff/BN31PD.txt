@@ -1,0 +1,25 @@
+1a2,11
+>       ******************************************************************
+>       *               M O D I F I C A T I O N   L O G:                 *
+>       ******************************************************************
+>       *  Modified by Analysts International,MN                         *
+>       ******************************************************************
+>       *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+>       *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+>       *                    END DATE FIELDS IN DETERMINATION OF THE     *
+>       *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+>       ******************************************************************
+1340a1351
+> AI0010         MOVE BN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE
+1563a1575
+> AI0010     MOVE BN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+1656a1669
+> AI0010     MOVE BN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+1762c1775
+< P08685     MOVE HRWS-DATE-HIGH-VAL     TO DBRNG-START-DATE.
+---
+>            MOVE 21991231               TO DBRNG-START-DATE.
+1844c1857
+< P08685     MOVE HRWS-DATE-HIGH-VAL     TO DBRNG-START-DATE.
+---
+>            MOVE 21991231               TO DBRNG-START-DATE.

@@ -1,0 +1,472 @@
+******* PA52WS 33 <1807104199>
+000100******************************************************************
+000200*                            PA52WS                              *
+000300******************************************************************
+124408*  JT#      TAG      DESCRIPTION                                 *
+124411*  ------   ------   ------------------------------------------  *
+124412*  379563 | J79563 | ADDED A SWITCH AND A WS-HOLD VARIABLE       *
+124413*         |        | NEEDED TO HANDLE ERROR DURING REVERSE.      *
+      *  ------   ------   ------------------------------------------  *
+      * 1102321 | 102321 | Added hold variables for display of records *
+      *         |        | with multiple action entries.               *
+      *  ------   ------   ------------------------------------------  * 
+AA0626*   N/A   | AA0626 | ADDED VARIABLE FOR STORING TERM-WORKUNIT    *
+AA0626*         |        | TO FIX ISSUE WHERE TERM WORKUNIT IS NOT     *
+AA0626*         |        | RELEASED WHEN TERM-DATE IS SUPPLIED         *
+124406******************************************************************
+000400 01  PA52WS.
+AA0626     02  WS-WORKUNIT-TERM        PIC 9(12) VALUE ZEROES.
+           02  PA52WS-PROCESS-LEVEL-SW PIC 9(01) VALUE ZEROES.
+               88  PA52WS-USE-PROCESS-LEVEL      VALUE 1.
+               88  PA52WS-USE-COMPANY            VALUE 0.
+           02  PA52WS-ACTION-REASON-SW PIC 9(01) VALUE ZEROES.
+               88  PA52WS-NO-ACTION-REASON       VALUE 1.
+               88  PA52WS-ACTION-REASON          VALUE 0.
+           02  PA52WS-WORK-COUNTRY     PIC X(02) VALUE SPACES.
+000500     02  PA52WS-ITEM-NAME-IN     PIC X(20) VALUE SPACES.
+000600     02  PA52WS-ITEM-NAME-OUT    PIC X(21) VALUE SPACES.
+000700     02  PA52WS-PRS-NAME         PIC X(30) VALUE SPACES.
+000900     02  PA52WS-LAST-PART        PIC 9(09) VALUE ZEROS.
+001000     02  PA52WS-PARTICIPNT       PIC 9(09) VALUE ZEROS.
+001100     02  PA52WS-ACTION-NBR       PIC 9(04) VALUE ZEROS.
+001100     02  PA52WS-FIRST-ACT-NBR    PIC 9(04) VALUE ZEROS.
+001100     02  PA52WS-LAST-ACT-NBR     PIC 9(04) VALUE ZEROS.
+           02  PA52WS-ACTION-CODE      PIC X(10) VALUE SPACES.
+001200     02  PA52WS-FTE              LIKE NBR-FTE   VALUE ZEROES.
+001300     02  PA52WS-SALARY-CLASS     PIC X(01) VALUE SPACES.
+001400     02  PA52WS-TIPPED           PIC X(01) VALUE SPACES.
+001500     02  PA52WS-FLD-NBR          PIC 9(04) VALUE ZEROES.
+001600     02  PA52WS-RETRO-POSITION   PIC X(12) VALUE SPACES.
+001700     02  PA52WS-RETRO-JOB-CODE   PIC X(15) VALUE SPACES.
+001800     02  PA52WS-RETRO-PL         PIC X(05) VALUE SPACES.
+001900     02  PA52WS-RETRO-DEPARTMENT PIC X(05) VALUE SPACES.
+           02  PA52WS-RETRO-SW         PIC 9(04) VALUE ZEROES.
+               88  PA52WS-RETRO                  VALUE 1.
+           02  PA52WS-DEFAULT-SW       PIC 9(04) VALUE ZEROES.
+               88  PA52WS-DEFAULT-OK             VALUE 1.
+001600     02  PA52WS-POSITION         PIC X(12) VALUE SPACES.
+001700     02  PA52WS-JOB-CODE         PIC X(15) VALUE SPACES.
+001800     02  PA52WS-PL               PIC X(05) VALUE SPACES.
+001900     02  PA52WS-DEPARTMENT       PIC X(05) VALUE SPACES.
+002000     02  PA52WS-STAR             PIC X(01) VALUE "*".
+002100     02  PA52WS-DATE                 PIC 9(08) VALUE ZEROS.
+002200     02  PA52WS-DATE-RED             REDEFINES PA52WS-DATE.
+002600         03  PA52WS-YEAR             PIC 9(04).
+002700         03  PA52WS-MONTH            PIC 9(02).
+002800         03  PA52WS-DAY              PIC 9(02).
+           02  WS-MONTH                PIC 9(03) COMP-3 VALUE ZEROES.
+           02  PA52WS-PL-FN            PIC 9(04) VALUE ZEROES.
+           02  PA52WS-ST-FN            PIC 9(04) VALUE ZEROES.
+           02  PA52WS-POS-FN           PIC 9(04) VALUE ZEROES.
+           02  PA52WS-TERM-FN          PIC 9(04) VALUE ZEROES.
+           02  PA52WS-POS-IDX          PIC 9(02) VALUE ZEROES.
+           02  PA52WS-EMP-STATUS       PIC XX.
+
+           02  PA52WS-PL-ENTERED-SW    PIC 9(01)    VALUE 0.
+               88  NO-PL-ENTERED                    VALUE 0.
+               88  PL-ENTERED                       VALUE 2.
+           02  PA52WS-ST-ENTERED-SW    PIC 9(01)    VALUE 0.
+               88  NO-ST-ENTERED                    VALUE 0.
+               88  ST-ENTERED                       VALUE 2.
+003600     02  PA52WS-NUMBER-SW        PIC 9(01)    VALUE 0.
+003700         88  PA52WS-NUMBER-FOUND              VALUE 1.
+003800     02  PA52WS-ACCEPT-SW        PIC 9(01)    VALUE 0.
+003900         88  PA52WS-ACCEPT-FOUND              VALUE 1.
+004000     02  PA52WS-NOTHING-ENTERED-SW  PIC 9(01) VALUE 0.
+               88  PA52WS-SOMETHING-ENTERED         VALUE 0.
+004100         88  PA52WS-NOTHING-ENTERED           VALUE 1.
+004200     02  PA52WS-FIELDS-EXIST-SW     PIC 9(01) VALUE 0.
+004400         88  PA52WS-NO-FIELDS-EXIST           VALUE 0.
+004300         88  PA52WS-FIELDS-EXIST              VALUE 1.
+004800     02  PA52WS-AMOUNT-ENTERED-SW   PIC 9(01) VALUE 0.
+004900         88  PA52WS-AMOUNT-ENTERED            VALUE 1.
+005000         88  PA52WS-NO-AMOUNT-ENTERED         VALUE 0.
+005100     02  PA52WS-HREMP-SW         PIC 9(01)    VALUE 0.
+005200         88  PA52WS-HREMP-FLDS-FOUND          VALUE 1.
+005300         88  PA52WS-HREMP-NO-FLDS-FOUND       VALUE 0.
+005100     02  PA52WS-PAPEP-SW         PIC 9(01)    VALUE 0.
+005300         88  PA52WS-PAPEP-NO-FLDS-FOUND       VALUE 0.
+005200         88  PA52WS-PAPEP-FLDS-FOUND          VALUE 1.
+005400     02  PA52WS-POS-LVL-SW       PIC 9(01)    VALUE 0.
+005500         88  PA52WS-POS-LVL-FOUND             VALUE 1.
+005600         88  PA52WS-POS-LVL-NOTFOUND          VALUE 0.
+           02  PA52WS-COUNTRY-SW        PIC 9(01)   VALUE 0.
+               88  PA52WS-COMPANY-REQ               VALUE 0.
+               88  PA52WS-COUNTRY-REQ               VALUE 1.
+           02  PA52WS-REQ-EDIT-SW       PIC 9(01)   VALUE 0.
+               88  PA52WS-REQ-EDIT                  VALUE 0.
+               88  PA52WS-NO-REQ-EDIT               VALUE 1.
+           02  PA52WS-SECURED-SW        PIC 9(01)   VALUE 0.
+               88  PA52WS-NOT-SECURED               VALUE 0.
+               88  PA52WS-SECURED                   VALUE 1.
+           02  PA52WS-MOVELEVEL-SW       PIC 9(01)  VALUE 0.
+               88  PA52WS-NO-MOVELEVELDONE          VALUE 0.
+               88  PA52WS-MOVELEVELDONE             VALUE 1.
+006100
+           02  PA52WS-STEP-BLANKED-SW     PIC 9(01) VALUE 0.
+               88  PA52WS-STEP-NOT-BLANKED          VALUE 0.
+               88  PA52WS-STEP-BLANKED              VALUE 1.
+
+J79563     02  WS-REVERSE-RATE-SW          PIC 9(01) VALUE 0.
+J79563         88  WS-REVERSE-RATE-NOTINIT          VALUE 0.
+J79563         88  WS-REVERSE-RATE-INIT             VALUE 1.
+
+J79563     02  WS-REVERSE-RATE-A-34        PIC X(15)  VALUE ZEROES.
+
+006200     02  PA52WS-ROUND-EVEN           PIC 9(04)V9999 VALUE ZEROS.
+006300     02  PA52WS-ROUND-EVEN-A         REDEFINES PA52WS-ROUND-EVEN.
+006400         03  PA52WS-RND-THOUSAND     PIC 9(01).
+006500         03  PA52WS-RND-HUNDRED      PIC 9(01).
+006600         03  PA52WS-RND-TEN          PIC 9(01).
+006700         03  PA52WS-RND-ONE          PIC 9(01).
+006800         03  PA52WS-RND-CENT-A       PIC 9(01).
+006900         03  PA52WS-RND-CENT-B       PIC 9(01).
+007000         03  PA52WS-RND-TENTH-CENT   PIC 9(01).
+007100         03  PA52WS-RND-HUNDREDTH-CENT PIC 9(01).
+007200
+007300     02  PA52WS-OCC-MONTHS-EXT       PIC 9(02) VALUE ZEROS.
+007400
+007500     02  PA52WS-SCRN3-VALUES.
+J56239         03  PA52WS-PCT-NEW-VALUES3     PIC X(60) VALUE SPACES.
+007700         03  PA52WS-PCT-NEW-VALUE-FNS3  PIC 9(04) VALUE ZEROES.
+007800         03  PA52WS-PAT-FLD-NBRS3       PIC 9(04) VALUE ZEROES.
+007900
+011600     02  PA52WS-PAT-ITEM-NAME    PIC X(20) OCCURS 36 TIMES.
+J56239     02  PA52WS-PCT-PRE-VALUE    PIC X(60) OCCURS 36 TIMES.
+J56239     02  PA52WS-PCT-NEW-VALUE    PIC X(60) OCCURS 36 TIMES.
+011900     02  PA52WS-PCT-NEW-VALUE-FN PIC 9(04) OCCURS 36 TIMES.
+012000     02  PA52WS-PAT-FIELD-NBR    PIC 9(04) OCCURS 36 TIMES.
+           02  PA52WS-USER-FLD         PIC 9(02) VALUE ZEROES.
+P58299* LOGGING PA31 DEFAULT FIELDS FOR HIRE ACTION 
+P58299     02  PA52WS-PAT-FLD-NUMBERS-4.        
+P58299         03  FILLER              PIC 9(04) VALUE 0002.
+P58299         03  FILLER              PIC 9(04) VALUE 0003.
+P58299         03  FILLER              PIC 9(04) VALUE 0155.
+P58299         03  FILLER              PIC 9(04) VALUE 0156.
+P58299         03  FILLER              PIC 9(04) VALUE 0005.
+P58299         03  FILLER              PIC 9(04) VALUE 0006.
+P58299         03  FILLER              PIC 9(04) VALUE 0157.
+P58299         03  FILLER              PIC 9(04) VALUE 0158.
+P58299         03  FILLER              PIC 9(04) VALUE 0007.
+P58299         03  FILLER              PIC 9(04) VALUE 0008.
+P58299         03  FILLER              PIC 9(04) VALUE 0009.
+P58299         03  FILLER              PIC 9(04) VALUE 0010.
+P58299         03  FILLER              PIC 9(04) VALUE 0020.
+P58299         03  FILLER              PIC 9(04) VALUE 0056.
+P58299         03  FILLER              PIC 9(04) VALUE 0293.
+P58299         03  FILLER              PIC 9(04) VALUE 0879.
+P58299         03  FILLER              PIC 9(04) VALUE 0881.
+P58299         03  FILLER              PIC 9(04) VALUE 1362.
+P58299         03  FILLER              PIC 9(04) VALUE 0050.
+P58299         03  FILLER              PIC 9(04) VALUE 0089.
+P58299         03  FILLER              PIC 9(04) VALUE 0140.
+P58299         03  FILLER              PIC 9(04) VALUE 0186.
+P58299         03  FILLER              PIC 9(04) VALUE 0151.
+P58299         03  FILLER              PIC 9(04) VALUE 0013.
+P58299         03  FILLER              PIC 9(04) VALUE 0887.
+P58299         03  FILLER              PIC 9(04) VALUE 0889.
+P58299         03  FILLER              PIC 9(04) VALUE 0088.
+P58299         03  FILLER              PIC 9(04) VALUE 0915.
+P58299         03  FILLER              PIC 9(04) VALUE 0032.
+P58299         03  FILLER              PIC 9(04) VALUE 0888.
+P58299         03  FILLER              PIC 9(04) VALUE 0097.
+P58299         03  FILLER              PIC 9(04) VALUE 0033.
+P58299         03  FILLER              PIC 9(04) VALUE 0034.
+P58299         03  FILLER              PIC 9(04) VALUE 0035.
+P58299     02  PA52WS-PAT-FLD-4 REDEFINES PA52WS-PAT-FLD-NUMBERS-4.
+P58299         03  PA52WS-PAT-FLD-NBR-4  PIC 9(04) OCCURS 34 TIMES.
+012100
+012200     02  PA52WS-PAT-FLD-NUMBERS-5.
+012300         03  FILLER              PIC 9(04) VALUE 0553.
+012400         03  FILLER              PIC 9(04) VALUE 1524.
+012400         03  FILLER              PIC 9(04) VALUE 0126.
+012500         03  FILLER              PIC 9(04) VALUE 0019.
+012600         03  FILLER              PIC 9(04) VALUE 0014.
+012700         03  FILLER              PIC 9(04) VALUE 0015.
+012800         03  FILLER              PIC 9(04) VALUE 0016.
+012900         03  FILLER              PIC 9(04) VALUE 0018.
+013000         03  FILLER              PIC 9(04) VALUE 0289.
+013100         03  FILLER              PIC 9(04) VALUE 0017.
+013200         03  FILLER              PIC 9(04) VALUE 0056.
+013300         03  FILLER              PIC 9(04) VALUE 0294.
+013400         03  FILLER              PIC 9(04) VALUE 0064.
+013500         03  FILLER              PIC 9(04) VALUE 0063.
+013600         03  FILLER              PIC 9(04) VALUE 0062.
+013700         03  FILLER              PIC 9(04) VALUE 0789.
+013700         03  FILLER              PIC 9(04) VALUE 0073.
+013800         03  FILLER              PIC 9(04) VALUE 0106.
+013900         03  FILLER              PIC 9(04) VALUE 0021.
+013900         03  FILLER              PIC 9(04) VALUE 0022.
+014000         03  FILLER              PIC 9(04) VALUE 0136.
+014100         03  FILLER              PIC 9(04) VALUE 0135.
+014200         03  FILLER              PIC 9(04) VALUE 0134.
+014400         03  FILLER              PIC 9(04) VALUE 0065.
+014400         03  FILLER              PIC 9(04) VALUE 0293.
+014500         03  FILLER              PIC 9(04) VALUE 0291.
+014600         03  FILLER              PIC 9(04) VALUE 0292.
+014700         03  FILLER              PIC 9(04) VALUE 0288.
+014800         03  FILLER              PIC 9(04) VALUE 0028.
+014900         03  FILLER              PIC 9(04) VALUE 0029.
+015000         03  FILLER              PIC 9(04) VALUE 0030.
+015100         03  FILLER              PIC 9(04) VALUE 0031.
+015200         03  FILLER              PIC 9(04) VALUE 0165.
+               03  FILLER              PIC 9(04) VALUE 0899.
+               03  FILLER              PIC 9(04) VALUE 0898.
+               03  FILLER              PIC 9(04) VALUE 1525.
+               03  FILLER              PIC 9(04) VALUE      ZEROES.
+015500     02  PA52WS-PAT-FLD-5 REDEFINES PA52WS-PAT-FLD-NUMBERS-5.
+015600         03  PA52WS-PAT-FLD-NBR-5  PIC 9(04) OCCURS 37 TIMES.
+015700
+015800     02  PA52WS-PCT-NEW-VALUE5    PIC X(15) OCCURS 37 TIMES.
+015900     02  PA52WS-PCT-NEW-VALUE5-FN PIC 9(04) OCCURS 37 TIMES.
+           02  PA52WS-PCT-STAR          PIC X     OCCURS 37 TIMES.
+      * Fields after 36 are NOT in the action
+
+      * Actual fields used in the action:
+           02  PA52WS-5-FIELD-COUNT    PIC 99 VALUE 36.
+016000
+017800     02  PA52WS-OBJ-ID           PIC 9(12) VALUE ZEROS.
+017900     02  PA52WS-POS-SHIFT        PIC 9(01)       VALUE ZEROES.
+018000     02  PA52WS-POS-PAY-RATE     PIC S9(09)V9999 VALUE ZEROS.
+018100     02  PA52WS-NEW-PAY-RATE     PIC S9(09)V9999 VALUE ZEROS.
+018200     02  PA52WS-NEW-PAY-RATE-A   REDEFINES PA52WS-NEW-PAY-RATE.
+018300         03  PA52WS-TEN-MILLION      PIC 9(01).
+018400         03  PA52WS-MILLION          PIC 9(01).
+018500         03  PA52WS-HUN-THOUSANDS    PIC 9(01).
+018600         03  PA52WS-TEN-THOUSANDS    PIC 9(01).
+018700         03  PA52WS-THOUSANDS        PIC 9(01).
+018800         03  PA52WS-HUNDREDS         PIC 9(01).
+018900         03  PA52WS-TENS             PIC 9(01).
+019000         03  PA52WS-ONES             PIC 9(01).
+019100         03  PA52WS-CENT-A           PIC 9(01).
+019200         03  PA52WS-CENT-B           PIC 9(01).
+019300         03  PA52WS-TENTH-CENT       PIC 9(01).
+019400         03  PA52WS-HUNDREDTH-CENT   PIC 9(01).
+019500
+019600     02  PA52WS-POS-EFFECT-DATE      PIC 9(08) VALUE ZEROES.
+019700     02  PA52WS-POS-POSITION         PIC X(12) VALUE SPACES.
+019800     02  PA52WS-PEP-EFFECT-DATE      PIC 9(08) VALUE ZEROES.
+019900     02  PA52WS-APPROVALS            PIC 9(02) VALUE ZEROES.
+020000     02  PA52WS-DIFF                 PIC 9(02) VALUE ZEROES.
+020100     02  PA52WS-DIFF-ERR             PIC Z9    VALUE ZEROES.
+020200     02  PA52WS-AMOUNT               PIC S9(09)V9999  VALUE ZEROS.
+020300     02  PA52WS-PERCENT              PIC S9(01)V99999 VALUE ZEROS.
+020400     02  PA52WS-DECIMAL-AMT          PIC S9(09)V9999  VALUE ZEROS.
+P76655     02  PA52WS-NODECIMAL-AMT        PIC S9(13)       VALUE ZEROS.
+P76655     02  PA52WS-AMT4                 PIC S9(13)V9999  VALUE ZEROS.
+P76655     02  PA52WS-AMT1                 PIC S9(13)       VALUE ZEROS.
+P76655     02  PA52WS-AMT2                 PIC S9(13)       VALUE ZEROS.
+P76655     02  PA52WS-AMT3                 PIC S9(13)       VALUE ZEROS.
+021000     02  PA52WS-VALUE                PIC X(30).
+           02  PA52WS-VALUE-FN             PIC 9(04).
+           02  PA52WS-PRE-VALUE            PIC X(30).
+021100     02  PA52WS-SEC-MESSAGE          PIC X(50)       VALUE SPACES.
+021200     02  PA52WS-DSP-EMPLOYEE         PIC Z(09)       VALUE ZEROES.
+021300     02  PA52WS-HUT-DATA.
+021400         03  PA52WS-REASON1      PIC X(10)  VALUE SPACES.
+021500         03  PA52WS-REASON2      PIC X(10)  VALUE SPACES.
+021600         03  PA52WS-DESC         PIC X(30)  VALUE SPACES.
+021700         03  FILLER              PIC X(200) VALUE SPACES.
+021800         03  FILLER              PIC X(250) VALUE SPACES.
+021900     02  PA52WS-COMPANY-N            PIC 9(04)        VALUE ZEROS.
+022000     02  PA52WS-COMPANY-A REDEFINES PA52WS-COMPANY-N
+022100                                     PIC X(04).
+022200     02  PA52WS-EXP-COMPANY-N        PIC 9(04)        VALUE ZEROS.
+022300     02  PA52WS-EXP-COMPANY-A REDEFINES PA52WS-EXP-COMPANY-N
+022400                                     PIC X(04).
+022500     02  PA52WS-END-DATE-N           PIC 9(08)        VALUE ZEROS.
+022600     02  PA52WS-END-DATE-A REDEFINES PA52WS-END-DATE-N
+022700                                     PIC X(08).
+022800     02  PA52WS-FTE-N                LIKE NBR-FTE    VALUE ZEROES.
+023100     02  PA52WS-PAY-RATE-N           PIC S9(09)V9999 VALUE ZEROES.
+023400     02  PA52WS-PAY-FREQ-N           PIC 9(01)       VALUE ZEROES.
+023500     02  PA52WS-PAY-FREQ-A REDEFINES PA52WS-PAY-FREQ-N
+023600                                     PIC X(01).
+023700     02  PA52WS-SECURITY-LVL-N       PIC 9(01)       VALUE ZEROES.
+023800     02  PA52WS-SECURITY-LVL-A REDEFINES PA52WS-SECURITY-LVL-N
+023900                                     PIC X(01).
+024000     02  PA52WS-STEP-N               PIC 9(02)       VALUE ZEROES.
+024100     02  PA52WS-STEP-A         REDEFINES PA52WS-STEP-N
+024200                                     PIC X(02).
+024300     02  PA52WS-SHIFT-N              PIC 9(01)       VALUE ZEROES.
+024400     02  PA52WS-SHIFT-A         REDEFINES PA52WS-SHIFT-N
+024500                                     PIC X(01).
+024600     02  PA52WS-SEC-LVL-N            PIC 9(01)       VALUE ZEROES.
+024700     02  PA52WS-SEC-LVL-A       REDEFINES PA52WS-SEC-LVL-N
+024800                                     PIC X(01).
+024600     02  PA52WS-ASSIGN-DATE-N        PIC 9(08)       VALUE ZEROES.
+024700     02  PA52WS-ASSIGN-DATE-A   REDEFINES PA52WS-ASSIGN-DATE-N
+024800                                     PIC X(08).
+024600     02  PA52WS-USER-AMOUNT-N        PIC S9(09)V9999 VALUE ZEROES.
+021000     02  PA52WS-WORK-PRIORITY        PIC 9(04)       VALUE 50.
+021000     02  PA52WS-PCTSET1              PIC X(10)    VALUE "PCTSET1".
+021000     02  PA52WS-SCREEN-CODE.
+               03  PA52WS-SCREEN-NAME      PIC X(04)       VALUE SPACES.
+               03  FILLER                  PIC X(01)       VALUE ".".
+               03  PA52WS-SCREEN-NUMBER    PIC 9(01)       VALUE ZEROES.
+021000     02  PA52WS-FORM                 PIC X(04)       VALUE "FORM".
+005400     02  PA52WS-TERM-CHANGED-SW      PIC 9(01)       VALUE ZEROES.
+005500         88  TERM-CHANGED                            VALUE 0.
+005600         88  TERM-NOTCHANGED                         VALUE 1.
+005400     02  PA52WS-STATUS-CHANGED-SW    PIC 9(01)       VALUE ZEROES.
+005500         88  STATUS-CHANGED                          VALUE 0.
+005600         88  STATUS-NOTCHANGED                       VALUE 1.
+005400     02  PA52WS-TERM-OR-STATUS-CHG-SW PIC 9(01)      VALUE ZEROES.
+005500         88  TERM-OR-STATUS-CHANGED                  VALUE 0.
+005600         88  TERM-OR-STATUS-NOTCHANGED               VALUE 1.
+021000     02  PA52WS-BLANK                PIC X(06)     VALUE "*BLANK".
+021000     02  PA52WS-ALPHA-15             PIC X(15)       VALUE SPACES.
+021000     02  PA52WS-NUM-15               REDEFINES PA52WS-ALPHA-15
+                                               PIC 9(10).9999.
+           02  PA52WS-NUM-15-INTL          REDEFINES PA52WS-ALPHA-15.
+               03  FILLER                      PIC 9(10).
+               03  PA52WS-INTL-DECIMAL         PIC X.
+               03  FILLER                      PIC 9999.
+021000     02  PA52WS-OLD-SALARY           PIC 9(10)V99    VALUE ZEROES.
+021000     02  PA52WS-NEW-SALARY           PIC 9(10)V99    VALUE ZEROES.
+021000     02  PA52WS-PCT-CHANGE           PIC S9(10)V99   VALUE ZEROES.
+001800     02  PA52WS-ANNUAL-HOURS         LIKE ANNUAL-HOURS.
+001900     02  PA52WS-PAY-RATE             LIKE PAY-RATE.
+001900     02  PA52WS-NBR-FTE              LIKE NBR-FTE.
+           02  PA52WS-ANNUAL-HOURS-WF      LIKE ANNUAL-HOURS.
+           02  PA52WS-NBR-FTE-WF           LIKE NBR-FTE.
+001900     02  PA52WS-SCHEDULE             LIKE SCHEDULE.
+001900     02  PA52WS-PAY-STEP             LIKE PAY-STEP.
+001900     02  PA52WS-PAY-GRADE            LIKE PAY-GRADE.
+           02  PA52WS-NEW-PL               PIC X(30).
+           02  PA52WS-NEW-CURRENCY-A       PIC X(30).
+           02  PA52WS-NEW-CURRENCY-FN      PIC 9(04)       VALUE ZEROES.
+005400     02  PA52WS-FIELD-USED-SW        PIC 9(01)       VALUE ZEROES.
+005500         88  FIELD-NOTUSED                           VALUE 0.
+005600         88  FIELD-USED                              VALUE 1.
+005400     02  PA52WS-FIELD-CHANGED-SW     PIC 9(01)       VALUE ZEROES.
+005500         88  FIELD-NOTCHANGED                        VALUE 0.
+005600         88  FIELD-CHANGED                           VALUE 1.
+005400     02  PA52WS-PHRASE-SIZE          PIC 9(02)       VALUE 20.
+           02  PA52WS-CURRENCY-CHANGE-SW   PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-CURRENCY-NOT-CHANGED             VALUE 0.
+               88  PA52WS-CURRENCY-CHANGED                 VALUE 1.
+           02  PA52WS-PL-CHANGE-SW         PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-PL-NOT-CHANGED                   VALUE 0.
+               88  PA52WS-PL-CHANGED                       VALUE 1.
+           02  PA52WS-PAY-RATE-CHANGE-SW   PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-PAY-RATE-NOT-CHANGED             VALUE 0.
+               88  PA52WS-PAY-RATE-CHANGED                 VALUE 1.
+           02  PA52WS-DIST-CO-SW           PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-DIST-CO                          VALUE 1.
+           02  PA52WS-MAX-HIRE-ACTIONS     PIC 9(02) VALUE 10.
+
+           02  PA52WS-ALPHA                PIC X(15).
+           02  PA52WS-NUMBER               PIC 9(10)V9(04) VALUE ZEROES.
+           02  PA52WS-NUMBER-A             PIC X(14)
+                                           REDEFINES PA52WS-NUMBER.
+           02  PA52WS-WHOLE-START          PIC 9999.
+           02  PA52WS-WHOLE-END            PIC 9999.
+           02  PA52WS-FRACT-START          PIC 9999.
+           02  PA52WS-FRACT-END            PIC 9999.
+002100     02  PA52WS-WF-DATE              PIC 9(08)       VALUE ZEROES.
+002200     02  PA52WS-WF-DATE-R            REDEFINES PA52WS-WF-DATE.
+002600         03  PA52WS-CC               PIC 9(02).
+002600         03  PA52WS-YY               PIC 9(02).
+002700         03  PA52WS-MM               PIC 9(02).
+002800         03  PA52WS-DD               PIC 9(02).
+002100     02  PA52WS-WF-DATE-ALPHA-6      PIC X(06)       VALUE SPACES.
+           02  PA52WS-COMP-CODE.
+               03  PA52WS-COMPANY          PIC 9(04)       VALUE ZEROES.
+               03  PA52WS-SUPERVISOR       PIC X(10)       VALUE SPACES.
+           02  PA52WS-OLD-SUPER-EMP        PIC 9(09)       VALUE ZEROES.
+           02  PA52WS-NEXT-OLD-SUPER-EMP   PIC 9(09)       VALUE ZEROES.
+           02  PA52WS-NEW-SUPER-EMP        PIC 9(09)       VALUE ZEROES.
+           02  PA52WS-NEXT-NEW-SUPER-EMP   PIC 9(09)       VALUE ZEROES.
+           02  PA52WS-NBR-OF-SEARCH        PIC 9(04)       VALUE 3.
+      **** Fields used for reversal ****
+           02  PA52WS-FLD-NBR-FOUND-SW     PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-FLD-NBR-NOTFOUND                 VALUE 0.
+               88  PA52WS-FLD-NBR-FOUND                    VALUE 1.
+           02  PA52WS-PCT-ERR-SW           PIC 9(01)       VALUE ZEROES.
+               88  PCT-ERR-NOTFOUND                        VALUE 0.
+               88  PCT-ERR-FOUND                           VALUE 1.
+           02  PA52WS-REV-CHECK-DONE-SW    PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-REV-CHECK-NOT-DONE               VALUE 0.
+               88  PA52WS-REV-CHECK-DONE                   VALUE 1.
+
+           02  PA52WS-PCT-FOUND-SW         PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-PCT-NOT-FOUND                    VALUE 0.
+               88  PA52WS-PCT-FOUND                        VALUE 1.
+           02  PA52WS-FNCTN-SW             PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-NOT-ON-SCR-F                     VALUE 0.
+               88  PA52WS-FULL-ON-SCR-F                    VALUE 1.
+               88  PA52WS-EMPTY-ON-SCR-F                   VALUE 2.
+           02  PA52WS-EXCLUDE-SW           PIC 9(01)       VALUE ZEROES.
+               88  PA52WS-NOT-ON-SCR-E                     VALUE 0.
+               88  PA52WS-FULL-ON-SCR-E                    VALUE 1.
+               88  PA52WS-EMPTY-ON-SCR-E                   VALUE 2.
+           02  PA52WS-EXCLUDE-FN           PIC 9(04)       VALUE ZEROES.
+           02  PA52WS-FNCTN-FN             PIC 9(04)       VALUE ZEROES.
+           02  PA52WS-LEM-FIELDS.
+               05  PA52WS-L-COMPANY          PIC 9(04) VALUE ZEROES.
+               05  PA52WS-L-EMPLOYEE         PIC 9(09) VALUE ZEROES.
+               05  PA52WS-L-LINE-FC          PIC X(01) VALUE SPACES.
+               05  PA52WS-L-STATUS           PIC 9(01) VALUE ZEROES.
+               05  PA52WS-L-DATE-STAMP   LIKE DATE-STAMP VALUE ZEROES.
+               05  PA52WS-L-TIME-STAMP       PIC 9(08) VALUE ZEROES.
+               05  PA52WS-L-ERROR-FLAG       PIC X(01) VALUE SPACES.
+               05  PA52WS-L-WORKASSIGNMENT   PIC 9(04) VALUE ZEROES.
+               05  PA52WS-L-ACTION-CODE      PIC X(10) VALUE SPACES.
+               05  PA52WS-L-ACTION-REASON    PIC X(20) VALUE SPACES.
+               05  PA52WS-L-EFFECT-DATE      PIC 9(08) VALUE ZEROES.
+
+           02  PA52WS-FST-FC                 PIC X(01) VALUE SPACES.
+           02  PA52WS-FST-COMPANY            PIC 9(04) VALUE ZEROES.
+           02  PA52WS-FST-EMPLOYEE           PIC 9(09) VALUE ZEROES.
+           02  PA52WS-FST-STATUS             PIC 9(01) VALUE ZEROES.
+           02  PA52WS-FST-LTM-DATE-STAMP     PIC 9(08) VALUE ZEROES.
+           02  PA52WS-FST-LTM-TIME-STAMP     PIC 9(09) VALUE ZEROES.
+           02  PA52WS-FST-ERROR-FLAG         PIC X(01) VALUE SPACES.
+           02  PA52WS-FST-WORKASSIGNMENT     PIC 9(04) VALUE ZEROES.
+           02  PA52WS-FST-ACTION-CODE        PIC X(09) VALUE SPACES.
+           02  PA52WS-FST-ACTION-REASON      PIC X(20) VALUE SPACES.
+
+           02  PA52WS-LST-FC                 PIC X(01) VALUE SPACES.
+           02  PA52WS-LST-COMPANY            PIC 9(04) VALUE ZEROES.
+           02  PA52WS-LST-EMPLOYEE           PIC 9(09) VALUE ZEROES.
+           02  PA52WS-LST-STATUS             PIC 9(01) VALUE ZEROES.
+           02  PA52WS-LST-LTM-DATE-STAMP     PIC 9(08) VALUE ZEROES.
+           02  PA52WS-LST-LTM-TIME-STAMP     PIC 9(09) VALUE ZEROES.
+           02  PA52WS-LST-ERROR-FLAG         PIC X(01) VALUE SPACES.
+           02  PA52WS-LST-WORKASSIGNMENT     PIC 9(04) VALUE ZEROES.
+           02  PA52WS-LST-ACTION-CODE        PIC X(09) VALUE SPACES.
+           02  PA52WS-LST-ACTION-REASON      PIC X(20) VALUE SPACES.
+
+           02  PA52WS-SEL-ERROR-SW           PIC 9(01) VALUE ZEROES.
+               88  PA52WS-SELECT-ERROR                 VALUE 1.
+               88  PA52WS-NO-SELECT-ERROR              VALUE 0.
+           02  PA52WS-SELECT-SW              PIC 9(01) VALUE ZEROES.
+               88  PA52WS-LTM-SELECTED                 VALUE 1.
+               88  PA52WS-LTM-NOT-SELECTED             VALUE 0.
+           02  PA52WS-LTM-SELECT-CLOSE-SW    PIC 9(01) VALUE ZEROES.
+               88  PA52WS-LTM-SELECT-CLOSE             VALUE 1.
+               88  PA52WS-LTM-SELECT-OPEN              VALUE 0.
+J02328     02  PA52WS-LTM-FLAG               PIC X(01) VALUE SPACES.
+J41791     02  PA52WS-ERROR-CAT-SAVE         PIC X(05) VALUE SPACES.
+
+J28956     02  PA52WS-LTM-FILLED-SW          PIC 9(01) VALUE ZEROES.
+J28956         88  PA52WS-LTM-FILLED                   VALUE 1.
+J28956         88  PA52WS-NOT-LTM-FILLED               VALUE 0.     
+102321     02  PA52WS-OTHER-CODES-SW         PIC 9(01) VALUE ZEROES.
+102321         88  PA52WS-OTHER-CODES                  VALUE 1.
+102321         88  PA52WS-NOMORE-CODES                 VALUE 0.
+
+102321     02 PA52WS-HOLD-EMPLOYEE           PIC 9(09) VALUE ZEROES.
+102321     02 PA52WS-HOLD-ACTION-CODE        PIC X(10) VALUE SPACES.
+
+J28956     02 PA52WS-FILL-LTM.
+J28956        05 PA52WS-FILLED-BY-LTM        PIC 9(01) OCCURS 36 TIMES.
+J28956     02 PA52WS-FILL-LTM1.
+J28956        05 PA52WS-FILLED-BY-LTM-1      PIC 9(01) OCCURS 12 TIMES.
+J28956     02 PA52WS-FILL-LTM2.
+J28956        05 PA52WS-FILLED-BY-LTM-2      PIC 9(01) OCCURS 12 TIMES.
+J28956     02 PA52WS-FILL-LTM3.
+J28956        05 PA52WS-FILLED-BY-LTM-3      PIC 9(01) OCCURS 12 TIMES.
+MG0301
+MG0301     02  PA52WS-ZIP                  PIC X(10)       VALUE SPACES.

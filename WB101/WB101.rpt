@@ -1,0 +1,179 @@
+******* WB101.rpt 3 <3861230635>
+******************************************************************
+$PROGRAM   WB101
+******************************************************************
+
+****************************************************
+$REPORT    WB101-R1
+****************************************************
+
+**************************************
+$GROUP     GN1-PRM-COMPANY
+**************************************
+$PREFIX    G1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+WB101 Date: ZZ/ZZ/ZZ                               Company ZZZ9 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                          Page ZZZZ
+      |     A                                    ; |     ; B    C                                                       |  ; D
+      Time: 99:99                                  Salary History Load into PERSACTION
+      |   ; E
+%
+    Employee       Pay Rate     Basic Cash   House Prov    Cash Housing  Cash Utility  Stand Hours                                  
+    |                        ;|                          ;|                          ;|              ;                             
+    ---------- --------------  ------------  ------------  ------------  ------------  -----------                                      
+    |                        ;|                          ;|                          ;|              ;                             
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     DATE                                   TD 
+ B     PRM-COMPANY
+ C     PRS-NAME
+ D     PAGE                                   PN
+ E     TIME                                   CT
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2-SAL-HIST-REC
+**************************************
+$PREFIX    G2-
+$LEVEL     C
+$FORMAT
+    ZZZZZZZZ9  ZZZZZZZZZZZ.99  ZZZZZZZZZ.99  ZZZZZZZZZ.99  ZZZZZZZZZ.99  ZZZZZZZZZ.99     ZZZZZ.99                                            
+    B          C               D             E             F             G                H                                         
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ B     PCT-EMPLOYEE
+ C     PCT-PAY-RATE  
+ D     PAE-BEN-SALARY-1
+ E     PAE-BEN-SALARY-2
+ F     PAE-BEN-SALARY-3  
+ G     PAE-BEN-SALARY-4
+ H     EMP-STAND-HOURS   
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN3-COUNTERS
+**************************************
+$PREFIX    G3-
+$FORMAT
+%
+Total Salary History Records Added:   ZZZ,ZZZ,ZZZ,ZZ9
+|                                  ;  A
+Total Salary History Recs in error:   ZZZ,ZZZ,ZZZ,ZZ9
+|                                  ;  C
+Total Salary History Recs processed:  ZZZ,ZZZ,ZZZ,ZZ9
+|                                  ;  D
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     RECS-ADDED
+ C     RECS-IN-ERROR
+ D     RECS-PROCESSED
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+**************************************
+$REPORT    WB101-R2           
+**************************************
+$PRINTFILE ERRORS
+**************************************
+$GROUP     GEN1-PRM-COMPANY
+**************************************
+$PREFIX    GE1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+WB101 Date ZZ/ZZ/ZZ                                Company ZZZ9 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                           Page ZZZZ
+      |  ; A                                       |     ; B    C                                                        |  ; D
+      Time 99:99                                   Error Listing
+      |  ; E                                       |           ;
+%
+FC  Employee   Error Message                                                                              
+|; |                                      ;|                        ;                                                               
+-- ---------- -------------------------------------------------------                                                                      
+|; |                                      ;|                        ;                                                               
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     DATE                                   TD
+ B     PRM-COMPANY
+ C     PRS-NAME
+ D     PAGE                                   PN
+ E     TIME                                   CT
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GEN2-SAL-HIST-REC        
+**************************************
+$PREFIX    GE2-
+$LEVEL     B
+$FORMAT
+   ZZZZZZZZZ  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                                  
+   A          B                                                                                     
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     PCT-EMPLOYEE
+ B     ERROR   
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GEN3-COUNTERS
+**************************************
+$PREFIX    GE3-
+$FORMAT
+Total Salary History Recs in error:  ZZZ,ZZZ,ZZZ,ZZ9
+|                                 ;  A
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     RECS-IN-ERROR
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GEN4-BLANK
+**************************************
+$PREFIX    GE4-
+$FORMAT
+%
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

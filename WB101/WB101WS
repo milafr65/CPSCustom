@@ -1,0 +1,67 @@
+******* WB101WS 4 <2530733329>
+000010******************************************************************
+000020*                            WB101WS                             *
+000030******************************************************************
+000040 01  WB101WS.
+000050     02  WS-EMP-ERROR-SW             PIC 9(01) VALUE 0.
+000060         88  NO-EMP-ERROR-FOUND                VALUE 0.
+000070         88  EMP-ERROR-FOUND                   VALUE 1.
+000080     02  WS-AUDIT-SW                 PIC 9(01) VALUE 0.
+000090         88  NO-AUDIT-END                      VALUE 0.
+000100         88  AUDIT-END                         VALUE 1.
+000080     02  WS-AUDIT-BEGIN-SW           PIC 9(01) VALUE 0.
+000090         88  NO-AUDIT-BEGIN                    VALUE 0.
+000100         88  AUDIT-BEGIN                       VALUE 1.
+000110     02  WS-CSV-RECORDS-SW          PIC 9(01) VALUE 0.
+000120         88  CSV-RECS-EXIST                   VALUE 0.
+000130         88  NO-CSV-RECS-EXIST                VALUE 1.
+           02  WS-ERROR-SW                PIC 9(01) VALUE 0.
+               88  NO-ERRORS-PRINTED                VALUE 0.
+               88  ERRORS-PRINTED                   VALUE 1.
+000140     02  WS-PRS-NAME                PIC X(30) VALUE SPACES.
+000150     02  WS-EMPLOYEE                PIC 9(09) VALUE ZEROES.
+000180     02  WS-UPDATE-COUNT            PIC 9(03) VALUE ZEROES.
+000190     02  WS-REST-INFO.
+000200         03  WS-REST-EMPLOYEE       PIC 9(08) VALUE ZEROES.
+000230         03  WS-REST-COUNT          PIC 9(08) VALUE ZEROES.
+000240         03  WS-REST-RECORDS        PIC 9(08) VALUE ZEROES.
+000250         03  WS-REST-ADDED          PIC 9(06) VALUE ZEROES.
+000270         03  WS-REST-ERRORS         PIC 9(06) VALUE ZEROES.
+000280     02  WS-RECORD-COUNT            PIC 9(08) VALUE ZEROES. 
+000290     02  WS-RECS-ADDED              PIC 9(06) VALUE ZEROES.
+000300     02  WS-RECS-CHANGED            PIC 9(06) VALUE ZEROES.
+000310     02  WS-ERROR-RECS              PIC 9(06) VALUE ZEROES.
+000320     02  WS-EMP-ERROR-COUNT         PIC 9(06) VALUE ZEROES.
+000330     02  WS-ERROR-MESSAGE.
+000340         03  WS-ERR-MSG             PIC X(50) VALUE SPACES.
+000330     02  WS-NEW-VALUE-FLD.
+000340         03  WS-NUM-16              PIC 9(12).9(4) VALUE ZEROS.
+000360         03  WS-ALPHA-12            PIC X(14) VALUE SPACES.  
+           02  WS-NEW-SIGNED-FLD.
+               03  WS-NUM-16-SIGNED       PIC S9(12)v9(4) 
+                                          VALUE ZEROS. 
+000380     02  WS-CSV-SALHIST-REC.  
+000430         03  WS-CSV-EMPLOYEE        PIC 9(09) VALUE ZEROES.
+000440         03  WS-CSV-EMPLOYEE-A      REDEFINES WS-CSV-EMPLOYEE
+000450                                    PIC X(09).
+000460         03  WS-CSV-PAY-RATE        PIC 9(9)V9(04) VALUE ZEROES.
+000470         03  WS-CSV-PAY-RATE-A      REDEFINES WS-CSV-PAY-RATE
+000480                                    PIC X(13).
+000460         03  WS-CSV-BASIC-CASH      PIC 9(9)V9(02) VALUE ZEROES.
+000470         03  WS-CSV-BASIC-CASH-A    REDEFINES WS-CSV-BASIC-CASH  
+000480                                    PIC X(11).
+000460         03  WS-CSV-HOUSE-PROVIDED  PIC 9(9)V9(02) VALUE ZEROES.
+000470         03  WS-CSV-HOUSE-PROVIDED-A 
+000470                                REDEFINES WS-CSV-HOUSE-PROVIDED
+000480                                    PIC X(11).
+000460         03  WS-CSV-CASH-HOUSING    PIC 9(9)V9(02) VALUE ZEROES.
+000470         03  WS-CSV-CASH-HOUSING-A  REDEFINES WS-CSV-CASH-HOUSING
+000480                                    PIC X(11).
+000460         03  WS-CSV-CASH-UTILITY    PIC 9(9)V9(02) VALUE ZEROES.
+000470         03  WS-CSV-CASH-UTILITY-A  REDEFINES WS-CSV-CASH-UTILITY
+000480                                    PIC X(11).
+000460         03  WS-CSV-STAND-HOURS     PIC 9(5)V9(02) VALUE ZEROES.
+000470         03  WS-CSV-STAND-HOURS-A   REDEFINES WS-CSV-STAND-HOURS  
+000480                                    PIC X(7).
+000500                                    
+           02  WS-ERROR-RPT-NAME        LIKE FILENAME VALUE SPACES.

@@ -1,0 +1,11 @@
+< prod/bnsrc/BN72WS
+9,10d8
+< 
+<            02  WS-GO-TO-SW                  PIC X VALUE "N".
+
+
+
+
+
+
+Added the above line /law/apps/prod11/bnsrc/bn72ws  as line 12     PEG. 06/15/07  LAWTAPP

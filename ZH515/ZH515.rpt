@@ -1,0 +1,76 @@
+******************************************************************
+$PROGRAM   ZH515
+******************************************************************
+
+****************************************************
+$REPORT    ZH515-R1
+****************************************************
+
+**************************************
+$GROUP     GN1H-COMPANY-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     A
+$FORMAT
+ZH515 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                  Part Time Employee Load Error Report
+      |  ; E1                                     |                                  ;   
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1S-EMPLOYEE-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+   Proc Lvl   Employee   FICA Nbr       Last Name       First Name      Field Data                           Error Message
+   |      ;   |      ;   |      ;       |       ;       |        ;      |        ;                           |           ;
+   ---------- ---------  -------------  --------------- --------------- ----------------------               --------------------------------------------------
+   |        ; |        ; |           ;  |             ; |             ; |                              ;     |                                                ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1D-EMPLOYEE-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     C
+$FORMAT                    1
+   XXXXXXXXXX  XXXXXXXXX  XXXXXXXXXXX   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+   A           B          C             D               E               F                                    G
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-PROCESS-LEVEL
+ B     DTL-EMPLOYEE
+ C     DTL-FICA-NBR
+ D     DTL-LAST-NAME
+ E     DTL-FIRST-NAME
+ F     DTL-EMP-FIELD
+ G     DTL-ERROR-MSG
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+$ENDPGM

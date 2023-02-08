@@ -1,0 +1,235 @@
+******* WBIPWS 8.1.1 <3178272876>
+SB0830* SDB 08/30/2014 INCREASED THE OCCURS TO 9000 FOR NEW HEALTH PLANS
+000010******************************************************************
+000020 01  WBIPWS.
+000030******************************************************************
+
+           02  WBIPWS-POST-COMPANY     PIC 9(04)          VALUE ZEROES.
+           02  WBIPWS-PROCESS-LEVEL    PIC X(05)          VALUE SPACES.
+           02  WBIPWS-AR-PROCESS-LVL   PIC X(05)          VALUE SPACES.
+           02  WBIPWS-CUSTOMER         PIC X(09)          VALUE SPACES.
+           02  WBIPWS-BILL-TO          PIC 9(04)          VALUE ZEROES.
+           02  WBIPWS-CONTRACT         PIC X(10)          VALUE SPACES.
+           02  WBIPWS-EMPLOYEE         PIC 9(09)          VALUE ZEROES. 
+
+000180     02  WBIPWS-PRINT-COUNT      PIC 9(09) COMP-3   VALUE ZEROES.
+           02  WBIPWS-CURRENCY-CODE    LIKE CURRENCY-CODE VALUE SPACES.
+           02  WBIPWS-PLAN-COUNT       PIC 9(03)          VALUE ZEROES.
+
+001480**** OVERALL REGISTER TOTAL FIELDS *****
+001480     02  WBIPWS-REGISTER-TOTALS.
+000170         03  WBIPWS-RT-TOTAL-DUE     LIKE ADJ-AMT   VALUE ZEROES.
+000170         03  WBIPWS-RT-TOTAL-TAX     LIKE ADJ-AMT   VALUE ZEROES.
+
+001480**** INVOICE TOTAL FIELDS *****
+001480     02  WBIPWS-INVOICE-TOTALS.
+001530         03  WBIPWS-TOT-PAYMENTS     PIC S9(15)V99  VALUE ZEROS.
+001530         03  WBIPWS-TOT-CURR-CHARGES PIC S9(15)V99  VALUE ZEROS.
+001530         03  WBIPWS-TOT-ADJUSTMENTS  PIC S9(15)V99  VALUE ZEROS.
+001530         03  WBIPWS-TOT-MAN-ADJUSTS  PIC S9(15)V99  VALUE ZEROS.
+001530         03  WBIPWS-TOT-LATE-FEES    PIC S9(15)V99  VALUE ZEROS.
+001530         03  WBIPWS-TOT-FIN-CHGS     PIC S9(15)V99  VALUE ZEROS.
+000230         03  WBIPWS-INVOICE-AMT      LIKE ADJ-AMT   VALUE ZEROES.
+               03  WBIPWS-TOT-REFUNDS      PIC S9(15)V99  VALUE ZEROS.
+000170         03  WBIPWS-AMOUNT-DUE       LIKE ADJ-AMT   VALUE ZEROES.
+            
+           02  WBIPWS-SV-CUSTOMER      LIKE CUSTOMER      VALUE SPACES.
+           02  WBIPWS-SV-PER-END-DATE  LIKE DATE          VALUE ZEROS.
+           02  WBIPWS-SV-DEPARTMENT    LIKE DEPARTMENT    VALUE SPACES.
+
+           02  WS-PTB-AMOUNT             PIC S9(15)V99    VALUE ZEROS.
+           02  WS-SV-EFF-BILL-DT         PIC 9(08)        VALUE ZEROES.
+           02  WS-MAN-ADJ-DIFF           PIC S9(15)V99    VALUE ZEROS.
+           02  WS-MAN-ADJ-DIFF-TOT       PIC S9(15)V99    VALUE ZEROS.
+           02  WS-LAST-BILL-DATE         PIC 9(08)        VALUE ZEROES.
+           02  WS-CUST-FILE-NAME         PIC X(100)       VALUE SPACES.
+           02  WS-WORK-DIR               PIC X(50)        VALUE SPACES.
+           02  WS-INVOICES-NAME          PIC X(15)        VALUE SPACES.
+
+           02  I-COL                     PIC 9(02)        VALUE ZEROES.
+           02  I-ROW                     PIC 9(02)        VALUE ZEROES.
+           02  I-TOT                     PIC 9(02)        VALUE ZEROES.
+
+           02  WBIPWS-AMT-TYPE-FLAG    PIC X(01)          VALUE SPACES.
+               88  CURRENT-CHARGES                        VALUE "C".
+               88  ADJUSTMENTS                            VALUE "A".
+               88  LATE-ENROLLMENT                        VALUE "L".
+
+           02  WS-RETRO-FLAG           PIC 9(01)          VALUE ZEROES.
+               88  RETRO                                  VALUE 1.
+
+           02  WBIPWS-CR-MEMO-PFX      PIC X(02)          VALUE SPACES.
+           02  WBIPWS-INVOICE-PFX      PIC X(02)          VALUE SPACES.
+000240     02  WBIPWS-INVOICE.
+000250         03  WBIPWS-INVOICE-PREFIX PIC X(02)        VALUE SPACES.
+000260         03  WBIPWS-INVOICE-NBR    PIC 9(08)        VALUE ZEROS.
+               03  FILLER                PIC X(12)        VALUE SPACES.
+
+000240     02  WBIPWS-AR-INVOICE.
+000250         03  WBIPWS-AR-INVC-PFX    PIC X(02)        VALUE SPACES.
+000260         03  WBIPWS-AR-INVC-NBR    PIC 9(08)        VALUE ZEROS.
+               03  WBIPWS-AR-INVC-SFX.
+000250             04  WBIPWS-AR-SEQ     PIC 9(02).
+000260             04  FILLER            PIC X(10).
+
+           02  WS-BILL-DT                PIC 9(08)        VALUE ZEROES.
+000200     02  WS-BILL-DT-R REDEFINES WS-BILL-DT.
+000200         03  WS-BILL-DT-CCYY       PIC 9(04).
+000200         03  WS-BILL-DT-CCYY-R REDEFINES WS-BILL-DT-CCYY.  
+000260             04  WS-BILL-DT-CC     PIC 9(02).
+000260             04  WS-BILL-DT-YY      PIC 9(02).
+               03  WS-BILL-DT-MM         PIC 9(02).
+000280         03  WS-BILL-DT-DD         PIC 9(02).
+000280 
+           02  WS-TMP-DATE               PIC 9(08) VALUE ZEROES.
+           02  WS-TMP-DATE-R REDEFINES WS-TMP-DATE.
+               03  WS-TMP-CCYY           PIC 9(04).
+               03  WS-TMP-CCYY-R REDEFINES WS-TMP-CCYY.
+                   04  WS-TMP-CC         PIC 9(02).
+                   04  WS-TMP-YY         PIC 9(02).
+               03  WS-TMP-MM             PIC 9(02).
+               03  WS-TMP-DD             PIC 9(02).
+
+000200     02  WS-RESTART-INFO.
+000210         03  WS-RESTART-WBIPWRK-FILE LIKE FILENAME  VALUE SPACES.
+000260         03  WS-RESTART-PHASE    PIC 9(01)          VALUE ZEROES.
+               03  WS-RESTART-API-PHASE PIC 9(01)         VALUE ZEROES.
+000280         03  WS-RESTART-COUNT    PIC 9(04)          VALUE ZEROES.
+000300         03  WS-RESTART-CKP-ID   PIC 9(12)          VALUE ZEROES.
+
+000320     02  PRINT-LINE-SW           PIC 9(01)          VALUE 0.
+000330         88  PRINT-LINE                             VALUE 1.
+
+           02  WBIPWS-TYPE-CODE-LOOKUP     PIC X(06)      VALUE SPACES.
+       
+           02  WBIPWS-ACCT-INFO.
+               03  WBIPWS-COMP             PIC X(04).
+               03  WBIPWS-COMP-N REDEFINES WBIPWS-COMP
+                                           PIC 9(04).
+               03  FILLER                  PIC X(01).
+               03  WBIPWS-ACCT-UNIT        PIC X(15).
+               03  FILLER                  PIC X(01).
+               03  WBIPWS-ACCOUNT          PIC X(06).
+               03  WBIPWS-ACCOUNT-N REDEFINES WBIPWS-ACCOUNT
+                                           PIC 9(06).
+               03  FILLER                  PIC X(01).
+               03  WBIPWS-SUB-ACCT         PIC X(04).  
+               03  WBIPWS-SUB-ACCT-N REDEFINES WBIPWS-SUB-ACCT
+                                           PIC 9(04).
+        
+           02  I-OTHER                     PIC 9(03) VALUE 0.
+           
+      *    02  I-PLGRP                     PIC 9(04) VALUE 1500.
+SB0830     02  I-PLGRP                     PIC 9(04) VALUE 9000. 
+           02  WBIPWS-WBP-PLAN-GROUP-TBL.
+      *         03  WBIPWS-PLAN-GROUP-ENTRY OCCURS 1500 TIMES.
+SB0830          03  WBIPWS-PLAN-GROUP-ENTRY OCCURS 9000 TIMES. 
+                   04  WBIPWS-PLAN-KEY.
+                       05  WBIPWS-COLUMN       PIC X(01).
+                       05  WBIPWS-COLUMN-N REDEFINES WBIPWS-COLUMN
+                                               PIC 9(01).
+                       05  WBIPWS-TYPE-CODE.
+                           06  WBIPWS-PLAN-TYPE    PIC X(02).
+                           06  WBIPWS-PLAN-CODE    PIC X(04).
+                   04  WBIPWS-WBP-PLAN-GROUP   PIC X(10).
+                   04  WBIPWS-PLN-GRP-CR-COMP  PIC 9(04).
+                   04  WBIPWS-PLN-GRP-CR-AU    PIC X(15).
+                   04  WBIPWS-PLN-GRP-CR-ACCT  PIC 9(06).
+                   04  WBIPWS-PLN-GRP-CR-SUB   PIC 9(04).   
+                   04  WBIPWS-PLN-GRP-DB-COMP  PIC 9(04).
+                   04  WBIPWS-PLN-GRP-DB-AU    PIC X(15).
+                   04  WBIPWS-PLN-GRP-DB-ACCT  PIC 9(06).
+                   04  WBIPWS-PLN-GRP-DB-SUB   PIC 9(04).   
+        
+           02  WBIPWS-GLSUM-TBL.
+               03  WS-GLSUM-PLAN-GROUP OCCURS 10 TIMES PIC X(10).
+               03  WS-GLSUM-TOT-AMOUNT OCCURS 10 TIMES PIC S9(13)V99.
+
+           02  WBIPWS-COLUMN-HDR-TBL.
+               03  WBIPWS-COL-HDR OCCURS 10 TIMES PIC X(12).
+
+           02  WBIPWS-CODE-TBL.
+               03  WBIPWS-CODE-LINE OCCURS 9 TIMES.
+                   04  WBIPWS-CODE  OCCURS 5 TIMES PIC X(07).
+                
+    
+           02  WBIPWS-TOTAL-COL      OCCURS  10 TIMES 
+                                             PIC S9(15)V99 VALUE ZEROES.
+       
+AIC001     02  WBIPWS-SRCH-COL-NBR         PIC 9          VALUE ZEROES.
+AIC001     02  WBIPWS-SRCH-COL-HDR         PIC X(10)      VALUE SPACES.
+           02  WS-GLSUM-DEBIT-AMOUNT       PIC S9(15)V99  VALUE ZEROES.
+RAY        02  WBIPWS-PRT-GROUP            PIC X(01)      VALUE SPACES.
+RAY        02  WBIPWS-LINE-TYPE            PIC X(01)      VALUE SPACES.
+RAY        02  WBIPWS-IC-INV-GROUP         PIC X(01)      VALUE SPACES.
+GW9/07     02  WBIPWS-CUS-INV-GROUP        PIC X(01)      VALUE SPACES.
+RAY        02  WBIPWS-INVOICES-FILENAME    PIC X(30)      VALUE SPACES. 
+RAY        02  WBIPWS-PRINT-DIR            PIC X(100)     VALUE SPACES.
+RAY        02  WBIPWS-COMMAND-LINE         PIC X(150)     VALUE SPACES.
+           02  WBIPWS-COMMAND-LINE-CUS     PIC X(150)     VALUE SPACES.
+           02  WBIPWS-CMD-RETURN-CODE      PIC 9(08)  COMP VALUE 0.
+           02  WBIPWS-CMD-RETURN-CODE-CUS  PIC 9(08)  COMP VALUE 0.
+           02  WS-CMD-END-MARK             PIC X(01) VALUE X"00".
+           02  WS-SCRIPT-NAME              PIC X(50)
+               VALUE "$LAWDIR/script/wb120_rm_print".
+
+
+           02  WS-DEBIT-PRINT-FLAG         PIC X VALUE "Y".
+
+           02  WBIPWS-ACCT-HOLD-TBL.
+               03  WBIPWS-ACCT-ENTRY-HOLD OCCURS 9 TIMES.
+                   04  WBIPWS-DB-COMP-HOLD          PIC X(04).
+                   04  WBIPWS-DB-COMP-HOLD-N
+                      REDEFINES WBIPWS-DB-COMP-HOLD  PIC 9(04).
+                   04  WBIPWS-DB-AU-HOLD             PIC X(15).
+                   04  WBIPWS-DB-ACCT-HOLD           PIC X(06).
+                   04  WBIPWS-DB-ACCT-HOLD-N 
+                      REDEFINES WBIPWS-DB-ACCT-HOLD  PIC 9(06).
+                   04  WBIPWS-DB-SUB-HOLD            PIC X(04).   
+                   04  WBIPWS-DB-SUB-HOLD-N REDEFINES WBIPWS-DB-SUB-HOLD
+                                                     PIC 9(04).
+        
+           02  WS-PRT-INPUT-COLD-FILE  OCCURS 99 TIMES
+                                                PIC X(100) VALUE SPACES.
+           02  WS-PRT-OUTPUT-COLD-FILE OCCURS 99 TIMES
+                                                PIC X(100) VALUE SPACES.
+
+           02  WS-PRT-INPUT-FILE                PIC X(100) VALUE SPACES.
+ACS001*    02  WS-PRT-OUTPUT-FILE.
+    ****       03 WS-PRT-OUTPUT-FILE-PATH       PIC X(20)
+    ****                                 VALUE "E:\LAW\APPS\COLDING\".
+ACS001*LSF9           03 WS-PRT-OUTPUT-FILE-PATH       PIC X(38)
+ACS001*                   VALUE  "/cps/prd9/law/cpsprd8/work/colding/".
+CURPRD*         03 WS-PRT-OUTPUT-FILE-PATH       PIC X(38)
+      *                    VALUE  "/cps/tst/lawson/cpstst/work/colding/".
+CURTST*         03 WS-PRT-OUTPUT-FILE-PATH       PIC X(38)
+      *                VALUE  "/cps/prd8/lawson/cpsprd8/work/colding/".
+ACS001*        03 WS-PRT-OUTPUT-FILE-TYPE       PIC X(4) VALUE SPACES.
+ACS001*        03 WS-PRT-OUTPUT-FILE-MMM        PIC X(3) VALUE SPACES.
+ACS001*        03 WS-PRT-OUTPUT-FILE-YY         PIC X(2) VALUE SPACES.
+ACS001*        03 WS-PRT-OUTPUT-FILE-UPD        PIC X(1) VALUE SPACES.
+ACS001*        03 WS-PRT-OUTPUT-FILE-TXT        PIC X(4) VALUE ".TXT".
+ACS001
+ACS001     02  WS-PRT-OUTPUT-DIR-EXT.
+ACS001         03  WS-PRT-OUTPUT-EXT1             PIC X(13)
+ACS001                    VALUE "work/colding/".
+ACS001         03  WS-PRT-OUTPUT-FILE-NAME.
+                   05  WS-PRT-OUTPUT-FILE-TYPE  PIC X(4) VALUE SPACES.
+                   05  WS-PRT-OUTPUT-FILE-MMM   PIC X(3) VALUE SPACES.
+                   05  WS-PRT-OUTPUT-FILE-YY    PIC X(2) VALUE SPACES.
+                   05  WS-PRT-OUTPUT-FILE-UPD   PIC X(1) VALUE SPACES.
+                   05  WS-PRT-OUTPUT-FILE-TXT   PIC X(4) VALUE ".TXT".
+ACS001     02  WS-PRT-OUTPUT-FILE               PIC X(100) VALUE SPACES.
+
+           02  WS-COLD-INPUT-FILE-SW            PIC X      VALUE "N".
+           02  WS-COLD-OUTPUT-FILE-SW           PIC X      VALUE "N".
+
+           02  WS-PRT-EOF-SW                  PIC 9(01)  VALUE ZEROES.
+               88 WS-PRT-EOF                             VALUE 1.
+
+           02  WS-PRT-ESC-STRING              PIC X(22)  VALUE
+      *                                       "(10U(s0p12h0s3b4099T".
+                                              "s0p12h0s3b4099T".
+           02  WS-ESC-SEQ-FOUND-SW            PIC 9(01) VALUE ZEROES.
+               88  WS-ESC-SEQ-FOUND           VALUE 1 THRU 9.
+

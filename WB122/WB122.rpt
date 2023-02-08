@@ -1,0 +1,120 @@
+******************************************************************
+$PROGRAM   WB122
+******************************************************************
+
+****************************************************
+$REPORT    WB122-R1
+****************************************************
+
+**************************************
+$GROUP     GN1H-ACM-CUSTOMER
+**************************************
+$PREFIX    G1-
+$LEVEL     A
+$DELAY
+$FORMAT
+XXXXX Date Z9/99/99                    Exception Report               Page ZZZZ
+A1    |  ; A2                          |              ;               |  ; B1
+      Time 99.99                                                     
+      |  ; C1                                                                  
+%
+                                               Last     Curr Cust Bal  Prev Invoice
+  |      ;  | ;  |        ;   |         ;   |        ;  |           ;  |          ;
+  Customer  Sts  Lst Pmt Dt   Lst Pmt Amt    Stmt Date   Adjusted (a)  Bal Adj (b)    Differ
+  |      ;  | ;  |        ;   |         ;   |        ;  |           ;  |          ;  |       ;
+  ---------  --  ----------   -----------    ---------   ------------  ------------  --------- 
+  |       ; | ;  |        ;   |         ;    |       ;   |          ;  |          ;  |       ;
+%
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES           
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    PROGRAM
+ A2    DATE                                   TD    
+ B1    PAGE                                   PN    
+ C1    TIME                                   CT
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+$ENDDTL
+
+$ENDGRP
+
+**************************************
+$GROUP     GN1D-ACM-CUSTOMER
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$FORMAT
+  XXXXXXXXX  X    ZZ/ZZ/ZZ   ZZZZZZZ.99-     ZZ/ZZ/ZZ    ZZZZZZZ.99-   ZZZZZZZ.99-  ZZZZZZZ.99-
+  A          B    C          D               E           F             G            H    
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     ACM-CUSTOMER
+ B     ACM-ACTIVE-STATUS
+ C     ACM-LAST-PMT-DATE                      CD
+ D     ACM-LAST-PMT-AMT
+ E     WBC-LST-STA-DT                         CD
+ F     ACM-CURR-BAL
+ G     WBC-LST-STA-BAL
+ H     BAL-DIFF
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN1E-TOTAL        
+**************************************
+$PREFIX    G2-
+$LEVEL     C
+$DELAY
+$FORMAT
+                                                 Total  ZZZZZZZZ.99-  ZZZZZZZZ.99- ZZZZZZZZ.99-
+                                                 |   ;  A             B            C     
+%
+%
+  Memo Grand Total All Current Customer Balances    ZZZZZZZZZZ.99-
+  |              ; |         ; |               ;    D
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     TTL-CURR-BAL
+ B     TTL-LST-STA-BAL
+ C     TTL-DIFF
+ D     GRAND-TTL-CURR-BAL
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN1F-FOOTER       
+**************************************
+$PREFIX    G3-
+$LEVEL     D
+$FORMAT
+%
+%
+  (a) Current AR90 Balance plus unposted trxs in ARITRANS, e.g. Curr Invoice Amt
+  |                                    ; |                                     ;
+  (b) Prior Statement Balance adjusted for later checks and AROITEMS 
+  |                         ; |                                    ;
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

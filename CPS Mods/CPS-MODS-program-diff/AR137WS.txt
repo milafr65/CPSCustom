@@ -1,0 +1,58 @@
+1c1
+< ******* AR137WS 11.1.8 <2955292789>
+---
+> ******* AR137WS 11.1.5 <3718640518>
+6,52d5
+<            02  AR137WS-ARFINRATE-FOUND  PIC 9(01) VALUE ZEROS.
+<            02  AR137WS-I1               PIC 9(06) VALUE ZEROS.
+<            02  AR137WS-MULTI-FIN-CYCLES PIC 9(01) VALUE ZEROS.
+<            02  FIL-ACM-LATE-PAY-FL.
+<                03  FILLER               PIC X(25) VALUE
+<                                    "(ACM-LATE-PAY-FL != "" "")".
+<                03  FILLER               PIC X(05) VALUE
+<                                         " AND ".
+<            02  FIL-ACM-FIN-CYCLE-1.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-2.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-3.        
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-4.      
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-5.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-6.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-7.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-8.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-9.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ACM-FIN-CYCLE-10.
+<                03  FILLER               PIC X(22) VALUE
+<                                         "(ACM-FIN-CYCLE = ""?"")".
+<            02  FIL-ARO-BANK-INST-TYPE.
+<                03  FILLER               PIC X(29) VALUE
+<                                   "(ARO-BANK-INST-TYPE != ""D"")".
+<            02  FIL-ARO-DUE-DATE.
+<                03  FILLER               PIC X(28) VALUE
+<                                    " AND (ARO-DUE-DATE <= ""?"")".
+<            02  FIL-ARO-TRANS-TYPE.
+<                03  FILLER               PIC X(30) VALUE
+<                                  " AND (ARO-TRANS-TYPE != ""C"")".
+67d19
+<                03  WS-RESTART-COMPANY      PIC 9(04) VALUE ZEROS.
+299c251
+<            02  AR137WS-ERROR-CNT               PIC 9(08)  VALUE ZEROES.
+---
+>            02  AR137WS-LANG-ERR-CNT    PIC 9(08)  VALUE ZEROES.

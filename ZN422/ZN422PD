@@ -1,0 +1,405 @@
+******* ZN422PD 5 <1167626559>
+000010******************************************************************
+      *                  MODIFICATION LOG
+000030******************************************************************
+WO5483* 04/16/2014  MLF  ADDED EMPLOYEE OVERRIDE CAPABILITY
+WO5483*                  (1500- PARAGRAPHS)
+WO5483*                  IF EMPLOYEE IS IN OVERRIDE FILE, THEY ARE
+WO5483*                  WRITTEN TO FILE WHETHER OR NOT THEY HAVE AN
+WO5483*                  UPDATE IN THE REPORTING DATE RANGE
+AI0001* 11/14/2019  SCC  Set effective date to first of next month if 
+AI0001*                  not the first of the month; exception is if 
+AI0001*                  WBPBENTAG.EmpStatus = "DN", use start date.
+      ******************************************************************
+000020 050-EDIT-PARAMETERS             SECTION 10.
+      ******************************************************************
+000040 050-START.
+000050
+000060     MOVE SPACES                     TO PRM-PRS-NAME.
+000070     IF (PRM-COMPANY NOT = ZEROES)
+000080         MOVE PRM-COMPANY            TO DB-COMPANY
+000090         MOVE SPACES                 TO DB-PROCESS-LEVEL
+000100         PERFORM 840-FIND-PRSSET1
+000110         IF (PRSYSTEM-NOTFOUND)
+000120             MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+000130             MOVE 100                TO CRT-ERROR-NBR
+000140             MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+000150             PERFORM 780-PRINT-ERROR-MSG
+000160             GO TO 050-END
+000170         ELSE
+000180             MOVE PRS-NAME           TO PRM-PRS-NAME
+000190         END-IF.
+000200
+           IF  (PRM-PERIOD-START = ZEROES)
+           AND (PRM-PERIOD-END   = ZEROES)
+               MOVE WS-SYSTEM-DATE-YMD     TO PRM-PERIOD-END        
+                                              WSDR-FR-DATE 
+               PERFORM 900-DATE-TO-JULIAN 
+               SUBTRACT 1                FROM WSDR-JULIAN-DAYS 
+               PERFORM 900-JULIAN-TO-DATE 
+               MOVE WSDR-FR-DATE           TO PRM-PERIOD-START.   
+
+           MOVE PRM-PERIOD-START           TO WS-PERIOD-START.
+           MOVE PRM-PERIOD-END             TO WS-PERIOD-END.
+
+           MOVE WS-PERIOD-START            TO WSDR-FR-DATE.
+           PERFORM 900-DATE-TO-JULIAN.
+           SUBTRACT 150                  FROM WSDR-JULIAN-DAYS.
+           PERFORM 900-JULIAN-TO-DATE.
+           MOVE WSDR-FR-DATE               TO WS-150-DAYS.        
+
+001760 050-END.
+001770
+N02230******************************************************************
+002240 100-PROGRAM-CONTROL             SECTION 10.
+002250******************************************************************
+002260 100-START.
+002270
+002280     MOVE 052                        TO CRT-MSG-NBR.
+002290     PERFORM 780-DISPLAY-MSG.
+002300
+001290     PERFORM 900-BUILD-TMP-FILE-NAME.
+           STRING WS-TMP-FILE    DELIMITED BY "tmp"
+                  "ZN422WRK/COMP_"
+                  WS-SYSTEM-Y   
+                  WS-SYSTEM-YY   
+                   "_"
+                  WS-SYSTEM-MM  
+                  "_"
+                  WS-SYSTEM-DD                                       
+                  ".csv"                 INTO WS-COMP-RATE-OUT.
+           MOVE "COMP-DTL"                 TO WS-COMP-DTL-FILE.
+           MOVE "COMP-HDR"                 TO WS-COMP-HDR-FILE.
+           MOVE "COMP-TR"                  TO WS-COMP-TRLR-FILE.
+002350     PERFORM 800-OPENOUTPUTCSV-COMP-HDR.   
+002350     PERFORM 800-OPENOUTPUTCSV-COMPENSATE.     
+002350     PERFORM 800-OPENOUTPUTCSV-COMP-TRLR.    
+002420
+002430     PERFORM 1000-DO-REPORT.
+002440
+002450     PERFORM 800-CLOSECSV-COMP-HDR.   
+002450     PERFORM 800-CLOSECSV-COMPENSATE.     
+002450     PERFORM 800-CLOSECSV-COMP-TRLR.    
+002470
+002480 100-END.
+002490
+002500******************************************************************
+002510 1000-DO-REPORT                  SECTION 50.
+002520******************************************************************
+002530 1000-START.
+002540
+002550     MOVE ZEROES                     TO RPT-PAGE-COUNT (ZN422-R1).
+002560
+002570     MOVE ZEROES                     TO WS-RECORD-COUNT 
+                                              WS-SUM-OF-PAY
+                                              WS-SUM-OF-HOURS.
+002580
+002570     MOVE "H"                        TO HD-RECORD-TYPE. 
+002570     MOVE "CPS"                      TO HD-CLIENT-NAME. 
+002570     MOVE "COMPRATE"                 TO HD-FILE-TYPE.   
+002570     MOVE WS-SYSTEM-DATE-YMD         TO HD-CREATE-DATE. 
+002570     MOVE HHMMSS                     TO HD-CREATE-TIME. 
+002570     MOVE WS-PERIOD-START            TO HD-PERIOD-START-DATE.
+002570     MOVE WS-PERIOD-END              TO HD-PERIOD-END-DATE.
+004170     PERFORM 800-WRITECSV-COMP-HDR.
+
+WO5483     PERFORM 1500-LOAD-OVERRIDES
+WO5483     THRU    1500-END.
+004180
+002590     IF (PRM-COMPANY NOT = ZEROES)
+002590         MOVE PRM-COMPANY                TO DB-COMPANY
+002600         MOVE BENSET8-COMPANY            TO WS-DB-BEG-RNG
+002620         PERFORM 850-FIND-BEGRNG-BENSET8
+002620     ELSE
+002590         MOVE ZEROES                     TO DB-COMPANY
+002600         MOVE ZEROES                     TO DB-EMPLOYEE
+002620         PERFORM 850-FIND-NLT-BENSET8.
+002670
+002690     PERFORM 1020-DO-BEN-COMPANY
+002700     THRU    1020-END.
+003080
+003090     MOVE WS-RECORD-COUNT            TO G2-RECORD-COUNT.
+003100     MOVE GN2-TOTALS                 TO RPT-GROUP-REQUEST.
+003110     PERFORM 700-PRINT-RPT-GRP.
+003120
+002570     MOVE "T"                        TO TR-RECORD-TYPE. 
+002570     MOVE "COMPRATE"                 TO TR-FILE-TYPE.   
+003090     MOVE WS-RECORD-COUNT            TO TR-RECORD-COUNT.
+           INSPECT TR-RECORD-COUNT REPLACING LEADING ZEROES BY SPACES.
+           MOVE TR-RECORD-COUNT            TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO TR-RECORD-COUNT.
+
+003090     MOVE WS-SUM-OF-PAY              TO WS-AMOUNT.       
+           MOVE WS-AMOUNT(1:11)            TO TR-SUM-OF-PAY(1:11).
+           MOVE "."                        TO TR-SUM-OF-PAY(12:1).
+           MOVE WS-AMOUNT(12:2)            TO TR-SUM-OF-PAY(13:2).
+           INSPECT TR-SUM-OF-PAY REPLACING LEADING ZEROES BY SPACES.
+           MOVE TR-SUM-OF-PAY              TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO TR-SUM-OF-PAY.
+
+003090     MOVE WS-SUM-OF-HOURS            TO WS-AMOUNT.       
+           MOVE WS-AMOUNT(1:11)            TO TR-SUM-OF-HOURS(1:11).
+           MOVE "."                        TO TR-SUM-OF-HOURS(12:1).
+           MOVE WS-AMOUNT(12:2)            TO TR-SUM-OF-HOURS(13:2).
+           INSPECT TR-SUM-OF-HOURS  REPLACING LEADING ZEROES BY SPACES.
+           MOVE TR-SUM-OF-HOURS            TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO TR-SUM-OF-HOURS.
+
+004170     PERFORM 800-WRITECSV-COMP-TRLR. 
+004180
+           INITIALIZE                         WS-COMMAND-STRING.
+           STRING "gawk '{gsub(""@"""         DELIMITED BY SIZE
+                 ","""");print}'"             DELIMITED BY SPACES
+                  "  "                        DELIMITED BY SIZE
+                  WS-COMP-DTL-FILE            DELIMITED BY SPACES
+                  " > temp1 "                 DELIMITED BY SIZE
+                                         INTO WS-COMMAND-STRING.
+            CALL "system"               USING WS-COMMAND.
+004180
+           INITIALIZE                         WS-COMMAND-STRING.
+           STRING "cat "                      DELIMITED BY SIZE
+                  WS-COMP-HDR-FILE            DELIMITED BY SPACES
+                  "  "                        DELIMITED BY SIZE 
+                  "temp1"                     DELIMITED BY SPACES
+                  "  "                        DELIMITED BY SIZE 
+                  WS-COMP-TRLR-FILE           DELIMITED BY SPACES
+                  " > "                       DELIMITED BY SIZE 
+                  WS-COMP-RATE-OUT            DELIMITED BY SPACES
+                                         INTO WS-COMMAND-STRING.
+            CALL "system"               USING WS-COMMAND.
+ 
+003130     GO TO 1000-END.
+003140
+003150*****************************************************************
+003160 1020-DO-BEN-COMPANY.
+003170******************************************************************
+003180
+003220     MOVE BEN-COMPANY                TO DB-COMPANY.
+003230     MOVE SPACES                     TO DB-PROCESS-LEVEL.
+003240     PERFORM 840-FIND-PRSSET1.
+003250
+003260     MOVE BEN-COMPANY                TO G1-COMPANY.
+003270     MOVE PRS-NAME                   TO G1-NAME.
+003280
+003290     MOVE GN1-EMP-COMPANY            TO RPT-GROUP-REQUEST.
+003300     PERFORM 700-PRINT-RPT-GRP.
+003310
+003640     PERFORM 1040-DO-BEN-EMPLOYEE
+003650     THRU    1040-END
+003660         UNTIL (BENEFIT-NOTFOUND)
+003670         OR    (BEN-COMPANY NOT = DB-COMPANY).
+003690                               
+003760 1020-END.
+003770
+003780******************************************************************
+003790 1040-DO-BEN-EMPLOYEE.  
+003800******************************************************************
+003810                                   
+WO5483     IF (BEN-UPD-DATE < WS-PERIOD-START)
+WO5483     OR (BEN-UPD-DATE > WS-PERIOD-END)
+WO5483         PERFORM 1550-CHECK-OVERRIDES
+WO5483         THRU    1550-END
+WO5483         IF (WS-OVERRIDE-FOUND-FLAG = 0)
+WO5483             GO TO 1040-NEXT-BENEFIT
+WO5483         ELSE
+WO5483             DISPLAY BEN-EMPLOYEE, " OVERRIDE FOUND"
+WO5483         END-IF
+WO5483     END-IF.
+
+           IF (BEN-PLAN-OPTION = 61 OR 68)
+               NEXT SENTENCE
+           ELSE
+WO5483         IF (WS-OVERRIDE-FOUND-FLAG = 1)
+WO5483            DISPLAY BEN-EMPLOYEE,
+WO5483            " OVERRIDE CANCELLED BY PLAN OPTION"
+WO5483         END-IF
+               GO TO 1040-NEXT-BENEFIT.  
+
+           IF (BEN-PAY-RATE = ZEROES)
+WO5483         IF (WS-OVERRIDE-FOUND-FLAG = 1)
+WO5483            DISPLAY BEN-EMPLOYEE,
+WO5483            " OVERRIDE CANCELLED BY PAY RATE"
+WO5483         END-IF           
+               GO TO 1040-NEXT-BENEFIT.  
+
+004380     MOVE BEN-COMPANY                TO DB-COMPANY.
+004390     MOVE BEN-EMPLOYEE               TO DB-EMPLOYEE.
+004400     PERFORM 840-FIND-EMPSET1.
+004580
+004630     MOVE "D"                        TO CSV-RECORD-TYPE.
+004630     MOVE EMP-EMPLOYEE               TO CSV-EMPLOYEE.
+           INSPECT CSV-EMPLOYEE REPLACING LEADING ZEROES BY SPACES.
+           MOVE CSV-EMPLOYEE               TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO CSV-EMPLOYEE.
+004670     MOVE EMP-FIRST-NAME             TO CSV-FIRST-NAME.
+004660     MOVE EMP-LAST-NAME              TO CSV-LAST-NAME.
+004660     MOVE BEN-START-DATE             TO CSV-EFFECT-DATE.
+AI0001*--- default effective date is Benefit Start Date. If WBPBENTAG
+AI0001*--- EmpStatus = DN, then move on. Otherwise, if the Benefit
+AI0001*--- Start Date is not the first of the month, roll to the 
+AI0001*--- first of next month.
+AI0001     INITIALIZE                         WS-WEN-EMP-STATUS.
+AI0001     MOVE EMP-COMPANY                TO DB-COMPANY.
+AI0001     MOVE EMP-EMPLOYEE               TO DB-EMPLOYEE.
+AI0001     MOVE "DI"                       TO DB-PLAN-TYPE.
+AI0001     MOVE "PNP"                      TO DB-PLAN-CODE.
+AI0001     MOVE WENSET4-PLAN-CODE          TO WS-DB-BEG-RNG. 
+AI0001     PERFORM 850-FIND-BEGRNG-WENSET4.
+AI0001     PERFORM
+AI0001       UNTIL (WBPBENTAG-NOTFOUND)
+AI0001
+AI0001       IF (BEN-START-DATE NOT < WEN-START-DATE)
+AI0001           MOVE WEN-EMP-STATUS       TO WS-WEN-EMP-STATUS
+AI0001       END-IF
+AI0001       PERFORM 860-FIND-NXTRNG-WENSET4
+AI0001     END-PERFORM.
+AI0001     IF (WS-WEN-EMP-STATUS = "DN")
+AI0001         GO TO 1040-CONTINUE
+AI0001     END-IF.
+AI0001     
+AI0001     IF (BEN-START-DATE(7:2) NOT = 01)
+AI0001         MOVE BEN-START-DATE         TO WSDR-FR-DATE
+AI0001         PERFORM 900-GET-DATE-EOM
+AI0001         MOVE WSDR-TO-DATE           TO WSDR-FR-DATE
+AI0001         MOVE 1                      TO WSDR-DAY-INCR
+AI0001         MOVE ZERO                   TO WSDR-MONTH-INCR
+AI0001                                        WSDR-YEAR-INCR
+AI0001         MOVE "Y"                    TO WSDR-EOM-ROLLOVER
+AI0001         PERFORM 900-INCREMENT-DATE
+AI0001         MOVE WSDR-TO-DATE           TO CSV-EFFECT-DATE
+AI0001     END-IF.
+AI0001
+AI0001 1040-CONTINUE.
+           IF  (BEN-STOP-DATE NOT = ZEROES)
+           AND (BEN-STOP-DATE NOT > PRM-PERIOD-END)
+004660         MOVE "HISTORY"              TO CSV-UPDATE-IND 
+           ELSE
+004660         MOVE "CURRENT"              TO CSV-UPDATE-IND.
+004660     MOVE "PEN"                      TO CSV-PAY-TYPE.    
+004660     MOVE "A"                        TO CSV-PAY-RATE-BASIS.   
+004660     MOVE BEN-PAY-RATE               TO WS-AMOUNT.           
+           MOVE WS-AMOUNT(3:9)             TO CSV-PAY-RATE(1:9).
+           MOVE "."                        TO CSV-PAY-RATE(10:1).
+           MOVE WS-AMOUNT(12:2)            TO CSV-PAY-RATE(11:2).
+           INSPECT CSV-PAY-RATE REPLACING LEADING ZEROES BY SPACES.
+           MOVE CSV-PAY-RATE               TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO CSV-PAY-RATE.
+           IF (CSV-PAY-RATE = SPACES OR ".  ")
+               GO TO 1040-NEXT-BENEFIT.   
+004660     MOVE "A"                        TO CSV-PAY-FREQUENCY.        
+004660     MOVE "@"                        TO CSV-SCHED-HOURS    
+004660                                        CSV-SCHED-HOURS-BASIS 
+004720                                        CSV-CD1             
+004730                                        CSV-CD2                   
+004740                                        CSV-CD3            
+004750                                        CSV-CD4.          
+004760
+004170     PERFORM 800-WRITECSV-COMPENSATE.   
+004180
+004190     ADD 1                           TO WS-RECORD-COUNT.
+           ADD BEN-PAY-RATE                TO WS-SUM-OF-PAY.
+004200
+004210 1040-NEXT-BENEFIT.   
+004220
+           IF (PRM-COMPANY NOT = ZEROES)
+004280         PERFORM 860-FIND-NXTRNG-BENSET8
+004280     ELSE    
+004280         PERFORM 860-FIND-NEXT-BENSET8.
+004310
+004320 1040-END.
+
+003150******************************************************************
+003160 1500-LOAD-OVERRIDES.
+003170******************************************************************
+
+003260     MOVE PRM-COMPANY                TO G3-COMPANY.
+003270     MOVE PRS-NAME                   TO G3-NAME.
+
+           MOVE GN3H-WEN-PLAN-CODE     TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM 800-OPENINPUTCSV-ZN420IN.
+           MOVE 1 TO WS-NBR-OF-OVERRIDES.
+       
+           PERFORM  800-READCSV-ZN420IN.             
+
+           PERFORM  1510-WRITE-CSV
+              THRU  1510-END
+             UNTIL (ZN420IN-NOTFOUND). 
+
+       1500-END.
+       
+003150******************************************************************
+       1510-WRITE-CSV.
+003150******************************************************************
+           MOVE 1000                   TO DB-COMPANY.
+           MOVE WKI-EMPLOYEE           TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           
+           IF (EMPLOYEE-FOUND)
+              DISPLAY "LOADING:",
+              WS-NBR-OF-OVERRIDES,":",
+              WKI-EMPLOYEE,
+              WS-OVERRIDE-EMP (WS-NBR-OF-OVERRIDES)
+              MOVE WKI-EMPLOYEE          
+              TO WS-OVERRIDE-EMP (WS-NBR-OF-OVERRIDES)
+              ADD 1 TO WS-NBR-OF-OVERRIDES
+           ELSE
+              DISPLAY "INVALID EMPLOYEE:", WKI-EMPLOYEE
+              GO TO 1510-READ-NEXT-CSV.
+              
+           IF (WS-NBR-OF-OVERRIDES > WS-MAX-OVERRIDES)
+               DISPLAY "***********************************"
+               DISPLAY "NUMBER OF OVERRIDES EXCEEDS MAXIMUM"
+               DISPLAY "***********************************"
+               GO TO 1000-END.
+           
+007800     MOVE WKI-EMPLOYEE           TO G3-EMPLOYEE.
+012900     MOVE EMP-FIRST-NAME         TO G3-FIRST-NAME.
+013000     MOVE EMP-LAST-NAME          TO G3-LAST-NAME.
+           MOVE EMP-FICA-NBR           TO G3-FICA-NBR.
+013200     MOVE EMP-EMP-STATUS         TO G3-EMP-STATUS.
+013300     MOVE EMP-PROCESS-LEVEL      TO G3-PROCESS-LEVEL.
+013900
+014000     MOVE GN3D-WEN-PLAN-CODE     TO RPT-GROUP-REQUEST.
+014100     PERFORM 700-PRINT-RPT-GRP.
+           
+       1510-READ-NEXT-CSV.
+           PERFORM  800-READCSV-ZN420IN.      
+       1510-END.
+       
+ 
+003150******************************************************************
+003160 1550-CHECK-OVERRIDES.
+003170******************************************************************
+
+           MOVE 0 TO WS-OVERRIDE-FOUND-FLAG.
+           PERFORM 1560-CHECK-OVERRIDE-TABLE
+              THRU 1560-END
+           VARYING I1 FROM 1 BY 1
+             UNTIL (I1 > WS-NBR-OF-OVERRIDES)
+             OR    (WS-OVERRIDE-FOUND-FLAG = 1).
+
+
+       1550-END.
+004330
+
+003150******************************************************************
+003160 1560-CHECK-OVERRIDE-TABLE.
+003170******************************************************************
+    
+           IF (BEN-EMPLOYEE = WS-OVERRIDE-EMP (I1) )
+               MOVE 1 TO WS-OVERRIDE-FOUND-FLAG. 
+
+       1560-END.
+
+004330
+015150******************************************************************
+015160 1000-END.
+015170******************************************************************
+015180

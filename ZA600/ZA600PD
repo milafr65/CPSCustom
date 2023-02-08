@@ -1,0 +1,149 @@
+******* ZA600PD 2 <2258389555>
+000100******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+000500
+000600     MOVE PRM-COMPANY            TO DB-COMPANY.
+000700     MOVE SPACES                 TO DB-PROCESS-LEVEL.
+000800     PERFORM 840-FIND-PRSSET1.
+000900     IF (PRSYSTEM-NOTFOUND)
+001000         MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+001100         MOVE 100                TO CRT-ERROR-NBR
+001200         PERFORM 780-PRINT-ERROR-MSG
+001300         GO TO 050-END.
+001400
+001500     MOVE PRS-NAME               TO PRM-PRS-NAME.
+001700
+           IF (PRM-EMPLOYEE = ZEROES)
+               GO TO 050-END.
+
+001800     MOVE PRM-EMPLOYEE           TO DB-EMPLOYEE.
+002000     PERFORM 840-FIND-EMPSET1.
+002100     IF (EMPLOYEE-NOTFOUND)
+002200         MOVE 101                TO CRT-ERROR-NBR
+002300         PERFORM 780-PRINT-ERROR-MSG
+002400         GO TO 050-END.
+002500
+002600 050-END.
+002700
+002800******************************************************************
+002900 100-PROGRAM-CONTROL             SECTION 10.
+003000******************************************************************
+003100 100-START.
+003200
+003500     MOVE 102                    TO CRT-MSG-NBR.
+003600     PERFORM 780-DISPLAY-MSG.
+003700  
+      *--- Audit begin/end included due to calls to Workflow
+           PERFORM 910-AUDIT-BEGIN.
+003800     PERFORM 1000-DO-REPORT.
+           PERFORM 925-AUDIT-END.
+003900
+004400 100-END.
+004500
+004600******************************************************************
+004700 1000-DO-REPORT                  SECTION 50.
+004800******************************************************************
+004900 1000-START.
+005000
+005500     MOVE PRM-COMPANY            TO G1-PRS-COMPANY.
+005500     MOVE PRM-PRS-NAME           TO G1-PRS-NAME.    
+005600
+006200     MOVE GN1-EMP-COMPANY        TO RPT-GROUP-REQUEST.
+006300     PERFORM 700-PRINT-RPT-GRP.
+
+013300     MOVE GN2H-HRH-EMPLOYEE       TO RPT-GROUP-REQUEST.
+013400     PERFORM 700-PRINT-RPT-GRP.
+013500
+           IF (PRM-EMPLOYEE NOT = ZEROES)
+               MOVE PRM-COMPANY        TO DB-COMPANY
+               MOVE PRM-EMPLOYEE       TO DB-EMPLOYEE
+               PERFORM 1060-DO-WORKUNIT
+               THRU    1060-END
+               GO TO 1000-END.
+
+           MOVE WS-SYSTEM-DATE-YMD      TO WSDR-FR-DATE.
+           COMPUTE WSDR-DAY-INCR =        (PRM-LOOK-BACK-DAYS + 1)
+                                           * -1.
+           PERFORM 900-INCREMENT-DATE.
+
+           MOVE PRM-COMPANY             TO DB-COMPANY.
+           MOVE 20                      TO DB-FLD-NBR.
+           MOVE HRHSET5-FLD-NBR         TO WS-DB-BEG-RNG.
+
+           MOVE SPACES                     TO FILTER-STRING.
+           MOVE "(HRH-DATE-STAMP > ?)" TO FILTER-STRING.
+           PERFORM 890-CREATE-FILTER.
+           MOVE WSDR-TO-DATE               TO DATETIME-FILTER-VALUE.
+           PERFORM 890-SET-DATETIME-FILTER-VALUE.
+           PERFORM 850-FILTER-BEGRNG-HRHSET5.
+006400
+006800     PERFORM 1040-DO-HRHISTORY              
+006900     THRU    1040-END
+007000         UNTIL (HRHISTORY-NOTFOUND).
+007100*         OR    (HRH-COMPANY NOT = PRM-COMPANY).
+007200
+007300     GO TO 1000-END.
+007400
+007500******************************************************************
+007600 1040-DO-HRHISTORY.                  
+007700******************************************************************
+007800
+
+013200
+           MOVE HRH-COMPANY        TO DB-COMPANY.
+           MOVE HRH-EMPLOYEE       TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMP-CREATION-DATE < WSDR-TO-DATE)
+               GO TO 1040-NEXT-HRHISTORY.
+
+013300     PERFORM 1060-DO-WORKUNIT        
+013400     THRU    1060-END.               
+013500
+013900 1040-NEXT-HRHISTORY. 
+014000     PERFORM 860-FIND-NXTRNG-HRHSET5.
+014100
+014200 1040-END.
+014300
+007500******************************************************************
+007600 1060-DO-WORKUNIT.                   
+007700******************************************************************
+007800
+      *--- Skip employees with positions that do not have 0 as
+      *--- the first character - these are non-workers (e.g. students)
+           IF (EMP-POSITION(1:1) NOT = "0")
+               GO TO 1060-END.
+
+           IF (EMP-ADJ-HIRE-DATE > EMP-ANNIVERS-DATE)
+               MOVE EMP-ADJ-HIRE-DATE   TO HRCRP-EFFECT-DATE
+           ELSE
+               MOVE EMP-ANNIVERS-DATE   TO HRCRP-EFFECT-DATE.
+013200     MOVE EMP-EMPLOYEE            TO G2-EMP-EMPLOYEE.
+013200     MOVE EMP-FIRST-NAME          TO G2-EMP-FIRST-NAME. 
+013200     MOVE EMP-LAST-NAME           TO G2-EMP-LAST-NAME.  
+013200     MOVE HRCRP-EFFECT-DATE       TO G2-EFFECT-DATE.    
+013300     MOVE GN2D-EMP-EMPLOYEE       TO RPT-GROUP-REQUEST.
+013400     PERFORM 700-PRINT-RPT-GRP.
+           IF (PRM-RUN-MODE = "U")
+CRP001         MOVE EMP-COMPANY         TO HRCRP-COMPANY
+CRP001         MOVE EMP-EMPLOYEE        TO HRCRP-EMPLOYEE
+CRP001*--- The following logic is in library hrpdlib/HRCRPPD
+CRP001         PERFORM 1000-SETUP-CRP-TRIGGER-WS
+CRP001         PERFORM 2000-CREATE-CRP-TRIGGER.
+
+      *--- Pause so as to avoid overloading IPA Work unit creation
+      *--- ***Pause may not be needed****
+           PERFORM 902-SLEEP 5 TIMES.
+           GO TO 1060-END.
+
+      *---Access of PERSACTION file to get clean compile for HRCRPPD library
+          PERFORM 840-FIND-PCTSET1.
+013500
+014100
+014200 1060-END.
+014300
+014400******************************************************************
+014500 1000-END.
+014600******************************************************************
+014700

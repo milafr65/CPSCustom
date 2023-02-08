@@ -1,0 +1,146 @@
+000100******************************************************************
+000200*                            ZH510WS                             *
+000300******************************************************************
+      *                        MODIFICATION LOG                        *
+      ******************************************************************
+WO7878* 07/13/2015  MLF  WO#7878                                       *
+WO7878*             INITIAL VERSION                                    *
+WO7878*                                                                *
+WO7878*             FOR CRSP ENROLLMENT OF PART-TIME EMPLOYEES         *
+WO7878*             CONVERTS DATA SENT IN BY EMPLOYERS TO BE READ INTO *
+WO7878*             HR511/HR515.                                       *
+      ******************************************************************
+201209* 12/09/2020  MLF                                                *
+201209*             INCREASED OMIT TABLE SIZE TO 1000                  *
+201209******************************************************************
+000400 01  ZH515WS.
+WO7330     02  WS-DB-NULL-DATE         PIC 9(08) VALUE 17530101.
+           02  WS-REC-CTR              PIC 9(04) VALUE 0.
+           02  WS-LOAD-ERR-FLAG        PIC X(01) VALUE "N".
+           02  WS-EMP-FIELD            PIC X(30) VALUE SPACES.
+           02  WS-EMAIL                PIC X(60) VALUE SPACES.
+           02  WS-EMAIL-COMMA-FLAG     PIC X(01) VALUE "N".
+           02  WS-EMPLOYEE             PIC 9(09) VALUE 0.
+           02  WS-SEQ-NBR              PIC 9(04) VALUE 0.
+           
+           02  WS-WKLY-HRS             PIC 9(3)V99 VALUE 0.
+           02  WS-WKLY-HRS-X REDEFINES WS-WKLY-HRS PIC X(5).
+           
+           02  WS-PAY-RATE             PIC 9(9)V9999  VALUE 0.
+           02  WS-PAY-RATE-X REDEFINES WS-PAY-RATE PIC X(13).
+           02  WS-PAY-TOTAL            PIC 9(13)V9999 VALUE 0.
+           
+           02  WS-CURR-DATE            VALUE ZEROES.
+               05  WS-CURR-CCYY        PIC 9(04).
+               05  WS-CURR-MM          PIC 9(02).
+               05  WS-CURR-DD          PIC 9(02).
+
+           02  WS-DATE-REFORMAT          PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-DATE-REFORMAT.
+               04  WS-DATE-CCYY          PIC 9(04).
+               04  WS-DATE-MM            PIC 9(02).
+               04  WS-DATE-DD            PIC 9(02).
+
+           02  WS-DATE-SLASH.
+               05  WS-DATE-MM-SL       PIC X(02) VALUE SPACES.
+               05  WS-DATE-MM-SL-N  REDEFINES WS-DATE-MM-SL PIC 9(02).
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-DATE-DD-SL       PIC X(02) VALUE SPACES.
+               05  WS-DATE-DD-SL-N  REDEFINES WS-DATE-DD-SL PIC 9(02).
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-DATE-CCYY-SL      PIC X(04) VALUE SPACES.                                                                     
+               05  WS-DATE-CCYY-SL-N  REDEFINES WS-DATE-CCYY-SL 
+                                                            PIC 9(04).
+                                                            
+           02  WS-DATE-TIME-IN.
+               05  WS-DATE-TIME-YYYY-IN PIC X(04) VALUE SPACES.
+               05  WS-DATE-TIME-YYYY-IN-N REDEFINES
+                   WS-DATE-TIME-YYYY-IN PIC 9(04).
+               05  FILLER               PIC X(01).
+               05  WS-DATE-TIME-MM-IN   PIC X(02) VALUE SPACES.
+               05  WS-DATE-TIME-MM-IN-N REDEFINES
+                   WS-DATE-TIME-MM-IN   PIC 9(02).
+               05  FILLER               PIC X(01).
+               05  WS-DATE-TIME-DD-IN   PIC X(02) VALUE SPACES.
+               05  WS-DATE-TIME-DD-IN-N REDEFINES
+                   WS-DATE-TIME-DD-IN   PIC 9(02).
+               05  FILLER               PIC X(09).
+                                                            
+WO7330     02  WS-DATE-MDY.
+WO7330         05  WS-DATE-MDY-MM      PIC X(02) VALUE SPACES.
+WO7330         05  WS-DATE-MDY-DD      PIC X(02) VALUE SPACES.
+WO7330         05  WS-DATE-MDY-YYYY    PIC X(04) VALUE SPACES.
+WO7330     02  WS-ZIP-CODE-IN.
+WO7330         03  WS-ZIP-5-IN            PIC X(05) VALUE SPACES.
+WO7330         03  WS-ZIP-DASH            PIC X(01) VALUE SPACES.
+WO7330             88  WS-ZIP-CONTAINS-DASH         VALUE "-".
+WO7330         03  WS-ZIP-4-IN            PIC X(04) VALUE SPACES.
+          
+           02  WS-PHONE-WITH-SLASH     PIC X(12) VALUE SPACES.
+           02  WS-PHONE-REFORMAT REDEFINES WS-PHONE-WITH-SLASH.
+               05  WS-AREA-CODE        PIC X(03).
+               05  FILLER              PIC X(01).
+               05  WS-EXCHANGE         PIC X(03).
+               05  FILLER              PIC X(01).
+               05  WS-LOCAL            PIC X(04).
+           02  WS-PHONE-NBR            PIC X(10) VALUE SPACES. 
+           02  WS-PHONE-NBR-RED REDEFINES    WS-PHONE-NBR.
+               05  WS-AREA-CODE-NBR    PIC X(03).                                                                                          
+               05  WS-EXCHANGE-NBR     PIC X(03).
+               05  WS-LOCAL-NBR        PIC X(04).
+               
+           02  WS-FICA-ERR-FLAG         PIC X(01) VALUE "N".
+           
+           02  WS-FICA-NBR-IN.
+               03  WS-FICA-3-IN         PIC X(03) VALUE SPACES.
+               03  WS-FICA-2-IN         PIC X(02) VALUE SPACES.
+               03  WS-FICA-4-IN         PIC X(04) VALUE SPACES.
+               
+           02  WS-FICA-NBR-OUT.
+               03  WS-FICA-3-OUT        PIC X(03).
+               03  FILLER               PIC X(01) VALUE "-".
+               03  WS-FICA-2-OUT        PIC X(02).
+               03  FILLER               PIC X(01) VALUE "-".
+               03  WS-FICA-4-OUT        PIC X(04).
+
+           02  WS-OMIT-FICA-FOUND-FLAG  PIC 9(01) VALUE 0.
+           02  WS-OMIT-FICA-NDX         PIC 9(04) VALUE 0.
+           02  WS-OMIT-FICA-TABLE.
+               03  WS-OMIT-FICA         PIC X(11)
+                                        OCCURS 1000 TIMES.
+               
+           02  WS-POSITION-DATA.
+               03  WS-HOLD-POSITION     PIC X(12) VALUE SPACES.
+               03  WS-POS-PROCESS-LEVEL PIC X(05) VALUE SPACES.
+               03  WS-POS-DEPARTMENT    PIC X(05) VALUE SPACES.
+               03  WS-POS-SUPERVISOR    PIC X(10) VALUE SPACES.
+               03  WS-POS-UNION-CODE    PIC X(10) VALUE SPACES.
+               03  WS-POS-USER-LEVEL    PIC X(10) VALUE SPACES.
+               03  WS-POS-PAY-STEP      PIC 9(02) VALUE ZEROES.
+               03  WS-POS-PAY-GRADE     PIC X(03) VALUE SPACES.
+               03  WS-POS-SCHEDULE      PIC X(09) VALUE SPACES.
+               03  WS-POS-SHIFT         PIC 9(01) VALUE ZEROES.
+               03  WS-POS-BARGAIN-UNIT  PIC X(10) VALUE SPACES.
+               03  WS-POS-SUPERVISOR-IND PIC X(10) VALUE SPACES.
+               03  WS-POS-WORK-SCHED    PIC X(10) VALUE SPACES.
+               03  WS-POS-EXEMPT-EMP    PIC X(01) VALUE SPACES.
+               03  WS-POS-OT-PLAN-CODE  PIC X(04) VALUE SPACES.
+               
+           02  WS-GENDER               PIC X(01)  VALUE SPACE.
+               88  WS-VALID-GENDER                VALUE "M", "F".
+               
+           02  WS-MARITAL-STATUS       PIC X(01)  VALUE SPACE.
+               88  WS-VALID-MARITAL               VALUE "M", "D",
+                                                        "S", "W".
+                                                        
+           02  WS-TITLE                PIC X(04)  VALUE SPACES.
+               88  WS-VALID-TITLE                 VALUE "MR  ",
+                                                        "MRS ",
+                                                        "MS  ",
+                                                        "DR  ",
+                                                        "MISS",
+                                                        "REV ",
+                                                        "DCS ".
+           
+               
+           

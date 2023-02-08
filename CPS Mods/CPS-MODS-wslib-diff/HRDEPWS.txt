@@ -1,0 +1,29 @@
+< IS PROD\WSLIB\HRDEPWS
+> IS VNLA\WSLIB\HRDEPWS
+3,9d2
+< SN0306* MODIFICATIONS:                                                 *
+< SN0406*  SN0406  04/03/06  ADD 4 NEW FIELDS TO SCREEN HR13.1           *
+< SN0406*                                                                *
+< SN0306*  SN0306  03/29/06  ADD HIC-NUMBER TO SCREEN HR13.1             *
+< SN0306*                                                                *
+< SN0306******************************************************************
+< 000300*                                                                *
+137,154d129
+< AI0080         03  HRDEP-DIVORCE-DATE                PIC 9(08).
+< AI0080         03  HRDEP-DIVORCE-DATE-FN             PIC 9(04) BINARY.
+< AI0080         03  HRDEP-MARRIAGE-DATE               PIC 9(08).
+< AI0080         03  HRDEP-MARRIAGE-DATE-FN            PIC 9(04) BINARY.
+< AI0080         03  HRDEP-DISABLED-DATE               PIC 9(08).
+< AI0080         03  HRDEP-DISABLED-DATE-FN            PIC 9(04) BINARY.
+< AI0080         03  HRDEP-STUDENT-DATE                PIC 9(08).
+< AI0080         03  HRDEP-STUDENT-DATE-FN             PIC 9(04) BINARY.
+< SN0306         03  HRDEP-HIC-NUMBER                  PIC X(12).
+< SN0306         03  HRDEP-HIC-NUMBER-FN               PIC 9(04) BINARY.
+< SN0406         03  HRDEP-DIS-APR-CDSP                PIC X(01).
+< SN0406         03  HRDEP-DIS-APR-CDSP-FN             PIC 9(04) BINARY.
+< SN0406         03  HRDEP-DIS-APR-CDSP-D              PIC 9(08).
+< SN0406         03  HRDEP-DIS-APR-CDSP-D-FN           PIC 9(04) BINARY.
+< SN0406         03  HRDEP-DIS-APR-CHP                 PIC X(01).
+< SN0406         03  HRDEP-DIS-APR-CHP-FN              PIC 9(04) BINARY.
+< SN0406         03  HRDEP-DIS-APR-CHP-D               PIC 9(08).
+< SN0406         03  HRDEP-DIS-APR-CHP-D-FN            PIC 9(04) BINARY.

@@ -1,0 +1,29 @@
+< prod/prsrc/PR14PD
+> vnla/prsrc/PR14PD
+2,7d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  MG0304  03/04/04  RESTRICT ENTERING TAX WITHHOLDING FOR       *
+<       *                    MINISTERS ON DISABILITY                     *
+<       ******************************************************************
+116c110
+< MG0304
+---
+> 
+117,131d110
+< MG0304     MOVE EMP-COMPANY             TO WBHUF-COMPANY.
+< MG0304     MOVE EMP-EMPLOYEE            TO WBHUF-EMPLOYEE.
+< MG0304     MOVE "A-ROSTER CODE"         TO WBHUF-FIELD-NAME.
+< MG0304
+< MG0304     PERFORM 8000-GET-HR-USER-FIELD.
+< MG0304
+< MG0304     IF (PR14F1-FC = "A") AND 
+< MG0304        (PR14F1-EDM-DED-CODE = "CDSW") AND 
+< MG0304        (WBHUF-A-VALUE (4:1)   = "M")
+< MG0304         MOVE "WBMSG"                 TO CRT-ERROR-CAT
+< MG0304         MOVE 101                     TO CRT-ERROR-NBR
+< MG0304         MOVE PR14F1-EDM-EMPLOYEE-FN  TO CRT-FIELD-NBR
+< MG0304         GO TO 200-END
+< MG0304     END-IF.
+< MG0304

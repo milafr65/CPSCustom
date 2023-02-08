@@ -1,0 +1,49 @@
+******************************************************************
+$PROGRAM   ZN550
+******************************************************************
+
+****************************************************
+$REPORT    ZN550-R1
+****************************************************
+
+**************************************
+$GROUP     GN1H-WBP-START-DATE
+**************************************
+$PREFIX    G1-
+$LEVEL     A
+$DELAY
+$FORMAT
+ Company  Employee   First Name      Last Name                      Term Dt    St Tp  Comments
+ |      ; |        ; |             ; |                            ; |        ; |    ; |      ;
+$ENDFMT
+
+$ENDGRP
+
+**************************************
+$GROUP     GN1D-WBP-START-DATE
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$FORMAT
+ ZZZ9     ZZZZZZZZ9  XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXX XX XX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ A        B          C               D                              E          F  G   H
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     WBP-COMPANY
+ B     WBP-EMPLOYEE
+ C     EMP-FIRST-NAME
+ D     EMP-LAST-NAME
+ E     TERM-DATE                          
+ F     EMP-EMP-STATUS
+ G     1-EMP-EMP-STATUS
+ H     EMP-COMMENTS
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

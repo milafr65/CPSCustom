@@ -1,0 +1,69 @@
+000100******************************************************************
+000200*                            ZN421WS                             *
+000300******************************************************************
+      *                        MODIFICATION LOG                        *
+      ******************************************************************
+WO5483* 04/16/2014   MLF   WO5483                                      *
+WO5483*                    ADDED EMPLOYEE OVERRIDE CAPABILITY          *
+SR4177* 05/07/2018   MLF   SR4177                                      *
+SR4177*                    CHANGES TO RULES FOR DETERMINING EMPLOYMENT *
+SR4177*                    CODE - ADDED CODE TO CHECK PREVIOUS PAY     *
+SR4177*                    GRADE WHEN REQUIRED                         *
+190313* 03/13/2019  MLF  CHECKING IN 1/7/19 AND 3/13/19 CHANGES        *
+190313*                  190107 CHANGED PAPOSITION PROCESSING TO RETURN*
+190313*                  THE LAST NON-NUMERIC PROCESS LEVEL            *
+190313*                  190313 CREATED SPECIAL EXCEPTION FOR CPH      *
+AI0001* 11/15/2019  SCC -Set effective date to first of next month if 
+AI0001*                  not the first of the month; exception is if 
+AI0001*                  WBPBENTAG.EmpStatus = "DN", use start date.
+AI0001*                 -Adjust logic for SubPlanName; move to 1120-.
+US0300* 01/21/2021  MLF -VERIFY MEMBER HAS EVER BEEN ENROLLED IN A     *
+US0300*                  PENSION PLAN BEFORE WRITING RECORD            *
+      ******************************************************************
+000400 01  ZN421WS.
+000500     02  WS-PROG-RNGPRM-SETTO-HV PIC X(01) VALUE SPACES.
+000600     02  WS-WEN-COMPANY          PIC 9(04) VALUE ZEROES.
+000700     02  WS-WEN-EMPLOYEE         PIC 9(09) VALUE ZEROES.
+000800     02  WS-WEN-PLAN-TYPE        PIC X(02) VALUE SPACES.
+000900     02  WS-WEN-PLAN-CODE        PIC X(04) VALUE SPACES.
+           02  WS-RECORD-COUNT                 PIC 9(13) VALUE ZEROES. 
+           02  WS-EMPLOY-HDR-FILE              PIC X(99) VALUE SPACES. 
+           02  WS-EMPLOY-DTL-FILE              PIC X(99) VALUE SPACES. 
+           02  WS-EMPLOY-TRLR-FILE             PIC X(99) VALUE SPACES. 
+           02  WS-EMPLOYMENT-OUT               PIC X(99) VALUE SPACES. 
+           02  WS-COMMAND.
+               03  WS-COMMAND-STRING           PIC X(600) VALUE SPACES.
+               03  FILLER                      PIC X(01)  VALUE X"00". 
+
+           02  WS-EMPLOYEE-ID.
+               03 WS-EMPLOYEE-NBR              PIC 9(09) VALUE ZEROES. 
+           02  WS-150-DAYS                     PIC 9(08) VALUE ZEROES.  
+           02  WS-PERIOD-START-DATE.                                   
+               03  WS-PERIOD-START-CCYY        PIC 9(04) VALUE ZEROES.
+               03  WS-PERIOD-START-MM          PIC 9(02) VALUE ZEROES.
+               03  WS-PERIOD-START-DD          PIC 9(02) VALUE ZEROES.
+           02  FILLER REDEFINES WS-PERIOD-START-DATE.
+               03  WS-PERIOD-START             PIC 9(08).               
+           02  WS-PERIOD-END-DATE.                                     
+               03  WS-PERIOD-END-CCYY          PIC 9(04) VALUE ZEROES.
+               03  WS-PERIOD-END-MM            PIC 9(02) VALUE ZEROES.
+               03  WS-PERIOD-END-DD            PIC 9(02) VALUE ZEROES.
+           02  FILLER REDEFINES WS-PERIOD-END-DATE.
+               03  WS-PERIOD-END               PIC 9(08).               
+               
+WO5483     02 WS-OVERRIDE-FOUND-FLAG           PIC 9(01) VALUE 0.
+WO5483     02 WS-MAX-OVERRIDES                 PIC 9(04) VALUE 1000.
+WO5483     02 WS-NBR-OF-OVERRIDES              PIC 9(04) VALUE 0.
+WO5483     02 WS-OVERRIDE-TABLE.
+WO5483        03  WS-OVERRIDE-EMP              PIC 9(09)
+WO5483                                         OCCURS 1000 TIMES.
+
+SR4177     02  WS-PREV-PL-FLAG                 PIC X(01) VALUE "N".
+190313     02  WS-PEP-PROC-FLAG                PIC X(01) VALUE "N".
+SR4177     02  WS-PAY-GRADE                    PIC X(03) VALUE SPACES.
+SR4177       88  WS-TARGET-GRADE                         VALUE "1  ",
+SR4177                                                         "1CP",
+SR4177                                                         "2C ",
+SR4177                                                         "2CP".
+AI0001     02  WS-PLAN-CODE-PFX                PIC X(02) VALUE SPACES.
+US0300     02  WS-EMP-IN-PENSION-PLAN          PIC X(01) VALUE "N".

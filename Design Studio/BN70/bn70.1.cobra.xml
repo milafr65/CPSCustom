@@ -1,0 +1,131 @@
+<UIDEF default="true" id="BN70.1_COBRA" token="BN70.1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="BN" TITLE="COBRA Participant Custom" TOKEN="BN70.1" TYPE="ONLINE" XMLGenBy="xscrgen 9.0.1.7.181 2010-08-10 04:00:00 (201010)" XMLGenDT="20110919 1616" add="A" chg="C" custom="1" datareq="AC" dblXmit="D" defaultFC="I" defaultui="true" del="D" evttype="" formid="BN70.1_COBRA" gHeight="24" gWidth="14" height="24" hiddenFC="0" id="form1" inq="I" keycheck="CD" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="I" rtntype="ALL" staticsize="1" typ="o" width="80" workflow="1">
+		<transfers id="transfers1" nbr="_l1">
+			<frm_trans FC="I" PROD="LSAPPS" TITLE="Participant Dates" TOKEN="BN70.2" id="frm_trans1" nbr="_l2"/>
+			<frm_trans PROD="LSAPPS" TITLE="Benefit Entry" TOKEN="BN71.1" id="frm_trans2" nbr="_l53"/>
+			<frm_trans PROD="LSAPPS" TITLE="Participant Listing" TOKEN="BN270" id="frm_trans3" nbr="_l54"/>
+		</transfers>
+		<fld al="right" col="15" id="label1" nbr="_l7" nm="Company:" row="2" sz="8" tp="label"/>
+		<fld al="right" col="11" id="label2" nbr="_l8" nm="Participant:" row="3" sz="12" tp="label"/>
+		<fld al="right" col="14" id="label3" nbr="_l9" nm="Employee:" row="4" sz="9" tp="label"/>
+		<fld al="right" col="13" id="label4" nbr="_l10" nm="Dependent:" row="5" sz="10" tp="label"/>
+		<fld al="right" col="7" id="label5" nbr="_l11" nm="Occurrence Type:" row="6" sz="16" tp="label"/>
+		<fld al="right" col="7" id="label6" nbr="_l12" nm="Occurrence Date:" row="7" sz="16" tp="label"/>
+		<fld al="right" col="6" id="label7" nbr="_l13" nm="Company Notified:" row="8" sz="17" tp="label"/>
+		<fld al="right" col="6" id="label8" nbr="_l14" nm="Termination Date:" row="9" sz="17" tp="label"/>
+		<fld al="right" col="13" id="label9" nbr="_l15" nm="Birthdate:" row="10" sz="10" tp="label"/>
+		<fld al="right" col="13" id="label10" nbr="_l16" nm="Address 1:" row="11" sz="10" tp="label"/>
+		<fld al="right" col="13" id="label11" nbr="_l17" nm="Address 2:" row="12" sz="10" tp="label"/>
+		<fld al="right" col="13" id="label12" nbr="_l18" nm="Address 3:" row="13" sz="10" tp="label"/>
+		<fld al="right" col="13" id="label13" nbr="_l19" nm="Address 4:" row="14" sz="10" tp="label"/>
+		<fld al="right" col="5" id="label14" nbr="_l20" nm="City or Address 5:" row="15" sz="18" tp="label"/>
+		<fld al="right" col="50" id="label15" nbr="_l21" nm="State or Province:" row="15" sz="18" tp="label"/>
+		<fld al="right" col="15" id="label16" nbr="_l22" nm="Country:" row="16" sz="8" tp="label"/>
+		<fld al="right" col="56" id="label17" nbr="_l23" nm="Postal Code:" row="16" sz="12" tp="label"/>
+		<fld al="right" col="13" id="label18" nbr="_l24" nm="Telephone:" row="17" sz="10" tp="label"/>
+		<fld al="right" col="9" id="label19" nbr="_l25" nm="Social Number:" row="18" sz="14" tp="label"/>
+		<fld al="right" col="16" id="label20" nbr="_l26" nm="Gender:" row="19" sz="7" tp="label"/>
+		<fld al="right" col="16" id="label21" nbr="_l27" nm="Smoker:" row="20" sz="7" tp="label"/>
+		<fld al="right" col="15" id="label22" nbr="_l28" nm="Consent:" row="21" sz="8" tp="label"/>
+		<fld al="right" col="4" id="label23" nbr="_l29" nm="Medicare Indicator:" row="22" sz="19" tp="label"/>
+		<fld al="left" blankzero="1" col="1" defval="BN70.1" hsel="1" id="hidden1" nbr="_f0" nm="TC" row="0" sz="6" tp="Hidden"/>
+		<toolbar al="left" blankzero="1" col="9" defval="I" ed="upper" hsel="1" id="toolbar1" nbr="_f1" nm="FC" req="1" row="0" sz="1" customTbrOrder="0">
+			<button Disp="A" id="button1" nbr="_l30" nm="Add" value="A" visible="1"/>
+			<button Disp="C" id="button2" nbr="_l31" nm="Change" value="C" visible="1"/>
+			<button Disp="D" id="button3" nbr="_l32" nm="Delete" value="D" visible="1"/>
+			<button Disp="I" id="button4" nbr="_l33" nm="Inquire" value="I" visible="1"/>
+			<button Disp="N" id="button5" nbr="_l34" nm="Next" value="N" visible="1"/>
+			<button Disp="P" id="button6" nbr="_l35" nm="Previous" value="P" visible="1"/>
+		</toolbar>
+		<fld al="left" blankzero="1" ed="upper" id="hidden2" nbr="_f2" nm="ORIGINATOR" sz="6" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="numeric" id="hidden3" nbr="_f3" nm="PT-XMIT-NBR1" sz="1" tp="Hidden"/>
+		<fld al="right" blankzero="1" col="24" deftkn="HR00.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text1" key="1" keynbr="01" label="Company:" nbr="_f4" nextreq="1" nm="PAR-COMPANY" req="1" row="2" sz="4" tp="Text"/>
+		<fld al="left" blankzero="1" col="36" id="out1" keynbr="CN" nbr="_f5" nm="PRS-NAME" row="2" sz="30" tp="Out"/>
+		<fld al="right" blankzero="1" col="24" deftkn="BN70.1" drlnokeys="0" ed="numeric" hdet="1" hsel="1" hselrul="1" id="text2" key="1" keynbr="HTZ" label="Participant:" nbr="_f6" nm="PAR-PARTICIPNT" row="3" sz="9" tp="Text"/>
+		<fld al="left" blankzero="1" col="36" id="text3" nbr="_f7" nm="PAR-LAST-NAME" row="3" sz="15" tp="Text"/>
+		<fld al="left" blankzero="1" col="52" id="text4" nbr="_f8" nm="PAR-FIRST-NAME" row="3" sz="14" tp="Text"/>
+		<fld al="left" blankzero="1" col="67" ed="upper" id="text5" nbr="_f9" nm="PAR-MIDDLE-INIT" row="3" sz="1" tp="Text"/>
+		<fld al="right" blankzero="1" btnnm="HCU" col="24" deftkn="HR11.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text6" keynbr="H07" label="Employee:" nbr="_f10" nm="PAR-EMPLOYEE" row="4" sz="9" tp="Text"/>
+		<fld al="left" blankzero="1" col="36" drlnokeys="0" hdet="1" id="out2" keynbr="HEN" nbr="_f11" nm="EMP-NAME" row="4" sz="40" tp="Out"/>
+		<fld al="right" blankzero="1" btnnm="HU1" col="24" deftkn="HR13.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hsel="1" hselrul="1" id="text7" keynbr="HBV" label="Dependent:" nbr="_f12" nm="PAR-DEPENDENT" row="5" sz="4" tp="Text"/>
+		<fld al="left" blankzero="1" col="36" id="out3" keynbr="HHS" nbr="_f13" nm="PCO-DESCRIPTION" row="5" sz="30" tp="Out"/>
+		<fld al="left" blankzero="1" col="24" deftkn="BN00.3" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text8" keynbr="HTJ" label="Occurrence Type:" nbr="_f14" nknimp="1" nm="PAR-OCCUR-TYPE" req="1" row="6" sz="2" tp="Text"/>
+		<fld al="left" blankzero="1" col="36" id="out4" keynbr="HTK" nbr="_f15" nknimp="1" nm="OCC-DESC" row="6" sz="30" tp="Out"/>
+		<fld al="left" blankzero="1" col="24" ed="date" id="text9" keynbr="H10" label="Occurrence Date:" nbr="_f16" nm="PAR-OCCUR-DATE" req="1" row="7" sz="6" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" ed="date" id="text10" label="Company Notified:" nbr="_f17" nm="PAR-EVENT-DATE" row="8" sz="6" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" ed="date" id="out5" label="Termination Date:" nbr="_f18" nm="PAR-TERM-DATE" row="9" sz="8" tp="Out"/>
+		<fld al="left" blankzero="1" col="24" ed="date" id="text11" label="Birthdate:" nbr="_f19" nm="PAR-BIRTHDATE" row="10" sz="8" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" id="text12" label="Address 1:" nbr="_f20" nm="PAR-ADDR1" row="11" sz="30" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" id="text13" label="Address 2:" nbr="_f21" nm="PAR-ADDR2" row="12" sz="30" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" id="text14" label="Address 3:" nbr="_f22" nm="PAR-ADDR3" row="13" sz="30" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" id="text15" label="Address 4:" nbr="_f23" nm="PAR-ADDR4" row="14" sz="30" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" id="text16" label="City or Address 5:" nbr="_f24" nm="PAR-CITY" row="15" sz="18" tp="Text"/>
+		<fld al="left" blankzero="1" col="69" ed="upper" id="text17" label="State or Province:" nbr="_f25" nm="PAR-STATE" row="15" sz="2" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text18" keynbr="VA2" label="Country:" nbr="_f27" nknimp="1" nm="PAR-COUNTRY-CODE" row="16" sz="2" tp="Text"/>
+		<fld al="left" blankzero="1" col="29" id="out6" keynbr="VAD" nbr="_f27" nknimp="1" nm="INT-COUNTRY-DESC" row="16" sz="22" tp="Out"/>
+		<fld al="left" blankzero="1" col="69" ed="upper" id="text19" label="Postal Code:" nbr="_f26" nm="PAR-ZIP" row="16" sz="10" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" id="text20" label="Telephone:" nbr="_f28" nm="PAR-HM-PHONE-CNTRY" row="17" sz="6" tp="Text"/>
+		<fld al="left" blankzero="1" col="31" ed="upper" id="text21" nbr="_f29" nm="PAR-HM-PHONE-NBR" row="17" sz="15" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" id="text22" label="Social Number:" nbr="_f30" nm="PAR-FICA-NBR" row="18" sz="20" tp="Text"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" hsel="1" id="select1" label="Gender:" nbr="_f31" nm="PAR-SEX" row="19" seltype="" sz="1" tp="Select">
+			<vals Disp="F" Tran="F" id="vals1" nbr="_l36">Female</vals>
+			<vals Disp="M" Tran="M" id="vals2" nbr="_l37">Male</vals>
+		</fld>
+		<fld al="left" blankzero="1" col="36" defval="_f32" id="out7" isxlt="_f31" nbr="_f32" nm="PAR-SEX" row="19" sz="30" tp="Out"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" hsel="1" id="select2" label="Smoker:" nbr="_f33" nm="PAR-SMOKER" row="20" seltype="" sz="1" tp="Select">
+			<vals Disp="Y" Tran="Y" id="vals3" nbr="_l38">Yes</vals>
+			<vals Disp="N" Tran="N" id="vals4" nbr="_l39">No</vals>
+		</fld>
+		<fld al="left" blankzero="1" col="36" defval="_f34" id="out8" isxlt="_f33" nbr="_f34" nm="PAR-SMOKER" row="20" sz="30" tp="Out"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" hsel="1" id="select3" label="Consent:" nbr="_f35" nm="PAR-CONSENT" row="21" seltype="" sz="1" tp="Select">
+			<vals Disp="N" Tran="N" id="vals5" nbr="_l40">No</vals>
+			<vals Disp="Y" Tran="Y" id="vals6" nbr="_l41">Yes</vals>
+		</fld>
+		<fld al="left" blankzero="1" col="36" defval="_f36" id="out9" isxlt="_f35" nbr="_f36" nm="PAR-CONSENT" row="21" sz="3" tp="Out"/>
+		<fld al="left" blankzero="1" col="24" ed="upper" hsel="1" id="select4" label="Medicare Indicator:" nbr="_f37" nm="PAR-MEDICARE-IND" row="22" seltype="" sz="1" tp="Select">
+			<vals Disp="" Tran="" id="vals7" nbr="_l42">Not Applicable</vals>
+			<vals Disp="A" Tran="A" id="vals8" nbr="_l43">Medicare Part A</vals>
+			<vals Disp="B" Tran="B" id="vals9" nbr="_l44">Medicare Part B</vals>
+			<vals Disp="C" Tran="C" id="vals10" nbr="_l45">Medicare Part A and B</vals>
+			<vals Disp="D" Tran="D" id="vals11" nbr="_l46">Medicare Part Unknown</vals>
+			<vals Disp="E" Tran="E" id="vals12" nbr="_l47">No Medicare</vals>
+			<vals Disp="F" Tran="F" id="vals13" nbr="_l48">Medicare Part A and B and D</vals>
+			<vals Disp="G" Tran="G" id="vals14" nbr="_l49">Medicare Part A and D</vals>
+			<vals Disp="H" Tran="H" id="vals15" nbr="_l50">Medicare Part B and D</vals>
+			<vals Disp="I" Tran="I" id="vals16" nbr="_l51">Medicare Part D</vals>
+		</fld>
+		<fld al="left" blankzero="1" col="36" defval="_f38" id="out10" isxlt="_f37" nbr="_f38" nm="PAR-MEDICARE-IND" row="22" sz="27" tp="Out"/>
+		<fld al="left" blankzero="0" ed="upper" id="sp1" nbr="_f39" nm="_HK" req="1" sz="13" tp="Sp"/>
+		<PATH id="path1" nbr="_l52"/>
+		<msgBar bMsgArea="1" id="msgbar1" nbr="msgBar"/>
+		<workflows id="workflows1" nbr="_l0">
+			<workflow id="COBRA Cust" nbr="_l1" pdl="LSAPPS" value="A" workcatval="">
+				<criteria id="criteria1" nbr="_l2">
+					<criterion id="criterion1" name="CRITERIA-1" nbr="_l3" pos="0" src="" type="Literal" value=""/>
+					<criterion id="criterion2" name="CRITERIA-2" nbr="_l4" pos="1" src="" type="Literal" value=""/>
+					<criterion id="criterion3" name="CRITERIA-3" nbr="_l5" pos="2" src="" type="Literal" value=""/>
+				</criteria>
+				<variables id="variables1" nbr="_l6">
+					<variable id="variable1" name="COMPANY" nbr="_l7" pos="0" src="Variable" type="Field" value="PAR-COMPANY"/>
+					<variable id="variable2" name="EMPLOYEE" nbr="_l8" pos="1" src="Variable" type="Field" value="PAR-EMPLOYEE"/>
+					<variable id="variable3" name="PARTICIPNT" nbr="_l9" pos="2" src="Variable" type="Field" value="PAR-PARTICIPNT"/>
+					<variable id="variable4" name="START_DATE" nbr="_l10" pos="3" src="Variable" type="Field" value="PAR-OCCUR-DATE"/>
+				</variables>
+			</workflow>
+			<workflow id="COBRA Cust Chg" pdl="LSAPPS" value="C" workcatval="" nbr="_l0">
+				<criteria id="criteria2" nbr="_l1">
+					<criterion name="CRITERIA-1" pos="0" src="" type="Literal" value="" id="criterion4" nbr="_l2"/>
+					<criterion name="CRITERIA-2" pos="1" src="" type="Literal" value="" id="criterion5" nbr="_l3"/>
+					<criterion name="CRITERIA-3" pos="2" src="" type="Literal" value="" id="criterion6" nbr="_l4"/>
+				</criteria>
+				<variables id="variables2" nbr="_l5">
+					<variable name="COMPANY" pos="0" src="Variable" type="Field" value="PAR-COMPANY" id="variable5" nbr="_l6"/>
+					<variable name="EMPLOYEE" pos="1" src="Variable" type="Field" value="PAR-EMPLOYEE" id="variable6" nbr="_l7"/>
+					<variable name="PARTICIPNT" pos="2" src="Variable" type="Field" value="PAR-PARTICIPNT" id="variable7" nbr="_l8"/>
+					<variable name="START_DATE" pos="3" src="Variable" type="Field" value="PAR-OCCUR-DATE" id="variable8" nbr="_l9"/>
+				</variables>
+			</workflow>
+		</workflows>
+	</form>
+	<TRANSACTION trantype="ALL"/>
+</UIDEF>

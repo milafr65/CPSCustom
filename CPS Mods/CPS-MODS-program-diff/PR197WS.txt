@@ -1,0 +1,29 @@
+< prod/prsrc/PR197WS
+> vnla/prsrc/PR197WS
+2,7d1
+< MG0825******************************************************************
+< MG0825*               M O D I F I C A T I O N   L O G:                 *
+< MG0825******************************************************************
+< MG0825*  Modified by MARK GLISSEN - MG0825                             *
+< MG0825******************************************************************
+< MG0825*  08/25/06  - INCREASED OCCURS DUE TO NEW PLANS ADDED           *
+152c146
+< MG0825     02  WS-TBL-MAX              PIC 9(03) VALUE 500.
+---
+>            02  WS-TBL-MAX              PIC 9(03) VALUE 200.
+155c149
+< MG0825         03  WS-PLN-TBL-1-GRP        OCCURS 500 TIMES.
+---
+>                03  WS-PLN-TBL-1-GRP        OCCURS 200 TIMES.
+170c164
+< MG0825         03  WS-PLN-TBL-2-GRP        OCCURS 500 TIMES.
+---
+>                03  WS-PLN-TBL-2-GRP        OCCURS 200 TIMES.
+177c171
+< MG0825         03  WS-BENWORK-OCC          OCCURS 500 TIMES.
+---
+> 014300         03  WS-BENWORK-OCC          OCCURS 200 TIMES.
+183c177
+< MG0825         03  WS-BENWORK-OCC-2        OCCURS 500 TIMES.
+---
+> 014900         03  WS-BENWORK-OCC-2        OCCURS 200 TIMES.

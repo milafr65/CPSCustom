@@ -1,0 +1,270 @@
+<UIDEF default="true" id="HR13.1.NEW" token="HR13.1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="HR" TITLE="Dependent" TOKEN="HR13.1" TYPE="ONLINE" XMLGenBy="xscrgen 10.0.9.0.1754 2019-09-17 00:37:17" XMLGenDT="20201011 1027" add="A" chg="C" datareq="AC" defaultFC="I" del="D" hiddenFC="0" inq="I" iosleadingzeroes="DEFAULT" keycheck="CD" lineDupAllow="0" next="NP" id="form1" defaultui="true" formid="HR13.1.NEW" nbr="form1" staticsize="1" pdl="LSAPPS" custom="1" width="80" height="24" gWidth="13" gHeight="24" typ="o" workflow="0" objmode="0" targetid="junk" prefc="" evttype="" rtntype="ALL">
+		<transfers nbr="_l1" id="transfers1">
+			<frm_trans PROD="LSAPPS" TITLE="Employee" TOKEN="HR11.1" nbr="_l2" id="frm_trans1"/>
+			<frm_trans PROD="LSAPPS" TITLE="Dependent Listing" TOKEN="HR213" nbr="_l3" id="frm_trans2"/>
+		</transfers>
+		<fld al="right" col="17" nm="Company:" row="2" sz="8" tp="label" nbr="_l4" id="label1"/>
+		<fld al="right" col="16" nm="Employee:" row="3" sz="9" tp="label" nbr="_l5" id="label2"/>
+		<fld al="right" col="15" nm="Dependent:" row="4" sz="10" tp="label" nbr="_l6" id="label3"/>
+		<fld al="left" blankzero="1" col="1" defval="HR13.1" hsel="1" nbr="_f0" nm="TC" row="0" sz="6" tp="Hidden" id="hidden1"/>
+		<toolbar al="left" blankzero="1" col="9" defval="I" ed="upper" hsel="1" nbr="_f1" nm="FC" req="1" row="0" sz="1" id="toolbar1" customTbrOrder="0">
+			<button Disp="A" nm="Add" value="A" nbr="_l7" id="button1" visible="1"/>
+			<button Disp="C" nm="Change" value="C" nbr="_l8" id="button2" visible="1"/>
+			<button Disp="D" nm="Delete" value="D" nbr="_l9" id="button3" visible="1"/>
+			<button Disp="I" nm="Inquire" value="I" nbr="_l10" id="button4" visible="1"/>
+			<button Disp="N" nm="Next" value="N" nbr="_l11" id="button5" visible="1"/>
+			<button Disp="P" nm="Previous" value="P" nbr="_l12" id="button6" visible="1"/>
+		</toolbar>
+		<fld al="left" blankzero="0" ed="numeric" nbr="_f2" nm="PT-XMIT-NBR1" sz="1" tp="Hidden" id="hidden2"/>
+		<fld al="left" blankzero="0" ed="numeric" nbr="_f3" nm="PT-XMIT-NBR2" sz="1" tp="Hidden" id="hidden3"/>
+		<fld al="left" blankzero="0" ed="numeric" nbr="_f4" nm="XMIT-D" sz="1" tp="Hidden" id="hidden4"/>
+		<fld al="left" blankzero="0" ed="numeric" nbr="_f5" nm="EFF-DT-XMIT" sz="1" tp="Hidden" id="hidden5"/>
+		<fld al="left" blankzero="1" ed="upper" keynbr="D29" nbr="_f6" nm="SCREEN-CODE" sz="5" tp="Hidden" id="hidden6"/>
+		<fld al="left" blankzero="1" defval="0" ed="numeric" keynbr="HU4" nbr="_f7" nknimp="1" nm="PAC-EMP-APP" sz="1" tp="Hidden" id="hidden7"/>
+		<fld al="left" blankzero="1" defval="DP" ed="upper" keynbr="H20" nbr="_f8" nknimp="1" nm="PAC-CMT-TYPE" sz="2" tp="Hidden" id="hidden8"/>
+		<fld al="right" blankzero="1" col="26" deftkn="HR00.1" drlnokeys="1" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" key="1" keynbr="01" label="Company:" nbr="_f9" nextreq="1" nm="EMD-COMPANY" req="1" row="2" sz="4" tp="Text" id="text1"/>
+		<fld al="left" blankzero="1" col="39" keynbr="CN" nbr="_f10" nm="PRS-NAME" row="2" sz="30" tp="Out" id="out1"/>
+		<fld al="right" blankzero="1" btnnm="HCU" col="26" deftkn="HR11.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" key="1" keynbr="H07" label="Employee:" nbr="_f11" nm="EMD-EMPLOYEE" req="1" row="3" sz="9" tp="Text" id="text2"/>
+		<fld al="left" blankzero="1" col="39" drlnokeys="0" hdet="1" hrul="1" keynbr="HEN" nbr="_f12" nm="EMP-FULL-NAME" row="3" sz="39" tp="Out" id="out2"/>
+		<fld al="right" blankzero="1" btnnm="HU1" col="26" deftkn="HR13.1" drlnokeys="0" ed="numeric" hdet="1" hrul="1" hsel="1" hselrul="1" key="1" keynbr="HBV" label="Dependent:" nbr="_f13" nm="EMD-SEQ-NBR" req="1" row="4" sz="4" tp="Text" id="text3"/>
+		<fld al="left" blankzero="1" col="39" keynbr="HBW" nbr="_f14" nm="EMD-SHORT-NAME" row="4" sz="30" tp="Out" id="out3"/>
+		<fld al="left" blankzero="0" ed="upper" nbr="_f15" nm="EMP-FICA-NBR" sz="20" tp="Hidden" id="hidden9"/>
+		<fld al="left" blankzero="0" nbr="_f16" nm="EMD-USER-ID" sz="10" tp="Hidden" id="hidden10"/>
+		<tabregion det="0" folders="1" height="13" nbr="TR0" row="5" scroll="0" id="tabregion1" col="1" width="79" grp="tab1">
+			<tab nbr="TF0-0" nm=" Main" par="TR0" secnm="MAIN-TAB" tabprot="0" id="tab1">
+				<fld al="right" col="20" nm="Last Name:" par="TF0-0" row="0" sz="10" tp="label" nbr="_l13" id="label4"/>
+				<fld al="right" col="3" nm="First Name, Middle Initial:" par="TF0-0" row="1" sz="27" tp="label" nbr="_l14" id="label5"/>
+				<fld al="right" col="23" nm="Status:" par="TF0-0" row="2" sz="7" tp="label" nbr="_l15" id="label6"/>
+				<fld al="right" col="16" nm="Social Number:" par="TF0-0" row="3" sz="14" tp="label" nbr="_l16" id="label7"/>
+				<fld al="right" col="13" nm="Employee Address:" par="TF0-0" row="4" sz="17" tp="label" nbr="_l17" id="label8"/>
+				<fld al="right" col="17" nm="Relationship:" par="TF0-0" row="5" sz="13" tp="label" nbr="_l18" id="label9"/>
+				<fld al="right" col="22" nm="Consent:" par="TF0-0" row="6" sz="8" tp="label" nbr="_l19" id="label10"/>
+				<fld al="left" blankzero="1" ed="upper" nbr="_f17" nm="MAIN-TAB" par="TF0-0" sz="6" tp="Tab" id="tabfld1"/>
+				<fld al="left" blankzero="1" col="31" label="Last Name:" mxsz="30" nbr="_f18" nm="EMD-LAST-NAME-PRE" par="TF0-0" row="0" sz="4" tp="Text" id="text4"/>
+				<fld al="left" blankzero="1" col="36" nbr="_f19" nm="EMD-LAST-NAME" par="TF0-0" req="1" row="0" sz="30" tp="Text" id="text5"/>
+				<fld al="left" blankzero="1" col="67" deftkn="HR91.3" hdef="1" hsel="1" hselrul="1" keynbr="Hql" nbr="_f20" nknimp="1" nm="EMD-NAME-SUFFIX" par="TF0-0" row="0" sz="4" tp="Text" id="text6"/>
+				<fld al="left" blankzero="1" col="31" label="First Name, Middle Initial:" nbr="_f21" nm="EMD-FIRST-NAME" par="TF0-0" req="1" row="1" sz="15" tp="Text" id="text7"/>
+				<fld al="left" blankzero="1" col="47" ed="upper" nbr="_f22" nm="EMD-MIDDLE-INIT" par="TF0-0" row="1" sz="1" tp="Text" id="text8"/>
+				<fld al="left" blankzero="1" col="31" defval="A" ed="upper" hsel="1" label="Status:" nbr="_f23" nm="EMD-ACTIVE-FLAG" par="TF0-0" row="2" sz="1" tp="Select" seltype="" id="select1">
+					<vals Disp="A" Tran="A" nbr="_l21" id="vals1">Active</vals>
+					<vals Disp="I" Tran="I" nbr="_l22" id="vals2">Inactive</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" defval="_f23" isxlt="_f23" nbr="_f24" nm="EMD-ACTIVE-FLAG" par="TF0-0" row="2" sz="8" tp="Out" id="out4"/>
+				<fld al="left" blankzero="1" col="31" ed="upper" label="Social Number:" nbr="_f25" nm="EMD-FICA-NBR" par="TF0-0" row="3" sz="20" tp="Text" id="text9"/>
+				<fld al="left" blankzero="1" col="31" defval="H" ed="upper" hsel="1" label="Employee Address:" nbr="_f26" nm="EMD-EMP-ADDRESS" par="TF0-0" req="1" row="4" sz="1" tp="Select" seltype="" id="select2">
+					<vals Disp="H" Tran="H" nbr="_l23" id="vals3">Home</vals>
+					<vals Disp="S" Tran="S" nbr="_l24" id="vals4">Supplemental</vals>
+					<vals Disp="N" Tran="N" nbr="_l25" id="vals5">No</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" defval="_f26" isxlt="_f26" nbr="_f27" nm="EMD-EMP-ADDRESS" par="TF0-0" row="4" sz="12" tp="Out" id="out5"/>
+				<fld al="left" blankzero="1" col="31" deftkn="HR80.8" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" keynbr="HHR" label="Relationship:" nbr="_f28" nknimp="1" nm="EMD-REL-CODE" par="TF0-0" req="1" row="5" sz="10" tp="Text" id="text10"/>
+				<fld al="left" blankzero="1" col="44" keynbr="HHS" nbr="_f29" nknimp="1" nm="PCO-DESCRIPTION" par="TF0-0" row="5" sz="30" tp="Out" id="out6"/>
+				<fld al="left" blankzero="1" col="31" ed="upper" hsel="1" label="Consent:" nbr="_f30" nm="EMD-CONSENT" par="TF0-0" row="6" sz="1" tp="Select" seltype="" id="select3">
+					<vals Disp="" Tran="" nbr="_l26" id="vals6">Not Applicable</vals>
+					<vals Disp="N" Tran="N" nbr="_l27" id="vals7">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l28" id="vals8">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" defval="_f30" isxlt="_f30" nbr="_f31" nm="EMD-CONSENT" par="TF0-0" row="6" sz="14" tp="Out" id="out7"/>
+				<fld al="left" blankzero="1" col="31" ed="upper" label="test HIC Number:" nbr="_f32" nm="HIC-NUMBER" par="TF0-0" row="7" sz="12" tp="Text" id="text11"/>
+				<fld al="right" col="14" nm="Survivor LWID" par="TF0-0" row="7" sz="16" tp="label" nbr="_l20" id="label11"/>
+			</tab>
+			<tab nbr="TF0-1" nm=" Address" par="TR0" secnm="ADDRESS-TAB" tabprot="0" id="tab2">
+				<fld al="right" col="15" nm="Address 1:" par="TF0-1" row="0" sz="10" tp="label" nbr="_l29" id="label12"/>
+				<fld al="right" col="15" nm="Address 2:" par="TF0-1" row="1" sz="10" tp="label" nbr="_l30" id="label13"/>
+				<fld al="right" col="15" nm="Address 3:" par="TF0-1" row="2" sz="10" tp="label" nbr="_l31" id="label14"/>
+				<fld al="right" col="15" nm="Address 4:" par="TF0-1" row="3" sz="10" tp="label" nbr="_l32" id="label15"/>
+				<fld al="right" col="7" nm="City or Address 5:" par="TF0-1" row="4" sz="18" tp="label" nbr="_l33" id="label16"/>
+				<fld al="right" col="7" nm="State or Province:" par="TF0-1" row="5" sz="18" tp="label" nbr="_l34" id="label17"/>
+				<fld al="right" col="13" nm="Postal Code:" par="TF0-1" row="6" sz="12" tp="label" nbr="_l35" id="label18"/>
+				<fld al="right" col="17" nm="Country:" par="TF0-1" row="7" sz="8" tp="label" nbr="_l36" id="label19"/>
+				<fld al="right" col="15" nm="Telephone:" par="TF0-1" row="8" sz="10" tp="label" nbr="_l37" id="label20"/>
+				<fld al="right" col="10" nm="Work Telephone:" par="TF0-1" row="9" sz="15" tp="label" nbr="_l38" id="label21"/>
+				<fld al="right" col="19" nm="Email:" par="TF0-1" row="10" sz="6" tp="label" nbr="_l39" id="label22"/>
+				<fld al="left" blankzero="1" ed="upper" nbr="_f33" nm="ADDRESS-TAB" par="TF0-1" sz="9" tp="Tab" id="tabfld2"/>
+				<fld al="left" blankzero="1" col="26" label="Address 1:" nbr="_f34" nm="EMD-ADDR1" par="TF0-1" row="0" sz="30" tp="Text" id="text12"/>
+				<fld al="left" blankzero="1" col="26" label="Address 2:" nbr="_f35" nm="EMD-ADDR2" par="TF0-1" row="1" sz="30" tp="Text" id="text13"/>
+				<fld al="left" blankzero="1" col="26" label="Address 3:" nbr="_f36" nm="EMD-ADDR3" par="TF0-1" row="2" sz="30" tp="Text" id="text14"/>
+				<fld al="left" blankzero="1" col="26" label="Address 4:" nbr="_f37" nm="EMD-ADDR4" par="TF0-1" row="3" sz="30" tp="Text" id="text15"/>
+				<fld al="left" blankzero="1" col="26" label="City or Address 5:" nbr="_f38" nm="EMD-CITY" par="TF0-1" row="4" sz="30" tp="Text" id="text16"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" label="State or Province:" nbr="_f39" nm="EMD-STATE" par="TF0-1" row="5" sz="2" tp="Text" id="text17"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" label="Postal Code:" nbr="_f40" nm="EMD-ZIP" par="TF0-1" row="6" sz="10" tp="Text" id="text18"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" keynbr="Hqr" label="Country:" nbr="_f41" nknimp="1" nm="EMD-COUNTRY-CODE" par="TF0-1" row="7" sz="2" tp="Text" id="text19"/>
+				<fld al="left" blankzero="1" col="36" keynbr="Hqs" nbr="_f42" nknimp="1" nm="INT-COUNTRY-DESC" par="TF0-1" row="7" sz="30" tp="Out" id="out8"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" label="Telephone:" nbr="_f43" nm="EMD-HM-PHONE-CNTRY" par="TF0-1" row="8" sz="6" tp="Text" id="text20"/>
+				<fld al="left" blankzero="1" col="33" ed="upper" nbr="_f44" nm="EMD-HM-PHONE-NBR" par="TF0-1" row="8" sz="15" tp="Text" id="text21"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" label="Work Telephone:" nbr="_f45" nm="EMD-WK-PHONE-CNTRY" par="TF0-1" row="9" sz="6" tp="Text" id="text22"/>
+				<fld al="left" blankzero="1" col="33" ed="upper" nbr="_f46" nm="EMD-WK-PHONE-NBR" par="TF0-1" row="9" sz="15" tp="Text" id="text23"/>
+				<fld al="left" blankzero="1" col="49" ed="upper" nbr="_f47" nm="EMD-WK-PHONE-EXT" par="TF0-1" row="9" sz="5" tp="Text" id="text24"/>
+				<fld al="left" blankzero="1" col="26" label="Email:" mxsz="60" nbr="_f48" nm="EMD-EMAIL-PERSONAL" par="TF0-1" row="10" sz="40" tp="Text" id="text25"/>
+			</tab>
+			<tab nbr="TF0-2" nm=" Benefits Analysis" par="TR0" secnm="BEN-ANA-TAB" tabprot="0" id="tab3">
+				<fld al="right" col="13" nm="Dependent Type:" par="TF0-2" row="0" sz="15" tp="label" nbr="_l40" id="label23"/>
+				<fld al="right" col="18" nm="Birthdate:" par="TF0-2" row="1" sz="10" tp="label" nbr="_l41" id="label24"/>
+				<fld al="right" col="52" nm="Age:" par="TF0-2" row="1" sz="4" tp="label" nbr="_l42" id="label25"/>
+				<fld al="right" col="14" nm="Adoption Date:" par="TF0-2" row="2" sz="14" tp="label" nbr="_l43" id="label26"/>
+				<fld al="right" col="50" nm="Placement Date:" par="TF0-2" row="2" sz="15" tp="label" nbr="_l44" id="label27"/>
+				<fld al="right" col="21" nm="Gender:" par="TF0-2" row="3" sz="7" tp="label" nbr="_l45" id="label28"/>
+				<fld al="right" col="51" nm="Marriage Date:" par="TF0-2" row="3" sz="14" tp="label" nbr="_l46" id="label29"/>
+				<fld al="right" col="21" nm="Smoker:" par="TF0-2" row="4" sz="7" tp="label" nbr="_l47" id="label30"/>
+				<fld al="right" col="52" nm="Divorce Date:" par="TF0-2" row="4" sz="13" tp="label" nbr="_l48" id="label31"/>
+				<fld al="right" col="20" nm="Student:" par="TF0-2" row="5" sz="8" tp="label" nbr="_l49" id="label32"/>
+				<fld al="right" col="50" nm="Status Rev Dte:" par="TF0-2" row="5" sz="15" tp="label" nbr="_l50" id="label33"/>
+				<fld al="right" col="13" nm="Effective Date:" par="TF0-2" row="6" sz="15" tp="label" nbr="_l51" id="label34"/>
+				<fld al="right" col="56" nm="Verified:" par="TF0-2" row="6" sz="9" tp="label" nbr="_l52" id="label35"/>
+				<fld al="right" col="45" nm="Create Transactions:" par="TF0-2" row="7" sz="20" tp="label" nbr="_l53" id="label36"/>
+				<fld al="right" col="1" nm="Health Insurance Claim Nbr:" par="TF0-2" row="8" sz="27" tp="label" nbr="_l54" id="label37"/>
+				<fld al="right" col="52" nm="HIPAA Reason:" par="TF0-2" row="8" sz="13" tp="label" nbr="_l55" id="label38"/>
+				<fld al="right" col="19" nm="Disabled:" par="TF0-2" row="9" sz="9" tp="label" nbr="_l56" id="label39"/>
+				<fld al="right" col="51" nm="Disabled Date:" par="TF0-2" row="9" sz="14" tp="label" nbr="_l57" id="label40"/>
+				<fld al="right" col="19" nm="Deceased:" par="TF0-2" row="10" sz="9" tp="label" nbr="_l58" id="label41"/>
+				<fld al="right" col="51" nm="Date Of Death:" par="TF0-2" row="10" sz="14" tp="label" nbr="_l59" id="label42"/>
+				<fld al="right" col="2" nm="Disability approved for CDSP:" par="TF0-2" row="11" sz="29" tp="label" nbr="_l60" id="label43"/>
+				<fld al="right" col="45" nm="Date approved for CDSP:" par="TF0-2" row="11" sz="23" tp="label" nbr="_l61" id="label44"/>
+				<fld al="right" col="2" nm="Disability approved for CHP:" par="TF0-2" row="12" sz="28" tp="label" nbr="_l62" id="label45"/>
+				<fld al="right" col="45" nm="Date approved for CHP:" par="TF0-2" row="12" sz="22" tp="label" nbr="_l63" id="label46"/>
+				<fld al="left" blankzero="1" ed="upper" nbr="_f49" nm="BEN-ANA-TAB" par="TF0-2" sz="19" tp="Tab" id="tabfld3"/>
+				<fld al="left" blankzero="1" col="29" ed="upper" hsel="1" label="Dependent Type:" nbr="_f50" nm="EMD-DEP-TYPE" par="TF0-2" req="1" row="0" sz="1" tp="Select" seltype="" id="select4">
+					<vals Disp="S" Tran="S" nbr="_l64" id="vals9">Spouse</vals>
+					<vals Disp="P" Tran="P" nbr="_l65" id="vals10">Domestic Partner</vals>
+					<vals Disp="D" Tran="D" nbr="_l66" id="vals11">Dependent</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="42" defval="_f50" isxlt="_f50" nbr="_f51" nm="EMD-DEP-TYPE" par="TF0-2" row="0" sz="16" tp="Out" id="out9"/>
+				<fld al="left" blankzero="1" col="29" ed="date" label="Birthdate:" nbr="_f52" nm="EMD-BIRTHDATE" par="TF0-2" row="1" sz="8" tp="Text" id="text26"/>
+				<fld al="right" blankzero="1" col="57" ed="numeric" label="Age:" nbr="_f53" nm="EMD-CUR-AGE" par="TF0-2" row="1" sz="3" tp="Out" id="out10"/>
+				<fld al="left" blankzero="1" col="29" ed="date" label="Adoption Date:" nbr="_f54" nm="EMD-ADOPTION-DATE" par="TF0-2" row="2" sz="8" tp="Text" id="text27"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Placement Date:" nbr="_f55" nm="EMD-PLACEMENT-DATE" par="TF0-2" row="2" sz="8" tp="Text" id="text28"/>
+				<fld al="left" blankzero="1" col="29" ed="upper" hsel="1" label="Gender:" nbr="_f56" nm="EMD-SEX" par="TF0-2" req="1" row="3" sz="1" tp="Select" seltype="" id="select5">
+					<vals Disp="M" Tran="M" nbr="_l67" id="vals12">Male</vals>
+					<vals Disp="F" Tran="F" nbr="_l68" id="vals13">Female</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f56" isxlt="_f56" nbr="_f57" nm="EMD-SEX" par="TF0-2" row="3" sz="6" tp="Out" id="out11"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Marriage Date:" nbr="_f58" nm="MARRIAGE-DATE" par="TF0-2" row="3" sz="8" tp="Text" id="text29"/>
+				<fld al="left" blankzero="1" col="29" defval="N" ed="upper" hsel="1" label="Smoker:" nbr="_f59" nm="EMD-SMOKER" par="TF0-2" row="4" sz="1" tp="Select" seltype="" id="select6">
+					<vals Disp="N" Tran="N" nbr="_l69" id="vals14">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l70" id="vals15">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f59" isxlt="_f59" nbr="_f60" nm="EMD-SMOKER" par="TF0-2" row="4" sz="3" tp="Out" id="out12"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Divorce Date:" nbr="_f61" nm="DIVORCE-DATE" par="TF0-2" row="4" sz="8" tp="Text" id="text30"/>
+				<fld al="left" blankzero="1" col="29" defval="N" ed="upper" hsel="1" label="Student:" nbr="_f62" nm="EMD-STUDENT" par="TF0-2" req="1" row="5" sz="1" tp="Select" seltype="" id="select7">
+					<vals Disp="N" Tran="N" nbr="_l71" id="vals16">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l72" id="vals17">Yes</vals>
+					<vals Disp="F" Tran="F" nbr="_l73" id="vals18">Fulltime</vals>
+					<vals Disp="P" Tran="P" nbr="_l74" id="vals19">Parttime</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f62" isxlt="_f62" nbr="_f63" nm="EMD-STUDENT" par="TF0-2" row="5" sz="8" tp="Out" id="out13"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Status Rev Dte:" nbr="_f64" nm="STUDENT-DATE" par="TF0-2" row="5" sz="8" tp="Text" id="text31"/>
+				<fld al="left" blankzero="1" col="29" ed="date" label="Effective Date:" nbr="_f65" nm="EFFECT-DATE" par="TF0-2" row="6" sz="8" tp="Text" id="text32"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Verified:" nbr="_f66" nm="VERIFY-DATE" par="TF0-2" row="6" sz="8" tp="Text" id="text33"/>
+				<fld al="left" blankzero="1" col="66" ed="upper" hsel="1" label="Create Transactions:" nbr="_f67" nm="CREATE-TRANS" par="TF0-2" row="7" sz="1" tp="Select" seltype="" id="select8">
+					<vals Disp="Y" Tran="Y" nbr="_l75" id="vals20">Yes</vals>
+					<vals Disp="N" Tran="N" nbr="_l76" id="vals21">No</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="71" defval="_f67" isxlt="_f67" nbr="_f68" nm="CREATE-TRANS" par="TF0-2" row="7" sz="3" tp="Out" id="out14"/>
+				<fld al="left" blankzero="1" col="29" ed="upper" label="Health Insurance Claim Nbr:" nbr="_f69" nm="EMD-HICN" par="TF0-2" row="8" sz="11" tp="Text" id="text34"/>
+				<fld al="left" blankzero="1" col="66" deftkn="HR83.7" ed="upper" hdef="1" hsel="1" hselrul="1" keynbr="HBi" label="HIPAA Reason:" nbr="_f70" nm="HIPAA-REASON" par="TF0-2" row="8" sz="10" tp="Text" id="text35"/>
+				<fld al="left" blankzero="1" col="29" defval="N" ed="upper" hsel="1" label="Disabled:" nbr="_f71" nm="EMD-DISABLED" par="TF0-2" req="1" row="9" sz="1" tp="Select" seltype="" id="select9">
+					<vals Disp="N" Tran="N" nbr="_l77" id="vals22">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l78" id="vals23">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f71" isxlt="_f71" nbr="_f72" nm="EMD-DISABLED" par="TF0-2" row="9" sz="3" tp="Out" id="out15"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Disabled Date:" nbr="_f73" nm="DISABLED-DATE" par="TF0-2" row="9" sz="8" tp="Text" id="text36"/>
+				<fld al="left" blankzero="1" col="29" ed="upper" hsel="1" label="Deceased:" nbr="_f74" nm="DECEASED" par="TF0-2" row="10" sz="1" tp="Select" seltype="" id="select10">
+					<vals Disp="" Tran="" nbr="_l79" id="vals24">N/A</vals>
+					<vals Disp="N" Tran="N" nbr="_l80" id="vals25">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l81" id="vals26">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f74" isxlt="_f74" nbr="_f75" nm="DECEASED" par="TF0-2" row="10" sz="3" tp="Out" id="out16"/>
+				<fld al="left" blankzero="1" col="66" ed="date" label="Date Of Death:" nbr="_f76" nm="DATE-OF-DEATH" par="TF0-2" row="10" sz="8" tp="Text" id="text37"/>
+				<fld al="left" blankzero="1" col="32" ed="upper" hsel="1" label="Disability approved for CDSP:" nbr="_f77" nm="DIS-APR-CDSP" par="TF0-2" row="11" sz="1" tp="Select" seltype="" id="select11">
+					<vals Disp="" Tran="" nbr="_l82" id="vals27">N/A</vals>
+					<vals Disp="N" Tran="N" nbr="_l83" id="vals28">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l84" id="vals29">Yes</vals>
+					<vals Disp="R" Tran="R" nbr="_l85" id="vals30">Under Review</vals>
+					<vals Disp="A" Tran="A" nbr="_l86" id="vals31">Under Appeal</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="_f77" isxlt="_f77" nbr="_f78" nm="DIS-APR-CDSP" par="TF0-2" row="11" sz="3" tp="Out" id="out17"/>
+				<fld al="left" blankzero="1" col="69" ed="date" label="Date approved for CDSP:" nbr="_f79" nm="DIS-APR-CDSP-D" par="TF0-2" row="11" sz="8" tp="Text" id="text38"/>
+				<fld al="left" blankzero="1" col="32" ed="upper" hsel="1" label="Disability approved for CHP:" nbr="_f80" nm="DIS-APR-CHP" par="TF0-2" row="12" sz="1" tp="Select" seltype="" id="select12">
+					<vals Disp="" Tran="" nbr="_l87" id="vals32">N/A</vals>
+					<vals Disp="N" Tran="N" nbr="_l88" id="vals33">No</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l89" id="vals34">Yes</vals>
+					<vals Disp="R" Tran="R" nbr="_l90" id="vals35">Under Review</vals>
+					<vals Disp="A" Tran="A" nbr="_l91" id="vals36">Under Appeal</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="_f80" isxlt="_f80" nbr="_f81" nm="DIS-APR-CHP" par="TF0-2" row="12" sz="3" tp="Out" id="out18"/>
+				<fld al="left" blankzero="1" col="69" ed="date" label="Date approved for CHP:" nbr="_f82" nm="DIS-APR-CHP-D" par="TF0-2" row="12" sz="8" tp="Text" id="text39"/>
+			</tab>
+			<tab nbr="TF0-3" nm=" Coverage" par="TR0" secnm="COVERAGE-TAB" tabprot="0" id="tab4">
+				<fld al="right" col="8" nm="Prior Months Cov:" par="TF0-3" row="0" sz="17" tp="label" nbr="_l92" id="label47"/>
+				<fld al="right" col="2" nm="Primary Care Physician:" par="TF0-3" row="1" sz="23" tp="label" nbr="_l93" id="label48"/>
+				<fld al="right" col="5" nm="Established Patient:" par="TF0-3" row="2" sz="20" tp="label" nbr="_l94" id="label49"/>
+				<fld al="right" col="18" nm="Health:" par="TF0-3" row="3" sz="7" tp="label" nbr="_l95" id="label50"/>
+				<fld al="right" col="18" nm="Dental:" par="TF0-3" row="4" sz="7" tp="label" nbr="_l96" id="label51"/>
+				<fld al="right" col="20" nm="Life:" par="TF0-3" row="5" sz="5" tp="label" nbr="_l97" id="label52"/>
+				<fld al="right" col="6" nm="Medicare Indicator:" par="TF0-3" row="6" sz="19" tp="label" nbr="_l98" id="label53"/>
+				<fld al="left" blankzero="1" ed="upper" nbr="_f83" nm="COVERAGE-TAB" par="TF0-3" sz="10" tp="Tab" id="tabfld4"/>
+				<fld al="right" blankzero="1" col="26" ed="numeric" label="Prior Months Cov:" nbr="_f84" nm="PRIOR-MONTHS-COV" par="TF0-3" row="0" sz="2" tp="Text" id="text40"/>
+				<fld al="left" blankzero="1" col="26" deftkn="HR80.9" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" keynbr="HFP" label="Primary Care Physician:" nbr="_f85" nknimp="1" nm="EMD-PRIMARY-CARE" par="TF0-3" row="1" sz="10" tp="Text" id="text41"/>
+				<fld al="left" blankzero="1" col="39" keynbr="HFQ" nbr="_f86" nknimp="1" nm="PCO-PC-DESCRIPTION" par="TF0-3" row="1" sz="30" tp="Out" id="out19"/>
+				<fld al="left" blankzero="1" col="26" defval="0" ed="numeric" hsel="1" label="Established Patient:" nbr="_f87" nm="ESTAB-PATIENT" par="TF0-3" row="2" sz="1" tp="Select" seltype="" id="select13">
+					<vals Disp="0" Tran="0" nbr="_l99" id="vals37">N/A</vals>
+					<vals Disp="1" Tran="1" nbr="_l100" id="vals38">No</vals>
+					<vals Disp="2" Tran="2" nbr="_l101" id="vals39">Yes</vals>
+					<vals Disp="3" Tran="3" nbr="_l102" id="vals40">Unknown</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f87" isxlt="_f87" nbr="_f88" nm="ESTAB-PATIENT" par="TF0-3" row="2" sz="15" tp="Out" id="out20"/>
+				<fld al="left" blankzero="1" col="26" defval="N" ed="upper" hsel="1" label="Health:" nbr="_f89" nm="EMD-HL-COV-FLAG" par="TF0-3" row="3" sz="1" tp="Select" seltype="" id="select14">
+					<vals Disp="N" Tran="N" nbr="_l103" id="vals41">No Coverage</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l104" id="vals42">Coverage</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f89" isxlt="_f89" nbr="_f90" nm="EMD-HL-COV-FLAG" par="TF0-3" row="3" sz="11" tp="Out" id="out21"/>
+				<fld al="left" blankzero="1" col="26" defval="N" ed="upper" hsel="1" label="Dental:" nbr="_f91" nm="EMD-DN-COV-FLAG" par="TF0-3" row="4" sz="1" tp="Select" seltype="" id="select15">
+					<vals Disp="N" Tran="N" nbr="_l105" id="vals43">No Coverage</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l106" id="vals44">Coverage</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f91" isxlt="_f91" nbr="_f92" nm="EMD-DN-COV-FLAG" par="TF0-3" row="4" sz="11" tp="Out" id="out22"/>
+				<fld al="left" blankzero="1" col="26" defval="N" ed="upper" hsel="1" label="Life:" nbr="_f93" nm="EMD-DL-COV-FLAG" par="TF0-3" row="5" sz="1" tp="Select" seltype="" id="select16">
+					<vals Disp="N" Tran="N" nbr="_l107" id="vals45">No Coverage</vals>
+					<vals Disp="Y" Tran="Y" nbr="_l108" id="vals46">Coverage</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f93" isxlt="_f93" mxsz="21" nbr="_f94" nm="EMD-DL-COV-FLAG" par="TF0-3" row="5" sz="11" tp="Out" id="out23"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" label="Medicare Indicator:" nbr="_f95" nm="EMD-MEDICARE-IND" par="TF0-3" row="6" sz="1" tp="Select" seltype="" id="select17">
+					<vals Disp="" Tran="" nbr="_l109" id="vals47">Not Applicable</vals>
+					<vals Disp="A" Tran="A" nbr="_l110" id="vals48">Medicare Part A</vals>
+					<vals Disp="B" Tran="B" nbr="_l111" id="vals49">Medicare Part B</vals>
+					<vals Disp="C" Tran="C" nbr="_l112" id="vals50">Medicare Part A and B</vals>
+					<vals Disp="D" Tran="D" nbr="_l113" id="vals51">Medicare Part Unknown</vals>
+					<vals Disp="E" Tran="E" nbr="_l114" id="vals52">No Medicare</vals>
+					<vals Disp="F" Tran="F" nbr="_l115" id="vals53">Medicare Part A and B and D</vals>
+					<vals Disp="G" Tran="G" nbr="_l116" id="vals54">Medicare Part A and D</vals>
+					<vals Disp="H" Tran="H" nbr="_l117" id="vals55">Medicare Part B and D</vals>
+					<vals Disp="I" Tran="I" nbr="_l118" id="vals56">Medicare Part D</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f95" isxlt="_f95" nbr="_f96" nm="EMD-MEDICARE-IND" par="TF0-3" row="6" sz="27" tp="Out" id="out24"/>
+				<push al="center" blankzero="0" btnnm=" Benefits" col="26" hdef="1" keynbr="HR13.2" nbr="_f97" nm="BENEFITS" par="TF0-3" row="7" sz="10" id="push1"/>
+			</tab>
+		</tabregion>
+		<push al="center" blankzero="0" btnnm=" Comments" col="26" deftkn="PR05.1" hdef="1" keynbr="HR90.1" nbr="_f98" nm="COMMENTS" row="22" sz="10" id="push2"/>
+		<fld al="left" blankzero="1" col="38" nbr="_f99" nm="COMMENTS-FLAG" row="22" sz="1" tp="Out" id="out25"/>
+		<fld al="left" blankzero="0" ed="upper" nbr="_f100" nm="_HK" req="1" sz="17" tp="Sp" id="sp1"/>
+		<keyselect index="EMDSET1" prefix="EMD" table="EMDEPEND">
+			<fields>
+				<field decsize="0" fieldNumber="9" name="COMPANY" size="4" type="NUMERIC"/>
+				<field decsize="0" fieldNumber="11" name="EMPLOYEE" size="9" type="NUMERIC"/>
+				<field decsize="0" fieldNumber="13" label="Dependent" name="SEQ-NBR" size="4" type="NUMERIC"/>
+				<field decsize="0" label="Name" name="FULL-NAME" size="49" type="ALPHALC"/>
+				<field decsize="0" label="Relation" name="REL-CODE" size="10" type="ALPHA"/>
+				<field decsize="0" label="Status" name="ACTIVE-FLAG" size="1" type="ALPHA">
+					<valuelist>
+						<value dbvalue="A" displayvalue="Active"/>
+						<value dbvalue="I" displayvalue="Inactive"/>
+					</valuelist>
+				</field>
+			</fields>
+		</keyselect>
+		<PATH nbr="_l130" id="path1"/>
+		<msgBar bMsgArea="1" nbr="msgBar" id="msgbar1"/>
+	</form>
+	<TRANSACTION trantype="ALL"/>
+</UIDEF>

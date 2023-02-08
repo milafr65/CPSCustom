@@ -1,0 +1,521 @@
+000100******************************************************************
+000200*                            ZH211WS                             *
+000300******************************************************************
+      *                        MODIFICATION LOG                        *
+      ******************************************************************
+WO2582* 10/19/2012  MLF  WO#2582                                       *
+WO2582*             EXPANDS PAEMPPOS READS TO RETURN PROPER NUMERIC    *
+WO2582*             PROCESS LEVELS FOR TERMED EMPLOYEES                *
+      ******************************************************************
+WO7330* 06/23/2015  MLF  WO#7330                                       *
+WO7330*             MAJOR REVISION                                     *
+WO7330*             CRSP CHANGED TO FIDELITY AS PROVIDER               *
+WO7330*             NEW FIDELITY INDICATIVE FILE CREATION ADDED TO     *
+WO7330*             STRUCTURE OF EXISTING METLIFE INDICATIVE PROGRAM   *
+WO8022* 10/08/2015  MLF  WO#8022, 8046, 8065                           *
+WO8022*             PROGRAM UPDATED TO PICK UP PART-TIME EMPLOYEES     *
+WO8022*             UPDATED PLAN CODE                                  *
+WO8022*             ADD SUFFIXES (JR, SR, III) TO LAST NAMES           *
+SR0704* 03/04/2015  DO NOT PASS STATUS CHANGES FOR 120 DAYS FOR TERMS  *
+SR1067* 06/10/2016  MLF SR#1067                                        *
+SR1067*     ADDITIONAL REQUIRED FIDELITY CHANGES:                      *
+SR1067*     61 - DO NOT SEND TERM DATE IF > CURRENT DATE               *
+SR1067*     11 - DO NOT SEND STATUS R IF TERM DATE > CURRENT DATE      *
+SR1067*          (DEFAULT TO A)                                        *
+SR1067*     CORRECTS PAPOSITION LOOKUP FOR PART-TIME EMPLOYEES         *
+SR1067*      SET UP IN EMPCODES TABLE (2300)                           *
+SR161A* 02/17/2017  MLF SR#1611                                        *
+SR161A*     IMPLEMENTS REMAINDER OF CHANGES FROM SEPT. 2016 SR1611     *
+SR161A*     FEE CODE LOGIC WAS REWRITTEN
+SR2505* 02/17/2017  MLF SR#2505                                        *
+SR2505*             ADD VESTING DATE TO FIDELITY 02D RECORD            *
+SR3086* 06/25/2017  MLF SR#3086                                        *
+SR3086*             MOVE FEE CODE TO NEW F07X RECORD                   *
+SR3487* 10/16/2017  MLF SR#3487                                        *
+SR3487*             MEMBERS NOT TERMINATING FROM FIDELITY FILE         *
+SR3487*             IF ZERO CODA BALANCE                               *
+CB2707* 10/06/2020  MLF CAB 2707                                       *
+CB2707*             ADD FOREIGN ADDRESS PROCESSING                     *
+US0220* 01/14/2021  MLF USER STORY 0220                                *
+US0220*             ADD REMITTER SOURCE CODE                           *
+US1791* 05/21/2021  MLF USER STORY 1791                                *
+US1791*             ADD IF10 LOOKUP THAT ALLOWS A PROC LEVEL TO        *
+US1791*             REPORT AS A DIFFERENT PROC LEVEL (07015/07058)     *
+US2392* 09/29/2021  MLF USER STORY 2392                                *
+US2392*             FIXES FEE CODE ERROR CAUSED BY SHIFT CODE NOT      *
+US2392*             GETTING SAVED IN ALL INSTANCES                     *
+      ******************************************************************
+000400 01  ZH211WS.
+WO7330     02  WS-DB-NULL-DATE         PIC 9(08) VALUE 17530101.
+SR1067     02  WS-DB-HIGH-DATE         PIC 9(08) VALUE 20991231.
+WO8265     02  I                       PIC 9(03) VALUE ZEROES.
+           02  WS-I-N                  PIC 9(02) VALUE ZEROS.
+000500     02  WS-EMP-COMPANY          PIC 9(04) VALUE ZEROES.
+000600     02  WS-EMP-PROCESS-LEVEL    PIC X(05) VALUE SPACES.
+           02  WS-PROC-LEVEL           PIC X(05) VALUE SPACES.
+           02  WS-PEP-COMPANY          PIC 9(04) VALUE ZEROS. 
+           02  WS-PEP-EMPLOYEE         PIC 9(09) VALUE ZEROS.
+           02  WS-PEP-DATESTAMP        PIC 9(08) VALUE ZEROS.
+           02  WS-PEP-EFFECT-DATE      PIC 9(08) VALUE ZEROS.
+           02  WS-PEP-END-DATE         PIC 9(08) VALUE ZEROS.
+US2392     02  WS-SHIFT                PIC 9(01) VALUE ZEROS.
+WO7330     02  WS-PAY-GRADE            PIC X(03) VALUE SPACES.
+WO7330     02  WS-CRSP-GRADE           PIC X(03) VALUE SPACES.
+WO7330       88  WS-CRSP-MEMBER                  VALUE  "1", "1CP",
+WO7330                                                 "2C", "2CP",
+WO7330                                                 "3C", "3CP",
+WO7330                                                 "4C", "4CP",
+WO7330                                                 "5C", "5CP".
+WO8022       88  WS-CRSP-PT-MEMBER               VALUE "1CP", "2CP",
+WO8022                                                 "3CP", "4CP",
+WO8022                                                 "5CP". 
+SR0704     02  WS-HRH-DATAITEM-STATUS  PIC 99    VALUE 20.
+SR0704     02  WS-EMP-EMP-STATUS       PIC X(02) VALUE SPACES.
+SR0704     02  WS-HIST-EMP-STATUS      PIC X(02).
+SR0704         88  WS-HIST-TERM-STATUS        VALUE "TM", "TV", "TW",
+                                                    "TO",
+SR0704                                              "TD", "LE", "LG",
+SR0704                                              "LH", "LM", "LS".
+WO7330     02  WS-CODA-BALANCE         PIC S9(13)V99 VALUE ZEROES.  
+WO7330     02  WS-NOT-ACTIVE-WBAL      PIC X(01) VALUE SPACES.  
+           02  WS-END-DATE             PIC 9(08) VALUE ZEROS.
+WO7330     02  WS-START-WEEK-DATE      PIC 9(08) VALUE ZEROS.
+           02  WS-AGE                  PIC 9(03) VALUE ZEROS.
+           02  WS-BIRTHDATE            PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-BIRTHDATE.
+               04  WS-BIRTHDATE-YYYY     PIC 9(04).
+               04  WS-BIRTHDATE-MM       PIC 9(02).
+               04  WS-BIRTHDATE-DD       PIC 9(02).
+           02  WS-SYS-DATE               PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-SYS-DATE.
+               04  WS-SYS-YYYY           PIC 9(04).
+               04  WS-SYS-MMDD.
+                   06  WS-SYS-MM         PIC 9(02).
+                   06  WS-SYS-DD         PIC 9(02).
+           02  WS-JULIAN-DAYS          PIC S9(06) COMP-3 VALUE ZEROS.
+           02  WS-WRITE-TERM-DATE      PIC X(01) VALUE SPACES.
+           02  WS-WRITE-REPORT         PIC X(01) VALUE SPACES.
+WO2582     02  WS-NN-TERM-FLAG         PIC X(01) VALUE SPACES.
+           02  WS-OLD-TERM             PIC X(01) VALUE SPACES.
+           02  WS-EXCPT-SW             PIC X(01) VALUE SPACES.
+           02  WS-FOUND                PIC X(01) VALUE SPACES. 
+           02  WS-HIRE-DATE-SW         PIC X(01) VALUE SPACES.
+           
+WO8022     02  WS-PART-TIME-EMP-FLAG   PIC X(01) VALUE SPACES.
+WO8022     02  WS-EPC-DATE-ACQUIRED    PIC 9(08) VALUE ZEROES.
+WO8022     02  WS-EPC-DESCRIPTION      PIC X(30) VALUE SPACES.
+WO8022     02  WS-POS-PAY-GRADE        PIC X(03) VALUE SPACES.
+SR1067     02  WS-POS-SCAN-FLAG        PIC X(01) VALUE "N".
+           02  WS-ACTIVE-WORKER-TERM-FLAG PIC X(01) VALUE "N".
+SR3487     02  WS-SENT-EBSO-TERM-FLAG  PIC X(01) VALUE "N".
+SR161A     02  WS-COD-READ-FLAG        PIC X(01) VALUE "N".
+           
+           02  WS-SAVE-SYSTEM-DATE     PIC 9(08) VALUE ZEROS.
+SR0704     02  WS-DB-BEG-DATE          PIC 9(08) VALUE ZEROS.
+           02  WS-DATE-A-TO-N.
+               05  WS-DATE-CCYY-ALPHA  PIC X(04) VALUE SPACES.
+               05  WS-DATE-MM-ALPHA    PIC X(02) VALUE SPACES.
+               05  WS-DATE-DD-ALPHA    PIC X(02) VALUE SPACES.
+           02  WS-DATE-NUMBER    REDEFINES WS-DATE-A-TO-N.  
+               05  WS-DATE-CCYY-NBR    PIC 9(04).               
+               05  WS-DATE-MM-NBR      PIC 9(02).               
+               05  WS-DATE-DD-NBR      PIC 9(02).                   
+           02  WS-DATE-REFORMAT.                                 
+               05  WS-DATE-CCYY-N      PIC 9(04) VALUE ZEROS.
+               05  WS-DATE-MM-N        PIC 9(02) VALUE ZEROS.
+               05  WS-DATE-DD-N        PIC 9(02) VALUE ZEROS.
+           02  WS-DATE-MMDDYYYY  REDEFINES WS-DATE-REFORMAT.
+               05  WS-DATE-CCYY.      
+                   10  WS-DATE-CC      PIC X(02). 
+                   10  WS-DATE-YY      PIC X(02). 
+               05  WS-DATE-MM          PIC X(02).    
+               05  WS-DATE-DD          PIC X(02).    
+           02  WS-PARTIC-DATE-N.
+               05  WS-PARTIC-CCYY      PIC 9(04) VALUE ZEROS.       
+               05  WS-PARTIC-MM        PIC 9(02) VALUE ZEROS.    
+               05  WS-PARTIC-DD        PIC 9(02) VALUE ZEROS.    
+           02  WS-PARTIC-DATE-NBR REDEFINES WS-PARTIC-DATE-N 
+                                       PIC 9(08).
+           02  WS-PARTIC-DATE   REDEFINES WS-PARTIC-DATE-N.
+               05  WS-PARTIC-CCYY-A    PIC X(04).
+               05  WS-PARTIC-MM-A      PIC X(02).
+               05  WS-PARTIC-DD-A      PIC X(02).
+           02  WS-DATE-SLASH.
+               05  WS-DATE-MM-SL       PIC X(02) VALUE SPACES.
+               05  WS-DATE-MM-SL-N  REDEFINES WS-DATE-MM-SL PIC 9(02).
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-DATE-DD-SL       PIC X(02) VALUE SPACES.
+               05  WS-DATE-DD-SL-N  REDEFINES WS-DATE-DD-SL PIC 9(02).
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-DATE-CCYY-SL      PIC X(04) VALUE SPACES.                                                                     
+               05  WS-DATE-CCYY-SL-N  REDEFINES WS-DATE-CCYY-SL 
+                                                            PIC 9(04).
+WO7330     02  WS-DATE-MDY.
+WO7330         05  WS-DATE-MDY-MM      PIC X(02) VALUE SPACES.
+WO7330         05  WS-DATE-MDY-DD      PIC X(02) VALUE SPACES.
+WO7330         05  WS-DATE-MDY-YYYY    PIC X(04) VALUE SPACES.
+WO7330     02  WS-ZIP-CODE-IN.
+WO7330         03  WS-ZIP-5-IN            PIC X(05) VALUE SPACES.
+WO7330         03  WS-ZIP-DASH            PIC X(01) VALUE SPACES.
+WO7330             88  WS-ZIP-CONTAINS-DASH         VALUE "-".
+WO7330         03  WS-ZIP-4-IN            PIC X(04) VALUE SPACES.
+           02  WS-PHONE-WITH-SLASH     PIC X(12) VALUE SPACES.
+           02  WS-PHONE-REFORMAT REDEFINES WS-PHONE-WITH-SLASH.
+               05  WS-AREA-CODE        PIC X(03).
+               05  FILLER              PIC X(01).
+               05  WS-EXCHANGE         PIC X(03).
+               05  FILLER              PIC X(01).
+               05  WS-LOCAL            PIC X(04).
+           02  WS-PHONE-NBR            PIC X(10) VALUE SPACES. 
+           02  WS-PHONE-NBR-RED REDEFINES    WS-PHONE-NBR.
+               05  WS-AREA-CODE-NBR    PIC X(03).                                                                                          
+               05  WS-EXCHANGE-NBR     PIC X(03).
+               05  WS-LOCAL-NBR        PIC X(04).
+           02  WS-DIV-NBR-N            PIC 9(05) VALUE ZEROS.
+           02  WS-DIV-NBR-A REDEFINES WS-DIV-NBR-N PIC X(05).
+WO8046     02  WS-LCMS-ID              PIC X(10) VALUE "0000093383".
+      *===============================================================
+      *11/30/2006 REMOVE FROM THE LIST BELOW AND CHANGE THE OCCURS NBR
+      *     PLAN-NO     PROC-LVL
+      *      15         07199   
+      *      16         07200
+      *      22         07572
+      *      24         07576
+      *   THESE WILL NOW HAVE A PLAN-NO OF 01
+      *03/06/2007 REMOVE FROM THE LIST BELOW AND CHANGE THE OCCURS NBR
+      *     PLAN-NO     PROC-LVL
+      *      06         07042
+      *   THESE WILL NOW HAVE A PLAN-NO OF 01
+      *=============================================================== 
+      *  DECISION WAS MADE TO LEAVE THE ABOVE IN THERE PLAN-NO'S
+      *===============================================================
+           02  WS-PROCESS-LEVEL-CONSTANTS.
+               05  WS-PL-07015          PIC X(07) VALUE "0701502".
+               05  WS-PL-07018          PIC X(07) VALUE "0701803".
+               05  WS-PL-07026          PIC X(07) VALUE "0702604".
+               05  WS-PL-07036          PIC X(07) VALUE "0703605". 
+               05  WS-PL-07058          PIC X(07) VALUE "0705807".
+               05  WS-PL-07068          PIC X(07) VALUE "0706808".
+               05  WS-PL-07070          PIC X(07) VALUE "0707009".
+               05  WS-PL-07076          PIC X(07) VALUE "0707610".
+               05  WS-PL-07092          PIC X(07) VALUE "0709211".
+               05  WS-PL-07180          PIC X(07) VALUE "0718012".
+               05  WS-PL-07181          PIC X(07) VALUE "0718113".
+               05  WS-PL-07191          PIC X(07) VALUE "0719114".
+               05  WS-PL-07199          PIC X(07) VALUE "0719915".
+               05  WS-PL-07200          PIC X(07) VALUE "0720016".
+               05  WS-PL-07216          PIC X(07) VALUE "0721617".
+               05  WS-PL-07222          PIC X(07) VALUE "0722218".
+               05  WS-PL-07270          PIC X(07) VALUE "0727019".
+               05  WS-PL-07341          PIC X(07) VALUE "0734120".
+               05  WS-PL-07443          PIC X(07) VALUE "0744321".
+               05  WS-PL-07572          PIC X(07) VALUE "0757222".
+               05  WS-PL-07573          PIC X(07) VALUE "0757323".
+               05  WS-PL-07576          PIC X(07) VALUE "0757624".
+               05  WS-PL-07598          PIC X(07) VALUE "0759825".
+           02  WS-PL-RETAIN  REDEFINES WS-PROCESS-LEVEL-CONSTANTS.
+               05 WS-PL-RET-TBL OCCURS 23 TIMES.
+                  10  WS-PROC-LVL       PIC X(05).
+                  10  WS-PLAN-NO        PIC X(02).
+           02  WS-MAX                   PIC 9(02) VALUE 23.
+           02  WS-EXCEPT-TABLE.
+               05 WS-EXCPT-TBL OCCURS 50 TIMES.
+                  10  WS-EXC-CO         PIC X(05) VALUE SPACES.
+                  10  WS-EXC-PL         PIC X(05) VALUE SPACES.
+                  10  WS-EXC-BEGIN-DT   PIC 9(08) VALUE ZEROS.
+                  10  WS-EXC-END-DT     PIC 9(08) VALUE ZEROS.
+           02  WS-MAX-TBL               PIC 9(02) VALUE ZEROS.
+
+WO7330* ALL MODS FROM HERE TO END OF SECTION
+           
+           02  WS-FICA-NBR-IN.
+               03  WS-FICA-3-IN         PIC X(03) VALUE SPACES.
+               03  WS-FICA-2-IN         PIC X(02) VALUE SPACES.
+               03  WS-FICA-4-IN         PIC X(04) VALUE SPACES.
+               
+           02  WS-FICA-NBR-OUT.
+               03  WS-FICA-3-OUT        PIC X(03).
+               03  FILLER               PIC X(01) VALUE "-".
+               03  WS-FICA-2-OUT        PIC X(02).
+               03  FILLER               PIC X(01) VALUE "-".
+               03  WS-FICA-4-OUT        PIC X(04).
+               
+           02  WS-EMPLOYEE-X            PIC X(11) VALUE SPACES.
+
+CB2707     02  WS-EMP-ADDR1             PIC X(57) VALUE SPACES.
+CB2707     02  WS-EMP-ADDR2             PIC X(30) VALUE SPACES.
+CB2707     02  WS-EMP-ADDR3             PIC X(30) VALUE SPACES.
+
+           02  WS-ADDRESS-WORK-AREA.
+               03  WS-ADDRESS-WORK-DATA-1  PIC X(32) VALUE SPACES.
+               03  WS-ADDRESS-WORK-DATA-2  PIC X(32) VALUE SPACES.
+               03  WS-ADDRESS-WORK-DATA-3  PIC X(32) VALUE SPACES.
+               
+           02  WS-EMAIL-WORK-AREA.
+               03  WS-EMAIL-WORK-DATA-1    PIC X(35) VALUE SPACES.
+               03  WS-EMAIL-WORK-DATA-2    PIC X(35) VALUE SPACES.
+               03  WS-EMAIL-WORK-DATA-3    PIC X(35) VALUE SPACES.
+
+CB2707     02  WS-FOREIGN-CITY-WORK-AREA.
+CB2707         03  WS-FOREIGN-CITY-20      PIC X(20) VALUE SPACES.
+CB2707         03  WS-FOREIGN-CITY-EXCESS  PIC X(30) VALUE SPACES.
+
+CB2707     02  WS-CITY-LENGTH              PIC 9(02) VALUE 0.
+CB2707     02  WS-ZIP-LENGTH               PIC 9(02) VALUE 0.
+CB2707     02  WS-ZIP-OVER-FLAG            PIC X(01) VALUE "N".
+               
+           02  WS-ROSTER-STATUS            PIC X(10) VALUE SPACES.
+           
+WO8265     02  WS-LAST-NAME                PIC X(20) VALUE SPACES.
+            
+CB2707     02  WS-FOREIGN-ADDR-FLAG        PIC X(01) VALUE "N".
+
+US0220     02  WS-REMITTER-SRC             PIC X(32) VALUE SPACES.
+US1791     02  WS-REMITTER-LOC             PIC X(32) VALUE SPACES.
+US1791     02  WS-HOLD-WRK-DIV-NBR         PIC X(13) VALUE SPACES.
+           
+      ***************************************************************     
+      * JULY 2015 - CPS SWITCHED PROVIDERS FROM METLIFE TO FIDELITY *
+      *             FIDELITY'S FILE REQUIRES A SERIES OF 80-CHAR    *
+      *             RECORDS PER EMPLOYEE.                           *
+      *             WS-F01 WILL BE THE FIDELITY "01" RECORD,        *
+      *             AND SO ON.                                      *
+      *             A ROUTINE WILL BE ADDED TO THE EXISTING ZH211   *
+      *             TO PUT THESE RECORDS OUT.                       *
+      *             THE OLD (METLIFE) FILE WILL BE KEPT INTACT      *
+      *             AND SENT TO EBSO                                *
+      ***************************************************************
+      
+          02  WS-F01-RECORD.
+              03  WS-F01-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F01-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F01-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-F01-LAST-NAME     PIC X(20) VALUE SPACES.
+              03  WS-F01-FIRST-NAME    PIC X(15) VALUE SPACES.
+              03  WS-F01-RESERVED      PIC X(09) VALUE SPACES.
+              03  WS-F01-MAR-STAT      PIC X(01) VALUE SPACES.
+              03  WS-F01-GENDER        PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+          
+          02  WS-F02D-RECORD.
+              03  WS-F02D-PLAN-NUMBER  PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F02D-SSN          PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F02D-RECORD-ID    PIC X(02) VALUE SPACES.
+              03  WS-F02D-FIELD-TYPE   PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  WS-F02D-HIRE-DATE    PIC X(08) VALUE SPACES.
+              03  FILLER               PIC X(08) VALUE SPACES.
+SR2505        03  WS-F02D-VEST-DATE    PIC X(08) VALUE SPACES.
+              03  WS-F02D-BIRTH-DATE   PIC X(08) VALUE SPACES.
+              03  WS-F02D-TERM-DATE    PIC X(08) VALUE SPACES.
+              03  WS-F02D-DATE-SW      PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+
+          02  WS-F02E-RECORD.
+              03  WS-F02E-PLAN-NUMBER  PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F02E-SSN          PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F02E-RECORD-ID    PIC X(02) VALUE SPACES.
+              03  WS-F02E-FIELD-TYPE   PIC X(01) VALUE SPACES.
+              03  WS-F02E-EMPLOYEE     PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(02) VALUE SPACES.
+              03  FILLER               PIC X(12) VALUE SPACES.
+              03  FILLER               PIC X(22) VALUE SPACES.
+          
+          02  WS-F03-RECORD.
+              03  WS-F03-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F03-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F03-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-F03-FIELD-TYPE    PIC X(01) VALUE SPACES.
+              03  WS-F03-ADDR-LINE-NO  PIC X(02) VALUE SPACES.
+              03  WS-F03-ADDRESS       PIC X(32) VALUE SPACES.
+              03  FILLER               PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+
+          02  WS-F04-RECORD.
+              03  WS-F04-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F04-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F04-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-F04-FIELD-TYPE    PIC X(01) VALUE SPACES.
+              03  WS-F04-CITY          PIC X(20) VALUE SPACES.
+              03  WS-F04-STATE         PIC X(02) VALUE SPACES.
+              03  FILLER               PIC X(08) VALUE SPACES.
+              03  WS-F04-ZIP           PIC X(05) VALUE SPACES.
+              03  WS-F04-ZIP-4         PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+CB2707        03  FILLER               PIC X(01) VALUE SPACES.
+CB2707        03  FILLER               PIC X(01) VALUE SPACES.
+CB2707        03  FILLER               PIC X(01) VALUE SPACES.
+
+CB2707    02  WS-F05-RECORD.
+CB2707        03  WS-F05-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+CB2707        03  FILLER               PIC X(04) VALUE SPACES.
+CB2707        03  FILLER               PIC X(03) VALUE SPACES.
+CB2707        03  WS-F05-SSN           PIC X(11) VALUE SPACES.
+CB2707        03  FILLER               PIC X(06) VALUE SPACES.
+CB2707        03  WS-F05-RECORD-ID     PIC X(02) VALUE SPACES.
+CB2707        03  WS-F05-FIELD-TYPE    PIC X(01) VALUE SPACES.
+CB2707        03  WS-F05-COUNTRY       PIC X(23) VALUE SPACES.
+CB2707        03  FILLER               PIC X(01) VALUE SPACES.
+CB2707        03  WS-F05-SPEC-HNDL     PIC X(01) VALUE SPACES.
+CB2707        03  FILLER               PIC X(19) VALUE SPACES.
+CB2707        03  WS-F05-MAIL-IND      PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+          
+          02  WS-F06-RECORD.
+              03  WS-F06-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F06-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F06-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-F06-DIVISION-ID   PIC X(20) VALUE SPACES.
+              03  FILLER               PIC X(20) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(02) VALUE SPACES.
+              
+SR3086    02  WS-F07X-RECORD.
+SR3086        03  WS-F07X-PLAN-NUMBER  PIC X(05) VALUE SPACES.
+SR3086        03  FILLER               PIC X(04) VALUE SPACES.
+SR3086        03  FILLER               PIC X(03) VALUE SPACES.
+SR3086        03  WS-F07X-SSN          PIC X(11) VALUE SPACES.
+SR3086        03  FILLER               PIC X(06) VALUE SPACES.
+SR3086        03  WS-F07X-RECORD-ID    PIC X(02) VALUE SPACES.
+SR3086        03  WS-F07X-FIELD-TYPE   PIC X(01) VALUE SPACES.
+SR3086        03  WS-F07X-FIELD-NBR    PIC X(02) VALUE SPACES.
+SR3086        03  WS-F07X-FEE-CODE     PIC X(01) VALUE SPACES.
+SR3086        03  FILLER               PIC X(45) VALUE SPACES.
+          
+          02  WS-F11-RECORD.
+              03  WS-F11-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F11-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F11-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-F11-EMP-STATUS    PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(05) VALUE SPACES.
+              03  WS-F11-EMP-STATUS-DT PIC X(08) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(32) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              
+          02  WS-F36-RECORD.
+              03  WS-F36-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F36-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F36-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  WS-F36-DIVISION-ID   PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(40) VALUE SPACES.
+              03  WS-F36-DIVISION-IND  PIC X(01) VALUE SPACES.
+
+          02  WS-F60-RECORD.
+              03  WS-F60-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F60-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F60-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-F60-PAR-CLASS     PIC X(01) VALUE SPACES.
+              03  WS-F60-PAY-GRADE     PIC X(08) VALUE SPACES.
+              03  WS-F60-PAR-DEPT      PIC X(08) VALUE SPACES.
+              03  WS-F60-PAR-LOC       PIC X(08) VALUE SPACES.
+              03  WS-F60-PAR-UNION     PIC X(08) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  WS-F60-MISC-CODE     PIC X(08) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(02) VALUE SPACES.
+              
+          02  WS-F61-RECORD.
+              03  WS-F61-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-F61-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-F61-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  FILLER               PIC X(08) VALUE SPACES.
+              03  WS-F61-ADJ-HIRE-DT   PIC X(08) VALUE SPACES.
+              03  WS-F61-RETIRE-DT     PIC X(08) VALUE SPACES.
+              03  WS-F61-RESERVED      PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(08) VALUE SPACES.
+              03  FILLER               PIC X(12) VALUE SPACES.
+          
+          02  WS-FEA-RECORD.
+              03  WS-FEA-PLAN-NUMBER   PIC X(05) VALUE SPACES.
+              03  FILLER               PIC X(04) VALUE SPACES.
+              03  FILLER               PIC X(03) VALUE SPACES.
+              03  WS-FEA-SSN           PIC X(11) VALUE SPACES.
+              03  FILLER               PIC X(06) VALUE SPACES.
+              03  WS-FEA-RECORD-ID     PIC X(02) VALUE SPACES.
+              03  WS-FEA-STATUS        PIC X(01) VALUE SPACES.
+              03  WS-FEA-EMAIL-TYPE    PIC X(02) VALUE SPACES.
+              03  FILLER               PIC X(02) VALUE SPACES.
+              03  WS-FEA-SEQ-NUMBER    PIC X(01) VALUE SPACES.
+              03  WS-FEA-EMAIL-ADDR    PIC X(35) VALUE SPACES.
+              03  FILLER               PIC X(01) VALUE SPACES.
+              03  FILLER               PIC X(07) VALUE SPACES.
+          
+          02  WS-FIDELITY-CONSTANTS.
+             03  WS-FC-PLAN-NUMBER     PIC X(05) VALUE "93383".
+             
+WO7330       03  WS-FID-HEADER-REC.
+WO7330         04  WS-HDR-PLAN-NUMBER  PIC X(05) VALUE SPACES.
+WO7330         04  WS-HDR-RECORD-ID    PIC X(03) VALUE "THR".
+WO7330         04  FILLER              PIC X(01) VALUE SPACES.
+WO7330         04  WS-HDR-ACCT-TYPE    PIC X(15)
+WO7330                                 VALUE "401K           ".
+WO7330         04  FILLER              PIC X(06) VALUE SPACES.
+WO7330         04  WS-HDR-CLIENT-NAME  PIC X(25)
+WO7330             VALUE "CRSP                     ".
+WO7330         04  WS-HDR-CHG-ONLY-IND PIC X(01) VALUE "Y".
+WO7330         04  FILLER              PIC X(24) VALUE SPACES. 
+             
+          02  WS-EMP-IN-PPPT-IND       PIC 9(09) VALUE ZEROES.
+             88  WS-EMP-IN-PPPT                  VALUE 2366,
+                                                       21753,
+                                                       22038,
+                                                       29477,
+                                                       32320,
+                                                       34571,
+                                                       45341,
+                                                       46416,
+                                                       51250,
+                                                       51304,
+                                                       62358,
+                                                       69759,
+                                                       79946,
+                                                       80714.
+
+WO7330* END OF SECTION          

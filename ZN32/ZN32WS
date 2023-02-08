@@ -1,0 +1,27 @@
+
+******* ZN32WS 1 <1513813417>
+000100******************************************************************
+000200*                             ZN32WS                             *
+000300******************************************************************
+000400 01  ZN32WS.
+000500     02  ZN32WS-LAST-PLAN-NBR    PIC 9(02)           VALUE ZEROES.
+000600     02  ZN32WS-RECORD-FOUND-SW  PIC 9(01)           VALUE ZEROES.
+000700         88  ZN32WS-RECORD-NOT-FOUND                 VALUE ZEROES.
+000800         88  ZN32WS-RECORD-FOUND                     VALUE 1.
+000900     02  ZN32WS-FILTER-SW        PIC 9(01)           VALUE ZEROES.
+001000         88  ZN32WS-NO-FILTER                        VALUE ZEROES.
+001100         88  ZN32WS-FILTER                           VALUE 1.
+001200     02  ZN32WS-NAVIGATE-SW      PIC 9(01)           VALUE ZEROES.
+001300         88  NAV-FOUND                               VALUE ZEROES.
+001400         88  NAV-NOTFOUND                            VALUE 1.
+001500     02  ZN32WS-FILTER-CHNG-SW   PIC 9(01)           VALUE ZEROES.
+001600         88  FILTER-CHANGED                          VALUE ZEROES.
+001700         88  FILTER-NOT-CHANGED                      VALUE 1.
+           02  WS-TAIP-AUD-FL                         PIC X VALUE "N".
+ACS002*    02  WS-ESMS-ESMX-DEL-SW     PIC 9(01)           VALUE ZEROES.
+ACS002*        88  ESMS-ESMX-NOT-DELETED                   VALUE ZEROES.
+ACS002*        88  ESMS-ESMX-DELETED                       VALUE 1.
+ACS002     02  WS-ESMS-DEL-SW     PIC 9(01)                VALUE ZEROES.
+ACS002         88  ESMS-NOT-DELETED                        VALUE ZEROES.
+ACS002         88  ESMS-DELETED                            VALUE 1.
+

@@ -1,0 +1,484 @@
+000100******************************************************************
+000200*                            ZH515PD                             *
+000300******************************************************************
+      * MODIFICATION LOG                                               *
+      * WO#7878  MLF 7/13/2015  INITIAL VERSION                        *
+      *                         UPDATE USER FIELDS FOR PART-TIME       *
+      *                         EMPLOYEES ADDED BY ZH510/HR511         *
+      *                         FILES FOR HR511 AND HR515              *
+      *                                                                *
+      *                         THIS IS FOR CRSP ENROLLMENT FOR        * 
+      *                         PART-TIME EMPLOYEES                    *
+      ******************************************************************
+      * 201209   MLF 12/09/2020 INCREASED OMITSSN TABLE SIZE TO 1000   *
+      ****************************************************************** 
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+
+           MOVE WS-SYSTEM-DATE-YMD     TO WS-CURR-DATE.
+000500
+000600     IF (PRM-COMPANY NOT = ZEROES)
+000700         MOVE PRM-COMPANY        TO DB-COMPANY
+000800         MOVE SPACES             TO DB-PROCESS-LEVEL
+000900         PERFORM 840-FIND-PRSSET1
+001000         IF (PRSYSTEM-NOTFOUND)
+001100             MOVE PRM-COMPANY    TO CRT-ERR-VAR1
+001200             MOVE 050            TO CRT-ERROR-NBR
+001300             MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+001400             PERFORM 780-PRINT-ERROR-MSG
+001500             GO TO 050-END.
+
+           MOVE PRS-NAME               TO G1-PRS-NAME.
+001600
+001700 050-END.
+001800
+001900******************************************************************
+002000 100-PROGRAM-CONTROL             SECTION 10.
+002100******************************************************************
+002200 100-START.
+002300
+002400     MOVE 051                    TO CRT-MSG-NBR.
+002500     PERFORM 780-DISPLAY-MSG.
+
+003600     PERFORM 800-OPENINPUTCSV-EMPLOADCSV.
+           PERFORM 800-ALLUSEDCSV-EMPLOADCSV.
+           
+           PERFORM 800-OPENINPUTCSV-ERPTEMP.
+           PERFORM 800-ALLUSEDCSV-ERPTEMP.
+           
+           PERFORM 800-OPENINPUTCSV-ERPOMIT.
+           PERFORM 800-ALLUSEDCSV-ERPOMIT.
+           
+WO3742     PERFORM 800-OPENOUTPUTCSV-USFCSV.
+WO3742     PERFORM 800-ALLUSEDCSV-USFCSV.
+
+002700     PERFORM 1000-PROCESS.
+
+005900     PERFORM 800-CLOSECSV-EMPLOADCSV.
+           PERFORM 800-CLOSECSV-ERPTEMP.
+           PERFORM 800-CLOSECSV-ERPOMIT.
+           PERFORM 800-CLOSECSV-USFCSV.
+
+002900 100-END.
+003000
+003100******************************************************************
+003200 1000-PROCESS                    SECTION 50.
+003300******************************************************************
+003400 1000-START.
+
+           MOVE PRM-COMPANY            TO G1-COMPANY.
+           MOVE GN1H-COMPANY-ERR       TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+           MOVE GN1S-EMPLOYEE-ERR      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM 800-READCSV-ERPTEMP.
+           
+      * PROCESS HEADER RECORD
+           IF (ERP-LAST-NAME = "LastName")
+               PERFORM 800-READCSV-ERPTEMP
+           ELSE
+               DISPLAY ERP-LAST-NAME, "!!!!!"
+               MOVE 99                TO CRT-MSG-NBR
+               MOVE SPACES            TO WS-EMP-FIELD
+               PERFORM 4000-PRINT-LOAD-ERROR
+               GO TO 1000-END
+           END-IF.      
+           
+           PERFORM 1500-LOAD-OMIT-FICAS
+              THRU 1500-END.     
+           
+           PERFORM 1020-PROCESS-REC
+              THRU 1020-END
+             UNTIL (ERPTEMP-NOTFOUND).
+             
+           GO TO 1000-END.
+
+      ******************************************************************
+       1020-PROCESS-REC.
+      ******************************************************************
+            
+            MOVE "N" TO WS-LOAD-ERR-FLAG.
+            PERFORM 4000-EDITS.
+            IF (WS-LOAD-ERR-FLAG = "Y")
+                GO TO 1020-NEXT-REC
+            END-IF.      
+
+            MOVE PRM-COMPANY           TO DB-COMPANY.
+            MOVE ERP-FICA-NBR       TO DB-FICA-NBR.
+            MOVE 0                     TO DB-EMPLOYEE.
+            PERFORM 850-FIND-NLT-EMPSET4.
+            
+            IF  (EMPLOYEE-FOUND)
+            AND (EMP-FICA-NBR = ERP-FICA-NBR)
+                 CONTINUE
+            ELSE
+                MOVE 200               TO CRT-MSG-NBR
+                MOVE SPACES            TO WS-EMP-FIELD
+                PERFORM 4000-PRINT-LOAD-ERROR
+                GO TO 1020-NEXT-REC
+            END-IF.
+            
+      *      IF (EMP-JOB-CODE NOT = "PARTTIME")
+      *          MOVE 201               TO CRT-MSG-NBR
+      *          MOVE EMP-JOB-CODE      TO WS-EMP-FIELD
+      *          PERFORM 4000-PRINT-LOAD-ERROR
+      *          GO TO 1020-NEXT-REC
+      *      END-IF.
+            
+            PERFORM 3000-LOAD-USF.
+            
+       1020-NEXT-REC.
+            PERFORM 800-READCSV-ERPTEMP.
+            
+       1020-END.     
+       
+003150******************************************************************
+003160 1500-LOAD-OMIT-FICAS.
+003170******************************************************************
+
+           MOVE 1 TO WS-OMIT-FICA-NDX.
+       
+           PERFORM  800-READCSV-ERPOMIT.             
+
+           PERFORM  1510-LOAD-OMIT-FICA-TBL
+              THRU  1510-END
+             UNTIL (ERPOMIT-NOTFOUND). 
+
+       1500-END.
+       
+       1510-LOAD-OMIT-FICA-TBL.
+       
+           IF (WS-OMIT-FICA-NDX > 1000)
+               DISPLAY "***********************************"
+               DISPLAY "NUMBER OF OVERRIDES EXCEEDS MAXIMUM"
+               DISPLAY "***********************************"
+               GO TO 1000-END.
+
+           MOVE ERO-FICA-NBR TO WS-OMIT-FICA(WS-OMIT-FICA-NDX).
+           ADD 1 TO WS-OMIT-FICA-NDX.
+           
+       1510-READ-NEXT-CSV.
+           PERFORM  800-READCSV-ERPOMIT.      
+       1510-END.
+       
+
+      ******************************************************************
+       3000-LOAD-USF.
+      ******************************************************************
+      
+      * USER-FIELD-1
+            MOVE "A"                   TO CSV-FC.
+            MOVE PRM-COMPANY           TO CSV-COMPANY.
+            MOVE 1                     TO CSV-REC-TYPE.
+            MOVE EMP-EMPLOYEE          TO CSV-EMPLOYEE.
+            MOVE "A-ROSTER CODE"       TO CSV-FIELD-NAME.
+            MOVE "NON-EMP"             TO CSV-A-FIELD.
+            IF (ERP-USER-FIELD-1 = "LAY")
+            OR (ERP-USER-FIELD-1 = "NON")
+                MOVE "LAYWORKER"       TO CSV-A-FIELD
+            ELSE
+            IF (ERP-USER-FIELD-1 = "COM")
+                MOVE "COMMTC"          TO CSV-A-FIELD
+            ELSE
+            IF (ERP-USER-FIELD-1 = "ORD")
+                MOVE "ORDMINSTR"       TO CSV-A-FIELD
+            END-IF
+            END-IF.
+            MOVE 0                     TO CSV-N-FIELD.
+      * ERP-PT-IN-HIRE-DATE WAS FORMATTED IN 4020
+            MOVE WS-DATE-REFORMAT      TO CSV-EFFECT-DATE.
+            PERFORM 800-WRITECSV-USFCSV.
+
+      * USER-FIELD-2
+      * I BELIEVE THIS IS THE SAME THING AS A-FIELD-96
+      * SO USER-FIELD-3 ISN'T NECESSARY
+            MOVE "A"                   TO CSV-FC.
+            MOVE PRM-COMPANY           TO CSV-COMPANY.
+            MOVE 1                     TO CSV-REC-TYPE.
+            MOVE EMP-EMPLOYEE          TO CSV-EMPLOYEE.
+            MOVE "A-SELF EMPL SS PART" TO CSV-FIELD-NAME.
+      *      MOVE "NON-EMP"             TO CSV-A-FIELD.
+            IF (ERP-USER-FIELD-1 = "LAY")
+                MOVE "NY"              TO CSV-A-FIELD
+            ELSE
+              IF (ERP-USER-FIELD-1 = "NON")
+                  MOVE "NON-EMP"       TO CSV-A-FIELD
+              ELSE
+                 IF (ERP-USER-FIELD-1 = "ORD")
+                 OR (ERP-USER-FIELD-1 = "COM")
+                     MOVE "YU"         TO CSV-A-FIELD
+                 END-IF
+              END-IF
+            END-IF.    
+            MOVE 0                     TO CSV-N-FIELD.
+      * ERP-PT-IN-HIRE-DATE WAS FORMATTED IN 4020
+            MOVE WS-DATE-REFORMAT      TO CSV-EFFECT-DATE.
+            PERFORM 800-WRITECSV-USFCSV.
+            
+      * USF RECORD DEFAULT
+            MOVE "A"                   TO CSV-FC.
+            MOVE PRM-COMPANY           TO CSV-COMPANY.
+            MOVE 1                     TO CSV-REC-TYPE.
+            MOVE EMP-EMPLOYEE          TO CSV-EMPLOYEE.
+            MOVE "A-CDSP FULL"         TO CSV-FIELD-NAME.
+            MOVE "N"                   TO CSV-A-FIELD.
+            MOVE 0                     TO CSV-N-FIELD.
+      *      MOVE IN-EMP-DATE-HIRED     TO CSV-EFFECT-DATE.
+      * ERP-PT-IN-HIRE-DATE WAS FORMATTED IN 4020
+            MOVE WS-DATE-REFORMAT      TO CSV-EFFECT-DATE.
+            PERFORM 800-WRITECSV-USFCSV.
+      
+      * USF RECORD DEFAULT
+            MOVE "A"                   TO CSV-FC.
+            MOVE PRM-COMPANY           TO CSV-COMPANY.
+            MOVE 1                     TO CSV-REC-TYPE.
+            MOVE EMP-EMPLOYEE          TO CSV-EMPLOYEE.
+            MOVE "A-DAYOFEVNTPLANCHG"  TO CSV-FIELD-NAME.
+            MOVE "NA"                  TO CSV-A-FIELD.
+            MOVE 0                     TO CSV-N-FIELD.
+      *      MOVE IN-EMP-DATE-HIRED     TO CSV-EFFECT-DATE.
+      * ERP-PT-IN-HIRE-DATE WAS FORMATTED IN 4020
+            MOVE WS-DATE-REFORMAT      TO CSV-EFFECT-DATE.
+            PERFORM 800-WRITECSV-USFCSV.
+            
+      * USF RECORD DEFAULT
+            MOVE "A"                   TO CSV-FC.
+            MOVE PRM-COMPANY           TO CSV-COMPANY.
+            MOVE 1                     TO CSV-REC-TYPE.
+            MOVE EMP-EMPLOYEE          TO CSV-EMPLOYEE.
+            MOVE "P-CITIZENSHIP"       TO CSV-FIELD-NAME.
+            MOVE "US"                  TO CSV-A-FIELD.
+            MOVE 0                     TO CSV-N-FIELD.
+      *      MOVE EMP-DATE-HIRED     TO CSV-EFFECT-DATE.
+      * ERP-PT-IN-HIRE-DATE WAS FORMATTED IN 4020
+            MOVE WS-DATE-REFORMAT      TO CSV-EFFECT-DATE.
+            PERFORM 800-WRITECSV-USFCSV.
+      
+      ******************************************************************
+       4000-EDITS.
+      ******************************************************************
+      
+            INSPECT ERP-LAST-NAME
+            CONVERTING "abcdefghijklmnopqrstuvwxyz"
+                    TO "ABCDEFGHIJKLMNOPQRSTUVWXYZ".
+            
+            IF (ERP-LAST-NAME = SPACES)
+                MOVE 202               TO CRT-MSG-NBR
+                MOVE SPACES            TO WS-EMP-FIELD
+                MOVE "Y"               TO WS-LOAD-ERR-FLAG
+                PERFORM 4000-PRINT-LOAD-ERROR
+            END-IF.
+            
+            INSPECT ERP-FIRST-NAME
+            CONVERTING "abcdefghijklmnopqrstuvwxyz"
+                    TO "ABCDEFGHIJKLMNOPQRSTUVWXYZ".
+
+            IF (ERP-FIRST-NAME = SPACES)
+                MOVE 203               TO CRT-MSG-NBR
+                MOVE SPACES            TO WS-EMP-FIELD
+                MOVE "Y"               TO WS-LOAD-ERR-FLAG
+                PERFORM 4000-PRINT-LOAD-ERROR
+            END-IF.
+            
+            PERFORM 4010-EDIT-FICA
+               THRU 4010-END.
+            
+      *** HIRE DATE
+            MOVE 214                   TO CRT-MSG-NBR.
+            MOVE ERP-PT-HIRE-DATE       TO WS-DATE-TIME-IN.
+            PERFORM 4020-EDIT-DATE
+               THRU 4020-END.
+               
+      ******************************************************************
+       4010-EDIT-FICA.
+      ******************************************************************
+
+      * EDIT FOR SSN IN XXX-XX-XXXX FORMAT
+          
+          IF  (ERP-FICA-NBR (4:1) = "-")
+          AND (ERP-FICA-NBR (7:1) = "-")
+               MOVE ERP-FICA-NBR        TO WS-FICA-NBR-OUT
+               IF (WS-FICA-3-OUT < "000")
+               OR (WS-FICA-3-OUT > "999")
+               OR (WS-FICA-2-OUT < "00")
+               OR (WS-FICA-2-OUT > "99")
+               OR (WS-FICA-4-OUT < "0000")
+               OR (WS-FICA-4-OUT > "9999")
+                  MOVE 211             TO CRT-MSG-NBR
+                  MOVE SPACES          TO WS-EMP-FIELD
+                  MOVE "Y"               TO WS-LOAD-ERR-FLAG
+                  PERFORM 4000-PRINT-LOAD-ERROR
+               ELSE
+                  PERFORM 4015-CHECK-FICA-OMIT-TBL
+                  THRU    4015-END
+                  GO TO 4010-END
+               END-IF
+          END-IF.
+          
+          IF (WS-LOAD-ERR-FLAG = "Y")
+              GO TO 4010-END.
+              
+      * EDIT FOR SSN IN XXXXXXXXX FORMAT
+      
+          MOVE "N"                     TO WS-FICA-ERR-FLAG.
+              
+          PERFORM VARYING I1 FROM 1 BY 1
+             UNTIL (I1 > 9)
+             
+             IF (ERP-FICA-NBR (I1:1) < "0")
+             OR (ERP-FICA-NBR (I1:1) > "9")
+                 MOVE "Y" TO WS-FICA-ERR-FLAG
+             END-IF
+             
+          END-PERFORM.
+             
+          IF (WS-FICA-ERR-FLAG = "N")
+              MOVE ERP-FICA-NBR         TO WS-FICA-NBR-IN
+              MOVE WS-FICA-3-IN        TO WS-FICA-3-OUT
+              MOVE WS-FICA-2-IN        TO WS-FICA-2-OUT
+              MOVE WS-FICA-4-IN        TO WS-FICA-4-OUT
+              MOVE WS-FICA-NBR-OUT     TO ERP-FICA-NBR
+          ELSE
+              MOVE 211                 TO CRT-MSG-NBR
+              MOVE SPACES              TO WS-EMP-FIELD
+              MOVE "Y"               TO WS-LOAD-ERR-FLAG
+              PERFORM 4000-PRINT-LOAD-ERROR
+          END-IF.
+          
+       4010-END.
+       
+      ******************************************************************
+       4015-CHECK-FICA-OMIT-TBL.
+      ****************************************************************** 
+       
+      * CHECK IF FICA IS ON OMIT LIST
+          MOVE 0 TO WS-OMIT-FICA-NDX.
+          MOVE 0 TO WS-OMIT-FICA-FOUND-FLAG.
+          PERFORM 4016-SCAN-FICA-OMIT-TBL
+             THRU 4016-END
+          VARYING WS-OMIT-FICA-NDX FROM 1 BY 1
+            UNTIL (WS-OMIT-FICA-NDX > 1000)
+            OR (WS-OMIT-FICA-FOUND-FLAG = 1).
+            
+          IF (WS-OMIT-FICA-FOUND-FLAG = 1)
+              MOVE 217             TO CRT-MSG-NBR
+              MOVE SPACES          TO WS-EMP-FIELD
+              MOVE "Y"               TO WS-LOAD-ERR-FLAG
+              PERFORM 4000-PRINT-LOAD-ERROR
+          END-IF.      
+          
+       4015-END.    
+
+      ******************************************************************
+       4016-SCAN-FICA-OMIT-TBL.
+      ******************************************************************
+      
+          IF (ERP-FICA-NBR = WS-OMIT-FICA (WS-OMIT-FICA-NDX))
+              MOVE 1 TO WS-OMIT-FICA-FOUND-FLAG.
+              
+       4016-END.       
+
+      ******************************************************************
+       4020-EDIT-DATE.
+      ******************************************************************
+
+      * CRT-MSG-NBR WAS MOVED OUT IN ADVANCE
+      * SO THE ERROR REPORT WILL REFERENCE THE PROPER DATE FIELD
+      
+      *     IF (WS-DATE-SLASH (3:1) NOT = "/")
+      *     OR (WS-DATE-SLASH (6:1) NOT = "/")
+      *     OR (WS-DATE-MM-SL IS NOT NUMERIC)
+      *     OR (WS-DATE-DD-SL IS NOT NUMERIC)
+      *     OR (WS-DATE-CCYY-SL IS NOT NUMERIC)
+      *         MOVE WS-DATE-SLASH      TO WS-EMP-FIELD
+      *         MOVE "Y"               TO WS-LOAD-ERR-FLAG
+      *         PERFORM 4000-PRINT-LOAD-ERROR
+      *         GO TO 4020-END
+      *     END-IF.
+           
+      *     IF (WS-DATE-MM-SL-N < 1)
+      *     OR (WS-DATE-MM-SL-N > 12)
+      *     OR (WS-DATE-DD-SL-N < 1)
+      *     OR (WS-DATE-DD-SL-N > 31)
+      *     OR (WS-DATE-CCYY-SL-N < 1900)
+      *     OR (WS-DATE-CCYY-SL-N > WS-CURR-CCYY + 1)
+      *         MOVE WS-DATE-SLASH      TO WS-EMP-FIELD
+      *         MOVE "Y"               TO WS-LOAD-ERR-FLAG
+      *         PERFORM 4000-PRINT-LOAD-ERROR
+      *     END-IF.
+      
+      * REPLACE WITH EDITS FOR YYYYMMDD
+      *      IF (WS-DATE-YYYY-IN IS NOT NUMERIC)
+      *      OR (WS-DATE-MM-IN   IS NOT NUMERIC)
+      *      OR (WS-DATE-DD-IN   IS NOT NUMERIC)
+      *          MOVE WS-DATE-YYYYMMDD-IN TO WS-EMP-FIELD
+      *          MOVE "Y"                 TO WS-LOAD-ERR-FLAG
+      *          PERFORM 4000-PRINT-LOAD-ERROR
+      *          GO TO 4020-END
+      *      END-IF.
+      
+      * REPLACE WITH EDITS FOR DATETIME FORMAT
+             IF (WS-DATE-TIME-YYYY-IN IS NOT NUMERIC)
+             OR (WS-DATE-TIME-MM-IN   IS NOT NUMERIC)
+             OR (WS-DATE-TIME-DD-IN   IS NOT NUMERIC)
+                 MOVE WS-DATE-TIME-IN  TO WS-EMP-FIELD
+                 MOVE "Y"              TO WS-LOAD-ERR-FLAG
+                 PERFORM 4000-PRINT-LOAD-ERROR
+                 GO TO 4020-END
+             END-IF.
+            
+            IF (WS-DATE-TIME-MM-IN-N < 1)
+            OR (WS-DATE-TIME-MM-IN-N > 12)
+            OR (WS-DATE-TIME-DD-IN-N < 1)
+            OR (WS-DATE-TIME-DD-IN-N > 31)
+            OR (WS-DATE-TIME-YYYY-IN-N < 1900)
+            OR (WS-DATE-TIME-YYYY-IN-N > WS-CURR-CCYY + 1)
+                MOVE WS-DATE-TIME-IN TO WS-EMP-FIELD
+                MOVE "Y"             TO WS-LOAD-ERR-FLAG
+                PERFORM 4000-PRINT-LOAD-ERROR
+            END-IF.
+            
+            MOVE WS-DATE-TIME-MM-IN-N TO WS-DATE-MM.
+            MOVE WS-DATE-TIME-DD-IN-N TO WS-DATE-DD.
+            MOVE WS-DATE-TIME-YYYY-IN-N TO WS-DATE-CCYY.
+               
+       4020-END.
+
+      ******************************************************************
+       4000-PRINT-LOAD-ERROR.
+      ******************************************************************
+           PERFORM 4050-MOVE-ERROR-FIELDS.
+           PERFORM 4500-PRINT-ERROR-LINE.
+
+      ******************************************************************
+       4050-MOVE-ERROR-FIELDS.
+      ******************************************************************
+           
+           MOVE ERP-EMPLOYER-ID   TO G1-DTL-PROCESS-LEVEL.
+      * EMPLOYEE NUMBER IS NEVER KNOWN BECAUSE ALL THE EDITS
+      * OCCUR BEFORE EMPLOYEE TABLE IS READ
+           MOVE SPACES              TO G1-DTL-EMPLOYEE.
+           MOVE ERP-FICA-NBR        TO G1-DTL-FICA-NBR.
+           MOVE ERP-LAST-NAME       TO G1-DTL-LAST-NAME.
+           MOVE ERP-FIRST-NAME      TO G1-DTL-FIRST-NAME.
+           MOVE WS-EMP-FIELD           TO G1-DTL-EMP-FIELD.
+           
+      ******************************************************************
+       4500-PRINT-ERROR-LINE.
+      ******************************************************************
+           MOVE ZEROES                 TO CRT-ERROR-NBR.
+           IF (CRT-MSG-NBR NOT = ZEROES)
+               PERFORM 790-GET-MSG.
+    
+           MOVE CRT-MESSAGE            TO G1-DTL-ERROR-MSG.
+
+           MOVE GN1D-EMPLOYEE-ERR      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+021900******************************************************************
+022000 1000-END.
+022100******************************************************************
+022200

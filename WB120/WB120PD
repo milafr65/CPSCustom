@@ -1,0 +1,4032 @@
+      ****************************************************************
+      *                    WB120 - BENEFITS BILLING                  *
+      ****************************************************************
+      *  PHASE 1: Create Interface records                           *
+      *                                                              *
+      *  PHASE 2: Create invoices and PBHSTHDR/DTL records.          *
+      *                                                              *
+      *  PHASE 3: GL Interface                                       *
+      *                                                              *
+      *  PHASE 4: Update company records                             *
+      *                                                              *
+      ******************************************************************
+      * 09/05 GW   PBH-REASON-CODE HAS BEEN CHANGED FROM 10 POS TO 4.  *
+      *  HAD TO CHANGE HARD-CODING IN WB120 AND WBIP TO ACCOMMODATE.   *
+      *  ALSO HAD TO CHANGE PBHSTTEMP WORK FILE                        *
+      ******************************************************************
+      * 08/00/06 GW  ADDED ADDITIONAL PRM EDITS ON UPDATE RUNS         *
+      ******************************************************************
+      * 07/00/07 GW  ADD "TAMI" & "TAMF" ON 2 LINES AS NEW TAIP CODES  *
+      ******************************************************************
+      * 03/00/09 GW  CHANGE NULL DEFAULT DATE FROM 1/1/1753 TO 1/1/1800*
+      *              RE DB2 CONVERSION.                                *
+      ******************************************************************
+ACS001* 07/23/09 M. HUNTER - MODIFIED 860-FIND-NXTRNG-PLNSET1 TO MATCH
+ACS001* ACS001               WITH THE INITIAL 850-FIND-NLT-PLNSET1 DUE
+ACS001*                      TO CHANGES FOR 9.0. MADE SAME MOD FOR 
+ACS001*                      860-FIND-NXTRNG-PTBSET5.
+AIC002* 11/05/18 S.Calvin   -2019 plans will be setup with ContribType
+AIC002*                      eq zero, so change this exclusion for 
+AIC002*                      loading table and other processing.
+AIC002*                     -Use Range Find for PLNSET1 for efficiency
+AIC002*                     -Increase Employer Plan Type options from
+AIC002*                      5 to 6 on job parm to include Type = DB.
+AIC002*                      Retirement is being changed to Plan Type
+AIC002*                      DB for 2019. Also changes I-PT value to 6
+AIC002*                      in working storage.
+AIC002*                     -Plan TRAV is a new override exception for
+AIC002*                      billing process level.
+AIC002*                     -Disability Waive Process Level for certain
+AIC002*                      plans are billed to ER in user field 
+AIC002*                      PREVIOUSPROCESSLEV if it exists. This also
+AIC002*                      includes logic for retroactive adjustments.
+AIC002*                     -Added message text for msg #702
+AIC002*                     -Update in paragrap 3020 to prevent job  
+AIC002*                      going into recovery under certain condi-
+AIC002*                      tions.
+AIC003* 03/29/19 S.Calvin   -In the adjustments logic, if employee is
+AIC003*                      PARTBEN table, skip the member paid logic
+US1487* 03/05/21 US1487  MLF
+US1487*                     -Billing for process level DISCW should be
+US1487*                      the same as for DISC
+      ****************************************************************
+       050-EDIT-PARAMETERS             SECTION.
+      ****************************************************************
+       050-START.
+      
+           MOVE WS-FALSE          TO WS-TYPE-FLAG.
+           IF  (PRM-PLAN-TYPE (1)     NOT = SPACES)
+           OR  (PRM-PLAN-TYPE (2)     NOT = SPACES)
+           OR  (PRM-PLAN-TYPE (3)     NOT = SPACES)
+           OR  (PRM-PLAN-TYPE (4)     NOT = SPACES)
+           OR  (PRM-PLAN-TYPE (5)     NOT = SPACES)
+               MOVE WS-TRUE       TO WS-TYPE-FLAG. 
+      
+           IF  (WS-TYPE-ENTERED)
+               PERFORM
+                   VARYING I1 FROM 1 BY 1
+                   UNTIL  (I1 > I-PT)
+                   
+                   IF  (PRM-PLAN-TYPE (I1) = SPACES)
+                       MOVE SPACES       TO WB120WS-PLAN-TYPE (I1)
+                   END-IF     
+               END-PERFORM.
+           
+           MOVE WS-FALSE               TO WS-CODE-FLAG.
+           IF  (PRM-PLAN-CODE (1)     NOT = SPACES)
+           OR  (PRM-PLAN-CODE (2)     NOT = SPACES)
+           OR  (PRM-PLAN-CODE (3)     NOT = SPACES)
+           OR  (PRM-PLAN-CODE (4)     NOT = SPACES)
+           OR  (PRM-PLAN-CODE (5)     NOT = SPACES)
+           OR  (PRM-PLAN-CODE (6)     NOT = SPACES)
+               MOVE WS-TRUE            TO WS-CODE-FLAG. 
+      
+********* INV-TYPE 9 = RETRO-ONLY *****************************
+           IF (PRM-INV-TYPE = 9)
+               MOVE 3                  TO WS-INV-TYPE
+               SET RETRO-ONLY-RUN      TO TRUE
+               SET COMBINED-RUN        TO TRUE
+           ELSE
+               MOVE PRM-INV-TYPE       TO WS-INV-TYPE.
+
+           IF  (EMPLOYER-RUN)
+           AND (PRM-REPORT-OPTION      NOT = ZEROES)
+               MOVE 901                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END. 
+      
+           IF  (EMPLOYEE-RUN)
+           AND ((PRM-PROC-GROUP        NOT = SPACES)
+           OR   (PRM-PROCESS-LEVEL     NOT = SPACES)
+           OR   (WS-TYPE-ENTERED)
+           OR   (WS-CODE-ENTERED))
+               MOVE 902                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END. 
+      
+           IF ((EMPLOYEE-RUN)
+           OR  (COMBINED-RUN))
+           AND (PRM-REPORT-OPTION       = ZEROES)
+               MOVE 907                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END. 
+      
+           MOVE PRM-TO-YEAR            TO WS-PRM-CCYY.
+           MOVE PRM-TO-PERIOD          TO WS-PRM-MM.
+           MOVE 1                      TO WS-PRM-DD.
+           
+           MOVE WS-PRM-DATE            TO WS-MONTH-BEG.
+           
+           ADD 1   TO WS-PRM-MM.
+           IF  (WS-PRM-MM = 13)
+               MOVE 1 TO WS-PRM-MM
+               ADD  1 TO WS-PRM-CCYY.            
+      
+           MOVE WS-PRM-DATE            TO WSDR-FR-DATE.
+           MOVE NEGATIVE-ONE           TO WSDR-DAY-INCR.
+           PERFORM 900-INCREMENT-DATE.
+           MOVE WSDR-TO-DATE           TO WS-MONTH-END.
+           
+
+           MOVE PRM-COMPANY            TO DB-COMPANY
+                                          IFACWS-COMPANY.
+           MOVE SPACES                 TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+           IF (PRSYSTEM-NOTFOUND)
+               MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+               MOVE 101                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END
+           ELSE
+               MOVE PRS-NAME           TO WS-CO-NAME
+RAY   *--- GLI FLAG IS NO LONGER USERD IN THIS PROGRAM
+RAY   *        MOVE PRS-GLI-OPTION     TO WS-GLI-OPTION
+               MOVE PRS-PRD-OPTION     TO WS-GT7-PRD-OPTION.
+
+           PERFORM 840-FIND-BNCSET1.
+           IF (BNCOMPANY-NOTFOUND)
+               MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+               MOVE 700                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END.
+
+GW6/09*    MOVE "P-BillToEmployer"     TO DB-FIELD-NAME.
+           MOVE "P-BILLTOEMPLOYER"     TO DB-FIELD-NAME.
+           PERFORM 840-FIND-HRUSET2.
+           IF  (HRUSERFLDS-NOTFOUND)
+               MOVE 701                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END
+           ELSE
+               MOVE HRU-FIELD-KEY      TO WS-BILL-EMPLOYER-A.
+RAY
+RAY   *--- GET TRAVEL INSURANCE BILL TO PROCESS LEVEL
+GW6/09*    MOVE "A-TAIP bill to ER"    TO DB-FIELD-NAME.
+           MOVE "A-TAIP BILL TO ER"    TO DB-FIELD-NAME.
+RAY        PERFORM 840-FIND-HRUSET2.
+RAY        IF  (HRUSERFLDS-NOTFOUND)
+RAY            MOVE 702                TO CRT-ERROR-NBR
+AIC002         MOVE DB-FIELD-NAME      TO CRT-ERR-VAR1
+RAY            PERFORM 780-PRINT-ERROR-MSG
+RAY            GO TO 050-END
+RAY        ELSE
+RAY            MOVE HRU-FIELD-KEY      TO WS-TAIP-EMPLOYER-A.    
+   
+GW6/09*    MOVE "P-Part Med Ded"       TO DB-FIELD-NAME.
+           MOVE "P-PART MED DED"       TO DB-FIELD-NAME.
+           PERFORM 840-FIND-HRUSET2.
+           IF  (HRUSERFLDS-NOTFOUND)
+               MOVE 702                TO CRT-ERROR-NBR
+AIC002         MOVE DB-FIELD-NAME      TO CRT-ERR-VAR1
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END
+           ELSE
+               MOVE HRU-FIELD-KEY      TO WS-BILL-ARREARS-A.    
+   
+AIC002     MOVE "A-PREVIOUSPROCESSLEV" TO DB-FIELD-NAME.
+AIC002     PERFORM 840-FIND-HRUSET2.
+AIC002     IF  (HRUSERFLDS-NOTFOUND)
+AIC002         MOVE 702                TO CRT-ERROR-NBR
+AIC002         MOVE DB-FIELD-NAME      TO CRT-ERR-VAR1
+AIC002         PERFORM 780-PRINT-ERROR-MSG
+AIC002         GO TO 050-END
+AIC002     ELSE
+AIC002         MOVE HRU-FIELD-KEY      TO WS-PREV-PROCLEVL-A    
+AIC002     END-IF.
+AIC002
+           PERFORM 080-EDIT-PLAN-GROUP-TBL.
+           IF  (ERROR-FOUND)
+               GO TO 050-END.  
+       
+           MOVE 910                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-BENEFIT-DESC.
+           MOVE 911                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-EXP-DESC.
+           MOVE 912                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-EXC-PREM-DESC.
+           MOVE 913                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-ACCR-DESC.
+           MOVE 914                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-AR-DESC.
+           MOVE 915                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-AR-OFFSET-DESC.
+           MOVE 916                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-AR-REV-DESC.
+           MOVE 917                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-AR-RCV-DESC.
+           MOVE 918                   TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE           TO WS-ARREARS-DESC.
+           
+           IF (EMPLOYER-RUN)
+               PERFORM 060-EMPLOYER-EDITS
+           ELSE     
+           IF (EMPLOYEE-RUN)
+               PERFORM 070-EMPLOYEE-EDITS
+           ELSE     
+           IF (COMBINED-RUN)
+               PERFORM 060-EMPLOYER-EDITS
+               IF (NOT ERROR-FOUND)
+                   PERFORM 070-EMPLOYEE-EDITS.
+               
+           IF (ERROR-FOUND)
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END.  
+
+GW8/06*** ADDITIONAL EDITS ON UPDATE RUNS ****************               
+           IF (PRM-UPDATE = "Y")
+              IF  (NOT COMBINED-RUN)
+              AND (NOT RETRO-ONLY-RUN) 
+                MOVE 951                TO CRT-ERROR-NBR
+                PERFORM 780-PRINT-ERROR-MSG
+                GO TO 050-END
+              ELSE
+              IF (PRM-INV-REGISTER = "N")
+                MOVE 952                TO CRT-ERROR-NBR
+                PERFORM 780-PRINT-ERROR-MSG
+                GO TO 050-END
+              ELSE
+              IF (PRM-PROC-GROUP = SPACES)
+                MOVE 953                TO CRT-ERROR-NBR
+                PERFORM 780-PRINT-ERROR-MSG
+                GO TO 050-END
+              ELSE
+              IF (PRM-PROCESS-LEVEL > SPACES)
+                MOVE 954                TO CRT-ERROR-NBR
+                PERFORM 780-PRINT-ERROR-MSG
+                GO TO 050-END
+              ELSE
+              IF (PRM-PLAN-TYPE-GRP = SPACES)
+                MOVE 955                TO CRT-ERROR-NBR
+                PERFORM 780-PRINT-ERROR-MSG
+                GO TO 050-END.
+                    
+
+       050-END.
+
+      ****************************************************************
+       060-EMPLOYER-EDITS              SECTION.
+      ****************************************************************
+       060-START.
+
+           IF  (PRS-INCLUDE-TP135  = "Y")
+           AND (PRS-TP135-RUN-FLG  = "R")
+               MOVE 123                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF  (PRS-PR132-RUN-FLG = "R")
+           AND (NOT INTERACTIVE)
+               MOVE 120                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF  (PRS-PR140-RUN-FLG = "R")
+           AND (NOT INTERACTIVE)
+               MOVE 102                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF  (PRS-PR160-RUN-FLG = "R")
+           AND (NOT INTERACTIVE)
+               MOVE 103                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF  (PRM-PROC-GROUP        = SPACES)
+           AND (PRM-PROCESS-LEVEL     = SPACES)
+               MOVE 201                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF  (PRM-PROC-GROUP    NOT = SPACES)
+           AND (PRM-PROCESS-LEVEL NOT = SPACES)
+               MOVE 104                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF (PRM-TO-PERIOD > 12)
+           OR (PRM-TO-PERIOD < 01)
+               MOVE 211                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 060-END.
+
+           IF  (PRM-PROCESS-LEVEL NOT = SPACES)
+               MOVE PRM-COMPANY           TO CRT-COMPANY
+                                             DB-COMPANY
+               MOVE PRM-PROCESS-LEVEL     TO CRT-PROCESS-LEVEL
+                                             DB-PROCESS-LEVEL
+               PERFORM 900-PROC-LEV-SECURED
+               IF (CRT-PROC-LEV-SECURED = "Y")
+                   MOVE DB-PROCESS-LEVEL  TO CRT-ERR-VAR1
+                   MOVE 119               TO CRT-MSG-NBR
+                   PERFORM 780-DISPLAY-MSG
+                   GO TO 060-END
+GW0408         END-IF.
+GW0408**** ADDED PERIOD ABOVE
+RAY   *        PERFORM 840-FIND-PCCSET1
+RAY   *        PERFORM 840-FIND-PBMSET1
+RAY   *        IF (PBCLIENT-NOTFOUND)
+RAY   *        OR (PBBNBILL-NOTFOUND)
+RAY   *            MOVE 200                TO CRT-ERROR-NBR
+RAY   *            PERFORM 780-PRINT-ERROR-MSG
+RAY   *            GO TO 060-END.
+
+           IF  (PRM-PROC-GROUP    = SPACES)
+           AND (PRM-PROCESS-LEVEL = SPACES)
+               MOVE PRSSET1-COMPANY    TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PRSSET1
+               MOVE PRS-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+               PERFORM 061-CHECK-ALL-RUN-FLGS
+                   UNTIL (PRSYSTEM-NOTFOUND)
+                   OR    (ERROR-FOUND)
+           ELSE
+           IF (PRM-PROC-GROUP NOT = SPACES)
+               MOVE PRM-PROC-GROUP     TO DB-PROC-GROUP
+               MOVE PRPSET1-PROC-GROUP TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PRPSET1
+               IF (PRPROCGRP-NOTFOUND)
+                   MOVE PRM-PROC-GROUP     TO CRT-ERR-VAR1
+                   MOVE 105                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+               END-IF
+               MOVE PRP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+               PERFORM 061-CHECK-ALL-RUN-FLGS
+                   UNTIL (PRPROCGRP-NOTFOUND)
+                   OR    (ERROR-FOUND)
+           ELSE
+           IF (PRM-PROCESS-LEVEL NOT = SPACES)
+               MOVE PRM-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+               PERFORM 840-FIND-PRSSET1
+               IF (PRSYSTEM-NOTFOUND)
+                   MOVE PRM-PROCESS-LEVEL  TO CRT-ERR-VAR1
+                   MOVE 106                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+               ELSE
+                   PERFORM 061-CHECK-ALL-RUN-FLGS.
+
+           INITIALIZE CRT-ERROR-CAT.
+
+       060-END.
+
+      ****************************************************************
+       061-CHECK-ALL-RUN-FLGS          SECTION.
+      ****************************************************************
+       061-START.
+
+           IF  (DB-PROCESS-LEVEL = SPACES)
+               GO TO 061-FIND-NEXT.
+
+           IF (WS-CODE-ENTERED)
+              PERFORM
+                 VARYING I1 FROM 1 BY 1
+                 UNTIL  (I1 > I-PT)
+
+                 PERFORM
+                    VARYING I2 FROM 1 BY 1
+                    UNTIL  (I2 > I-PC)
+
+                    MOVE WB120WS-PLAN-TYPE (I1) TO DB-PLAN-TYPE
+                    MOVE PRM-PLAN-CODE     (I2) TO DB-PLAN-CODE
+                    PERFORM 840-FIND-ZB1SET1
+                    IF  (PBBNPLAN-FOUND)
+                    AND (WS-MONTH-END <= ZB1-LAST-BILLED-DT)
+                        MOVE "PBPLN"            TO CRT-ERROR-CAT
+                        MOVE 210                TO CRT-ERROR-NBR
+                        MOVE ZB1-PLAN-TYPE      TO CRT-ERR-VAR1
+                        MOVE ZB1-PLAN-CODE      TO CRT-ERR-VAR2
+                        MOVE ZB1-LAST-BILLED-DT TO CRT-ERR-VAR3
+                        GO TO 061-FIND-NEXT
+                    END-IF
+                 END-PERFORM
+              END-PERFORM
+           ELSE
+               MOVE ZB1SET1-PROCESS-LEVEL TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-ZB1SET1
+               PERFORM
+                   UNTIL (PBBNPLAN-NOTFOUND)
+
+                   IF  (PBBNPLAN-FOUND)
+                   AND (WS-MONTH-END <= ZB1-LAST-BILLED-DT)
+                       MOVE "PBPLN"            TO CRT-ERROR-CAT
+                       MOVE 210                TO CRT-ERROR-NBR
+                       MOVE ZB1-PLAN-TYPE      TO CRT-ERR-VAR1
+                       MOVE ZB1-PLAN-CODE      TO CRT-ERR-VAR2
+                       MOVE ZB1-LAST-BILLED-DT TO CRT-ERR-VAR3
+                       GO TO 061-FIND-NEXT
+                   END-IF
+                   PERFORM 860-FIND-NXTRNG-ZB1SET1
+               END-PERFORM.
+
+       061-FIND-NEXT.
+
+           IF (PRM-PROC-GROUP NOT = SPACES)
+               PERFORM 860-FIND-NXTRNG-PRPSET1
+               MOVE PRP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+           ELSE
+           IF (PRM-PROCESS-LEVEL = SPACES)
+               PERFORM 860-FIND-NXTRNG-PRSSET1
+               MOVE PRS-PROCESS-LEVEL      TO DB-PROCESS-LEVEL.
+
+       061-END.
+           EXIT.
+
+      ******************************************************************
+       070-EMPLOYEE-EDITS              SECTION 10.
+      ******************************************************************
+       070-START.
+
+           SET PRINT-903               TO TRUE.
+
+           INITIALIZE DB-PLAN-TYPE
+                      DB-PLAN-CODE
+                      DB-COVER-TYPE
+                      DB-START-DATE
+                      DB-GROUP-NAME.
+           PERFORM 850-FIND-NLT-PRESET1.
+           PERFORM
+               UNTIL (PREMIUM-NOTFOUND)
+               OR    (PRE-COMPANY        NOT = DB-COMPANY)
+
+               IF (PRE-START-DATE        <= WS-MONTH-BEG)
+                   IF  (PRM-REPORT-OPTION = 1 OR 3)
+                   AND (PRE-PLAN-TYPE    = "HL" OR "DN" OR "EL" OR "RS")
+                   AND (PRE-COVER-TYPE    = "C")
+                   AND (PRE-COBRA-STATUS  NOT = 3)
+                       IF (PRINT-903)
+      *------------------  New premium exists or premium has been
+      *------------------  changed run BN105
+                           MOVE 903           TO CRT-ERROR-NBR
+                           PERFORM 780-PRINT-ERROR-MSG
+                           SET NO-PRINT-903   TO TRUE
+                       END-IF
+                       MOVE 904           TO CRT-ERROR-NBR
+                       MOVE PRE-PLAN-TYPE TO CRT-ERR-VAR1
+                       MOVE PRE-PLAN-CODE TO CRT-ERR-VAR2
+                       MOVE PRE-START-DATE   TO HRWS-DATE-FIELD
+                       INITIALIZE HRWS-DATE-8-FIELD
+                       PERFORM 781-HR-FORMAT-DATE-FIELD
+                       MOVE HRWS-VALUE       TO CRT-ERR-VAR3
+                       PERFORM 780-PRINT-ERROR-MSG
+                   ELSE
+                   IF  (PRM-REPORT-OPTION = 2 OR 3)
+                   AND (PRE-PLAN-TYPE    = "HL" OR "DN" OR "EL" OR "DL")
+                   AND (PRE-COVER-TYPE    = "R")
+                   AND (PRE-RET-STATUS    NOT = 3)
+                       IF (PRINT-903)
+      *------------------  New premium exists or premium has been
+      *------------------  changed run BN105
+                           MOVE 903           TO CRT-ERROR-NBR
+                           PERFORM 780-PRINT-ERROR-MSG
+                           SET NO-PRINT-903   TO TRUE
+                       END-IF
+                       MOVE 904           TO CRT-ERROR-NBR
+                       MOVE PRE-PLAN-TYPE TO CRT-ERR-VAR1
+                       MOVE PRE-PLAN-CODE TO CRT-ERR-VAR2
+                       MOVE PRE-START-DATE   TO HRWS-DATE-FIELD
+                       INITIALIZE HRWS-DATE-8-FIELD
+                       PERFORM 781-HR-FORMAT-DATE-FIELD
+                       MOVE HRWS-VALUE       TO CRT-ERR-VAR3
+                       PERFORM 780-PRINT-ERROR-MSG
+                   END-IF
+                   END-IF
+               END-IF
+               PERFORM 860-FIND-NEXT-PRESET1
+           END-PERFORM.
+
+           IF  (BNC-CBR-INV-PER        = ZEROS)
+           AND (BNC-RET-INV-PER        = ZEROS)
+               GO TO 070-END.
+
+           IF  (PRM-REPORT-OPTION      = 1 OR 3)
+           AND (BNC-CBR-INV-PER    NOT = ZEROS)
+               MOVE PRM-TO-YEAR        TO WS-WRK-CCYY
+               MOVE BNC-CBR-INV-PER    TO WS-PERIOD-MMYY
+               MOVE WS-PERIOD-MM       TO WS-WRK-MM
+               MOVE WS-PERIOD-YY       TO WS-WRK-YY
+               MOVE 1                  TO WS-WRK-DD
+               IF  (WS-WRK-DATE NOT < WS-MONTH-BEG)
+                   MOVE BNC-CBR-INV-PER    TO WS-INVOICE-PER
+                   MOVE WS-INVOICE-PER     TO CRT-ERR-VAR1
+                   MOVE 906                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG.
+
+           IF  (PRM-REPORT-OPTION      = 2 OR 3)
+           AND (BNC-RET-INV-PER    NOT = ZEROS)
+               MOVE PRM-TO-YEAR        TO WS-WRK-CCYY
+               MOVE BNC-RET-INV-PER    TO WS-PERIOD-MMYY
+               MOVE WS-PERIOD-MM       TO WS-WRK-MM
+               MOVE WS-PERIOD-YY       TO WS-WRK-YY
+               MOVE 1                  TO WS-WRK-DD
+               IF  (WS-WRK-DATE NOT < WS-MONTH-BEG)
+                   MOVE BNC-RET-INV-PER    TO WS-INVOICE-PER
+                   MOVE WS-INVOICE-PER     TO CRT-ERR-VAR1
+                   MOVE 906                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG.
+
+       070-END.
+
+      ******************************************************************
+       080-EDIT-PLAN-GROUP-TBL         SECTION 10.
+      ******************************************************************
+       080-START.
+
+           MOVE PRM-COMPANY            TO DB-LVL-1-KEY.
+           MOVE "BN-PLAN-GROUP"        TO DB-LVL-2-KEY.
+           INITIALIZE                     DB-LVL-3-KEY.
+           MOVE IF1SET1-LVL-3-KEY      TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-IF1SET1.
+           IF  (LUPTBLDTL-NOTFOUND)
+               MOVE 800                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 080-END.
+
+           MOVE 1 TO I1.
+
+           PERFORM
+               UNTIL (LUPTBLDTL-NOTFOUND)
+               OR    (I1 > I-PLGRP)
+
+               MOVE IF1-DTL-KEY        TO WB120WS-PLAN-KEY (I1)
+               MOVE IF1-DTL-VALUE      TO WB120WS-WBP-PLAN-GROUP(I1)
+
+               ADD 1 TO I1
+
+               PERFORM 860-FIND-NXTRNG-IF1SET1
+           END-PERFORM.
+
+           IF  (I1 > I-PLGRP)
+               MOVE 801                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 080-END.
+
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > I-PLGRP)
+               OR     (WB120WS-PLAN-KEY (I1) = SPACES)
+
+               IF  (WB120WS-COLUMN (I1) NOT NUMERIC)
+                   MOVE 802                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE PRM-COMPANY            TO DB-COMPANY
+               MOVE WB120WS-PLN-TYPE (I1)  TO DB-PLAN-TYPE
+               MOVE WB120WS-PLN-CODE (I1)  TO DB-PLAN-CODE
+               PERFORM 840-FIND-PLNSET1
+               IF  (PLAN-NOTFOUND)
+                   MOVE DB-PLAN-TYPE       TO CRT-ERR-VAR1
+                   MOVE DB-PLAN-CODE       TO CRT-ERR-VAR2
+                   MOVE 803                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE PRM-COMPANY                 TO DB-LVL-1-KEY
+               MOVE "PLAN-GROUP"                TO DB-LVL-2-KEY
+               MOVE "CREDIT"                    TO DB-LVL-3-KEY
+               MOVE WB120WS-WBP-PLAN-GROUP (I1) TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               IF  (LUPTBLDTL-NOTFOUND)
+                   MOVE "CREDIT"           TO CRT-ERR-VAR1
+                   MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                           TO CRT-ERR-VAR2
+                   MOVE 804                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE IF1-DTL-VALUE           TO WB120WS-ACCT-INFO
+
+               IF  (WB120WS-COMP     NOT NUMERIC)
+               OR  (WB120WS-ACCOUNT  NOT NUMERIC)
+               OR  (WB120WS-SUB-ACCT NOT NUMERIC)
+                   MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                           TO CRT-ERR-VAR1
+                   MOVE 805                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE WB120WS-COMP-N         TO IFACWS-COMPANY
+               MOVE 0                      TO IFACWS-EDIT-TYPE
+               MOVE WB120WS-ACCT-UNIT      TO IFACWS-ACCT-UNIT
+               MOVE WB120WS-ACCOUNT-N      TO IFACWS-ACCOUNT
+               MOVE WB120WS-SUB-ACCT-N     TO IFACWS-SUB-ACCOUNT
+               MOVE "AR"                   TO IFACWS-SYSTEM
+               PERFORM 635-EDIT-GLMASTER-60
+               IF  (ERROR-FOUND)
+                   MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                           TO CRT-ERR-VAR1
+                   MOVE 806                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE PRM-COMPANY                 TO DB-LVL-1-KEY
+               MOVE "PLAN-GROUP"                TO DB-LVL-2-KEY
+               MOVE "DEBIT"                     TO DB-LVL-3-KEY
+               MOVE WB120WS-WBP-PLAN-GROUP (I1) TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               IF  (LUPTBLDTL-NOTFOUND)
+                   MOVE "DEBIT"            TO CRT-ERR-VAR1
+                   MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                           TO CRT-ERR-VAR2
+                   MOVE 804                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE IF1-DTL-VALUE           TO WB120WS-ACCT-INFO
+
+               IF  (WB120WS-COMP     NOT NUMERIC)
+               OR  (WB120WS-ACCOUNT  NOT NUMERIC)
+               OR  (WB120WS-SUB-ACCT NOT NUMERIC)
+                   MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                           TO CRT-ERR-VAR1
+                   MOVE 805                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+
+               MOVE WB120WS-COMP-N         TO IFACWS-COMPANY
+               MOVE 0                      TO IFACWS-EDIT-TYPE
+               MOVE WB120WS-ACCT-UNIT      TO IFACWS-ACCT-UNIT
+               MOVE WB120WS-ACCOUNT-N      TO IFACWS-ACCOUNT
+               MOVE WB120WS-SUB-ACCT-N     TO IFACWS-SUB-ACCOUNT
+               MOVE "AR"                   TO IFACWS-SYSTEM
+               PERFORM 635-EDIT-GLMASTER-60
+               IF  (ERROR-FOUND)
+                   MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                           TO CRT-ERR-VAR1
+                   MOVE 806                TO CRT-ERROR-NBR
+                   PERFORM 780-PRINT-ERROR-MSG
+                   GO TO 080-END
+               END-IF
+           END-PERFORM.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > I-PLGRP)
+
+               COMPUTE I2 = I1 + 1
+
+               PERFORM
+                   UNTIL (I2 > I-PLGRP)
+
+                   IF  ( (WB120WS-COLUMN (I1) NOT = WB120WS-COLUMN (I2))
+                   AND   (WB120WS-WBP-PLAN-GROUP (I1)
+                                = WB120WS-WBP-PLAN-GROUP (I2)) )
+                   OR  ( (WB120WS-COLUMN (I1) = WB120WS-COLUMN (I2))
+                   AND   (WB120WS-WBP-PLAN-GROUP (I1)
+                            NOT = WB120WS-WBP-PLAN-GROUP (I2)) )
+                       MOVE WB120WS-WBP-PLAN-GROUP (I1)
+                                               TO CRT-ERR-VAR1
+                       MOVE 807                TO CRT-ERROR-NBR
+                       PERFORM 780-PRINT-ERROR-MSG
+                       GO TO 080-END
+                   END-IF
+
+                   ADD 1 TO I2
+               END-PERFORM
+           END-PERFORM.
+
+       080-END.
+      ****************************************************************
+       100-PROGRAM-CONTROL             SECTION.
+      ****************************************************************
+       100-START.
+
+           MOVE 114                    TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+
+           PERFORM 840-FIND-CKPSET1.
+           IF (CKP-RESTART-INFO = SPACES)
+               INITIALIZE WS-RESTART-INFO
+           ELSE
+               MOVE CKP-RESTART-INFO     TO WS-RESTART-INFO
+               MOVE 131                  TO CRT-MSG-NBR
+               PERFORM 780-DISPLAY-MSG.
+
+      *--- RE-USE THE PREVIOUS RUN'S GT70DISK FILENAME
+
+           IF (WS-RS-GT70DISK-NAME = SPACES)
+               PERFORM 9000-BUILD-GT70DISK-FILENAME
+               MOVE IFGTWS-FILENAME     TO WS-RS-GT70DISK-NAME
+           ELSE
+               MOVE WS-RS-GT70DISK-NAME TO IFGTWS-FILENAME.
+
+           PERFORM 9800-OPEN-OUTPUT-GT70DISK.
+           PERFORM 9900-CLOSE-GT70DISK.
+           IF (WS-RS-CKP-ID = ZEROES)
+               MOVE "WB120"            TO IFOBIWS-OBJ-TYPE
+               PERFORM 7000-ASSIGN-OBJ-ID-70
+               MOVE IFOBIWS-OBJ-ID     TO WS-RS-CKP-ID.
+
+
+           GO TO 100-PHASE-1
+                 100-PHASE-2
+                 100-PHASE-3
+                 100-PHASE-4        DEPENDING ON WS-RS-PHASE-COUNTER.
+
+           PERFORM 910-AUDIT-BEGIN.
+
+           MOVE WS-SYSTEM-DATE-YMD     TO WS-RS-RUN-DATE.
+           MOVE HHMMSS                 TO WS-RS-RUN-TIME.
+           MOVE 1                      TO WS-RS-PHASE-COUNTER.
+
+           PERFORM 840-MODIFY-CKPSET1.
+           MOVE WS-RESTART-INFO        TO CKP-RESTART-INFO.
+           PERFORM 820-STORE-CKPOINT.
+           PERFORM 925-AUDIT-END.
+
+       100-PHASE-1.
+
+           CALL "GetSysTime" USING WS-DATE-TIME.
+           MOVE HHMMSS                 TO CRT-ERR-VAR1.
+           MOVE 130                    TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+
+      *--- RE-USE THE PREVIOUS RUN'S PBHSTTEMP FILENAME
+
+           IF (WS-RS-PBHSTTEMP-NAME = SPACES)
+               PERFORM 900-BUILD-TMP-FILE-NAME
+               MOVE WS-TMP-FILE        TO PB1-TEMPFILE-NAME
+                                          WS-RS-PBHSTTEMP-NAME
+           ELSE
+               MOVE WS-RS-PBHSTTEMP-NAME
+                                       TO PB1-TEMPFILE-NAME.
+           PERFORM 9800-OPEN-OUTPUT-PBHSTTEMP.
+
+           MOVE PB1-TEMPFILE-NAME      TO WS-RS-PBHSTTEMP-NAME.
+
+      *--- Open Exceptions report file
+
+           OPEN OUTPUT EXCEPTIONS-FILE.
+
+RAY   *--- STORE THE PLANS THAT ARE BILLED FOR LATER FILTER ------------
+RAY        MOVE 1                      TO SUB1.
+RAY        MOVE PRM-COMPANY            TO DB-COMPANY.
+AIC002*    INITIALIZE                     DB-PLAN-TYPE.
+AIC002*    INITIALIZE                     DB-PLAN-CODE.
+AIC002*    PERFORM 850-FIND-NLT-PLNSET1.
+AIC002     MOVE PLNSET1-COMPANY        TO WS-DB-BEG-RNG.
+AIC002     PERFORM 850-FIND-BEGRNG-PLNSET1.
+RAY        PERFORM
+RAY          UNTIL (PLAN-NOTFOUND)
+RAY          OR (SUB1 > WB120WS-PLAN-OPTS-TBL-MAX)
+AIC002*        IF (PLN-CONTRIB-TYPE NOT = "0 ")
+RAY                PERFORM
+RAY                  VARYING SUB1 FROM 1 BY 1
+RAY                  UNTIL (SUB1 > WB120WS-PLAN-OPTS-TBL-MAX)
+RAY                  OR    (PLN-PLAN-OPTION = WB120WS-PLAN-OPT(SUB1)) 
+RAY                  OR    (WB120WS-PLAN-OPT (SUB1) = ZERO)
+RAY                    CONTINUE
+RAY                END-PERFORM
+RAY
+RAY                IF (PLN-PLAN-OPTION NOT = WB120WS-PLAN-OPT(SUB1)) 
+RAY                    IF (SUB1 > WB120WS-PLAN-OPTS-TBL-MAX)
+RAY                        MOVE 951          TO CRT-MSG-NBR
+RAY                        PERFORM 780-DISPLAY-MSG
+RAY                        GO TO 100-END
+RAY                    ELSE   
+RAY                    IF (WB120WS-PLAN-OPT (SUB1) = ZERO)
+RAY                        MOVE PLN-PLAN-OPTION TO 
+RAY                                               WB120WS-PLAN-OPT(SUB1)
+RAY                        MOVE WB120WS-PLAN-OPTS-TBL-MAX TO SUB1
+RAY                    END-IF
+RAY                    END-IF
+RAY   *    ----------- IF ANY OF THESE PLANS ARE BILLABLE --------------
+RAY   *    ----------- DO NOT USE THE HARDCODED PARTBEN FILTER ---------
+RAY                    IF (PLN-PLAN-CODE = "ES" OR "ESMS" OR "VO")
+RAY                        SET WB120WS-DO-NOT-FILTER-PARTBEN TO TRUE
+RAY                    END-IF
+RAY                END-IF
+AIC002*        END-IF
+RAY            PERFORM 860-FIND-NXTRNG-PLNSET1
+AIC002*        PERFORM 860-FIND-NEXT-PLNSET1 
+RAY        END-PERFORM.
+RAY   *--- STORE THE PLANS THAT ARE BILLED FOR LATER FILTER ------------
+
+      *--- Create Invoices
+
+           IF (NOT RETRO-ONLY-RUN)
+               IF (EMPLOYER-RUN)
+                   PERFORM 1000-BILL-EMPLOYERS
+               ELSE
+               IF (EMPLOYEE-RUN)
+                   PERFORM 2000-BILL-COBRA-RETIREE
+               ELSE
+               IF (COMBINED-RUN)
+                   PERFORM 1000-BILL-EMPLOYERS
+                   PERFORM 2000-BILL-COBRA-RETIREE.
+
+      *--- Check for Adjustments
+           PERFORM 3000-RETRO-ADJUSTMENTS.     
+
+           PERFORM 9900-CLOSE-PBHSTTEMP.
+           PERFORM 9900-CLOSE-WBWRK4.
+
+           CLOSE EXCEPTIONS-FILE.
+
+           PERFORM 910-AUDIT-BEGIN.
+           PERFORM 840-MODIFY-CKPSET1.
+           MOVE 2                      TO WS-RS-PHASE-COUNTER.
+           MOVE WS-RESTART-INFO        TO CKP-RESTART-INFO.
+           PERFORM 820-STORE-CKPOINT.
+           PERFORM 900-SAVE-PRINT-FILES.
+           PERFORM 925-AUDIT-END.
+
+       100-PHASE-2.
+
+           CALL "GetSysTime" USING WS-DATE-TIME.
+           MOVE HHMMSS                 TO CRT-ERR-VAR1.
+           MOVE 142                TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+           PERFORM 5000-CREATE-INVOICES.
+           PERFORM 900-SAVE-PRINT-FILES.
+
+           PERFORM 910-AUDIT-BEGIN.
+           PERFORM 840-MODIFY-CKPSET1.
+           MOVE 3                      TO WS-RS-PHASE-COUNTER.
+           MOVE WS-RESTART-INFO        TO CKP-RESTART-INFO.
+           PERFORM 820-STORE-CKPOINT.
+           PERFORM 900-SAVE-PRINT-FILES.
+           PERFORM 925-AUDIT-END.
+
+       100-PHASE-3.
+
+           CALL "GetSysTime" USING WS-DATE-TIME.
+           MOVE HHMMSS                 TO CRT-ERR-VAR1.
+           MOVE 136                    TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+
+           PERFORM 4000-GL-REPORT.
+
+           PERFORM 910-AUDIT-BEGIN.
+           PERFORM 840-MODIFY-CKPSET1.
+           MOVE 4                      TO WS-RS-PHASE-COUNTER.
+           MOVE WS-RESTART-INFO        TO CKP-RESTART-INFO.
+           PERFORM 820-STORE-CKPOINT.
+           PERFORM 900-SAVE-PRINT-FILES.
+           PERFORM 925-AUDIT-END.
+
+       100-PHASE-4.
+
+           CALL "GetSysTime" USING WS-DATE-TIME.
+           MOVE HHMMSS                 TO CRT-ERR-VAR1.
+           MOVE 138                    TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+       
+           IF  (PRM-UPDATE = "Y") 
+               PERFORM 910-AUDIT-BEGIN
+               PERFORM 6000-UPDATE-PROCESSED-FLAGS
+               PERFORM 920-AUDIT-END.
+
+           MOVE PB1-TEMPFILE-NAME      TO WS-TMP-FILE.
+           PERFORM 901-REMOVE-TMP-FILE.
+  
+           MOVE WBWRK4-FILENAME        TO WS-TMP-FILE.
+           PERFORM 901-REMOVE-TMP-FILE.
+      
+       100-END.
+           EXIT.
+
+      ****************************************************************
+       1000-BILL-EMPLOYERS             SECTION.
+      ****************************************************************
+       1000-START.
+
+      *--- WBWRK3 file is used for summing amounts and creating 
+      *    type 'O' offset records for the PB Invoice
+      *
+           DISPLAY "start 1000-BILL-EMPLOYERS".
+           IF (WS-RS-WBWRK3-NAME = SPACES)
+               PERFORM 900-BUILD-TMP-FILE-NAME
+               MOVE WS-TMP-FILE        TO WBWRK3-FILENAME
+                                          WS-RS-WBWRK3-NAME
+           ELSE
+               MOVE WS-RS-WBWRK3-NAME  TO WBWRK3-FILENAME.
+
+           IF (PRM-PROC-GROUP NOT = SPACES)
+               MOVE PRM-COMPANY        TO DB-COMPANY
+               MOVE PRM-PROC-GROUP     TO DB-PROC-GROUP
+               MOVE PRPSET1-PROC-GROUP TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PRPSET1
+               PERFORM
+                   UNTIL (PRPROCGRP-NOTFOUND)
+
+                   MOVE PRP-COMPANY        TO DB-COMPANY
+                   MOVE PRP-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+                   PERFORM 840-FIND-PRSSET1
+                   PERFORM 1020-PROCESS-CLIENT
+                   THRU    1020-END
+                   PERFORM 860-FIND-NXTRNG-PRPSET1
+               END-PERFORM
+           ELSE
+           IF (PRM-PROCESS-LEVEL = SPACES)
+               MOVE PRM-COMPANY            TO DB-COMPANY 
+               MOVE PRSSET1-COMPANY        TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PRSSET1
+               PERFORM 1020-PROCESS-CLIENT
+               THRU    1020-END
+                  UNTIL (PRSYSTEM-NOTFOUND)
+           ELSE
+               MOVE PRM-COMPANY            TO DB-COMPANY
+               MOVE PRM-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+               PERFORM 840-FIND-PRSSET1
+               PERFORM 1020-PROCESS-CLIENT
+               THRU    1020-END.
+
+           GO TO 1000-END.
+
+      ****************************************************************
+       1020-PROCESS-CLIENT.
+      ****************************************************************
+
+           IF (PRS-PROCESS-LEVEL = SPACES)
+               GO TO 1020-NEXT.
+
+RAY   *    MOVE PRS-COMPANY            TO DB-COMPANY.
+RAY   *    MOVE PRS-PROCESS-LEVEL      TO DB-PROCESS-LEVEL.
+RAY   *    PERFORM 840-FIND-PCCSET1.
+RAY   *    IF  (PBCLIENT-NOTFOUND)
+RAY   *        GO TO 1020-NEXT.
+RAY   *
+RAY   *    PERFORM 840-FIND-PBMSET1.
+RAY   *    IF (PBBNBILL-NOTFOUND)
+RAY   *        GO TO 1020-NEXT.
+RAY   *
+RAY   *    IF  (PBM-BILL-EMPLOYER NOT = "Y")
+RAY   *    AND (PBM-PRE-BILL      NOT = "Y")
+RAY   *         GO TO 1020-NEXT.
+RAY
+RAY        MOVE SPACES                 TO WB120WS-AR-CUSTOMER.
+RAY        STRING "ER"                 DELIMITED BY SIZE
+RAY               PRS-PROCESS-LEVEL    DELIMITED BY SPACE  
+                                       INTO WB120WS-AR-CUSTOMER.
+RAY        MOVE WB120WS-AR-CUSTOMER    TO JSTWS-STR.
+RAY        MOVE 09                     TO JSTWS-STR-LEN.
+RAY        MOVE 09                     TO JSTWS-STR-OUT-LEN.
+RAY        SET JSTWS-RIGHT             TO TRUE.
+RAY        PERFORM 2000-JUSTIFY-OBJECT.
+RAY        MOVE JSTWS-STR-OUT          TO WB120WS-AR-CUSTOMER.
+
+           MOVE PRS-COMPANY            TO CRT-COMPANY.
+           MOVE PRS-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL.
+           PERFORM 900-PROC-LEV-SECURED.
+           IF (CRT-PROC-LEV-SECURED = "Y")
+               GO TO 1020-NEXT.
+
+      *--- Reset Offset summary file for each process level
+
+           PERFORM 9800-OPEN-OUTPUT-WBWRK3.
+           PERFORM 9900-CLOSE-WBWRK3.
+           PERFORM 9810-OPEN-IO-WBWRK3.
+   
+      *--- Edit AR company
+
+RAY        MOVE PRS-COMPANY                TO ARCOWS-COMPANY.
+RAY   *    MOVE PCC-AR-PROCESS-LEVEL       TO ARCOWS-PROCESS-LEVEL.
+RAY        MOVE "1"                        TO ARCOWS-PROCESS-LEVEL.
+           PERFORM 700-EDIT-ARCOMPANY-60.
+
+           MOVE "I"                        TO ARCIWS-ACTION-CODE.
+RAY   *    MOVE PCC-POST-COMPANY           TO ARCIWS-COMPANY.
+RAY   *    MOVE PCC-CUSTOMER               TO ARCIWS-CUSTOMER.
+RAY        MOVE PRS-COMPANY                TO ARCIWS-COMPANY.
+RAY        MOVE WB120WS-AR-CUSTOMER        TO ARCIWS-CUSTOMER.
+
+AATEST*    DISPLAY "AA 1020-PROCESS-CLIENT".
+AATEST*    DISPLAY "ARCIWS-COMPANY : " ARCIWS-COMPANY.
+AATEST*    DISPLAY "ARCIWS-CUSTOMER: " ARCIWS-CUSTOMER.
+
+           PERFORM 700-INQUIRE-ARCUSTOMER-70.
+           IF (ERROR-FOUND)
+               INITIALIZE                     CRT-ERROR-NBR
+                                              CRT-ERROR-CAT.
+
+           MOVE PRS-COMPANY                TO DB-COMPANY.
+           MOVE PRS-PROCESS-LEVEL          TO DB-PROCESS-LEVEL.
+
+      *-- Process employees
+           
+           PERFORM 1100-SEL-EMPLOYEES
+           THRU    1100-END.
+           
+           PERFORM 1200-SEL-COBRA-RETIREES
+           THRU    1200-END.       
+
+      *--- Write Offsets
+           
+           INITIALIZE WW3-REC-KEY.
+           PERFORM 8500-FIND-NLT-WBWRK3.
+           PERFORM
+               UNTIL (WBWRK3-NOTFOUND)
+             
+               PERFORM 1999-EMP-OFFSET
+               THRU    1999-END
+               PERFORM 8600-FIND-NEXT-WBWRK3
+           END-PERFORM.   
+
+           PERFORM 9900-CLOSE-WBWRK3.
+      *
+       1020-NEXT.
+
+           IF  (PRM-PROCESS-LEVEL = SPACES)
+           AND (PRM-PROC-GROUP    = SPACES)
+               PERFORM 860-FIND-NXTRNG-PRSSET1.
+
+       1020-END.
+           EXIT.
+
+
+      ******************************************************************
+       1100-SEL-EMPLOYEES.
+      ******************************************************************
+
+           MOVE PRS-COMPANY               TO DB-COMPANY.
+           MOVE PRS-PROCESS-LEVEL         TO DB-PROCESS-LEVEL.
+           MOVE EMPSET7-PROCESS-LEVEL     TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-EMPSET7.
+           PERFORM
+               UNTIL (EMPLOYEE-NOTFOUND)
+
+               PERFORM 1110-SEL-EMPLOYEES
+               THRU    1110-END
+
+               PERFORM 860-FIND-NXTRNG-EMPSET7
+           END-PERFORM.
+
+       1100-END.
+      ******************************************************************
+       1110-SEL-EMPLOYEES.
+      ******************************************************************
+
+TEMPS *    IF (EMP-EMPLOYEE NOT = 18614)
+TEMPS *        GO TO 1110-END.
+TEMPS *
+           MOVE EMP-COMPANY            TO CRT-COMPANY.
+           MOVE EMP-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL.
+           PERFORM 700-HR-EMP-SECURITY.
+           IF (HRWS-EMP-SECURED)
+               GO TO 1110-END.
+
+RAY   *--- R. HERWECK FILTER FOR ACTIVE RECORDS ONLY ------------------
+RAY        INITIALIZE FILTER-STRING.
+RAY        MOVE 1                      TO SUB2.
+RAY        STRING "((BEN-START-DATE <= ""?"") "      DELIMITED BY SIZE
+AATEST        "AND ((BEN-STOP-DATE = ""17530101"") " DELIMITED BY SIZE
+AATEST*       "AND ((BEN-STOP-DATE = ""18000101"") " DELIMITED BY SIZE
+RAY           "OR   (BEN-STOP-DATE  >= ""?"")) "     DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY        PERFORM
+RAY          VARYING SUB1 FROM 1 BY 1
+RAY          UNTIL  (SUB1 > WB120WS-PLAN-OPTS-TBL-MAX)
+RAY          OR     (WB120WS-PLAN-OPT (SUB1) = ZERO)
+RAY            IF (SUB1 = 1)
+RAY                STRING "AND ("      DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY            ELSE
+RAY                STRING "OR "        DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY            END-IF
+RAY            STRING "(BEN-PLAN-OPTION = ""?"")"   DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY        END-PERFORM.
+RAY        STRING ")"                  DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY
+RAY        PERFORM
+RAY          VARYING I1 FROM 1 BY 1
+RAY          UNTIL  (I1 > I-PT)
+RAY            IF (WB120WS-PLAN-TYPE (I1) NOT = SPACES)
+RAY                IF (I1 = 1)
+RAY                    STRING "AND ("  DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY                ELSE
+RAY                    STRING "OR "    DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY                END-IF
+RAY                STRING "(BEN-PLAN-TYPE  = ""?"")"
+RAY                                    DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY            END-IF
+RAY        END-PERFORM.
+RAY        STRING "))"                 DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY
+RAY        PERFORM 890-CREATE-FILTER.
+RAY        MOVE WS-MONTH-BEG           TO DATETIME-FILTER-VALUE.
+RAY        PERFORM 890-SET-DATETIME-FILTER-VALUE.
+RAY        MOVE WS-MONTH-BEG           TO DATETIME-FILTER-VALUE.
+RAY        PERFORM 890-SET-DATETIME-FILTER-VALUE.
+RAY        PERFORM
+RAY          VARYING SUB1 FROM 1 BY 1
+RAY          UNTIL  (SUB1 > WB120WS-PLAN-OPTS-TBL-MAX)
+RAY          OR     (WB120WS-PLAN-OPT (SUB1) = ZERO)
+RAY
+RAY            IF (WB120WS-PLAN-OPT (SUB1) NOT = ZERO)
+RAY                MOVE WB120WS-PLAN-OPT (SUB1) TO NUMERIC-FILTER-VALUE
+RAY                PERFORM 890-SET-NUMERIC-FILTER-VALUE
+RAY            END-IF
+RAY        END-PERFORM.
+RAY   
+RAY        PERFORM
+RAY          VARYING SUB1 FROM 1 BY 1
+RAY          UNTIL  (SUB1 > I-PT)
+RAY            IF (WB120WS-PLAN-TYPE(SUB1) NOT = SPACE)
+RAY                MOVE WB120WS-PLAN-TYPE(SUB1) TO ALPHANUM-FILTER-VALUE
+RAY                PERFORM 890-SET-ALPHANUM-FILTER-VALUE
+RAY            END-IF
+RAY        END-PERFORM.
+RAY   
+RAY        MOVE EMP-COMPANY            TO DB-COMPANY.
+RAY        MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+RAY        INITIALIZE                     DB-PLAN-TYPE
+RAY                                       DB-PLAN-CODE
+RAY                                       DB-START-DATE.
+RAY        MOVE BENSET3-EMPLOYEE       TO WS-DB-BEG-RNG.
+RAY        PERFORM 850-FILTER-BEGRNG-BENSET3.
+RAY        PERFORM 1140-SEL-BEN-PLAN-CODES
+RAY        THRU    1140-END
+RAY            UNTIL (BENEFIT-NOTFOUND).
+RAY   
+RAY    1110-END.
+RAY   *--- R. HERWECK FILTER FOR ACTIVE RECORDS ONLY ------------------
+
+      ******************************************************************
+       1140-SEL-BEN-PLAN-CODES.
+      ******************************************************************
+
+           IF (WS-CODE-ENTERED)
+               IF  (PRM-PLAN-CODE (1)  NOT = BEN-PLAN-CODE)
+               AND (PRM-PLAN-CODE (2)  NOT = BEN-PLAN-CODE)
+               AND (PRM-PLAN-CODE (3)  NOT = BEN-PLAN-CODE)
+               AND (PRM-PLAN-CODE (4)  NOT = BEN-PLAN-CODE)
+               AND (PRM-PLAN-CODE (5)  NOT = BEN-PLAN-CODE)
+               AND (PRM-PLAN-CODE (6)  NOT = BEN-PLAN-CODE)
+                   GO TO 1140-NEXT.
+
+RAY   *--- R. HERWECK ADDED TO FILTER ABOVE  ---------------------------
+RAY   *    IF  (BEN-START-DATE       > WS-MONTH-BEG)
+RAY   *    OR  ((BEN-STOP-DATE   NOT = ZEROS)
+RAY   *    AND  (BEN-STOP-DATE       < WS-MONTH-BEG))
+RAY   *        GO TO 1140-NEXT.
+
+RAY   *--- R. HERWECK ADDED TO GET AROUND PROBLEM ----------------------
+RAY        IF  (BEN-START-DATE = BEN-STOP-DATE)
+RAY            GO TO 1140-NEXT.
+RAY   *--- R. HERWECK ADDED TO GET AROUND PROBLEM ----------------------
+RAY    
+RAY   *    MOVE BEN-PLAN-CODE          TO DB-PLAN-CODE.
+RAY   *    PERFORM 840-FIND-PLNSET1.
+RAY   *    IF (PLAN-NOTFOUND)
+RAY   *    OR (PLN-CONTRIB-TYPE = "0 ") 
+RAY   *        GO TO 1140-NEXT.
+RAY   *
+RAY   *    IF (WS-CODE-ENTERED)
+RAY   *        NEXT SENTENCE
+RAY   *    ELSE
+RAY   *    IF  (PLN-WAIVE-FLAG = "Y")
+RAY   *        GO TO 1140-NEXT.
+RAY   *--- R. HERWECK ADDED TO FILTER ABOVE  ---------------------------
+
+           IF (BEN-COMPANY   NOT = WB120WS-SAV-COMPANY)
+           OR (BEN-PLAN-TYPE NOT = WB120WS-SAV-PLAN-TYPE)
+           OR (BEN-PLAN-CODE NOT = WB120WS-SAV-PLAN-CODE)
+           OR (BEN-EMPLOYEE  NOT = WB120WS-SAV-EMPLOYEE)
+               MOVE BEN-COMPANY        TO WB120WS-SAV-COMPANY
+               MOVE BEN-PLAN-TYPE      TO WB120WS-SAV-PLAN-TYPE
+               MOVE BEN-PLAN-CODE      TO WB120WS-SAV-PLAN-CODE
+               MOVE BEN-EMPLOYEE       TO WB120WS-SAV-EMPLOYEE
+               MOVE BEN-START-DATE     TO WB120WS-SAV-START-DATE
+           ELSE
+               GO TO 1140-NEXT.
+
+           PERFORM 1160-EMPLOYEE-CALC
+           THRU    1160-END.
+
+       1140-NEXT.
+           PERFORM 860-FIND-NXTRNG-BENSET3.
+
+       1140-END.
+
+      ******************************************************************
+       1160-EMPLOYEE-CALC.
+      ******************************************************************
+
+           COMPUTE WB120WS-PRE-BILL-AMT ROUNDED
+                                        = BEN-EMP-AFT-CONT / 12.
+
+           IF  (WB120WS-PRE-BILL-AMT = ZEROES)
+               GO TO 1160-END.
+
+RAY   *--- R. HERWECK - FIND THE PROCESS LEVEL AS OF THE BILLING  ------
+RAY   *--- PERIOD DATE. FIXES FUTURE DATED CHANGE PROBLEM --------------
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE ZEROES                 TO DB-OBJ-ID.
+           MOVE HREMP-PROCESS-LEVEL-DN TO DB-FLD-NBR.
+           MOVE WS-MONTH-BEG           TO DB-BEG-DATE.
+           MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR.
+           PERFORM 850-FIND-NLT-HRHSET1. 
+           PERFORM 870-FIND-PREV-HRHSET1.
+           IF  (HRHISTORY-FOUND)
+           AND (HRH-COMPANY    = PRM-COMPANY)
+           AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+           AND (HRH-OBJ-ID     = ZEROES)
+           AND (HRH-FLD-NBR    = DB-FLD-NBR)
+               MOVE HRH-A-VALUE        TO WS-BILLING-PROC-LEVEL
+           ELSE
+               MOVE EMP-PROCESS-LEVEL  TO WS-BILLING-PROC-LEVEL
+           END-IF.        
+RAY   *-----------------------------------------------------------------
+
+RAY   *--- R. HERWECK - FIND THE BILL TO EMPLOYER FOR TAIP INSURANCE ---
+           IF  (BEN-PLAN-CODE = "TAIP" OR "TAMI" OR "TAMF")
+AIC002     OR  (BEN-PLAN-CODE = "TRAV")
+               MOVE PRM-COMPANY            TO DB-COMPANY
+               MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+               MOVE ZEROES                 TO DB-OBJ-ID
+               COMPUTE DB-FLD-NBR           = 2000 + WS-TAIP-EMPLOYER-N
+               MOVE WS-MONTH-BEG           TO DB-BEG-DATE
+               MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR
+               PERFORM 850-FIND-NLT-HRHSET1 
+               PERFORM 870-FIND-PREV-HRHSET1
+               IF  (HRHISTORY-FOUND)
+               AND (HRH-COMPANY    = PRM-COMPANY)
+               AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+               AND (HRH-OBJ-ID     = ZEROES)
+               AND (HRH-FLD-NBR    = DB-FLD-NBR)
+                   MOVE HRH-A-VALUE        TO WS-BILLING-PROC-LEVEL
+               END-IF.        
+
+AIC002*--- override for DISW/DISCW process level 
+US1487*--- for member paid plans
+AIC002     IF  (    (EMP-PROCESS-LEVEL = "DISW")
+US1487           OR (EMP-PROCESS-LEVEL = "DISCW") ) 
+AIC002     AND ((BEN-PLAN-CODE = "AIHI" OR "AILO" OR "ADDI" OR "ADDF")
+AIC002      OR  (BEN-PLAN-CODE = "CIEE" OR "CISP" OR "CICH")
+AIC002      OR  (BEN-PLAN-CODE = "SSLI" OR "SCLI" OR "SELI"))
+AIC002           MOVE EMP-COMPANY           TO DB-COMPANY
+AIC002           MOVE ZEROES                TO DB-EMP-APP
+AIC002           MOVE EMP-EMPLOYEE          TO DB-EMPLOYEE
+AIC002           MOVE WS-PREV-PROCLEVL-A    TO DB-FIELD-KEY
+AIC002           PERFORM 840-FIND-HEUSET1
+AIC002           IF (HREMPUSF-FOUND)
+AIC002               MOVE HEU-A-FIELD       TO WS-BILLING-PROC-LEVEL
+AIC002           END-IF
+AIC002     END-IF.
+AIC002
+           PERFORM 1980-START-PBHSTTEMP
+           THRU    1980-END.
+           MOVE WS-MONTH-END           TO PB1-EFF-BILL-DT.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+           MOVE PRS-COMPANY            TO PB1-COMPANY.
+RAY   *--- USE PROCESS LEVEL AS OF THE BILLING PERIOD ------------------
+RAY   *    MOVE PRS-PROCESS-LEVEL      TO PB1-PROCESS-LEVEL.
+RAY        MOVE WS-BILLING-PROC-LEVEL  TO PB1-PROCESS-LEVEL.
+RAY   *--- INSERT PRINT GROUP FOR SORTING AND BREAKING -----------------
+RAY        PERFORM 6500-PROCLVL-PRINT-GROUP.
+RAY   *-----------------------------------------------------------------
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+
+RAY   *--- ??? SHOULD THIS BE THE CUSTOMER CURRENTLY BEING PROCESSED 
+RAY   *    OR THE PROCESS LEVEL THE EMP WAS AT DURING THE BILLING PERIOD
+RAY   *    MOVE PCC-CUSTOMER           TO PB1-CUSTOMER. 
+RAY        MOVE WB120WS-AR-CUSTOMER    TO PB1-CUSTOMER. 
+RAY   *-----------------------------------------------------------------
+
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+
+           MOVE WS-BENEFIT-DESC        TO PB1-DESCRIPTION.
+           MOVE WB120WS-PRE-BILL-AMT   TO PB1-BILLABLE-AMT.
+           MOVE "P"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE BEN-PLAN-TYPE          TO PB1-PLAN-TYPE.
+           MOVE BEN-PLAN-CODE          TO PB1-PLAN-CODE.
+           MOVE BEN-COV-OPTION         TO PB1-COV-OPTION.
+           MOVE SPACES                 TO PB1-EMP-SORT-TYPE.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+      *--- Sum for offset
+
+           MOVE PRS-COMPANY            TO WW3-COMPANY.
+           MOVE PRS-PROCESS-LEVEL      TO WW3-PROCESS-LEVEL.
+           MOVE EMP-EMPLOYEE           TO WW3-EMPLOYEE.
+           PERFORM 8400-FIND-WBWRK3.
+           IF (WBWRK3-NOTFOUND)
+               PERFORM 8000-CREATE-WBWRK3
+               MOVE PRS-COMPANY        TO WW3-COMPANY
+               MOVE PRS-PROCESS-LEVEL  TO WW3-PROCESS-LEVEL
+               MOVE EMP-EMPLOYEE       TO WW3-EMPLOYEE.
+
+           COMPUTE WW3-BILLABLE-AMT     = WW3-BILLABLE-AMT
+                                        + (WB120WS-PRE-BILL-AMT
+                                        *  NEGATIVE-ONE).
+           PERFORM 8200-STORE-WBWRK3.
+
+       1160-END.
+
+      ******************************************************************
+       1200-SEL-COBRA-RETIREES.
+      ******************************************************************
+RAY
+RAY        MOVE WS-BILL-EMPLOYER-N     TO DB-FIELD-KEY.
+RAY        MOVE PRS-PROCESS-LEVEL      TO DB-A-FIELD.
+RAY        MOVE PRM-COMPANY            TO DB-COMPANY.
+RAY        MOVE 0                      TO DB-EMP-APP.
+RAY        INITIALIZE                     DB-EMPLOYEE.
+RAY        MOVE HEUSET3-COMPANY        TO WS-DB-BEG-RNG.
+RAY        PERFORM 850-FIND-BEGRNG-HEUSET3.
+RAY
+RAY        PERFORM 1220-SEL-COBRA-RETIREES
+RAY        THRU    1220-END 
+RAY            UNTIL (HREMPUSF-NOTFOUND).
+RAY        
+RAY    1200-END.
+RAY
+RAY   ******************************************************************
+RAY    1220-SEL-COBRA-RETIREES.
+RAY   ******************************************************************
+RAY
+RAY   *--- R. HERWECK FILTER FOR ACTIVE RECORDS ONLY ------------------
+RAY        INITIALIZE FILTER-STRING.
+RAY        MOVE 1                      TO SUB2.
+RAY        STRING "((PTB-START-DATE <= ""?"") "      DELIMITED BY SIZE
+AATEST        "AND ((PTB-STOP-DATE = ""17530101"") " DELIMITED BY SIZE
+AATEST*       "AND ((PTB-STOP-DATE = ""18000101"") " DELIMITED BY SIZE
+RAY           "OR   (PTB-STOP-DATE  >= ""?"")))"     DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY         
+RAY        STRING " AND (((PTB-EMPLOYEE = ""?"")"    DELIMITED BY SIZE
+RAY               " AND (PTB-PARTICIPNT = ""?""))"   DELIMITED BY SIZE
+RAY               " OR  ((PTB-EMPLOYEE = ""?"")"     DELIMITED BY SIZE
+RAY               " AND (PTB-PARTICIPNT = ""?"")))"  DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY        PERFORM
+RAY          VARYING SUB1 FROM 1 BY 1
+RAY          UNTIL  (SUB1 > I-PT)
+RAY            IF (WB120WS-PLAN-TYPE (SUB1) NOT = SPACES)
+RAY                IF (SUB1 = 1)
+RAY                    STRING "AND ("  DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY                ELSE
+RAY                    STRING "OR "    DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+RAY                END-IF
+RAY                STRING "(PTB-PLAN-TYPE = ""?"")"   DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2
+               END-IF
+RAY        END-PERFORM.
+RAY        STRING ")"                  DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY
+RAY        IF (WB120WS-FILTER-PARTBEN)
+RAY            STRING " AND ((PTB-PLAN-CODE <> ""ES"")" 
+RAY                                                    DELIMITED BY SIZE
+RAY                   " AND (PTB-PLAN-CODE <> ""ESMS"")"
+RAY                                                    DELIMITED BY SIZE
+RAY                   " AND (PTB-PLAN-CODE <> ""VO""))" 
+RAY                                                    DELIMITED BY SIZE
+RAY                                    INTO FILTER-STRING
+RAY                                    POINTER SUB2.
+RAY    
+RAY        PERFORM 890-CREATE-FILTER.
+RAY        MOVE WS-MONTH-BEG           TO DATETIME-FILTER-VALUE.
+RAY        PERFORM 890-SET-DATETIME-FILTER-VALUE.
+RAY        MOVE WS-MONTH-BEG           TO DATETIME-FILTER-VALUE.
+RAY        PERFORM 890-SET-DATETIME-FILTER-VALUE.
+RAY   *--- EMPLOYEE NUMBER AND ZERO PARTICIPNT
+RAY        MOVE HEU-EMPLOYEE           TO NUMERIC-FILTER-VALUE.
+RAY        PERFORM 890-SET-NUMERIC-FILTER-VALUE.
+RAY        MOVE ZEROES                 TO NUMERIC-FILTER-VALUE.
+RAY        PERFORM 890-SET-NUMERIC-FILTER-VALUE.
+RAY   *--- PARTICIPNT NUMBER AND ZERO EMPLOYEE NUMBER
+RAY        MOVE ZEROES                 TO NUMERIC-FILTER-VALUE.
+RAY        PERFORM 890-SET-NUMERIC-FILTER-VALUE.
+RAY        MULTIPLY HEU-EMPLOYEE       BY 100 
+RAY                                    GIVING NUMERIC-FILTER-VALUE.
+RAY        PERFORM 890-SET-NUMERIC-FILTER-VALUE.
+RAY   
+RAY        PERFORM
+RAY          VARYING SUB1 FROM 1 BY 1
+RAY          UNTIL  (SUB1 > I-PT)
+RAY            IF (WB120WS-PLAN-TYPE(SUB1) NOT = SPACE)
+RAY                MOVE WB120WS-PLAN-TYPE(SUB1) TO ALPHANUM-FILTER-VALUE
+RAY                PERFORM 890-SET-ALPHANUM-FILTER-VALUE
+RAY            END-IF
+RAY        END-PERFORM.
+RAY   *--- R. HERWECK FILTER FOR ACTIVE RECORDS ONLY ------------------
+RAY    
+RAY        MOVE PRM-COMPANY            TO DB-COMPANY.
+RAY        INITIALIZE                     DB-EMPLOYEE 
+RAY                                       DB-PARTICIPNT
+RAY                                       DB-PLAN-TYPE
+RAY                                       DB-PLAN-CODE
+RAY                                       DB-START-DATE.
+RAY        MOVE PTBSET5-COMPANY        TO WS-DB-BEG-RNG.
+RAY        PERFORM 850-FILTER-BEGRNG-PTBSET5.
+RAY
+           PERFORM 1240-SEL-PTB-PLAN-CODES
+           THRU    1240-END
+               UNTIL (PARTBEN-NOTFOUND).
+
+           PERFORM 860-FIND-NXTRNG-HEUSET3.
+
+       1220-END.
+
+      ******************************************************************
+       1240-SEL-PTB-PLAN-CODES.
+      ******************************************************************
+
+           IF (WS-CODE-ENTERED)
+               IF  (PRM-PLAN-CODE (1)  NOT = PTB-PLAN-CODE)
+               AND (PRM-PLAN-CODE (2)  NOT = PTB-PLAN-CODE)
+               AND (PRM-PLAN-CODE (3)  NOT = PTB-PLAN-CODE)
+               AND (PRM-PLAN-CODE (4)  NOT = PTB-PLAN-CODE)
+               AND (PRM-PLAN-CODE (5)  NOT = PTB-PLAN-CODE)
+               AND (PRM-PLAN-CODE (6)  NOT = PTB-PLAN-CODE)
+                   GO TO 1240-NEXT.
+
+RAY   *--- R. HERWECK ADDED TO FILTER ABOVE  ---------------------------
+RAY   *    IF  (PTB-START-DATE > WS-MONTH-BEG)
+RAY   *    OR  ((PTB-STOP-DATE   NOT = ZEROS)
+RAY   *    AND  (PTB-STOP-DATE < WS-MONTH-BEG))
+RAY   *        GO TO 1240-NEXT.
+RAY   *--- R. HERWECK ADDED TO FILTER ABOVE  ---------------------------
+
+RAY   *--- R. HERWECK ADDED TO GET AROUND PROBLEM ----------------------
+RAY        IF  (PTB-START-DATE = PTB-STOP-DATE)
+RAY            GO TO 1240-NEXT.
+RAY   *--- R. HERWECK ADDED TO GET AROUND PROBLEM ----------------------
+
+
+           MOVE PTB-EMPLOYEE           TO DB-EMPLOYEE.
+           IF  (PTB-EMPLOYEE = ZEROES)
+               MOVE PTB-PARTICIPNT     TO DB-PARTICIPNT
+               PERFORM 840-FIND-PARSET1 
+               IF  (PARTICIPNT-NOTFOUND)
+               OR  (PAR-DEPENDENT NOT = ZEROES)
+                   GO TO 1240-NEXT
+               END-IF    
+               MOVE PAR-EMPLOYEE       TO DB-EMPLOYEE
+           END-IF.
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMPLOYEE-NOTFOUND)
+TEMPS *    OR (EMP-EMPLOYEE NOT = 18614)
+               GO TO 1240-NEXT.
+
+           MOVE EMP-COMPANY            TO CRT-COMPANY.
+           MOVE HEU-A-FIELD            TO CRT-PROCESS-LEVEL.
+           PERFORM 700-HR-EMP-SECURITY.
+           IF (HRWS-EMP-SECURED)
+               GO TO 1240-NEXT.
+
+           MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE.
+           MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE.
+           PERFORM 840-FIND-PLNSET1.
+
+           IF (PLAN-NOTFOUND)
+AIC002*    OR (PLN-CONTRIB-TYPE = "0 ")
+               GO TO 1240-NEXT.
+
+           IF (WS-CODE-ENTERED)
+               NEXT SENTENCE
+           ELSE
+           IF  (PLN-WAIVE-FLAG = "Y")
+               GO TO 1240-NEXT.
+
+           IF (PTB-COMPANY    NOT = WB120WS-SAV-COMPANY)
+           OR (PTB-PLAN-TYPE  NOT = WB120WS-SAV-PLAN-TYPE)
+           OR (PTB-PLAN-CODE  NOT = WB120WS-SAV-PLAN-CODE)
+           OR (PTB-EMPLOYEE   NOT = WB120WS-SAV-EMPLOYEE)
+           OR (PTB-PARTICIPNT NOT = WB120WS-SAV-PARTICIPNT)
+               MOVE PTB-COMPANY        TO WB120WS-SAV-COMPANY
+               MOVE PTB-PLAN-TYPE      TO WB120WS-SAV-PLAN-TYPE
+               MOVE PTB-PLAN-CODE      TO WB120WS-SAV-PLAN-CODE
+               MOVE PTB-EMPLOYEE       TO WB120WS-SAV-EMPLOYEE
+               MOVE PTB-PARTICIPNT     TO WB120WS-SAV-PARTICIPNT
+               MOVE PTB-START-DATE     TO WB120WS-SAV-START-DATE
+           ELSE
+               GO TO 1240-NEXT.
+
+           PERFORM 1260-COBRA-RETIREE-CALC
+           THRU    1260-END.
+
+       1240-NEXT.
+           PERFORM 860-FIND-NXTRNG-PTBSET5.
+
+       1240-END.
+
+      ******************************************************************
+       1260-COBRA-RETIREE-CALC.
+      ******************************************************************
+
+           COMPUTE WB120WS-PRE-BILL-AMT ROUNDED = PTB-EMP-AFT-CONT / 12.
+
+           IF  (WB120WS-PRE-BILL-AMT = ZEROES)
+               GO TO 1260-END.
+
+           PERFORM 1980-START-PBHSTTEMP
+           THRU    1980-END.
+           MOVE WS-MONTH-END           TO PB1-EFF-BILL-DT.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+           MOVE PRS-COMPANY            TO PB1-COMPANY.
+           MOVE PRS-PROCESS-LEVEL      TO PB1-PROCESS-LEVEL.
+RAY   *--- INSERT PRINT GROUP FOR SORTING AND BREAKING -----------------
+RAY        PERFORM 6500-PROCLVL-PRINT-GROUP.
+RAY   *-----------------------------------------------------------------
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+RAY   *    MOVE PCC-CUSTOMER           TO PB1-CUSTOMER. 
+RAY        MOVE WB120WS-AR-CUSTOMER    TO PB1-CUSTOMER. 
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+
+           MOVE WS-BENEFIT-DESC        TO PB1-DESCRIPTION.
+           MOVE WB120WS-PRE-BILL-AMT   TO PB1-BILLABLE-AMT.
+           MOVE "P"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE PTB-PLAN-TYPE          TO PB1-PLAN-TYPE.
+           MOVE PTB-PLAN-CODE          TO PB1-PLAN-CODE.
+           MOVE PTB-COV-OPTION         TO PB1-COV-OPTION.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           IF  (PARTBEN-FOUND)
+               IF  (PTB-PARTICIPNT NOT = ZEROES)
+                   MOVE PTB-PARTICIPNT TO PB1-PARTICIPNT
+                   MOVE "2"            TO PB1-EMP-SORT-TYPE
+               ELSE
+                   MOVE "1"            TO PB1-EMP-SORT-TYPE.
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+      *--- Sum for offset
+
+           MOVE PRS-COMPANY            TO WW3-COMPANY.
+           MOVE PRS-PROCESS-LEVEL      TO WW3-PROCESS-LEVEL.
+           MOVE EMP-EMPLOYEE           TO WW3-EMPLOYEE.
+           PERFORM 8400-FIND-WBWRK3.
+           IF (WBWRK3-NOTFOUND)
+               PERFORM 8000-CREATE-WBWRK3
+               MOVE PRS-COMPANY        TO WW3-COMPANY
+               MOVE PRS-PROCESS-LEVEL  TO WW3-PROCESS-LEVEL
+               MOVE EMP-EMPLOYEE       TO WW3-EMPLOYEE.
+
+           COMPUTE WW3-BILLABLE-AMT     = WW3-BILLABLE-AMT
+                                        + (WB120WS-PRE-BILL-AMT
+                                        *  NEGATIVE-ONE).
+           PERFORM 8200-STORE-WBWRK3.
+
+       1260-END.
+
+      ******************************************************************
+       1980-START-PBHSTTEMP.
+      ******************************************************************
+
+           PERFORM 8000-CREATE-PBHSTTEMP.
+
+           MOVE WS-MONTH-END           TO PB1-PER-END-DATE.
+
+           INITIALIZE                     PB1-GROSS-PAY
+                                          PB1-ADJUST-PAY
+                                          PB1-WC-RATE
+                                          PB1-REG-HOURS
+                                          PB1-OT-HOURS
+                                          PB1-OTH-HOURS
+                                          PB1-REG-RATE
+                                          PB1-OT-RATE
+                                          PB1-OTH-RATE
+                                          PB1-REG-PAY
+                                          PB1-OT-PAY
+                                          PB1-OTH-PAY
+                                          PB1-TIPS-PAY
+                                          PB1-EMPLOYEE-CAFE
+                                          PB1-CREDITS
+                                          PB1-BILLABLE-UNIT
+                                          PB1-TAXABLE-AMT
+                                          PB1-TR-DATE
+                                          PB1-TIME-SEQ
+                                          PB1-EDM-SEQ-NBR
+                                          PB1-CHECK-DATE
+                                          PB1-CHECK-ID
+                                          PB1-PCD-SEQ-NBR.
+
+       1980-END.
+
+      ******************************************************************
+       1999-EMP-OFFSET.
+      ******************************************************************
+
+           MOVE WW3-COMPANY         TO DB-COMPANY.
+           MOVE WW3-EMPLOYEE        TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+
+      *-- Create an offset history record for the AR accoount.
+           PERFORM 8000-CREATE-PBHSTTEMP.
+
+           MOVE WS-MONTH-END           TO PB1-PER-END-DATE
+                                          PB1-EFF-BILL-DT.
+
+           INITIALIZE                     PB1-GROSS-PAY
+                                          PB1-ADJUST-PAY
+                                          PB1-WC-RATE
+                                          PB1-REG-HOURS
+                                          PB1-OT-HOURS
+                                          PB1-OTH-HOURS
+                                          PB1-REG-RATE
+                                          PB1-OT-RATE
+                                          PB1-OTH-RATE
+                                          PB1-REG-PAY
+                                          PB1-OT-PAY
+                                          PB1-OTH-PAY
+                                          PB1-TIPS-PAY
+                                          PB1-EMPLOYEE-CAFE
+                                          PB1-CREDITS
+                                          PB1-BILLABLE-UNIT
+                                          PB1-TAXABLE-AMT
+                                          PB1-TR-DATE
+                                          PB1-TIME-SEQ
+                                          PB1-EDM-SEQ-NBR
+                                          PB1-CHECK-DATE
+                                          PB1-CHECK-ID
+                                          PB1-PCD-SEQ-NBR.
+
+           MOVE PRS-COMPANY            TO PB1-COMPANY.
+           MOVE PRS-PROCESS-LEVEL      TO PB1-PROCESS-LEVEL.
+RAY   *--- INSERT PRINT GROUP FOR SORTING AND BREAKING -----------------
+RAY        PERFORM 6500-PROCLVL-PRINT-GROUP.
+RAY   *-----------------------------------------------------------------
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+RAY   *    MOVE PCC-CUSTOMER           TO PB1-CUSTOMER. 
+RAY        MOVE WB120WS-AR-CUSTOMER    TO PB1-CUSTOMER. 
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+           MOVE "O"                    TO PB1-RECORD-TYPE.
+           MOVE WS-AR-OFFSET-DESC      TO PB1-DESCRIPTION.
+           MOVE WW3-BILLABLE-AMT       TO PB1-BILLABLE-AMT.
+           MOVE PRS-CURRENCY-CODE      TO PB1-CURRENCY-CODE.
+           MOVE 2                      TO PB1-CURR-ND.
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+       1999-END.
+
+      ****************************************************************
+       1000-END.
+      ****************************************************************
+      ******************************************************************
+       2000-BILL-COBRA-RETIREE               SECTION 10.
+      ******************************************************************
+       2000-START.
+
+           DISPLAY "start 2000-BILL-COBRA-RETIREE".
+      *--- WBREMOTD file is used for later deleting ONETMDED records
+      *    after they have been processed
+      *
+           IF (WS-RS-WBREMOTD-NAME = SPACES)
+               PERFORM 900-BUILD-TMP-FILE-NAME
+               MOVE WS-TMP-FILE        TO WBREMOTD-FILE-NAME
+                                          WS-RS-WBREMOTD-NAME
+           ELSE
+               MOVE WS-RS-WBREMOTD-NAME
+                                       TO WBREMOTD-FILE-NAME.
+           PERFORM 9800-OPEN-OUTPUT-WBREMOTD.
+
+      *--- Process Cobra/Retirees
+
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           PERFORM 840-FIND-BNCSET1.
+
+           MOVE SPACES                 TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+
+           MOVE ZEROS                  TO DB-EMPLOYEE.
+           MOVE ZEROS                  TO DB-PARTICIPNT.
+
+      *--- R. HERWECK FILTER FOR ACTIVE RECORDS ONLY ------------------
+           INITIALIZE FILTER-STRING.
+           STRING "((PTB-START-DATE <= ""?"") "      DELIMITED BY SIZE
+AATEST        "AND ((PTB-STOP-DATE = ""17530101"") " DELIMITED BY SIZE
+AATEST*       "AND ((PTB-STOP-DATE = ""18000101"") " DELIMITED BY SIZE
+              "OR   (PTB-STOP-DATE  >= ""?"")))"     DELIMITED BY SIZE
+                                       INTO FILTER-STRING.
+
+           PERFORM 890-CREATE-FILTER.
+           MOVE WS-MONTH-BEG           TO DATETIME-FILTER-VALUE.
+           PERFORM 890-SET-DATETIME-FILTER-VALUE.
+           MOVE WS-MONTH-BEG           TO DATETIME-FILTER-VALUE.
+           PERFORM 890-SET-DATETIME-FILTER-VALUE.
+      *--- R. HERWECK FILTER FOR ACTIVE RECORDS ONLY ------------------
+           IF (PRM-REPORT-OPTION       = 1)
+RAY   *        PERFORM 850-FIND-NLT-PTBSET5
+               PERFORM 850-FILTER-NLT-PTBSET5
+               PERFORM 2020-EMPLOYEE
+               THRU    2020-END
+                   UNTIL (PARTBEN-NOTFOUND)
+                   OR    (PTB-COMPANY  NOT = DB-COMPANY)
+                   OR    (PTB-EMPLOYEE NOT = DB-EMPLOYEE)
+           ELSE
+           IF (PRM-REPORT-OPTION       = 2)
+               MOVE 999999999          TO DB-PARTICIPNT
+RAY   *        PERFORM 850-FIND-NLT-PTBSET5
+               PERFORM 850-FILTER-NLT-PTBSET5
+               PERFORM 2020-EMPLOYEE
+               THRU    2020-END
+                   UNTIL (PARTBEN-NOTFOUND)
+                   OR    (PTB-COMPANY  NOT = DB-COMPANY)
+           ELSE
+RAY   *        PERFORM 850-FIND-NLT-PTBSET5
+               PERFORM 850-FILTER-NLT-PTBSET5
+               PERFORM 2020-EMPLOYEE
+               THRU    2020-END
+                   UNTIL (PARTBEN-NOTFOUND)
+                   OR    (PTB-COMPANY  NOT = DB-COMPANY).
+
+           PERFORM 9900-CLOSE-WBREMOTD.
+      
+           GO TO 2000-END.
+
+      ******************************************************************
+       2020-EMPLOYEE.
+      ******************************************************************
+      
+           INITIALIZE                     WB120WS-TOT-DIST-AMT.
+
+           MOVE PTB-PARTICIPNT         TO WB120WS-SAV-PARTICIPNT.
+           MOVE PTB-EMPLOYEE           TO WB120WS-SAV-EMPLOYEE.
+
+           MOVE PTB-EMPLOYEE           TO DB-EMPLOYEE.
+           IF  (PTB-EMPLOYEE = ZEROES)
+               MOVE PTB-PARTICIPNT     TO DB-PARTICIPNT
+               PERFORM 840-FIND-PARSET1 
+               IF  (PARTICIPNT-NOTFOUND)
+                   GO TO 2020-NEXT-EMPLOYEE
+               END-IF    
+               MOVE PAR-EMPLOYEE           TO DB-EMPLOYEE.
+
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMPLOYEE-NOTFOUND)
+               GO TO 2020-NEXT-EMPLOYEE.
+   
+      *--- Get AR Customer record
+      * 
+RAY   *    USE PARTICIPANT NBR FOR COBRA BILL
+RAY        IF  (PTB-PARTICIPNT NOT = ZEROES)
+RAY            STRING "D"                 DELIMITED BY SIZE
+RAY               PTB-PARTICIPNT (2:8)    DELIMITED BY SIZE
+RAY                                  INTO DB-CUSTOMER
+RAY        ELSE
+               STRING "D"                 DELIMITED BY SIZE
+                  EMP-EMPLOYEE (4:6)      DELIMITED BY SIZE
+                  "00"                    DELIMITED BY SIZE
+                                     INTO DB-CUSTOMER.
+           PERFORM 840-FIND-ACMSET1.
+           IF  (ARCUSTOMER-NOTFOUND)
+               MOVE DB-CUSTOMER        TO ACM-CUSTOMER.
+
+      *--- Always individual bill Cobra dependents 
+
+           IF  (PTB-PARTICIPNT NOT = ZEROES)
+           AND (PARTICIPNT-FOUND)
+           AND (PAR-DEPENDENT  NOT = ZEROES)
+               GO TO 2020-SKIP-USER-FLD-CHECK.
+
+      *--- If amounts billed to employer, skip employee
+           
+           MOVE 0                      TO DB-EMP-APP.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE WS-BILL-EMPLOYER-N     TO DB-FIELD-KEY.
+           PERFORM 840-FIND-HEUSET1.
+           IF  (HREMPUSF-FOUND)
+           AND (HEU-A-FIELD NOT = SPACES)
+               GO TO 2020-NEXT-EMPLOYEE.
+
+       2020-SKIP-USER-FLD-CHECK.
+
+           MOVE EMP-COMPANY            TO CRT-COMPANY.
+           MOVE EMP-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL.
+           PERFORM 700-HR-EMP-SECURITY.
+           IF (HRWS-EMP-SECURED)
+               GO TO 2020-NEXT-EMPLOYEE.
+
+      *--- First check if employee has arrears (ONETMDED record)
+      *    and whether or not they should be billed 
+      *    (indicated by user field) 
+          
+           MOVE WS-FALSE               TO WS-OTD-FLAG.
+           
+           MOVE 0                      TO DB-EMP-APP.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE WS-BILL-ARREARS-N      TO DB-FIELD-KEY.
+           PERFORM 840-FIND-HEUSET1.
+           IF  (HREMPUSF-FOUND)
+           AND (HEU-A-FIELD = "Y")
+               MOVE WS-TRUE            TO WS-BILL-ARREARS-FL
+           ELSE
+               MOVE WS-FALSE           TO WS-BILL-ARREARS-FL.
+        
+           MOVE WB120WS-SAV-EMPLOYEE   TO DB-EMPLOYEE.
+           MOVE OTDSET1-EMPLOYEE       TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-OTDSET1.
+           PERFORM 2200-BILL-ONETMDED
+           THRU    2200-END
+               UNTIL (ONETMDED-NOTFOUND).
+               
+      *--- If a ONETMDED record was found, employee was already billed
+      *    via payroll deduction, so exit
+           
+           IF  (OTD-FOUND)
+               GO TO 2020-NEXT-EMPLOYEE.     
+
+       2020-BILL-PARTBEN.
+       
+      *--- If Pay Master found, billing has occurred, skip to next empl
+      *    Else, process PARTBEN
+      
+RAY   *    MOVE EMP-COMPANY          TO DB-COMPANY.
+RAY   *    MOVE EMP-EMPLOYEE         TO DB-EMPLOYEE.
+RAY   *    MOVE WS-MONTH-END         TO DB-PER-END-DATE.
+RAY   *    MOVE PYMSETW-PER-END-DATE TO WS-DB-BEG-RNG.
+      
+           
+RAY   *    PERFORM 850-FIND-BEGRNG-PYMSETW.   
+RAY   *    IF  (PAYMASTR-FOUND) 
+RAY   *        GO TO 2020-NEXT-EMPLOYEE. 
+
+      *--- No deductions or payroll records found, so bill employee
+           
+           INITIALIZE                 WB120WS-SAV-PLAN-TYPE
+                                      WB120WS-SAV-PLAN-CODE
+                                      WB120WS-SAV-START-DATE.
+
+           PERFORM 2040-BENEFIT
+           THRU    2040-END
+               UNTIL (PARTBEN-NOTFOUND)
+               OR    (PTB-COMPANY    NOT = DB-COMPANY)
+               OR    (PTB-PARTICIPNT NOT = WB120WS-SAV-PARTICIPNT)  
+               OR    (PTB-EMPLOYEE   NOT = WB120WS-SAV-EMPLOYEE).
+       
+           GO TO 2020-OFFSET.    
+
+       2020-NEXT-EMPLOYEE. 
+       
+           PERFORM 
+               UNTIL (PARTBEN-NOTFOUND)
+               OR    (PTB-COMPANY    NOT = DB-COMPANY)
+               OR    (PTB-PARTICIPNT NOT = WB120WS-SAV-PARTICIPNT)  
+               OR    (PTB-EMPLOYEE   NOT = WB120WS-SAV-EMPLOYEE)
+               
+               PERFORM 860-FIND-NEXT-PTBSET5
+               
+           END-PERFORM.
+           
+
+      *-- Create an offset history record for the AR accoount.
+      * 
+
+       2020-OFFSET.
+
+            IF  (WB120WS-TOT-DIST-AMT = ZEROES)
+                GO TO 2020-END.    
+
+           PERFORM 2980-START-PBHSTTEMP
+           THRU    2980-END.
+           MOVE "O"                    TO PB1-RECORD-TYPE.
+           MOVE WS-MONTH-END           TO PB1-EFF-BILL-DT.
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+           MOVE ACM-CUSTOMER           TO PB1-CUSTOMER.
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+           MOVE WS-AR-OFFSET-DESC      TO PB1-DESCRIPTION.
+           COMPUTE                        PB1-BILLABLE-AMT
+                                        = WB120WS-TOT-DIST-AMT
+                                        * NEGATIVE-ONE.
+           MOVE 2                      TO PB1-CURR-ND.
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+       2020-END.
+      
+      ******************************************************************
+       2040-BENEFIT.
+      ******************************************************************
+      
+           IF  (PTB-START-DATE > WS-MONTH-BEG)
+           OR  ((PTB-STOP-DATE   NOT = ZEROS)
+           AND  (PTB-STOP-DATE < WS-MONTH-BEG))
+               GO TO 2040-NEXT.
+      
+           MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE.
+           MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE.
+           PERFORM 840-FIND-PLNSET1.
+      
+           IF (PLAN-NOTFOUND)
+AIC002*    OR (PLN-CONTRIB-TYPE = "0 ")
+               GO TO 2040-NEXT.
+      
+           IF (PTB-PLAN-TYPE  NOT = WB120WS-SAV-PLAN-TYPE)
+           OR (PTB-PLAN-CODE  NOT = WB120WS-SAV-PLAN-CODE)
+               MOVE PTB-PLAN-TYPE      TO WB120WS-SAV-PLAN-TYPE
+               MOVE PTB-PLAN-CODE      TO WB120WS-SAV-PLAN-CODE
+               MOVE PTB-START-DATE     TO WB120WS-SAV-START-DATE
+           ELSE
+               GO TO 2040-NEXT.
+      
+           PERFORM 2100-BILL-COBRA-RETIREE
+           THRU    2100-END.
+      
+       2040-NEXT.
+ACS001*    PERFORM 860-FIND-NXTRNG-PTBSET5.
+ACS001     PERFORM 860-FIND-NEXT-PTBSET5.
+       
+       2040-END.
+      
+      ******************************************************************
+       2100-BILL-COBRA-RETIREE.
+      ******************************************************************
+
+           COMPUTE WB120WS-BILLABLE-AMT ROUNDED = PTB-EMP-AFT-CONT / 12.
+
+           IF  (WB120WS-BILLABLE-AMT = ZEROES)
+               GO TO 2100-END.
+
+           PERFORM 2980-START-PBHSTTEMP
+           THRU    2980-END.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+           MOVE WS-MONTH-END           TO PB1-EFF-BILL-DT.
+           MOVE WB120WS-BILLABLE-AMT   TO PB1-BILLABLE-AMT.
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+           MOVE ACM-CUSTOMER           TO PB1-CUSTOMER.
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+           MOVE "P"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE PTB-PLAN-TYPE          TO PB1-PLAN-TYPE.
+           MOVE PTB-PLAN-CODE          TO PB1-PLAN-CODE.
+           MOVE PTB-COV-OPTION         TO PB1-COV-OPTION.
+           MOVE WS-BENEFIT-DESC        TO PB1-DESCRIPTION.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           IF  (PARTBEN-FOUND)
+               IF  (PTB-PARTICIPNT NOT = ZEROES)
+                   MOVE PTB-PARTICIPNT TO PB1-PARTICIPNT
+                   MOVE "2"            TO PB1-EMP-SORT-TYPE
+               ELSE
+                   MOVE "1"            TO PB1-EMP-SORT-TYPE.
+           PERFORM 8200-STORE-PBHSTTEMP.
+           ADD WB120WS-BILLABLE-AMT     TO WB120WS-TOT-DIST-AMT.
+
+       2100-END.
+
+      ******************************************************************
+       2200-BILL-ONETMDED.
+      ******************************************************************
+
+           MOVE OTD-BEN-PLAN-TYPE          TO DB-PLAN-TYPE.
+           MOVE OTD-BEN-PLAN-CODE          TO DB-PLAN-CODE.
+           PERFORM 840-FIND-PLNSET1.
+           IF (PLAN-NOTFOUND)
+AIC002*    OR (PLN-CONTRIB-TYPE = "0 ")
+               GO TO 2200-NEXT.
+
+      *-- Bill for amount that in arrears
+
+           IF  (OTD-DED-CODE = PLN-PRE-DED-CODE-A)
+           OR  (OTD-DED-CODE = PLN-AFT-LMT-DED-A)
+           OR  (OTD-DED-CODE = PLN-AFT-DED-CODE-A)
+           OR  (OTD-DED-CODE = PLN-PRE-DED-CODE-P)
+           OR  (OTD-DED-CODE = PLN-AFT-LMT-DED-P)
+           OR  (OTD-DED-CODE = PLN-AFT-DED-CODE-P)
+           OR  (OTD-DED-CODE = PLN-PRE-DED-MTCH-A)
+           OR  (OTD-DED-CODE = PLN-AFT-LMT-MTCH-A)
+           OR  (OTD-DED-CODE = PLN-AFT-DED-MTCH-A)
+           OR  (OTD-DED-CODE = PLN-PRE-DED-MTCH-P)
+           OR  (OTD-DED-CODE = PLN-AFT-LMT-MTCH-P)
+           OR  (OTD-DED-CODE = PLN-AFT-DED-MTCH-P)
+                NEXT SENTENCE
+           ELSE
+                GO TO 2200-NEXT.
+
+           MOVE WS-TRUE            TO WS-OTD-FLAG.
+
+           IF  (BILL-ARREARS)
+               NEXT SENTENCE
+           ELSE
+               GO TO 2200-NEXT.
+
+      *--- Find matching PARTBEN record.  If not found, print
+      *    exception and exit
+
+           MOVE OTD-COMPANY            TO DB-COMPANY.
+           MOVE WB120WS-SAV-EMPLOYEE   TO DB-EMPLOYEE.
+           MOVE WB120WS-SAV-PARTICIPNT TO DB-PARTICIPNT.
+           MOVE OTD-BEN-PLAN-TYPE      TO DB-PLAN-TYPE.
+           MOVE OTD-BEN-PLAN-CODE      TO DB-PLAN-CODE.
+           MOVE WS-MONTH-BEG           TO DB-START-DATE.
+           PERFORM 850-FIND-NLT-PTBSET5.
+           IF  (PARTBEN-FOUND)
+           AND (PTB-COMPANY         = DB-COMPANY)
+           AND (PTB-EMPLOYEE        = DB-EMPLOYEE)
+           AND (PTB-PARTICIPNT      = DB-PARTICIPNT)
+           AND (PTB-PLAN-TYPE       = DB-PLAN-TYPE)
+           AND (PTB-PLAN-CODE       = DB-PLAN-CODE)
+           AND (PTB-START-DATE      > WS-MONTH-BEG)
+               PERFORM 870-FIND-PREV-PTBSET5.
+
+           IF  (PARTBEN-NOTFOUND)
+           OR  (PTB-COMPANY     NOT = DB-COMPANY)
+           OR  (PTB-EMPLOYEE    NOT = DB-EMPLOYEE)
+           OR  (PTB-PARTICIPNT  NOT = DB-PARTICIPNT)
+           OR  (PTB-PLAN-TYPE   NOT = DB-PLAN-TYPE)
+           OR  (PTB-PLAN-CODE   NOT = DB-PLAN-CODE)
+           OR  ((PTB-STOP-DATE  NOT = ZEROES)
+           AND  (PTB-STOP-DATE      < WS-MONTH-BEG))
+               MOVE EMP-PROCESS-LEVEL      TO E2-PROCESS-LEVEL
+               MOVE EMP-EMPLOYEE           TO E2-EMPLOYEE
+               MOVE OTD-BEN-PLAN-TYPE      TO E2-PLAN-TYPE
+               MOVE OTD-BEN-PLAN-CODE      TO E2-PLAN-CODE
+               MOVE WS-MONTH-END           TO WS-TMP-DATE
+               MOVE WS-TMP-CCYY            TO E2-BEG-CCYY
+                                              E2-END-CCYY
+               MOVE WS-TMP-MM              TO E2-BEG-MM
+                                              E2-END-MM
+               MOVE "O"                    TO E2-TYPE
+               MOVE EXCEPTION-LINE         TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+               GO TO 2200-NEXT.
+
+      *--- Create work file to later remove ONETMDED after billed
+      *    to employee
+
+           PERFORM 8000-CREATE-WBREMOTD.
+           MOVE OTD-COMPANY        TO WRO-COMPANY.
+           MOVE OTD-EMPLOYEE       TO WRO-EMPLOYEE.
+           MOVE OTD-DED-CODE       TO WRO-DED-CODE.
+           MOVE OTD-EDM-SEQ-NBR    TO WRO-EDM-SEQ-NBR.
+           MOVE OTD-SEQ-NBR        TO WRO-SEQ-NBR.
+           PERFORM 8200-STORE-WBREMOTD.
+
+      *--- PB Invoice Record
+
+           PERFORM 2980-START-PBHSTTEMP
+           THRU    2980-END.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+           MOVE WS-MONTH-END           TO PB1-EFF-BILL-DT.
+           MOVE WS-ARREARS-DESC        TO PB1-DESCRIPTION.
+           MOVE OTD-DED-CODE           TO PB1-DEDUCT-FEE-CD.
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+           MOVE ACM-CUSTOMER           TO PB1-CUSTOMER.
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+           MOVE "A"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE OTD-DED-AMT            TO PB1-BILLABLE-AMT.
+           INITIALIZE                     PB1-CHECK-ID.
+           INITIALIZE                     PB1-JOB-CODE.
+           MOVE WS-ARREARS-DESC        TO PB1-DESCRIPTION.
+           MOVE OTD-BEN-PLAN-TYPE      TO PB1-PLAN-TYPE.
+           MOVE OTD-BEN-PLAN-CODE      TO PB1-PLAN-CODE.
+           MOVE OTD-CURRENCY-CODE      TO PB1-CURRENCY-CODE.
+           MOVE OTD-CURR-ND            TO PB1-CURR-ND.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           IF  (PARTBEN-FOUND)
+               IF  (PTB-PARTICIPNT NOT = ZEROES)
+                   MOVE PTB-PARTICIPNT TO PB1-PARTICIPNT
+                   MOVE "2"            TO PB1-EMP-SORT-TYPE
+               ELSE
+                   MOVE "1"            TO PB1-EMP-SORT-TYPE.
+
+GW9/05*    MOVE "ONETMDED"             TO PB1-REASON-CODE.
+GW9/05     MOVE "ONET"                 TO PB1-REASON-CODE.
+           MOVE PTB-COV-OPTION         TO PB1-COV-OPTION.
+
+           PERFORM 8200-STORE-PBHSTTEMP.
+           ADD OTD-DED-AMT             TO WB120WS-TOT-DIST-AMT.
+
+       2200-NEXT.
+
+           PERFORM 860-FIND-NXTRNG-OTDSET1.
+
+       2200-END.
+
+      ******************************************************************
+       2980-START-PBHSTTEMP.
+      ******************************************************************
+
+           PERFORM 8000-CREATE-PBHSTTEMP.
+
+           MOVE PRM-COMPANY            TO PB1-COMPANY.
+           MOVE WS-MONTH-END           TO PB1-PER-END-DATE.
+
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+
+           INITIALIZE                     PB1-GROSS-PAY
+                                          PB1-ADJUST-PAY
+                                          PB1-WC-RATE
+                                          PB1-REG-HOURS
+                                          PB1-OT-HOURS
+                                          PB1-OTH-HOURS
+                                          PB1-REG-RATE
+                                          PB1-OT-RATE
+                                          PB1-OTH-RATE
+                                          PB1-REG-PAY
+                                          PB1-OT-PAY
+                                          PB1-OTH-PAY
+                                          PB1-TIPS-PAY
+                                          PB1-EMPLOYEE-CAFE
+                                          PB1-CREDITS
+                                          PB1-BILLABLE-UNIT
+                                          PB1-TAXABLE-AMT
+                                          PB1-TR-DATE
+                                          PB1-TIME-SEQ
+                                          PB1-EDM-SEQ-NBR
+                                          PB1-CHECK-DATE
+                                          PB1-CHECK-ID
+                                          PB1-PCD-SEQ-NBR
+                                          PB1-EFF-BILL-DT.
+
+       2980-END.
+
+      ******************************************************************
+       2000-END.
+      ******************************************************************
+
+      ******************************************************************
+       3000-RETRO-ADJUSTMENTS         SECTION.
+      ******************************************************************
+
+           DISPLAY "start 3000-RETRO-ADJUSTMENTS".
+      *--- WBWRK4 file is used for keeping track of Retro adjustment
+      *    records.
+      *
+           IF (WS-RS-WBWRK4-NAME = SPACES)
+               PERFORM 900-BUILD-TMP-FILE-NAME
+               MOVE WS-TMP-FILE        TO WBWRK4-FILENAME
+                                          WS-RS-WBWRK4-NAME
+           ELSE
+               MOVE WS-RS-WBWRK4-NAME  TO WBWRK4-FILENAME.
+           PERFORM 9800-OPEN-OUTPUT-WBWRK4.
+           PERFORM 9900-CLOSE-WBWRK4.
+           PERFORM 9810-OPEN-IO-WBWRK4.
+
+           IF (EMPLOYER-RUN)
+           OR (COMBINED-RUN)
+               PERFORM 3010-SEL-PLAN-TYPES
+               THRU    3010-END
+                   VARYING I1 FROM 1 BY 1
+                   UNTIL  (I1 > I-PT)
+           ELSE
+               MOVE PRM-COMPANY                TO DB-COMPANY
+               MOVE WB120WS-WBP-UNPROCESSED    TO DB-STATUS
+               INITIALIZE                         DB-PLAN-TYPE
+                                                  DB-PLAN-CODE
+                                                  DB-EMPLOYEE
+                                                  DB-PARTICIPNT
+                                                  DB-START-DATE
+               PERFORM 850-FIND-NLT-WBPSET4
+               PERFORM 3040-SEL-EMPLOYEE
+               THRU    3040-END
+                   UNTIL (WBPBENEFIT-NOTFOUND)
+                   OR    (WBP-COMPANY NOT = PRM-COMPANY)
+                   OR    (WBP-STATUS  NOT = WB120WS-WBP-UNPROCESSED).
+
+           GO TO 3000-END.
+
+      ******************************************************************
+       3010-SEL-PLAN-TYPES.
+      ******************************************************************
+
+           IF (WB120WS-PLAN-TYPE (I1) = SPACES)
+               GO TO 3010-END.
+
+           MOVE PRM-COMPANY                TO DB-COMPANY.
+           MOVE WB120WS-WBP-UNPROCESSED    TO DB-STATUS.
+           MOVE WB120WS-PLAN-TYPE (I1)     TO DB-PLAN-TYPE.
+           INITIALIZE                         DB-PLAN-CODE
+                                              DB-EMPLOYEE
+                                              DB-PARTICIPNT
+                                              DB-START-DATE.
+           PERFORM 850-FIND-NLT-WBPSET4.
+           PERFORM 3020-SEL-BEN-PLAN-CODES
+           THRU    3020-END
+               UNTIL (WBPBENEFIT-NOTFOUND)
+               OR    (WBP-COMPANY   NOT = PRM-COMPANY)
+               OR    (WBP-STATUS    NOT = WB120WS-WBP-UNPROCESSED)
+               OR    (WBP-PLAN-TYPE NOT = WB120WS-PLAN-TYPE (I1)).
+
+       3010-END.
+
+      ******************************************************************
+       3020-SEL-BEN-PLAN-CODES.
+      ******************************************************************
+
+           IF (WS-CODE-ENTERED)
+               IF  (PRM-PLAN-CODE (1)  NOT = WBP-PLAN-CODE)
+               AND (PRM-PLAN-CODE (2)  NOT = WBP-PLAN-CODE)
+               AND (PRM-PLAN-CODE (3)  NOT = WBP-PLAN-CODE)
+               AND (PRM-PLAN-CODE (4)  NOT = WBP-PLAN-CODE)
+               AND (PRM-PLAN-CODE (5)  NOT = WBP-PLAN-CODE)
+               AND (PRM-PLAN-CODE (6)  NOT = WBP-PLAN-CODE)
+      *----------- 3040-NEXT DOES A READ NEXT ??? -- USING SET4 NOW ---
+      *            PERFORM 860-FIND-NEXT-WBPSET1
+AIC002*            GO TO 3040-NEXT.
+AIC002             PERFORM 860-FIND-NEXT-WBPSET4
+AIC002             GO TO 3020-END.
+
+           MOVE WBP-PLAN-CODE           TO WS-SV-PLAN-CODE.
+
+           PERFORM 3040-SEL-EMPLOYEE
+           THRU    3040-END
+               UNTIL (WBPBENEFIT-NOTFOUND)
+               OR    (WBP-COMPANY      NOT = PRM-COMPANY)
+               OR    (WBP-STATUS       NOT = WB120WS-WBP-UNPROCESSED)
+               OR    (WBP-PLAN-TYPE    NOT = WB120WS-PLAN-TYPE (I1))
+               OR    (WBP-PLAN-CODE    NOT = WS-SV-PLAN-CODE).
+
+       3020-END.
+      ******************************************************************
+       3040-SEL-EMPLOYEE.
+      ******************************************************************
+
+      *--- Save WBPBENEFIT Keys - Keys are the same so we won't get dups
+           PERFORM 8000-CREATE-WBWRK4.
+           MOVE WBP-COMPANY                TO WW4-COMPANY.
+           MOVE WBP-EMPLOYEE               TO WW4-EMPLOYEE.
+           MOVE WBP-PARTICIPNT             TO WW4-PARTICIPNT.
+           MOVE WBP-PLAN-TYPE              TO WW4-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE              TO WW4-PLAN-CODE.
+           MOVE WBP-START-DATE             TO WW4-START-DATE.
+           MOVE WBP-STATUS                 TO WW4-STATUS.
+           PERFORM 8200-STORE-WBWRK4.
+
+           IF  (WBP-RETRO-START-DT >= WS-MONTH-BEG)
+               GO TO 3040-NEXT.
+
+           MOVE WBP-EMPLOYEE           TO DB-EMPLOYEE.
+
+           IF (WBP-PARTICIPNT > ZEROES)
+               MOVE WBP-COMPANY        TO DB-COMPANY
+               MOVE WBP-PARTICIPNT     TO DB-PARTICIPNT
+               PERFORM 840-FIND-PARSET1
+               IF (PARTICIPNT-FOUND)
+                   MOVE PAR-EMPLOYEE   TO DB-EMPLOYEE.
+
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMPLOYEE-NOTFOUND)
+TEMPS *    OR (EMP-EMPLOYEE NOT = 18614)
+               GO TO 3040-NEXT.
+
+           MOVE EMP-COMPANY            TO CRT-COMPANY.
+           MOVE EMP-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL.
+           PERFORM 700-HR-EMP-SECURITY.
+           IF (HRWS-EMP-SECURED)
+               GO TO 3040-NEXT.
+
+           MOVE WBP-PLAN-TYPE          TO DB-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE          TO DB-PLAN-CODE.
+           PERFORM 840-FIND-PLNSET1.
+           IF (PLAN-NOTFOUND)
+AIC002*    OR (PLN-CONTRIB-TYPE = "0 ")
+               GO TO 3040-NEXT.
+
+
+       3040-EMPLOYER-RUN-PL-CHECK.
+
+            IF  (EMPLOYEE-RUN)
+                GO TO 3040-EMPLOYEE-RUN-PL-CHECK.
+
+      *--- Determine if employee ever belonged to parameter process
+      *    level since date of change
+           IF (WBP-PARTICIPNT > ZEROES)
+           AND (PAR-DEPENDENT > ZEROES)
+      *        CODE FOR PARAMETER SELECTION CRITERIA
+               GO TO 3040-CONTINUE.
+
+      *--- First check Current Process Level
+
+           IF  (PRM-PROC-GROUP    = SPACES)
+           AND (PRM-PROCESS-LEVEL = SPACES)
+               GO TO 3040-CONTINUE.
+
+           IF  (PRM-PROC-GROUP NOT = SPACES)
+               MOVE PRM-COMPANY        TO DB-COMPANY
+               MOVE PRM-PROC-GROUP     TO DB-PROC-GROUP
+               MOVE EMP-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+               PERFORM 840-FIND-PRPSET1
+               IF  (PRPROCGRP-FOUND)
+TEMPS *            DISPLAY "3040 found Process Level-1"
+                   GO TO 3040-CONTINUE
+               END-IF
+           ELSE
+           IF  (PRM-PROCESS-LEVEL     = EMP-PROCESS-LEVEL)
+TEMPS *            DISPLAY "3040 found Process Level-2"
+               GO TO 3040-CONTINUE.
+
+      *--- Then check "Process Level" History
+
+           MOVE WS-FALSE TO WS-PL-MATCH-FLAG.
+
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE ZEROES                 TO DB-OBJ-ID.
+           MOVE HREMP-PROCESS-LEVEL-DN TO DB-FLD-NBR.
+           MOVE WBP-RETRO-START-DT     TO DB-BEG-DATE.
+           MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR.
+           PERFORM 850-FIND-NLT-HRHSET1.
+           PERFORM
+               UNTIL (HRHISTORY-NOTFOUND)
+               OR    (HRH-COMPANY    NOT = PRM-COMPANY)
+               OR    (HRH-EMPLOYEE   NOT = EMP-EMPLOYEE)
+               OR    (HRH-OBJ-ID     NOT = ZEROES)
+               OR    (HRH-FLD-NBR    NOT = DB-FLD-NBR)
+               OR    (HRH-BEG-DATE       > WS-MONTH-END)
+               OR    (PL-MATCH)
+
+               IF  (PRM-PROC-GROUP NOT = SPACES)
+                   MOVE PRM-COMPANY        TO DB-COMPANY
+                   MOVE PRM-PROC-GROUP     TO DB-PROC-GROUP
+                   MOVE HRH-A-VALUE        TO DB-PROCESS-LEVEL
+                   PERFORM 840-FIND-PRPSET1
+                   IF  (PRPROCGRP-FOUND)
+                       MOVE WS-TRUE        TO WS-PL-MATCH-FLAG
+                   END-IF
+               ELSE
+                   IF  (PRM-PROCESS-LEVEL     = SPACES)
+                   OR  (PRM-PROCESS-LEVEL     = HRH-A-VALUE)
+                       MOVE WS-TRUE        TO WS-PL-MATCH-FLAG
+                   END-IF
+               END-IF
+               PERFORM 860-FIND-NEXT-HRHSET1
+           END-PERFORM.
+
+TEMPS *    DISPLAY "PlMatchFlag1: " EMP-EMPLOYEE " " WS-PL-MATCH-FLAG.
+           IF (PL-MATCH)
+               GO TO 3040-CONTINUE.
+
+      *--- Next check "P-BillToEmployer" History
+
+           MOVE WS-FALSE TO WS-PL-MATCH-FLAG.
+
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE ZEROES                 TO DB-OBJ-ID.
+           COMPUTE DB-FLD-NBR           = 2000 + WS-BILL-EMPLOYER-N.
+           MOVE WBP-RETRO-START-DT     TO DB-BEG-DATE.
+           MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR.
+           PERFORM 850-FIND-NLT-HRHSET1.
+           PERFORM
+               UNTIL (HRHISTORY-NOTFOUND)
+               OR    (HRH-COMPANY    NOT = PRM-COMPANY)
+               OR    (HRH-EMPLOYEE   NOT = EMP-EMPLOYEE)
+               OR    (HRH-OBJ-ID     NOT = ZEROES)
+               OR    (HRH-FLD-NBR    NOT = DB-FLD-NBR)
+               OR    (HRH-BEG-DATE       > WS-MONTH-END)
+               OR    (PL-MATCH)
+
+               IF  (PRM-PROC-GROUP NOT = SPACES)
+                   MOVE PRM-COMPANY        TO DB-COMPANY
+                   MOVE PRM-PROC-GROUP     TO DB-PROC-GROUP
+                   MOVE HRH-A-VALUE        TO DB-PROCESS-LEVEL
+                   PERFORM 840-FIND-PRPSET1
+                   IF  (PRPROCGRP-FOUND)
+                       MOVE WS-TRUE        TO WS-PL-MATCH-FLAG
+                   END-IF
+               ELSE
+                   IF  (PRM-PROCESS-LEVEL     = SPACES)
+                   OR  (PRM-PROCESS-LEVEL     = HRH-A-VALUE)
+                       MOVE WS-TRUE        TO WS-PL-MATCH-FLAG
+                   END-IF
+               END-IF
+               PERFORM 860-FIND-NEXT-HRHSET1
+           END-PERFORM.
+
+TEMPS *    DISPLAY "PlMatchFlag2: " EMP-EMPLOYEE " " WS-PL-MATCH-FLAG.
+           IF (PL-MATCH)
+               GO TO 3040-CONTINUE
+           ELSE
+               IF (COMBINED-RUN)
+                   GO TO 3040-EMPLOYEE-RUN-PL-CHECK
+               ELSE
+                   GO TO 3040-NEXT.
+
+      *--- Determine if employee ever was ever retired or on COBRA
+
+       3040-EMPLOYEE-RUN-PL-CHECK.
+       
+      *--- REMOVED BECAUSE THE RETRO COULD BE FOR MISSED PERIODS ON
+      *--- A NEW RETIREE, SO THERE WOULDN'T BE PRIOR BILLING     
+013300*    MOVE EMP-COMPANY                TO DB-COMPANY.
+012930*    MOVE EMP-EMPLOYEE               TO DB-EMPLOYEE.
+012930*    MOVE ZEROES                     TO DB-CHECK-ID. 
+012930*    MOVE SPACES                     TO DB-PROCESS-LEVEL.
+012930*    MOVE ZB3SET2-PROCESS-LEVEL      TO WS-DB-BEG-RNG.        
+012930*    PERFORM 850-FIND-BEGRNG-ZB3SET2. 
+      *    IF  (PBHSTDTL-NOTFOUND)
+      *        GO TO 3040-NEXT.
+
+       3040-CONTINUE.
+
+      *--- Set Late Enrollment flag for plan
+
+           MOVE WS-FALSE               TO WS-LATE-ENROLL-SW.
+           MOVE PRM-COMPANY            TO DB-LVL-1-KEY.
+           MOVE "BN-PLAN-GROUP"        TO DB-LVL-2-KEY.
+           INITIALIZE                     DB-LVL-3-KEY.
+           MOVE IF1SET1-LVL-3-KEY      TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-IF1SET1.
+           PERFORM
+               UNTIL (WS-LATE-ENROLL)
+               OR    (LUPTBLDTL-NOTFOUND)
+
+               IF  (IF1-DTL-KEY (2:2)   = PLN-PLAN-TYPE)
+               AND (IF1-DTL-KEY (4:4)   = PLN-PLAN-CODE)
+
+                   PERFORM
+                       VARYING I2 FROM 1 BY 1
+                       UNTIL  (WS-LATE-ENROLL)
+                       OR     (I2 > 6)
+
+                       IF  (IF1-DTL-VALUE = PRM-WBP-PLAN-GROUP (I2))
+                           MOVE WS-TRUE TO WS-LATE-ENROLL-SW
+                       END-IF
+                   END-PERFORM
+
+               END-IF
+
+               PERFORM 860-FIND-NXTRNG-IF1SET1
+           END-PERFORM.
+
+
+      *--- Build Month End Date Process Table
+
+           INITIALIZE WS-RETRO-DATE-TABLE.
+
+           MOVE WBP-RETRO-START-DT     TO WS-TMP-DATE.
+
+      *--- If start date not 1st of month, the benefit doesn't
+      *    get billed until next month
+      *
+
+           IF  (WS-TMP-DD > 1)
+               ADD 1                   TO WS-TMP-MM
+               IF  (WS-TMP-MM = 13)
+                   MOVE 1              TO WS-TMP-MM
+                   ADD 1               TO WS-TMP-CCYY.
+
+      *--- Get Month End Dates by going to next month and
+      *    backing up one day.  Continue until current month
+
+           MOVE WS-TMP-DATE            TO WSDR-FR-DATE.
+           INITIALIZE                     WSDR-TO-DATE.
+
+           PERFORM
+               VARYING I-DT FROM 1 BY 1
+               UNTIL  (I-DT > 50)
+               OR     (WSDR-TO-DATE NOT < WS-MONTH-END)
+
+               MOVE WSDR-FR-DATE           TO WS-TMP-DATE
+               ADD 1                       TO WS-TMP-MM
+               IF  (WS-TMP-MM = 13)
+                   MOVE 1                  TO WS-TMP-MM
+                   ADD 1                   TO WS-TMP-CCYY
+               END-IF
+               MOVE 1                      TO WS-TMP-DD
+
+               MOVE WS-TMP-DATE            TO WSDR-FR-DATE
+               MOVE NEGATIVE-ONE           TO WSDR-DAY-INCR
+               PERFORM 900-INCREMENT-DATE
+               IF  (WSDR-TO-DATE < WS-MONTH-END)
+                   MOVE WSDR-TO-DATE       TO WS-RETRO-DATE (I-DT)
+               END-IF
+               IF  (WSDR-FR-DATE  < PRM-WBP-FR-DATE)
+                   MOVE PRM-WBP-FR-DATE    TO WSDR-FR-DATE
+               END-IF
+           END-PERFORM.
+
+      *--- If table max hit, display message and abend
+
+           IF  (I-DT > 50)
+               MOVE 950                    TO CRT-MSG-NBR
+               PERFORM 780-DISPLAY-MSG
+               MOVE WS-RETRO-DATE (I-DT)   TO WS-RETRO-DATE (I-DT).
+
+
+      *--- skip if effective bill month is after current month
+
+           IF  (WS-RETRO-DATE (1) > WS-MONTH-END)
+               GO TO 3040-NEXT.
+
+
+      *--- Exception report if changes prior to conversion
+
+           IF  (WS-RETRO-DATE (1)      < PRM-WBP-FR-DATE)
+           AND ((EMPLOYER-RUN)
+           OR   (COMBINED-RUN))
+               MOVE WBP-COMPANY               TO DB-COMPANY
+               MOVE EMP-EMPLOYEE              TO DB-EMPLOYEE
+               MOVE WBP-PLAN-TYPE             TO DB-PLAN-TYPE
+               MOVE WBP-PLAN-CODE             TO DB-PLAN-CODE
+               MOVE ZB3SETW1-PLAN-CODE         TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-ZB3SETW1
+               IF  (PBHSTDTL-NOTFOUND)
+               OR  (ZB3-EFF-BILL-DT    > PRM-WBP-FR-DATE)
+                   MOVE EMP-PROCESS-LEVEL      TO E2-PROCESS-LEVEL
+                   MOVE EMP-EMPLOYEE           TO E2-EMPLOYEE
+                   MOVE WBP-PLAN-TYPE          TO E2-PLAN-TYPE
+                   MOVE WBP-PLAN-CODE          TO E2-PLAN-CODE
+                   MOVE WBP-RETRO-START-DT     TO WS-TMP-DATE
+                   MOVE WS-TMP-CCYY            TO E2-BEG-CCYY
+                   MOVE WS-TMP-MM              TO E2-BEG-MM
+                   IF  (PBHSTDTL-FOUND)
+                   AND (ZB3-EFF-BILL-DT NOT > PRM-WBP-FR-DATE)
+                       MOVE ZB3-EFF-BILL-DT    TO WS-TMP-DATE
+                       MOVE ZB3-PROCESS-LEVEL  TO E2-PROCESS-LEVEL
+                   ELSE
+                       MOVE PRM-WBP-FR-DATE    TO WS-TMP-DATE
+                   END-IF
+                   MOVE WS-TMP-CCYY            TO E2-END-CCYY
+                   MOVE WS-TMP-MM              TO E2-END-MM
+                   SUBTRACT 1                FROM E2-END-MM
+                   IF  (E2-BEG-MM = 0)
+                       MOVE 12                 TO E2-END-MM
+                       SUBTRACT 1            FROM E2-END-CCYY
+                   END-IF
+                   MOVE "A"                    TO E2-TYPE
+                   MOVE EXCEPTION-LINE         TO RPT-GROUP-REQUEST
+                   PERFORM 700-PRINT-RPT-GRP.
+
+      *--- Cycle thru months and check if adjustments needed
+
+           PERFORM
+               VARYING I-DT FROM 1 BY 1
+               UNTIL  (I-DT > 50)
+               OR     (WS-RETRO-DATE (I-DT) = ZEROES)
+
+TEMPS *        DISPLAY "retro date: " WS-RETRO-DATE (I-DT)
+TEMPS *                " index: " I-DT
+               PERFORM 3060-CALC-RETRO
+               THRU    3060-END
+
+           END-PERFORM.
+
+       3040-NEXT.
+
+           PERFORM 860-FIND-NEXT-WBPSET4.
+
+       3040-END.
+
+      ******************************************************************
+       3060-CALC-RETRO.
+      ******************************************************************
+
+AATEST*    DISPLAY "WB120 3060-CALC-RETRO".
+
+      *--- Get previous bill amt and process level for month
+
+           INITIALIZE WS-PREV-OLD-BILL-AMT.
+           INITIALIZE WS-PREV-OLD-PROC-LVL.
+
+TEMPS *    DISPLAY "3060 WBP.Participnt: " WBP-PARTICIPNT
+TEMPS *            " PAR.Dependent: " PAR-DEPENDENT.
+           IF (WBP-PARTICIPNT = ZEROES)
+               PERFORM 7000-GET-BILLED
+           ELSE
+               IF (PAR-DEPENDENT = ZERO)
+                   MOVE EMP-EMPLOYEE       TO WBP-EMPLOYEE
+                   PERFORM 7000-GET-BILLED
+                   MOVE ZEROES             TO WBP-EMPLOYEE
+               ELSE
+                   PERFORM 7100-GET-PTB-BILLED.
+
+           IF  (WS-PREV-OLD-BILL-AMT NOT = ZEROES)
+TEMPS *        DISPLAY "Going to 3060-NEW-AMT"
+               GO TO 3060-NEW-AMT.
+
+      *--- If no previous bill amt, check for ONETMDED billings
+
+           INITIALIZE WS-PREV-OLD-PROC-LVL.
+           IF (WBP-PARTICIPNT > ZEROES)
+           AND (PAR-DEPENDENT > ZEROES)
+               GO TO 3060-NEW-AMT.
+
+           MOVE WBP-COMPANY                TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE               TO DB-EMPLOYEE.
+           MOVE WBP-PLAN-TYPE              TO DB-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE              TO DB-PLAN-CODE.
+           MOVE WS-RETRO-DATE (I-DT)       TO DB-EFF-BILL-DT.
+           INITIALIZE                         DB-PROCESS-LEVEL
+                                              DB-INVOICE
+                                              DB-LINE-NBR.
+           PERFORM 850-FIND-NLT-ZB3SETW1.
+           PERFORM
+               UNTIL (PBHSTDTL-NOTFOUND)
+               OR    (ZB3-COMPANY          NOT = EMP-COMPANY)
+               OR    (ZB3-EMPLOYEE         NOT = EMP-EMPLOYEE)
+               OR    (ZB3-PLAN-TYPE        NOT = PLN-PLAN-TYPE)
+               OR    (ZB3-PLAN-CODE        NOT = PLN-PLAN-CODE)
+               OR    (ZB3-EFF-BILL-DT      NOT = WS-RETRO-DATE (I-DT))
+               OR    (WS-PREV-OLD-BILL-AMT NOT = ZEROES)
+
+               MOVE ZB3-PROCESS-LEVEL      TO WS-PREV-OLD-PROC-LVL
+
+               PERFORM
+                   UNTIL (PBHSTDTL-NOTFOUND)
+                   OR    (ZB3-COMPANY       NOT = EMP-COMPANY)
+                   OR    (ZB3-EMPLOYEE      NOT = EMP-EMPLOYEE)
+                   OR    (ZB3-PLAN-TYPE     NOT = PLN-PLAN-TYPE)
+                   OR    (ZB3-PLAN-CODE     NOT = PLN-PLAN-CODE)
+                   OR    (ZB3-EFF-BILL-DT   NOT = WS-RETRO-DATE (I-DT))
+                   OR    (ZB3-PROCESS-LEVEL NOT = WS-PREV-OLD-PROC-LVL)
+
+GW9/05*            IF  (ZB3-REASON-CODE = "ONETMDED")
+GW9/05             IF  (ZB3-REASON-CODE = "ONET")
+                       ADD ZB3-BILLABLE-AMT    TO WS-PREV-OLD-BILL-AMT
+                   END-IF
+                   PERFORM 860-FIND-NEXT-ZB3SETW1
+               END-PERFORM
+           END-PERFORM.
+
+      *--- If ONETMDED amount found, cannot calculate total of old
+      *    amount.  Print on exception report.
+
+           IF  (WS-PREV-OLD-BILL-AMT NOT = ZEROES)
+               MOVE WS-PREV-OLD-PROC-LVL   TO E2-PROCESS-LEVEL
+               MOVE EMP-EMPLOYEE           TO E2-EMPLOYEE
+               MOVE WBP-PLAN-TYPE          TO E2-PLAN-TYPE
+               MOVE WBP-PLAN-CODE          TO E2-PLAN-CODE
+               MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE
+               MOVE WS-TMP-CCYY            TO E2-BEG-CCYY
+                                              E2-END-CCYY
+               MOVE WS-TMP-MM              TO E2-BEG-MM
+                                              E2-END-MM
+               MOVE "A"                    TO E2-TYPE
+               MOVE EXCEPTION-LINE         TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+
+               GO TO 3060-END.
+
+      *--- If prior to conversion date, and no previous bill amt, skip
+
+           IF  (WS-PREV-OLD-BILL-AMT     = ZEROES)
+           AND (WS-RETRO-DATE (I-DT) NOT > PRM-WBP-FR-DATE)
+               GO TO 3060-END.
+
+       3060-NEW-AMT.
+
+      *--- Determine if active BENEFIT record or PARTBEN record
+      *
+           INITIALIZE WS-PREV-NEW-BILL-AMT.
+
+           IF (WBP-PARTICIPNT > ZEROES)
+           AND (PAR-DEPENDENT > ZEROES)
+               MOVE 1                  TO BENEFIT-SW
+               GO TO 3060-COBRA.
+
+           MOVE WBP-COMPANY            TO DB-COMPANY.
+           MOVE WBP-PLAN-TYPE          TO DB-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE          TO DB-PLAN-CODE.
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE.
+           MOVE 1                      TO WS-TMP-DD.
+           MOVE WS-TMP-DATE            TO DB-START-DATE.
+           PERFORM 850-FIND-NLT-BENSET2.
+           
+           IF  (BENEFIT-FOUND)
+           AND (BEN-COMPANY    = DB-COMPANY)
+           AND (BEN-PLAN-TYPE  = DB-PLAN-TYPE)
+           AND (BEN-PLAN-CODE  = DB-PLAN-CODE)
+           AND (BEN-EMPLOYEE   = DB-EMPLOYEE)
+           AND ((BEN-STOP-DATE = ZEROES)
+           OR   (BEN-STOP-DATE > DB-START-DATE))
+               COMPUTE WS-PREV-NEW-BILL-AMT ROUNDED
+                                           = (BEN-EMP-AFT-CONT / 12)
+               MOVE 1                      TO PARTBEN-SW
+TEMPS *        DISPLAY "going to 3060-CONTINUE"
+               GO TO 3060-CONTINUE
+           ELSE
+               MOVE 1                      TO BENEFIT-SW.
+
+       3060-COBRA.
+      *--- If Active BENEFIT not found, OR COBRA, check PARTBEN
+
+           MOVE WBP-COMPANY            TO DB-COMPANY.
+           MOVE WBP-PLAN-TYPE          TO DB-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE          TO DB-PLAN-CODE.
+           MOVE WBP-EMPLOYEE           TO DB-EMPLOYEE.
+           MOVE WBP-PARTICIPNT         TO DB-PARTICIPNT.
+           MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE.
+           MOVE 1                      TO WS-TMP-DD.
+           MOVE WS-TMP-DATE            TO DB-START-DATE.
+           PERFORM 850-FIND-NLT-PTBSET2.
+
+           IF  (PARTBEN-FOUND)
+           AND (PTB-COMPANY    = DB-COMPANY)
+           AND (PTB-PLAN-TYPE  = DB-PLAN-TYPE)
+           AND (PTB-PLAN-CODE  = DB-PLAN-CODE)
+           AND (PTB-EMPLOYEE   = DB-EMPLOYEE)
+           AND (PTB-PARTICIPNT = DB-PARTICIPNT)
+           AND ((PTB-STOP-DATE = ZEROES)
+           OR   (PTB-STOP-DATE > DB-START-DATE))
+               COMPUTE WS-PREV-NEW-BILL-AMT ROUNDED
+                               = PTB-EMP-AFT-CONT / 12
+           ELSE
+               MOVE 1                  TO PARTBEN-SW.
+
+       3060-CONTINUE.
+TEMPS *    DISPLAY "3060 PartbenSw: " PARTBEN-SW.
+
+      *--- Determine Bill To Process Level, using "Process Level"
+      *    HRHISTORY for active BENEFIT, or "BillToEmployer" for
+      *    active PARTBEN
+
+           INITIALIZE                     WS-PREV-NEW-PROC-LVL.
+      *--- DEP ON COBRA CAN ONLY BE DIRECT BILL
+           IF (WBP-PARTICIPNT > ZEROES)
+           AND (PAR-DEPENDENT > ZEROES)
+               GO TO 3060-CHECK-DIFF.
+           
+           IF  (BENEFIT-FOUND) 
+               MOVE PRM-COMPANY            TO DB-COMPANY
+               MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+               MOVE ZEROES                 TO DB-OBJ-ID
+               MOVE HREMP-PROCESS-LEVEL-DN TO DB-FLD-NBR
+               MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE
+               MOVE 1                      TO WS-TMP-DD
+               MOVE WS-TMP-DATE            TO DB-BEG-DATE
+               MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR
+               PERFORM 850-FIND-NLT-HRHSET1 
+               PERFORM 870-FIND-PREV-HRHSET1
+               IF  (HRHISTORY-FOUND)
+               AND (HRH-COMPANY    = PRM-COMPANY)
+               AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+               AND (HRH-OBJ-ID     = ZEROES)
+               AND (HRH-FLD-NBR    = DB-FLD-NBR)
+                   MOVE HRH-A-VALUE        TO WS-PREV-NEW-PROC-LVL
+               ELSE
+                   MOVE EMP-PROCESS-LEVEL  TO WS-PREV-NEW-PROC-LVL
+               END-IF        
+           ELSE
+           IF  (PARTBEN-FOUND)
+               MOVE PRM-COMPANY            TO DB-COMPANY
+               MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+               MOVE ZEROES                 TO DB-OBJ-ID
+               COMPUTE DB-FLD-NBR           = 2000 + WS-BILL-EMPLOYER-N
+               MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE
+               MOVE 1                      TO WS-TMP-DD
+               MOVE WS-TMP-DATE            TO DB-BEG-DATE
+               MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR
+               PERFORM 850-FIND-NLT-HRHSET1 
+               PERFORM 870-FIND-PREV-HRHSET1
+               IF  (HRHISTORY-FOUND)
+               AND (HRH-COMPANY    = PRM-COMPANY)
+               AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+               AND (HRH-OBJ-ID     = ZEROES)
+               AND (HRH-FLD-NBR    = DB-FLD-NBR)
+                   IF (HRH-A-VALUE = "*BLANK")
+                       MOVE SPACES         TO WS-PREV-NEW-PROC-LVL
+                   ELSE
+                       MOVE HRH-A-VALUE    TO WS-PREV-NEW-PROC-LVL
+                   END-IF
+               ELSE
+                   MOVE SPACES             TO WS-PREV-NEW-PROC-LVL.
+
+RAY   *--- R. HERWECK - OVERRIDE THE BILL TO EMPLOYER WITH TAIP       --
+      *---              EMPLOYER DURING THE RETRO BILLING PERIOD      --
+           IF  (BEN-PLAN-CODE = "TAIP" OR "TAMI" OR "TAMF")
+AIC002     OR  (BEN-PLAN-CODE = "TRAV")
+               MOVE PRM-COMPANY            TO DB-COMPANY
+               MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+               MOVE ZEROES                 TO DB-OBJ-ID
+               COMPUTE DB-FLD-NBR           = 2000 + WS-TAIP-EMPLOYER-N
+               MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE
+               MOVE 1                      TO WS-TMP-DD
+               MOVE WS-TMP-DATE            TO DB-BEG-DATE
+               MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR
+               PERFORM 850-FIND-NLT-HRHSET1 
+               PERFORM 870-FIND-PREV-HRHSET1
+               IF  (HRHISTORY-FOUND)
+               AND (HRH-COMPANY    = PRM-COMPANY)
+               AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+               AND (HRH-OBJ-ID     = ZEROES)
+               AND (HRH-FLD-NBR    = DB-FLD-NBR)
+                   MOVE HRH-A-VALUE        TO WS-PREV-NEW-PROC-LVL
+               END-IF.        
+
+AIC002*--- for these member paid plans look up to see if the employee
+AIC002*--- was part of DISW/DISCW process level at the time of 
+US1487*--- adjustment. if so, get the user field value at the time of 
+Us1487*--- the adjustment.
+AIC003     IF  (PARTBEN-FOUND)
+AIC003          GO TO 3060-CHECK-DIFF
+AIC003     END-IF.
+AIC002     IF ((BEN-PLAN-CODE = "AIHI" OR "AILO" OR "ADDI" OR "ADDF")
+AIC002     OR  (BEN-PLAN-CODE = "CIEE" OR "CISP" OR "CICH")
+AIC002     OR  (BEN-PLAN-CODE = "SSLI" OR "SCLI" OR "SELI"))
+AIC002          MOVE PRM-COMPANY            TO DB-COMPANY
+AIC002          MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+AIC002          MOVE ZEROES                 TO DB-OBJ-ID
+AIC002          MOVE 14                     TO DB-FLD-NBR
+AIC002          MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE
+AIC002          MOVE 1                      TO WS-TMP-DD
+AIC002          MOVE WS-TMP-DATE            TO DB-BEG-DATE
+AIC002          MOVE WS-HIGH-VALUES         TO DB-SEQ-NBR
+AIC002          PERFORM 850-FIND-NLT-HRHSET1 
+AIC002          PERFORM 870-FIND-PREV-HRHSET1
+AIC002          IF  (HRHISTORY-FOUND)
+AIC002          AND (HRH-COMPANY    = PRM-COMPANY)
+AIC002          AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+AIC002          AND (HRH-OBJ-ID     = ZEROES)
+AIC002          AND (HRH-FLD-NBR    = DB-FLD-NBR)
+AIC002          AND (    (HRH-A-VALUE    = "DISW")
+US1487                OR (HRH-A-VALUE    = "DISCW") )
+TEMPS *              DISPLAY "3060 ProcLvl Date: " WS-TMP-DATE
+TEMPS *              DISPLAY "Mark1 HRH at: " HRH-EMPLOYEE
+TEMPS *                      " " HRH-OBJ-ID
+TEMPS *                      " " HRH-FLD-NBR
+TEMPS *                      " " HRH-BEG-DATE
+TEMPS *                      " " HRH-SEQ-NBR
+AIC002               MOVE PRM-COMPANY           TO DB-COMPANY
+AIC002               MOVE EMP-EMPLOYEE          TO DB-EMPLOYEE
+AIC002               MOVE ZEROES                TO DB-OBJ-ID
+AIC002               COMPUTE DB-FLD-NBR = 2000 + WS-PREV-PROCLEVL-N
+AIC002               MOVE WS-RETRO-DATE (I-DT)  TO WS-TMP-DATE
+AIC002               MOVE 1                     TO WS-TMP-DD
+AIC002               MOVE WS-TMP-DATE           TO DB-BEG-DATE
+AIC002               MOVE WS-HIGH-VALUES        TO DB-SEQ-NBR
+AIC002               PERFORM 850-FIND-NLT-HRHSET1 
+AIC002               PERFORM 870-FIND-PREV-HRHSET1
+TEMPS *              DISPLAY "Mark2 HRH at: " HRH-EMPLOYEE
+TEMPS *                      " " HRH-OBJ-ID
+TEMPS *                      " " HRH-FLD-NBR
+TEMPS *                      " " HRH-BEG-DATE
+TEMPS *                      " " HRH-SEQ-NBR
+AIC002               IF  (HRHISTORY-FOUND)
+AIC002               AND (HRH-COMPANY    = PRM-COMPANY)
+AIC002               AND (HRH-EMPLOYEE   = EMP-EMPLOYEE)
+AIC002               AND (HRH-OBJ-ID     = ZEROES)
+AIC002               AND (HRH-FLD-NBR    = DB-FLD-NBR)
+TEMPS *                   DISPLAY "Found Old ProcLvl: " HRH-A-VALUE
+AIC002                    MOVE HRH-A-VALUE      TO WS-PREV-NEW-PROC-LVL
+AIC002               END-IF
+AIC002          END-IF        
+AIC002     END-IF.
+AIC002
+      *--- Check for differences
+       3060-CHECK-DIFF.
+TEMPS *    DISPLAY "ChkDiff 3060 Employee: " EMP-EMPLOYEE.
+TEMPS *    DISPLAY "       PrevOldProcLvl: " WS-PREV-OLD-PROC-LVL.
+TEMPS *    DISPLAY "       PrevNewProcLvl: " WS-PREV-NEW-PROC-LVL.
+TEMPS *    DISPLAY "       PrevOldBillAmt: " WS-PREV-OLD-BILL-AMT.
+TEMPS *    DISPLAY "       PrevNewBillAmt: " WS-PREV-NEW-BILL-AMT.
+TEMPS *    DISPLAY "         RetroDiffAmt: " WS-RETRO-DIFF-AMT.
+
+           COMPUTE WS-RETRO-DIFF-AMT =
+               (WS-PREV-OLD-BILL-AMT - WS-PREV-NEW-BILL-AMT).
+
+           IF  (WS-PREV-OLD-PROC-LVL = WS-PREV-NEW-PROC-LVL)
+           AND (WS-PREV-OLD-BILL-AMT = WS-PREV-NEW-BILL-AMT)
+      *    ---- OR JUST A PENNY DIFFERENCE
+           OR  (WS-RETRO-DIFF-AMT =  .01)
+           OR  (WS-RETRO-DIFF-AMT = -.01)
+               CONTINUE
+           ELSE
+      *        --- Make adjustments         
+AATEST*        DISPLAY "AA RETR IS CREATED"
+               PERFORM 3100-RETRO-ADJUSTMENTS
+               THRU    3100-END.
+
+TEMPS *    DISPLAY "End of 3060 Employee: " EMP-EMPLOYEE.
+TEMPS *    DISPLAY "3060 PrevOldProcLvl: " WS-PREV-OLD-PROC-LVL.
+TEMPS *    DISPLAY "3060 PrevNewProcLvl: " WS-PREV-NEW-PROC-LVL.
+TEMPS *    DISPLAY "3060 PrevOldBillAmt: " WS-PREV-OLD-BILL-AMT.
+TEMPS *    DISPLAY "3060 PrevNewBillAmt: " WS-PREV-NEW-BILL-AMT.
+TEMPS *    DISPLAY "3060 RetroDiffAmt:  " WS-RETRO-DIFF-AMT.
+
+       3060-END.
+
+      ******************************************************************
+       3100-RETRO-ADJUSTMENTS.
+      ******************************************************************
+
+      *--- MARK THE WBPBENEFIT RECORD AS USED
+           MOVE WBP-COMPANY                         TO WW4-COMPANY.
+           MOVE WBP-EMPLOYEE                        TO WW4-EMPLOYEE.
+           MOVE WBP-PARTICIPNT                      TO WW4-PARTICIPNT.
+           MOVE WBP-PLAN-TYPE                       TO WW4-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE                       TO WW4-PLAN-CODE.
+           MOVE WBP-START-DATE                      TO WW4-START-DATE.
+           PERFORM 8400-FIND-WBWRK4.
+           IF (WBWRK4-FOUND)
+               MOVE WB120WS-WBP-PROCESSED           TO WW4-STATUS
+               PERFORM 8200-STORE-WBWRK4.
+
+TEMPS *    DISPLAY "3100 PrevOldBillAmt: " WS-PREV-OLD-BILL-AMT.
+
+           IF  (WS-PREV-OLD-BILL-AMT = ZEROES)
+               GO TO 3100-BILL-NEW-AMOUNT.
+
+      *--- Backout previous amount
+
+           COMPUTE WB120WS-PRE-BILL-AMT         = WS-PREV-OLD-BILL-AMT
+                                                * NEGATIVE-ONE.
+TEMPS *    DISPLAY "PreBillAmt: " WB120WS-PRE-BILL-AMT.
+
+           PERFORM 3980-START-PBHSTTEMP
+           THRU    3980-END.
+
+           MOVE "B"                    TO PB1-RETRO-FLAG.
+           MOVE WS-RETRO-DATE (I-DT)   TO PB1-EFF-BILL-DT.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+GW9/05*    MOVE "RETRO BILL"           TO PB1-REASON-CODE.
+GW9/05     MOVE "RETR"                 TO PB1-REASON-CODE.
+           MOVE PRM-COMPANY            TO PB1-COMPANY.
+           MOVE WS-PREV-OLD-PROC-LVL   TO PB1-PROCESS-LEVEL.
+RAY   *--- INSERT PRINT GROUP FOR SORTING AND BREAKING -----------------
+RAY        PERFORM 6500-PROCLVL-PRINT-GROUP.
+RAY   *-----------------------------------------------------------------
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+
+           IF  (PB1-PROCESS-LEVEL NOT = SPACES)
+           AND (WBP-PARTICIPNT = ZEROES)
+RAY   *        MOVE PB1-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+RAY   *        PERFORM 840-FIND-PCCSET1
+RAY   *        MOVE PCC-CUSTOMER       TO PB1-CUSTOMER
+RAY            MOVE SPACES             TO PB1-CUSTOMER
+RAY            STRING "ER"                DELIMITED BY SIZE
+RAY                   PB1-PROCESS-LEVEL   DELIMITED BY SPACE  
+RAY                                    INTO PB1-CUSTOMER
+RAY            MOVE PB1-CUSTOMER       TO JSTWS-STR
+RAY            MOVE 09                 TO JSTWS-STR-LEN
+RAY            MOVE 09                 TO JSTWS-STR-OUT-LEN
+RAY            SET JSTWS-RIGHT         TO TRUE
+RAY            PERFORM 2000-JUSTIFY-OBJECT
+RAY            MOVE JSTWS-STR-OUT      TO PB1-CUSTOMER
+           ELSE
+               IF (WBP-PARTICIPNT = ZEROES)
+                   STRING "D"                 DELIMITED BY SIZE
+                          EMP-EMPLOYEE (4:6)  DELIMITED BY SIZE
+                          "00"                DELIMITED BY SIZE
+                                              INTO PB1-CUSTOMER
+               ELSE
+                   MOVE PAR-PARTICIPNT        TO PB1-CUSTOMER
+                   MOVE "D"                   TO PB1-CUSTOMER(1:1).
+
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+
+           MOVE "RETRO BILL"           TO PB1-DESCRIPTION.
+           COMPUTE PB1-BILLABLE-AMT     = WS-PREV-OLD-BILL-AMT
+                                        * NEGATIVE-ONE.
+           MOVE "P"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE WBP-PLAN-TYPE          TO PB1-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE          TO PB1-PLAN-CODE.
+           MOVE ZEROES                 TO PB1-COV-OPTION.
+           MOVE SPACES                 TO PB1-EMP-SORT-TYPE.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           IF  (PARTBEN-FOUND)
+               IF  (WBP-PARTICIPNT NOT = ZEROES)
+                   MOVE WBP-PARTICIPNT TO PB1-PARTICIPNT
+                   MOVE "2"            TO PB1-EMP-SORT-TYPE
+               ELSE
+                   MOVE "1"            TO PB1-EMP-SORT-TYPE.
+
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+       3100-BILL-NEW-AMOUNT.
+
+           IF  (WS-PREV-NEW-BILL-AMT = ZEROES)
+               GO TO 3100-LATE-ENROLL.
+
+      *--- Add in new amount
+
+           MOVE WS-PREV-NEW-BILL-AMT           TO WB120WS-PRE-BILL-AMT.
+
+           PERFORM 3980-START-PBHSTTEMP
+           THRU    3980-END.
+           MOVE "N"                    TO PB1-RETRO-FLAG.
+           MOVE WS-RETRO-DATE (I-DT)   TO PB1-EFF-BILL-DT.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+GW9/05*    MOVE "RETRO BILL"           TO PB1-REASON-CODE.
+GW9/05     MOVE "RETR"                 TO PB1-REASON-CODE.
+           MOVE PRM-COMPANY            TO PB1-COMPANY.
+           MOVE WS-PREV-NEW-PROC-LVL   TO PB1-PROCESS-LEVEL.
+RAY   *--- INSERT PRINT GROUP FOR SORTING AND BREAKING -----------------
+RAY        PERFORM 6500-PROCLVL-PRINT-GROUP.
+RAY   *-----------------------------------------------------------------
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+
+           IF  (PB1-PROCESS-LEVEL NOT = SPACES)
+           AND (WBP-PARTICIPNT = ZEROES)
+RAY   *        MOVE PB1-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+RAY   *        PERFORM 840-FIND-PCCSET1
+RAY   *        MOVE PCC-CUSTOMER       TO PB1-CUSTOMER
+RAY            MOVE SPACES             TO PB1-CUSTOMER
+RAY            STRING "ER"                DELIMITED BY SIZE
+RAY                   PB1-PROCESS-LEVEL   DELIMITED BY SPACE  
+RAY                                    INTO PB1-CUSTOMER
+RAY            MOVE PB1-CUSTOMER       TO JSTWS-STR
+RAY            MOVE 09                 TO JSTWS-STR-LEN
+RAY            MOVE 09                 TO JSTWS-STR-OUT-LEN
+RAY            SET JSTWS-RIGHT         TO TRUE
+RAY            PERFORM 2000-JUSTIFY-OBJECT
+RAY            MOVE JSTWS-STR-OUT      TO PB1-CUSTOMER
+           ELSE
+               IF (WBP-PARTICIPNT = ZEROES)
+                   STRING "D"                 DELIMITED BY SIZE
+                          EMP-EMPLOYEE (4:6)  DELIMITED BY SIZE
+                          "00"                DELIMITED BY SIZE
+                                              INTO PB1-CUSTOMER
+               ELSE
+                   MOVE PAR-PARTICIPNT        TO PB1-CUSTOMER
+                   MOVE "D"                   TO PB1-CUSTOMER(1:1).
+
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+
+           MOVE "RETRO BILL"           TO PB1-DESCRIPTION.
+           COMPUTE PB1-BILLABLE-AMT ROUNDED
+                                        = WS-PREV-NEW-BILL-AMT.
+           MOVE "P"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE WBP-PLAN-TYPE          TO PB1-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE          TO PB1-PLAN-CODE.
+           IF  (BENEFIT-FOUND)
+               MOVE BEN-COV-OPTION     TO PB1-COV-OPTION
+           ELSE
+           IF  (PARTBEN-FOUND)
+               MOVE PTB-COV-OPTION     TO PB1-COV-OPTION.        
+           MOVE SPACES                 TO PB1-EMP-SORT-TYPE.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           IF  (PARTBEN-FOUND)
+               IF  (PTB-PARTICIPNT NOT = ZEROES)
+                   MOVE PTB-PARTICIPNT TO PB1-PARTICIPNT
+                   MOVE "2"            TO PB1-EMP-SORT-TYPE
+               ELSE
+                   MOVE "1"            TO PB1-EMP-SORT-TYPE.
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+
+       3100-LATE-ENROLL.
+           
+      *--- If Late enrollment not indicated on parameter,
+      *    or if employee billed (PL = spaces), skip late fee 
+           
+           IF  (WS-NO-LATE-ENROLL)
+           OR  (WS-PREV-NEW-PROC-LVL = SPACES)
+               GO TO 3100-END. 
+               
+           MOVE 1                      TO WS-NBR-MTHS.
+           MOVE WS-RETRO-DATE (I-DT)   TO WS-TMP-DATE.
+           MOVE WS-MONTH-END           TO WS-WRK-DATE.
+           PERFORM
+               UNTIL (WS-TMP-CCYY = WS-WRK-CCYY)
+               AND   (WS-TMP-MM   = WS-WRK-MM)
+               
+               ADD 1                   TO WS-TMP-MM
+                                          WS-NBR-MTHS
+               IF  (WS-TMP-MM = 13)
+                   MOVE 1              TO WS-TMP-MM
+                   ADD 1               TO WS-TMP-CCYY
+               END-IF
+           END-PERFORM.          
+           
+           IF  (WS-NBR-MTHS NOT > PRM-GRACE-MTHS)
+               GO TO 3100-END.
+           
+           IF  (WS-PREV-NEW-PROC-LVL = WS-PREV-OLD-PROC-LVL) 
+               COMPUTE WB120WS-PRE-BILL-AMT ROUNDED
+                                        = (WS-PREV-NEW-BILL-AMT
+                                        -  WS-PREV-OLD-BILL-AMT)
+                                        * (PRM-RATE / 100)
+                                        * (WS-NBR-MTHS - PRM-GRACE-MTHS)
+           ELSE
+               COMPUTE WB120WS-PRE-BILL-AMT ROUNDED
+                                       = WS-PREV-NEW-BILL-AMT
+                                       * (PRM-RATE / 100)
+                                       * (WS-NBR-MTHS - PRM-GRACE-MTHS).
+
+           IF  (WB120WS-PRE-BILL-AMT NOT > ZEROES)
+               GO TO 3100-END.
+
+      *--- Late Enrollment Fee
+
+           PERFORM 3980-START-PBHSTTEMP
+           THRU    3980-END.
+           MOVE WS-RETRO-DATE (I-DT)   TO PB1-EFF-BILL-DT.
+           MOVE "B"                    TO PB1-RECORD-TYPE.
+GW9/05*    MOVE "LATE FEE"             TO PB1-REASON-CODE.
+GW9/05     MOVE "LATE"                 TO PB1-REASON-CODE.
+           MOVE PRM-COMPANY            TO PB1-COMPANY.
+           MOVE WS-PREV-NEW-PROC-LVL   TO PB1-PROCESS-LEVEL.
+RAY   *--- INSERT PRINT GROUP FOR SORTING AND BREAKING -----------------
+RAY        PERFORM 6500-PROCLVL-PRINT-GROUP.
+RAY   *-----------------------------------------------------------------
+           ADD 1                       TO WB120WS-LINE-NBR.
+           MOVE WB120WS-LINE-NBR       TO PB1-LINE-NBR.
+
+           IF  (PB1-PROCESS-LEVEL NOT = SPACES)
+RAY   *        MOVE PB1-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+RAY   *        PERFORM 840-FIND-PCCSET1
+RAY   *        MOVE PCC-CUSTOMER       TO PB1-CUSTOMER
+RAY            MOVE SPACES             TO PB1-CUSTOMER
+RAY            STRING "ER"                DELIMITED BY SIZE
+RAY                   PB1-PROCESS-LEVEL   DELIMITED BY SPACE  
+RAY                                    INTO PB1-CUSTOMER
+RAY            MOVE PB1-CUSTOMER       TO JSTWS-STR
+RAY            MOVE 09                 TO JSTWS-STR-LEN
+RAY            MOVE 09                 TO JSTWS-STR-OUT-LEN
+RAY            SET JSTWS-RIGHT         TO TRUE
+RAY            PERFORM 2000-JUSTIFY-OBJECT
+RAY            MOVE JSTWS-STR-OUT      TO PB1-CUSTOMER
+           ELSE
+               STRING "D"                 DELIMITED BY SIZE
+                      EMP-EMPLOYEE (4:6)  DELIMITED BY SIZE
+                      "00"                DELIMITED BY SIZE
+                                     INTO PB1-CUSTOMER.
+
+           MOVE EMP-EMPLOYEE           TO PB1-EMPLOYEE.
+
+           MOVE EMP-DEPARTMENT         TO PB1-DEPARTMENT.
+           MOVE EMP-JOB-CODE           TO PB1-JOB-CODE.
+           MOVE EMP-POSITION           TO PB1-POSITION.
+
+           MOVE "Late Fee"             TO PB1-DESCRIPTION.
+           MOVE WB120WS-PRE-BILL-AMT   TO PB1-BILLABLE-AMT.
+           MOVE "P"                    TO PB1-CODE-TYPE.
+           MOVE "C"                    TO PB1-ADJUST-PAY.
+           MOVE WBP-PLAN-TYPE          TO PB1-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE          TO PB1-PLAN-CODE.
+           IF  (BENEFIT-FOUND)
+               MOVE BEN-COV-OPTION     TO PB1-COV-OPTION
+           ELSE
+           IF  (PARTBEN-FOUND)
+               MOVE PTB-COV-OPTION     TO PB1-COV-OPTION.        
+           MOVE SPACES                 TO PB1-EMP-SORT-TYPE.
+           MOVE ZEROES                 TO PB1-PARTICIPNT.
+           IF  (PARTBEN-FOUND)
+               IF  (PTB-PARTICIPNT NOT = ZEROES)
+                   MOVE PTB-PARTICIPNT TO PB1-PARTICIPNT
+                   MOVE "2"            TO PB1-EMP-SORT-TYPE
+               ELSE
+                   MOVE "1"            TO PB1-EMP-SORT-TYPE.
+           PERFORM 8200-STORE-PBHSTTEMP.
+
+       3100-END.
+
+      ******************************************************************
+       3980-START-PBHSTTEMP.
+      ******************************************************************
+
+           PERFORM 8000-CREATE-PBHSTTEMP.
+
+           MOVE WS-MONTH-END           TO PB1-PER-END-DATE.
+
+           INITIALIZE                     PB1-GROSS-PAY
+                                          PB1-ADJUST-PAY
+                                          PB1-WC-RATE
+                                          PB1-REG-HOURS
+                                          PB1-OT-HOURS
+                                          PB1-OTH-HOURS
+                                          PB1-REG-RATE
+                                          PB1-OT-RATE
+                                          PB1-OTH-RATE
+                                          PB1-REG-PAY
+                                          PB1-OT-PAY
+                                          PB1-OTH-PAY
+                                          PB1-TIPS-PAY
+                                          PB1-EMPLOYEE-CAFE
+                                          PB1-CREDITS
+                                          PB1-BILLABLE-UNIT
+                                          PB1-TAXABLE-AMT
+                                          PB1-TR-DATE
+                                          PB1-TIME-SEQ
+                                          PB1-EDM-SEQ-NBR
+                                          PB1-CHECK-DATE
+                                          PB1-CHECK-ID
+                                          PB1-PCD-SEQ-NBR.
+
+       3980-END.
+
+      ******************************************************************
+       3000-END.
+      ******************************************************************
+
+      ****************************************************************
+       4000-GL-REPORT                   SECTION.
+      ****************************************************************
+       4000-START.
+
+           MOVE WS-RS-CKP-ID           TO IFGTWS-CKP-ID.
+           MOVE CRT-JOB-USER           TO IFGTWS-JOB-USER.
+           MOVE CRT-JOB-NAME           TO IFGTWS-JOB-NAME.
+           MOVE CRT-STEP-KEY           TO IFGTWS-STEP-KEY.
+           MOVE "WB120"                TO IFGTWS-PROGRAM.
+           MOVE "PB"                   TO IFGTWS-SYSTEM.
+           MOVE "Y"                    TO IFGTWS-SUMMARIZE.
+
+           IF  (PRM-UPDATE    = "Y")
+RAY   *--- GLI FLAG IS BEING TURNED OF SO PAYROLL WILL NOT GENERATE
+RAY   *--- GL TRANSACTIONS, BUT THEY STILL WANT THEM CREATED FROM HERE
+RAY   *    AND (WS-GLI-OPTION = "Y")
+      *** IF WS-RS-IFGT-DONE IS TRUE, THE GL INTERFACE HAS           ***
+      *** ALREADY COMPLETED AND THE PRDISTRIB UPDATE IS IN PROGRESS. ***
+      *** THIS IS CONSIDERED A SUB-PHASE OF PHASE 1.                 ***
+               IF (WS-RS-IFGT-DONE)
+                   MOVE 141              TO CRT-MSG-NBR
+                   PERFORM 780-DISPLAY-MSG
+               ELSE
+                   MOVE 136              TO CRT-MSG-NBR
+                   PERFORM 780-DISPLAY-MSG
+                   INITIALIZE            CRT-ERROR-NBR
+                   INITIALIZE            CRT-ERROR-CAT
+                   PERFORM 6000-INTERFACE-GLTRANS-70
+                   PERFORM 910-AUDIT-BEGIN
+                   PERFORM 840-MODIFY-CKPSET1
+                   MOVE WS-TRUE          TO WS-RS-IFGT-DONE-SW
+                   MOVE WS-RESTART-INFO  TO CKP-RESTART-INFO
+                   PERFORM 820-STORE-CKPOINT
+                   PERFORM 925-AUDIT-END
+               END-IF
+           ELSE
+               MOVE WS-RS-RUN-DATE     TO IFGTWS-RUN-DATE
+               MOVE WS-RS-RUN-TIME     TO IFGTWS-RUN-TIME.
+
+           IF (PRM-UPDATE = "Y")
+               PERFORM 910-AUDIT-BEGIN
+               MOVE ZEROS              TO WB120WS-AUDIT-COUNT
+               MOVE "PRPRD"            TO IFOBIWS-OBJ-TYPE
+               MOVE WS-MAX-OPS-IN-TRAN TO IFOBIWS-NBR-OBJECTS
+               PERFORM 7000-ASSIGN-OBJ-ID-70
+               COMPUTE WS-OBJ-ID        = IFOBIWS-OBJ-ID
+                                        - IFOBIWS-NBR-OBJECTS
+               PERFORM 925-AUDIT-END.
+
+           MOVE 137                    TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+
+           PERFORM 900-BUILD-TMP-FILE-NAME.
+           MOVE WS-TMP-FILE            TO WS-GT70SEQ-FILE.
+
+           SORT GT70SORT-FILE
+               ASCENDING KEY           DGTS-COMPANY
+                                       DGTS-TO-COMPANY
+                                       DGTS-POSTING-DATE
+                                       DGTS-ACCT-UNIT
+                                       DGTS-ACCOUNT
+                                       DGTS-SUB-ACCOUNT
+                                       DGTS-SUMMARY-CONTROL
+               USING GT70DISK-FILE
+               GIVING GT70SEQ-FILE SAVE.
+
+           SET NO-END-OF-FILE          TO TRUE.
+
+           OPEN INPUT GT70SEQ-FILE.
+
+           READ GT70SEQ-FILE           INTO SEQ-GT70SEQ-REC
+               AT END
+                   SET END-OF-FILE     TO TRUE
+                   GO TO 4000-END.
+
+           PERFORM 910-AUDIT-BEGIN.
+
+           ADD 1                       TO WS-RECORD-COUNT.
+           PERFORM 4010-ACCOUNT-CONTROL
+               UNTIL (END-OF-FILE).
+
+           CLOSE GT70SEQ-FILE.
+
+           PERFORM 925-AUDIT-END.
+
+           PERFORM 9820-OPEN-INPUT-GT70DISK.
+           PERFORM 4014-PRINT-PAY-DATE-SUM.
+           PERFORM 9900-CLOSE-GT70DISK.
+
+           IF (PRM-UPDATE = "Y")
+               MOVE IFGTWS-FILENAME    TO SLFDWS-FILENAME
+               MOVE "PR"               TO SLFDWS-SYSTEM
+               MOVE IFGTWS-JOB-USER    TO SLFDWS-OPERATOR
+                                      SLFDWS-REL-OPERATOR
+               PERFORM 700-SLIFGTFILE-80.
+
+           MOVE WS-GT70SEQ-FILE            TO WS-TMP-FILE.
+           PERFORM 901-REMOVE-TMP-FILE.
+
+       4000-END.
+           EXIT.
+      ******************************************************************
+       4010-ACCOUNT-CONTROL             SECTION.
+      ******************************************************************
+       4010-START.
+
+      ***  MOVE WS-RS-RUN-DATE         TO PH-RUN-DATE.
+      ***  MOVE WS-RS-RUN-TIME         TO PH-RUN-TIME.
+           MOVE PRM-COMPANY            TO PH-COMPANY.
+           MOVE WS-CO-NAME             TO PH-NAME.
+
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE SPACES                 TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+
+           MOVE PAGE-HEADING           TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           MOVE SEQ-TO-COMPANY         TO DCH-DIST-COMPANY
+                                          IFCOWS-COMPANY.
+           IF (SEQ-TO-COMPANY          NOT = PRM-COMPANY)
+               MOVE "PR"               TO IFCOWS-SYSTEM
+               PERFORM 615-EDIT-COMPANY-60
+               MOVE IFCOWS-GLS-NAME    TO DCH-GLS-NAME
+           ELSE
+               MOVE WS-CO-NAME         TO DCH-GLS-NAME.
+
+           MOVE DIST-COMP-HEADING      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           MOVE ZEROS                  TO WS-SUB-TOT-AMT
+                                          WS-SUB-TOT-HOURS.
+           MOVE SEQ-COMPANY            TO WS-COMPANY.
+           MOVE SEQ-TO-COMPANY         TO WS-TO-COMPANY.
+
+           PERFORM 4011-DIST-COMPANY
+               UNTIL (END-OF-FILE)
+               OR    (SEQ-COMPANY      NOT = WS-COMPANY)
+               OR    (SEQ-TO-COMPANY   NOT = WS-TO-COMPANY).
+
+       4010-END.
+           EXIT.
+      ******************************************************************
+       4011-DIST-COMPANY                SECTION.
+      ******************************************************************
+       4011-START.
+
+           MOVE ZEROS                  TO WS-TOT-DEBIT-AMT
+                                          WS-TOT-CREDIT-AMT
+                                          WS-TOT-DEBIT-HOURS
+                                          WS-TOT-CREDIT-HOURS.
+
+           MOVE SEQ-POSTING-DATE       TO WS-POSTING-DATE
+                                          PDH-PAYMENT-DATE
+                                          TL-PAYMENT-DATE.
+
+           MOVE PAYMENT-DATE-HEADING   TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           MOVE ACCOUNT-HEADING        TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1              > 1000)
+               OR     (WS-TBL-PAY-DATE (I1) = ZEROES)
+               OR     (WS-TBL-PAY-DATE (I1) = WS-POSTING-DATE)
+
+               CONTINUE
+           END-PERFORM.
+
+           IF (I1                      > 1000)
+      *------- Unable to print Payment Date/ Dist Comp Summary
+               MOVE 124                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               MOVE 125                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG.
+
+           IF (WS-TBL-PAY-DATE (I1)    = ZEROES)
+               MOVE WS-POSTING-DATE    TO WS-TBL-PAY-DATE (I1)
+               MOVE WS-TO-COMPANY      TO WS-TBL-TO-COMP  (I1)
+           ELSE
+           IF (WS-TBL-TO-COMP (I1)     NOT = WS-TO-COMPANY)
+               MOVE "X"                TO WS-TBL-REPORT (I1).
+
+           PERFORM 4012-DATE-CONTROL
+               UNTIL (END-OF-FILE)
+               OR    (SEQ-COMPANY      NOT = WS-COMPANY)
+               OR    (SEQ-TO-COMPANY   NOT = WS-TO-COMPANY)
+               OR    (SEQ-POSTING-DATE NOT = WS-POSTING-DATE).
+
+           MOVE WS-TOT-DEBIT-AMT       TO TL-DEBIT-AMT.
+           MOVE WS-TOT-CREDIT-AMT      TO TL-CREDIT-AMT.
+           MOVE WS-TOT-DEBIT-HOURS     TO TL-DEBIT-HOURS.
+           MOVE WS-TOT-CREDIT-HOURS    TO TL-CREDIT-HOURS.
+
+           MOVE TOTAL-LINE             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+       4011-END.
+           EXIT.
+      ******************************************************************
+       4012-DATE-CONTROL                SECTION.
+      ******************************************************************
+       4012-START.
+
+           MOVE SEQ-TO-COMPANY         TO WS-TO-COMPANY.
+           MOVE SEQ-POSTING-DATE       TO WS-POSTING-DATE.
+           MOVE SEQ-ACCT-UNIT          TO WS-DST-ACCT-UNIT.
+           MOVE SEQ-ACCOUNT            TO WS-DST-ACCOUNT.
+           MOVE SEQ-SUB-ACCOUNT        TO WS-DST-SUB-ACCT.
+
+           IF  (SEQ-TO-COMPANY  = PRS-ES-DIST-CO)
+           AND (SEQ-ACCT-UNIT   = PRS-ES-ACCT-UNIT)
+           AND (SEQ-ACCOUNT     = PRS-ES-ACCOUNT)
+           AND (SEQ-SUB-ACCOUNT = PRS-ES-SUB-ACCT)
+
+               PERFORM
+                   UNTIL (END-OF-FILE)
+                   OR    (SEQ-COMPANY         NOT = WS-COMPANY)
+                   OR    (SEQ-TO-COMPANY      NOT = WS-TO-COMPANY)
+                   OR    (SEQ-POSTING-DATE    NOT = WS-POSTING-DATE)
+                   OR    (SEQ-ACCT-UNIT       NOT = WS-DST-ACCT-UNIT)
+                   OR    (SEQ-ACCOUNT         NOT = WS-DST-ACCOUNT)
+                   OR    (SEQ-SUB-ACCOUNT     NOT = WS-DST-SUB-ACCT)
+
+                   MOVE ZEROS              TO WS-DIST-AMT-TOT
+                                              WS-DIST-HOURS-TOT
+                   PERFORM 4013-ACCUM-TRANS-AMT
+                   PERFORM 4020-PRINT-ACCOUNT
+
+               END-PERFORM
+
+               GO TO 4012-END.
+
+           MOVE ZEROS                  TO WS-DIST-AMT-TOT
+                                          WS-DIST-HOURS-TOT.
+
+           PERFORM 4013-ACCUM-TRANS-AMT
+               UNTIL (END-OF-FILE)
+               OR    (SEQ-COMPANY         NOT = WS-COMPANY)
+               OR    (SEQ-TO-COMPANY      NOT = WS-TO-COMPANY)
+               OR    (SEQ-POSTING-DATE    NOT = WS-POSTING-DATE)
+               OR    (SEQ-ACCT-UNIT       NOT = WS-DST-ACCT-UNIT)
+               OR    (SEQ-ACCOUNT         NOT = WS-DST-ACCOUNT)
+               OR    (SEQ-SUB-ACCOUNT     NOT = WS-DST-SUB-ACCT).
+
+           PERFORM 4020-PRINT-ACCOUNT.
+
+       4012-END.
+           EXIT.
+      ****************************************************************
+       4013-ACCUM-TRANS-AMT             SECTION.
+      ****************************************************************
+       4013-START.
+
+           MOVE SEQ-SUMMARY-CONTROL    TO WS-SUMMARY-CONTROL.
+           MOVE SEQ-PROGRAM-INFO       TO WS-PROGRAM-INFO.
+
+           IF  (PRM-UPDATE         = "Y")
+           AND (WS-GT7-PRD-OPTION  = "Y")
+           AND (WS-RECORD-COUNT    > WS-RS-REC-CNT)
+               PERFORM 800-CREATE-PBDISTRIB
+               MOVE SEQ-COMPANY        TO ZB2-COMPANY
+               MOVE WS-GT7-EMPLOYEE    TO ZB2-EMPLOYEE
+               MOVE WS-GT7-CHECK-ID    TO ZB2-CHECK-ID
+               MOVE WS-GT7-PROCESS-LEVEL
+                                       TO ZB2-PROCESS-LEVEL
+               MOVE WS-GT7-DEPARTMENT  TO ZB2-DEPARTMENT
+               MOVE WS-GT7-RECORD-TYPE TO ZB2-RECORD-TYPE
+               MOVE WS-GT7-CHECK-TYPE  TO ZB2-CHECK-TYPE
+               MOVE SEQ-TO-COMPANY     TO ZB2-DIST-COMPANY
+               MOVE SEQ-ACCT-UNIT      TO ZB2-DST-ACCT-UNIT
+               MOVE SEQ-ACCOUNT        TO ZB2-DST-ACCOUNT
+               MOVE SEQ-SUB-ACCOUNT    TO ZB2-DST-SUB-ACCT
+               MOVE WS-GT7-PCD-SEQ-NBR TO ZB2-PCD-SEQ-NBR
+               MOVE WS-GT7-DED-CODE    TO ZB2-DED-CODE
+               MOVE SEQ-UNITS-AMOUNT   TO ZB2-HOURS
+               MOVE SEQ-TRAN-AMOUNT    TO ZB2-DIST-AMT
+               MOVE SEQ-ACTIVITY       TO ZB2-ACTIVITY
+               MOVE SEQ-ACCT-CATEGORY  TO ZB2-ACCT-CATEGORY
+
+               MOVE WS-GT7-JOB-CODE    TO ZB2-JOB-CODE
+               MOVE SEQ-POSTING-DATE   TO ZB2-GL-DATE
+               MOVE 9                  TO ZB2-STATUS
+               MOVE WS-RS-RUN-DATE     TO ZB2-RUN-DATE
+               MOVE WS-RS-RUN-TIME     TO ZB2-RUN-TIME
+               ADD 1                   TO WS-OBJ-ID
+               MOVE WS-OBJ-ID          TO ZB2-OBJ-ID
+               MOVE SEQ-GLT-OBJ-ID     TO ZB2-GLT-OBJ-ID
+               MOVE SEQ-ATN-OBJ-ID     TO ZB2-ATN-OBJ-ID
+               MOVE WS-GT7-POSITION    TO ZB2-POSITION
+               PERFORM 820-STORE-PBDISTRIB
+               ADD 1                   TO WB120WS-AUDIT-COUNT
+               IF (WB120WS-AUDIT-COUNT      = WS-MAX-OPS-IN-TRAN)
+                   MOVE WS-RECORD-COUNT    TO WS-RS-REC-CNT
+                   PERFORM 840-MODIFY-CKPSET1
+                   MOVE WS-RESTART-INFO    TO CKP-RESTART-INFO
+                   PERFORM 820-STORE-CKPOINT
+                   MOVE "PRPRD"            TO IFOBIWS-OBJ-TYPE
+                   MOVE WS-MAX-OPS-IN-TRAN TO IFOBIWS-NBR-OBJECTS
+                   PERFORM 7000-ASSIGN-OBJ-ID-70
+                   COMPUTE WS-OBJ-ID   = IFOBIWS-OBJ-ID
+                                       - IFOBIWS-NBR-OBJECTS
+ACS002*            PERFORM 925-AUDIT-END
+                   MOVE ZEROS              TO WB120WS-AUDIT-COUNT. 
+ACS002*            PERFORM 910-AUDIT-BEGIN.
+
+           ADD SEQ-UNITS-AMOUNT        TO WS-DIST-HOURS-TOT
+                                          WS-SUB-TOT-HOURS.
+           ADD SEQ-TRAN-AMOUNT         TO WS-DIST-AMT-TOT
+                                          WS-SUB-TOT-AMT.
+
+           READ GT70SEQ-FILE           INTO SEQ-GT70SEQ-REC
+               AT END
+                   SET END-OF-FILE     TO TRUE.
+           ADD 1                       TO WS-RECORD-COUNT.
+
+       4013-END.
+           EXIT.
+
+      ****************************************************************
+       4014-PRINT-PAY-DATE-SUM          SECTION.
+      ****************************************************************
+       4014-START.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 1000)
+               OR     (WS-TBL-PAY-DATE (I1) = ZEROES)
+
+               IF (WS-TBL-REPORT (I1)       = "X")
+                   PERFORM 4015-ACCOUNT-CONTROL
+               END-IF
+           END-PERFORM.
+
+       4014-END.
+           EXIT.
+      ******************************************************************
+       4015-ACCOUNT-CONTROL             SECTION.
+      ******************************************************************
+       4015-START.
+
+           INITIALIZE GT7-REC-KEY.
+           MOVE PRM-COMPANY            TO GT7-COMPANY.
+           MOVE WS-TBL-PAY-DATE (I1)   TO GT7-POSTING-DATE.
+           PERFORM 8500-READ-NLT-GT70DISK.
+
+           MOVE ZEROS                  TO WS-TOT-DEBIT-AMT
+                                          WS-TOT-CREDIT-AMT
+                                          WS-TOT-DEBIT-HOURS
+                                          WS-TOT-CREDIT-HOURS.
+
+           MOVE PAGE-HEADING           TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           MOVE GT7-POSTING-DATE       TO WS-POSTING-DATE
+                                          PDH-PAYMENT-DATE
+                                          TL-PAYMENT-DATE.
+
+           MOVE PAYMENT-DATE-HEADING   TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           MOVE ACCOUNT-HEADING        TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           MOVE ZEROS                  TO WS-SUB-TOT-AMT
+                                          WS-SUB-TOT-HOURS.
+
+           MOVE GT7-COMPANY            TO WS-COMPANY.
+           MOVE GT7-POSTING-DATE       TO WS-POSTING-DATE.
+
+           PERFORM 4016-DATE-CONTROL
+               UNTIL (GT70DISK-NOTFOUND)
+               OR    (GT7-COMPANY      NOT = WS-COMPANY)
+               OR    (GT7-POSTING-DATE NOT = WS-POSTING-DATE).
+
+           MOVE WS-TOT-DEBIT-AMT       TO TL-DEBIT-AMT.
+           MOVE WS-TOT-CREDIT-AMT      TO TL-CREDIT-AMT.
+           MOVE WS-TOT-DEBIT-HOURS     TO TL-DEBIT-HOURS.
+           MOVE WS-TOT-CREDIT-HOURS    TO TL-CREDIT-HOURS.
+
+           MOVE TOTAL-LINE             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+       4015-END.
+           EXIT.
+      ******************************************************************
+       4016-DATE-CONTROL                SECTION.
+      ******************************************************************
+       4016-START.
+
+           MOVE GT7-TO-COMPANY         TO WS-TO-COMPANY.
+           MOVE GT7-ACCT-UNIT          TO WS-DST-ACCT-UNIT.
+           MOVE GT7-ACCOUNT            TO WS-DST-ACCOUNT.
+           MOVE GT7-SUB-ACCOUNT        TO WS-DST-SUB-ACCT.
+
+           MOVE ZEROS                  TO WS-DIST-AMT-TOT
+                                          WS-DIST-HOURS-TOT.
+
+           PERFORM
+               UNTIL (GT70DISK-NOTFOUND)
+               OR    (GT7-COMPANY         NOT = WS-COMPANY)
+               OR    (GT7-POSTING-DATE    NOT = WS-POSTING-DATE)
+               OR    (GT7-TO-COMPANY      NOT = WS-TO-COMPANY)
+               OR    (GT7-ACCT-UNIT       NOT = WS-DST-ACCT-UNIT)
+               OR    (GT7-ACCOUNT         NOT = WS-DST-ACCOUNT)
+               OR    (GT7-SUB-ACCOUNT     NOT = WS-DST-SUB-ACCT)
+
+               ADD GT7-UNITS-AMOUNT        TO WS-DIST-HOURS-TOT
+                                              WS-SUB-TOT-HOURS
+               ADD GT7-TRAN-AMOUNT         TO WS-DIST-AMT-TOT
+                                              WS-SUB-TOT-AMT
+               PERFORM 8600-READ-NEXT-GT70DISK
+           END-PERFORM.
+
+           PERFORM 4020-PRINT-ACCOUNT.
+
+       4016-END.
+           EXIT.
+      ****************************************************************
+       4020-PRINT-ACCOUNT               SECTION.
+      ****************************************************************
+       4020-START.
+
+           MOVE WS-TO-COMPANY          TO PL-DIST-COMPANY
+                                          IFACWS-COMPANY.
+           MOVE WS-DST-ACCT-UNIT       TO PL-ACCT-UNIT
+                                          IFACWS-ACCT-UNIT.
+           MOVE WS-DST-ACCOUNT         TO PL-ACCOUNT
+                                          IFACWS-ACCOUNT.
+           MOVE WS-DST-SUB-ACCT        TO PL-SUB-ACCT
+                                          IFACWS-SUB-ACCOUNT.
+           MOVE WS-POSTING-DATE        TO PL-POSTING-DATE.
+
+           MOVE 4                      TO IFACWS-EDIT-TYPE.
+           PERFORM 635-EDIT-GLMASTER-60.
+           MOVE IFACWS-GLM-DESCRIPTION TO PL-DESCRIPTION.
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+
+           MOVE ZEROS                  TO PL-DEBIT-HOURS
+                                          PL-CREDIT-HOURS
+                                          PL-DEBIT-AMT
+                                          PL-CREDIT-AMT.
+
+           IF (WS-DIST-AMT-TOT        > ZEROS)
+               MOVE WS-DIST-AMT-TOT   TO PL-DEBIT-AMT
+               ADD  WS-DIST-AMT-TOT   TO WS-TOT-DEBIT-AMT
+           ELSE
+               MOVE WS-DIST-AMT-TOT   TO PL-CREDIT-AMT
+               ADD  WS-DIST-AMT-TOT   TO WS-TOT-CREDIT-AMT.
+
+           IF (WS-DIST-HOURS-TOT      > ZEROS)
+               MOVE WS-DIST-HOURS-TOT TO PL-DEBIT-HOURS
+               ADD  WS-DIST-HOURS-TOT TO WS-TOT-DEBIT-HOURS
+           ELSE
+               MOVE WS-DIST-HOURS-TOT TO PL-CREDIT-HOURS
+               ADD  WS-DIST-HOURS-TOT TO WS-TOT-CREDIT-HOURS.
+
+           IF (WS-DIST-AMT-TOT   NOT = ZEROS)
+           OR (WS-DIST-HOURS-TOT NOT = ZEROS)
+               MOVE POSTING-LINE       TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP.
+
+       4020-END.
+           EXIT.
+
+      ****************************************************************
+       5000-CREATE-INVOICES         SECTION.
+      ****************************************************************
+       5000-START.
+
+ACS002*     IF (PRM-UPDATE = "Y")
+ACS002*         PERFORM 910-AUDIT-BEGIN.
+
+           MOVE "WB120"                TO WBIPF1-PROGRAM.
+           MOVE PRM-COMPANY            TO WBIPF1-COMPANY.
+           MOVE WS-RS-RUN-DATE         TO WBIPF1-DATE-STAMP.
+           MOVE WS-RS-RUN-TIME         TO WBIPF1-TIME-STAMP.
+           MOVE WS-RS-PBHSTTEMP-NAME   TO WBIPF1-PBHSTTEMP-NAME.
+           MOVE IFGTWS-FILENAME        TO WBIPF1-GT70DISK-NAME.
+           MOVE PRM-UPDATE             TO WBIPF1-UPDATE.
+           MOVE PRM-INV-REGISTER       TO WBIPF1-INV-REGISTER.
+           MOVE PRM-GL-DATE            TO WBIPF1-POSTING-DATE.
+           MOVE PRM-INV-DATE           TO WBIPF1-INVOICE-DATE.
+           MOVE PRM-TO-YEAR            TO WBIPF1-BILL-YEAR.
+           MOVE PRM-TO-PERIOD          TO WBIPF1-BILL-PERIOD.
+           MOVE WS-MONTH-END           TO WBIPF1-PER-END-DATE.
+4/08       MOVE PRM-COLD-FILE-REQ      TO WBIPF1-COLD-FILE-REQ.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 10)
+
+               MOVE PRM-COMMENT (I1)    TO WBIPF1-COMMENT (I1)
+           END-PERFORM.
+
+           MOVE CRT-PROGRAM-CODE       TO WBIPF1-CRT-PROGRAM.
+
+           INVOKE "WBIP.1".
+
+ACS002*     IF (PRM-UPDATE = "Y")
+ACS002*         PERFORM 925-AUDIT-END.
+
+       5000-END.
+
+      ****************************************************************
+       6000-UPDATE-PROCESSED-FLAGS  SECTION.
+      ****************************************************************
+       6000-START.
+
+           IF (EMPLOYEE-RUN)
+               PERFORM 6100-EMPLOYEE-RUN
+               THRU    6100-END
+           ELSE
+           IF (EMPLOYEE-RUN)
+               PERFORM 6200-EMPLOYER-RUN
+               THRU    6200-END
+           ELSE
+           IF (COMBINED-RUN)
+               PERFORM 6100-EMPLOYEE-RUN
+               THRU    6100-END
+               PERFORM 6200-EMPLOYER-RUN
+               THRU    6200-END.
+
+      *--- Read thru the Retro triggers proceesed and update status
+           MOVE WS-RS-WBWRK4-NAME              TO WBWRK4-FILENAME.
+           PERFORM 9810-OPEN-IO-WBWRK4.
+           INITIALIZE WW4-REC-KEY.
+           PERFORM 8500-FIND-NLT-WBWRK4.
+           PERFORM
+             UNTIL (WBWRK4-NOTFOUND)
+               MOVE WW4-COMPANY                TO DB-COMPANY
+               MOVE WB120WS-WBP-UNPROCESSED    TO DB-STATUS
+               MOVE WW4-PLAN-TYPE              TO DB-PLAN-TYPE
+               MOVE WW4-PLAN-CODE              TO DB-PLAN-CODE
+               MOVE WW4-EMPLOYEE               TO DB-EMPLOYEE
+               MOVE WW4-PARTICIPNT             TO DB-PARTICIPNT
+               MOVE WW4-START-DATE             TO DB-START-DATE
+               PERFORM 840-MODIFY-WBPSET4
+
+      *------- Mark as "NO EFFECT" if Status still 0 or Status from WBIP
+               IF (WBPBENEFIT-FOUND)
+                   IF (WW4-STATUS = WB120WS-WBP-UNPROCESSED)
+                       MOVE WB120WS-WBP-NO-EFFECT  TO WBP-STATUS
+                   ELSE
+                       MOVE WW4-STATUS             TO WBP-STATUS
+                   END-IF
+                   MOVE WS-SYSTEM-DATE-YMD         TO WBP-PROCESS-DATE
+                   MOVE HHMMSS                     TO WBP-PROCESS-TIME
+                   PERFORM 820-STORE-WBPBENEFIT
+               END-IF
+               PERFORM 8600-FIND-NEXT-WBWRK4
+           END-PERFORM.
+           PERFORM 9900-CLOSE-WBWRK4.
+
+
+           GO TO 6000-END.
+
+      ****************************************************************
+       6100-EMPLOYEE-RUN.
+      ****************************************************************
+
+           MOVE WS-RS-WBREMOTD-NAME         TO WBREMOTD-FILE-NAME.
+           PERFORM 9810-OPEN-IO-WBREMOTD.
+           INITIALIZE                          WRO-COMPANY
+                                               WRO-EMPLOYEE
+                                               WRO-DED-CODE.
+           PERFORM 8500-FIND-NLT-WBREMOTD.
+           PERFORM
+               UNTIL (WBREMOTD-NOTFOUND)
+
+               MOVE WRO-COMPANY             TO DB-COMPANY
+               MOVE WRO-EMPLOYEE            TO DB-EMPLOYEE
+               MOVE WRO-DED-CODE            TO DB-DED-CODE
+               MOVE WRO-EDM-SEQ-NBR         TO DB-EDM-SEQ-NBR
+               MOVE WRO-SEQ-NBR             TO DB-SEQ-NBR
+               PERFORM 840-MODIFY-OTDSET1
+               PERFORM 830-DELETE-ONETMDED
+               PERFORM 8600-FIND-NEXT-WBREMOTD
+           END-PERFORM.
+           PERFORM 9900-CLOSE-WBREMOTD.
+
+           MOVE PRM-TO-PERIOD               TO WS-PERIOD-MM.
+           MOVE PRM-TO-YEAR                 TO WS-PRM-CCYY.
+           MOVE WS-PRM-YY                   TO WS-PERIOD-YY.
+           PERFORM 840-MODIFY-BNCSET1.
+           IF (PRM-REPORT-OPTION       = 1)
+               MOVE WS-PERIOD-MMYY          TO BNC-CBR-INV-PER
+           ELSE
+               IF (PRM-REPORT-OPTION   = 2)
+                   MOVE WS-PERIOD-MMYY      TO BNC-RET-INV-PER
+               ELSE
+                   MOVE WS-PERIOD-MMYY      TO BNC-CBR-INV-PER
+                                               BNC-RET-INV-PER.
+
+           PERFORM 820-STORE-BNCOMPANY.
+
+       6100-END.
+
+      ****************************************************************
+       6200-EMPLOYER-RUN.
+      ****************************************************************
+
+           MOVE WS-RS-PBHSTTEMP-NAME         TO PB1-TEMPFILE-NAME.
+           PERFORM 9810-OPEN-IO-PBHSTTEMP.
+           INITIALIZE                           PB1-REC-KEY.
+           PERFORM 8500-FIND-NLT-PBHSTTEMP.
+           PERFORM
+               UNTIL (PBHSTTEMP-NOTFOUND)
+
+               MOVE PB1-COMPANY              TO DB-COMPANY
+               MOVE PB1-PROCESS-LEVEL        TO DB-PROCESS-LEVEL
+               MOVE PB1-PLAN-TYPE            TO DB-PLAN-TYPE
+               MOVE PB1-PLAN-CODE            TO DB-PLAN-CODE
+               PERFORM 840-FIND-ZB1SET1
+               IF (PBBNPLAN-NOTFOUND)
+                   PERFORM 800-CREATE-PBBNPLAN
+                   MOVE PB1-COMPANY          TO ZB1-COMPANY
+                   MOVE PB1-PROCESS-LEVEL    TO ZB1-PROCESS-LEVEL
+                   MOVE PB1-PLAN-TYPE        TO ZB1-PLAN-TYPE
+                   MOVE PB1-PLAN-CODE        TO ZB1-PLAN-CODE
+                   MOVE WS-MONTH-END         TO ZB1-LAST-BILLED-DT
+                   PERFORM 820-STORE-PBBNPLAN
+               ELSE
+                   IF (ZB1-LAST-BILLED-DT NOT = WS-MONTH-END)
+                       PERFORM 840-MODIFY-ZB1SET1
+                       MOVE WS-MONTH-END     TO ZB1-LAST-BILLED-DT
+                       PERFORM 820-STORE-PBBNPLAN
+                   END-IF
+               END-IF
+
+               PERFORM 8600-FIND-NEXT-PBHSTTEMP
+           END-PERFORM.
+           PERFORM 9900-CLOSE-PBHSTTEMP.
+
+       6200-END.
+
+      ****************************************************************
+       6500-PROCLVL-PRINT-GROUP.
+      ****************************************************************
+
+           IF (PB1-PROCESS-LEVEL = SPACES)
+               MOVE SPACES                 TO PB1-PRINT-GROUP
+           ELSE
+               MOVE PRS-COMPANY            TO DB-LVL-1-KEY
+               MOVE "PROCESS-LEVEL"        TO DB-LVL-2-KEY
+               MOVE "INVOICE-GROUP"        TO DB-LVL-3-KEY
+               MOVE PB1-PROCESS-LEVEL      TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               IF (LUPTBLDTL-FOUND)
+                   MOVE IF1-DTL-VALUE      TO PB1-PRINT-GROUP
+               ELSE
+                   MOVE "9"                TO PB1-PRINT-GROUP.
+
+       6000-END.
+       
+      ******************************************************************
+       7000-GET-BILLED                 SECTION.
+      ******************************************************************
+       7000-START.
+AATEST*    DISPLAY "WB120 7000-GET-BILLED".
+
+           MOVE WBP-COMPANY               TO DB-COMPANY.
+           MOVE WBP-EMPLOYEE              TO DB-EMPLOYEE.
+           MOVE WBP-PLAN-TYPE             TO DB-PLAN-TYPE.
+           MOVE WBP-PLAN-CODE             TO DB-PLAN-CODE.
+           MOVE WS-RETRO-DATE (I-DT)      TO DB-EFF-BILL-DT.
+           INITIALIZE                        DB-PROCESS-LEVEL
+                                             DB-INVOICE
+                                             DB-LINE-NBR.
+           PERFORM 850-FIND-NLT-ZB3SETW1.
+           PERFORM
+               UNTIL (PBHSTDTL-NOTFOUND)
+               OR    (ZB3-COMPANY          NOT = EMP-COMPANY)
+               OR    (ZB3-EMPLOYEE         NOT = EMP-EMPLOYEE)
+               OR    (ZB3-PLAN-TYPE        NOT = PLN-PLAN-TYPE)
+               OR    (ZB3-PLAN-CODE        NOT = PLN-PLAN-CODE)
+               OR    (ZB3-EFF-BILL-DT      NOT = WS-RETRO-DATE (I-DT))
+               OR    (WS-PREV-OLD-BILL-AMT NOT = ZEROES)
+TEMPS *        DISPLAY "PBHSTDTL Rec1: " ZB3-COMPANY
+TEMPS *                "-" ZB3-EMPLOYEE
+TEMPS *                "-" ZB3-PLAN-TYPE
+TEMPS *                "-" ZB3-PLAN-CODE
+TEMPS *                "-" ZB3-EFF-BILL-DT
+TEMPS *                "-" ZB3-PROCESS-LEVEL
+TEMPS *                "-" ZB3-INVOICE
+TEMPS *                "-" ZB3-LINE-NBR
+
+      *------- SKIP THE COBRA DIRECT BILLS WHEN PROCESSING EMPLOYEES
+               MOVE ZB3-COMPANY            TO DB-COMPANY
+               MOVE ZB3-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+               MOVE ZB3-INVOICE            TO DB-INVOICE
+               PERFORM 840-FIND-ZB4SET1
+               IF  (WBP-PARTICIPNT (8:2) NOT = "00")
+               AND (PBHSTHDR-FOUND)
+               AND (ZB4-CUSTOMER(1:1) = "D")
+               AND (ZB4-CUSTOMER(8:2) NOT = "00")
+TEMPS *            DISPLAY "7000: skipped direct bill: " WBP-PARTICIPNT
+                   MOVE 1                  TO PBHSTDTL-SW
+               ELSE
+                   MOVE ZB3-PROCESS-LEVEL  TO WS-PREV-OLD-PROC-LVL
+                   PERFORM
+                   UNTIL (PBHSTDTL-NOTFOUND)
+                   OR    (ZB3-COMPANY       NOT = EMP-COMPANY)
+                   OR    (ZB3-EMPLOYEE      NOT = EMP-EMPLOYEE)
+                   OR    (ZB3-PLAN-TYPE     NOT = PLN-PLAN-TYPE)
+                   OR    (ZB3-PLAN-CODE     NOT = PLN-PLAN-CODE)
+                   OR    (ZB3-EFF-BILL-DT   NOT = WS-RETRO-DATE (I-DT))
+                   OR    (ZB3-PROCESS-LEVEL NOT = WS-PREV-OLD-PROC-LVL)
+TEMPS *        DISPLAY "PBHSTDTL Rec2: " PBH-COMPANY
+TEMPS *                "-" ZB3-EMPLOYEE
+TEMPS *                "-" ZB3-PLAN-TYPE
+TEMPS *                "-" ZB3-PLAN-CODE
+TEMPS *                "-" ZB3-EFF-BILL-DT
+TEMPS *                "-" ZB3-PROCESS-LEVEL
+TEMPS *                "-" ZB3-INVOICE
+TEMPS *                "-" ZB3-LINE-NBR
+
+AATEST*                DISPLAY "ZB3-REASON-CODE : " ZB3-REASON-CODE
+AATEST*                DISPLAY "ZB3-BILLABLE-AMT: " ZB3-BILLABLE-AMT
+                       IF  (ZB3-REASON-CODE NOT =
+GW9/05*                                     "LATE FEE" AND "ONETMDED")
+GW9/05                                      "LATE" AND "ONET")
+                           ADD ZB3-BILLABLE-AMT TO WS-PREV-OLD-BILL-AMT
+                       END-IF
+                       PERFORM 860-FIND-NEXT-ZB3SETW1
+                   END-PERFORM
+               END-IF
+           END-PERFORM.
+
+TEMPS *    DISPLAY "7000 PrevOldBillAmt: " WS-PREV-OLD-BILL-AMT
+TEMPS *            " PrevOldProcLvl: " WS-PREV-OLD-PROC-LVL.
+       7000-END.
+              
+      ******************************************************************
+       7100-GET-PTB-BILLED             SECTION.
+      ******************************************************************
+       7100-START.
+      *--- LOOKUP BILL HISTORY BY CUSTOMER NUMBER
+RAY        MOVE WBP-COMPANY            TO DB-COMPANY.
+RAY        MOVE WBP-PARTICIPNT         TO DB-CUSTOMER.
+RAY        MOVE "D"                    TO DB-CUSTOMER(1:1).
+RAY        MOVE WS-RETRO-DATE (I-DT)   TO DB-PER-END-DATE.
+RAY        INITIALIZE                     DB-INVOICE.
+RAY        MOVE ZB4SETW1-PER-END-DATE TO WS-DB-BEG-RNG.
+RAY        PERFORM 850-FIND-BEGRNG-ZB4SETW1.
+RAY        IF (PBHSTHDR-FOUND)
+RAY            MOVE ZB4-COMPANY        TO DB-COMPANY
+RAY            MOVE ZB4-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+RAY            MOVE ZB4-INVOICE        TO DB-INVOICE
+RAY            MOVE ZB3SET1-INVOICE    TO WS-DB-BEG-RNG
+RAY            PERFORM 850-FIND-BEGRNG-ZB3SET1
+RAY            PERFORM
+RAY            UNTIL (PBHSTDTL-NOTFOUND)
+RAY                IF  (PBHSTDTL-FOUND)
+RAY                AND (ZB3-PLAN-TYPE   = WBP-PLAN-TYPE)
+RAY                AND (ZB3-PLAN-CODE   = WBP-PLAN-CODE)
+RAY                AND (ZB3-EFF-BILL-DT = WS-RETRO-DATE (I-DT) )
+GW9/05*            AND (ZB3-REASON-CODE NOT = "LATE FEE" AND "ONETMDED")
+GW9/05             AND (ZB3-REASON-CODE NOT = "LATE" AND "ONET")
+RAY                     ADD ZB3-BILLABLE-AMT TO WS-PREV-OLD-BILL-AMT
+RAY                END-IF
+RAY                PERFORM 860-FIND-NXTRNG-ZB3SET1
+RAY            END-PERFORM
+RAY            PERFORM 860-FIND-NXTRNG-ZB4SETW1
+           END-IF.
+
+       7100-END.

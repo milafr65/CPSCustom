@@ -1,0 +1,431 @@
+******* WB103PD 6 <1426501081>
+000010******************************************************************
+GW0206* THIS PGM WAS CLONED FROM WB101
+000010* WB101 WAS CLONED FROM STANDARD LAWSON PROGRAM PA512.
+000010* 4/7/03 BJR         INITIAL PROGRAM CODE ANALYSTS INTERNATIONAL
+000010*
+GW    *  10/08 ASSIGN USER-ID OF PERSON RUNNING THE JOB TO PERSACTION
+      *     SEE WO 6428
+      *
+      *   6/2015 FP 7687 MODIFIED THE TERM DATE BEING MOVED TO THE 
+      *        TO THE PCT-NEW-VALUE(4)  
+      *   SEARCH ON 0615
+000010******************************************************************
+000010******************************************************************
+000020 050-EDIT-PARAMETERS             SECTION 10.
+000030******************************************************************
+000040 050-START.
+000050
+000060     MOVE PRM-COMPANY            TO DB-COMPANY.
+000070     MOVE SPACES                 TO DB-PROCESS-LEVEL.
+000080     PERFORM 840-FIND-PRSSET1.
+000090     IF (PRSYSTEM-NOTFOUND)
+000100         MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+000110         MOVE 050                TO CRT-ERROR-NBR
+000120         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+000130         PERFORM 780-PRINT-ERROR-MSG
+000140         GO TO 050-END.
+000150
+000160 050-END.
+000170
+000180******************************************************************
+000190 100-PROGRAM-CONTROL             SECTION 10.
+000200******************************************************************
+000210 100-START.
+000220
+000230     MOVE 051                            TO CRT-MSG-NBR.
+000240     PERFORM 780-DISPLAY-MSG.      
+000250
+000260     PERFORM 800-OPENINPUTCSV-PERSINCSV.
+           PERFORM 9900-HR-PRINT-BLANK.
+           MOVE ININFO-FILENAME               TO HR-PRT-LINE.
+           PERFORM 9900-HR-PRINT-CSVIN.
+000270***  PERFORM 800-OPENOUTPUTCSV-PERSOUTCSV.
+           PERFORM 9900-HR-PRINT-BLANK.
+*******    MOVE OUTINFO-FILENAME               TO HR-PRT-LINE.
+*******    PERFORM 9900-HR-PRINT-CSVOUT.
+000280
+000290     INITIALIZE                            WS-RECS-ADDED
+000310                                           WS-ERROR-RECS
+000320                                           WS-RECORD-COUNT.
+000330
+000340     IF (PRM-UPDATE = "Y")
+000350         PERFORM 840-FIND-CKPSET1
+000360         IF  (CKPOINT-FOUND)
+000370         AND (CKP-RESTART-INFO       NOT = SPACES)
+000380             MOVE CKP-RESTART-INFO       TO WS-REST-INFO
+000390             IF (WS-REST-EMPLOYEE NOT = ZEROES)
+000400                 MOVE WS-REST-COUNT      TO WS-RECORD-COUNT
+000410                 MOVE WS-REST-ADDED      TO WS-RECS-ADDED
+000430                 MOVE WS-REST-ERRORS     TO WS-ERROR-RECS
+000440                 PERFORM 800-READCSV-PERSINCSV
+000450                 PERFORM
+000460                     UNTIL  (PERSINCSV-NOTFOUND)
+000470                     OR     (IN-EMPLOYEE   = WS-REST-EMPLOYEE)
+000500                         PERFORM 800-READCSV-PERSINCSV
+000510                 END-PERFORM.
+000520
+000530     PERFORM 800-READCSV-PERSINCSV.
+000540
+000550     IF (PERSINCSV-NOTFOUND)
+000560         MOVE 52                         TO CRT-MSG-NBR
+000570         PERFORM 780-PRINT-MSG
+000580     ELSE
+000590         ADD 1 TO WS-RECORD-COUNT
+000600         SET IN-RECS-EXIST              TO TRUE
+000610         OPEN OUTPUT ERRORS-FILE
+               SET NO-ERRORS-PRINTED           TO TRUE.
+000620
+000630     IF (IN-RECS-EXIST)
+000640         PERFORM 1000-DO-LOAD-AND-REPORT
+000650             UNTIL (PERSINCSV-NOTFOUND).
+000660
+000670     PERFORM 800-CLOSECSV-PERSINCSV.
+000680**** PERFORM 800-CLOSECSV-PERSOUTCSV.
+000690
+000700     IF (NO-IN-RECS-EXIST)
+000710         MOVE 053                        TO CRT-MSG-NBR
+000720         PERFORM 780-PRINT-MSG.
+000730
+           IF (NO-ERRORS-PRINTED)
+               MOVE WS-ERROR-RPT-NAME  TO WS-TMP-FILE
+               PERFORM 901-REMOVE-TMP-FILE.
+
+000740     IF  (PRM-UPDATE = "Y")
+000750     AND (IN-RECS-EXIST)
+000760         PERFORM 910-AUDIT-BEGIN
+000770         PERFORM 840-MODIFY-CKPSET1
+000780         INITIALIZE WS-REST-INFO
+000790         MOVE WS-REST-INFO               TO CKP-RESTART-INFO
+000800         PERFORM 820-STORE-CKPOINT
+000810         PERFORM 925-AUDIT-END.
+000820
+000830 100-END.
+000840
+000850******************************************************************
+000860 1000-DO-LOAD-AND-REPORT         SECTION 50.
+000870******************************************************************
+000880 1000-START.
+000890
+000900     MOVE ZEROES                 TO RPT-PAGE-COUNT (WB103-R1)
+000910                                    RPT-PAGE-COUNT (WB103-R2).
+000920
+000930     MOVE PRM-COMPANY            TO G1-PRM-COMPANY
+000940                                    GE1-PRM-COMPANY.
+000950     MOVE PRS-NAME               TO G1-PRS-NAME
+000960                                    GE1-PRS-NAME.
+000970
+000980     MOVE GN1-PRM-COMPANY        TO RPT-GROUP-REQUEST.
+000990     PERFORM 700-PRINT-RPT-GRP.
+001000     MOVE GEN1-PRM-COMPANY       TO RPT-GROUP-REQUEST.
+001010     PERFORM 700-PRINT-RPT-GRP.
+001020
+001030     MOVE IN-EMPLOYEE            TO WS-EMPLOYEE.
+001060     INITIALIZE                     WS-UPDATE-COUNT.
+001730     SET NO-AUDIT-BEGIN          TO TRUE.
+001070
+001080     PERFORM 1020-ERWITHDRW-UPD  
+001090     THRU    1020-END
+001100         UNTIL (PERSINCSV-NOTFOUND).
+001110 
+001120     MOVE WS-RECS-ADDED          TO G3-RECS-ADDED.
+001140     MOVE WS-ERROR-RECS          TO G3-RECS-IN-ERROR.
+001150     MOVE WS-RECORD-COUNT        TO G3-RECS-PROCESSED.
+001160     MOVE GN3-COUNTERS           TO RPT-GROUP-REQUEST.
+001170     PERFORM 700-PRINT-RPT-GRP.
+001180
+001190     MOVE WS-ERROR-RECS          TO GE3-RECS-IN-ERROR.
+001200     MOVE GEN3-COUNTERS          TO RPT-GROUP-REQUEST.
+001210     PERFORM 700-PRINT-RPT-GRP.
+001220
+001230     GO TO 1000-END.
+001240
+001250******************************************************************
+001260 1020-ERWITHDRW-UPD.
+001270******************************************************************
+001280
+001290     MOVE WS-FALSE                   TO WS-EMP-ERROR-SW.
+001300
+001310     PERFORM 1200-EDIT-INPUT-RECORD
+001320     THRU    1200-END.
+001330
+001340     IF (EMP-ERROR-FOUND)
+001350         ADD 1 TO WS-ERROR-RECS        
+001360*******  MOVE IN-PERSINCSV-REC     TO OUT-PERSOUTCSV-REC
+001370*******  PERFORM 800-ALLUSEDCSV-PERSINCSV
+001380*******  PERFORM 800-WRITECSV-PERSOUTCSV
+001390         GO TO 1020-NEXT-PERSINCSV
+001400     ELSE
+001410         IF (PRM-UPDATE = "Y")
+001420             IF (WS-UPDATE-COUNT = ZEROES)
+001430                 PERFORM 910-AUDIT-BEGIN
+001730                 SET AUDIT-BEGIN    TO TRUE
+001440             END-IF
+001450             PERFORM 1250-UPDATE-PERSACTION
+001450                THRU 1250-END 
+001460             ADD 1 TO WS-UPDATE-COUNT
+001470         END-IF
+001490         ADD 1 TO WS-RECS-ADDED.
+001520
+001580
+001590     MOVE IN-EMP-STATUS             TO G2-EMP-STATUS.      
+001600     MOVE IN-POSITION               TO G2-POSITION.
+001600     MOVE IN-PROCESS-LEVEL          TO G2-PROCESS-LEVEL.
+001600     MOVE IN-TERM-DATE              TO G2-TERM-DATE.
+001600     MOVE IN-USER-LEVEL             TO G2-USER-LEVEL.
+001610     MOVE IN-SHIFT                  TO G2-SHIFT.   
+           MOVE IN-SCHEDULE               TO G2-SCHEDULE.
+           MOVE IN-WORK-SCHED             TO G2-WORK-SCHED.
+           MOVE IN-PAY-GRADE              TO G2-PAY-GRADE.
+001640     MOVE GN2-ERWITHDRW-REC         TO RPT-GROUP-REQUEST.
+001650     PERFORM 700-PRINT-RPT-GRP.
+001660
+001670 1020-NEXT-PERSINCSV.
+001680
+001690     IF (EMP-ERROR-FOUND)
+001700         MOVE GEN4-BLANK             TO RPT-GROUP-REQUEST
+001710         PERFORM 700-PRINT-RPT-GRP.
+001720
+001730     SET NO-AUDIT-END                TO TRUE.
+001740     IF (PRM-UPDATE      = "Y")
+001750         IF (WS-UPDATE-COUNT > 100)
+001760             INITIALIZE                 WS-UPDATE-COUNT
+001770             SET AUDIT-END           TO TRUE
+001780         END-IF.
+001790
+001800     PERFORM 800-READCSV-PERSINCSV.
+001810     IF  (PERSINCSV-FOUND)
+001820         ADD 1 TO WS-RECORD-COUNT.
+001830
+001840     IF  (PERSINCSV-NOTFOUND)
+001850     AND (PRM-UPDATE = "Y")
+001860     AND (NO-AUDIT-END)
+           AND (AUDIT-BEGIN)
+               PERFORM 925-AUDIT-END
+               PERFORM 900-SAVE-PRINT-FILES
+001880     ELSE    
+001890     IF  (PRM-UPDATE   = "Y")
+001900     AND (AUDIT-END)
+001910         PERFORM 840-MODIFY-CKPSET1
+001920         MOVE WS-EMPLOYEE            TO WS-REST-EMPLOYEE
+001950         MOVE WS-RECORD-COUNT        TO WS-REST-COUNT
+001960         MOVE WS-RECS-ADDED          TO WS-REST-ADDED
+001980         MOVE WS-ERROR-RECS          TO WS-REST-ERRORS
+001990         MOVE WS-REST-INFO           TO CKP-RESTART-INFO
+002000         PERFORM 820-STORE-CKPOINT
+002010         PERFORM 925-AUDIT-END
+002020         PERFORM 900-SAVE-PRINT-FILES
+002030         IF (PERSINCSV-FOUND)
+002040             MOVE IN-EMPLOYEE       TO WS-EMPLOYEE.
+002070
+002080 1020-END.
+002090
+002100******************************************************************
+002110 1200-EDIT-INPUT-RECORD.
+002120******************************************************************
+002160
+002170     MOVE IN-PERSINCSV-REC         TO WS-CSV-IN-REC.
+002180
+002210     
+002540     IF (WS-IN-EMPLOYEE-A    NOT NUMERIC) 
+002580         MOVE 100                    TO CRT-MSG-NBR
+002590         PERFORM 790-GET-MSG
+002600         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+002610         PERFORM 1300-PRINT-ERROR
+002620         THRU    1300-END
+002630         GO TO 1200-END
+002640     ELSE
+002650         MOVE IN-EMPLOYEE           TO GE2-EMPLOYEE
+002660                                        G2-EMPLOYEE
+002670         IF (IN-EMPLOYEE = ZEROES)
+002720             MOVE 104                TO CRT-MSG-NBR
+002730             PERFORM 790-GET-MSG
+002740             MOVE CRT-MESSAGE        TO WS-ERR-MSG
+002750             PERFORM 1300-PRINT-ERROR
+002760             THRU    1300-END
+002770             GO TO 1200-END
+002780         ELSE
+002790             MOVE PRM-COMPANY        TO DB-COMPANY
+002800             MOVE IN-EMPLOYEE       TO DB-EMPLOYEE
+002810             PERFORM 840-FIND-EMPSET1
+002820             IF (EMPLOYEE-NOTFOUND)
+002720                 MOVE 105                TO CRT-MSG-NBR
+002730                 PERFORM 790-GET-MSG
+002740                 MOVE CRT-MESSAGE        TO WS-ERR-MSG
+002750                 PERFORM 1300-PRINT-ERROR
+002760                 THRU    1300-END
+002770                 GO TO 1200-END.
+002910
+002920     IF (WS-IN-TERM-DATE-A NOT NUMERIC) 
+002960         MOVE 101                    TO CRT-MSG-NBR
+002970         PERFORM 790-GET-MSG
+002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+002990         PERFORM 1300-PRINT-ERROR
+003000         THRU    1300-END
+003010         GO TO 1200-END.
+003120
+002920     IF (WS-IN-SHIFT-A NOT NUMERIC) 
+002960         MOVE 102                    TO CRT-MSG-NBR
+002970         PERFORM 790-GET-MSG
+002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+002990         PERFORM 1300-PRINT-ERROR
+003000         THRU    1300-END
+003010         GO TO 1200-END.
+003120
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE IN-EMPLOYEE            TO DB-EMPLOYEE.
+           MOVE 1                      TO DB-POS-LEVEL.
+           MOVE WS-HIGH-VALUES         TO DB-EFFECT-DATE.
+           PERFORM 850-FIND-NLT-PEPSET3.
+           IF  (PAEMPPOS-FOUND)
+           AND (PEP-COMPANY       = DB-COMPANY)
+           AND (PEP-EMPLOYEE      = DB-EMPLOYEE)
+           AND (PEP-POS-LEVEL     = DB-POS-LEVEL)
+               NEXT SENTENCE                               
+           ELSE
+002960         MOVE 107                    TO CRT-MSG-NBR
+002970         PERFORM 790-GET-MSG
+002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+002990         PERFORM 1300-PRINT-ERROR
+003000         THRU    1300-END
+003010         GO TO 1200-END.
+003630
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE "E"                    TO DB-ACTION-TYPE.   
+           MOVE PRM-EFFECTIVE-DATE     TO DB-EFFECT-DATE.
+           MOVE "ER-WITHDRW"           TO DB-ACTION-CODE.
+           MOVE IN-EMPLOYEE            TO DB-EMPLOYEE.
+           MOVE 1                      TO DB-ACTION-NBR.
+           PERFORM 840-FIND-PCTSET1.
+           IF (PERSACTION-FOUND)
+002960         MOVE 111                    TO CRT-MSG-NBR
+002970         PERFORM 790-GET-MSG
+002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+002990         PERFORM 1300-PRINT-ERROR
+003000         THRU    1300-END
+003010         GO TO 1200-END.
+
+003640 1200-END.
+003650
+005300******************************************************************
+005310 1250-UPDATE-PERSACTION.
+005320******************************************************************
+           
+005330     PERFORM 800-CREATE-PERSACTION.
+
+           MOVE PRM-COMPANY            TO PCT-COMPANY.
+           MOVE "E"                    TO PCT-ACTION-TYPE.
+           MOVE PRM-EFFECTIVE-DATE     TO PCT-EFFECT-DATE.
+           MOVE "ER-WITHDRW"           TO PCT-ACTION-CODE.
+           MOVE IN-EMPLOYEE            TO PCT-EMPLOYEE.
+           MOVE 1                      TO PCT-ACTION-NBR.
+           MOVE PRM-PCT-REASON         TO PCT-REASON (1).
+                     
+           MOVE IN-PROCESS-LEVEL       TO PCT-PROCESS-LEVEL.
+           MOVE PEP-DEPARTMENT         TO PCT-DEPARTMENT.
+
+           MOVE 20                     TO PCT-FLD-NBR (1).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-EMP-STATUS          TO WS-ALPHA-12.
+*******    MOVE ZERO                   TO WS-NUM-16.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (1).
+           MOVE IN-EMP-STATUS          TO PCT-NEW-VALUE (1).
+
+           MOVE 126                    TO PCT-FLD-NBR (2).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-POSITION            TO WS-ALPHA-12.
+*******    MOVE ZERO                   TO WS-NUM-16.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (2).
+           MOVE IN-POSITION            TO PCT-NEW-VALUE (2).
+
+           MOVE 14                     TO PCT-FLD-NBR (3).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-PROCESS-LEVEL       TO WS-ALPHA-12.
+*******    MOVE ZERO                   TO WS-NUM-16.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (3).
+           MOVE IN-PROCESS-LEVEL       TO PCT-NEW-VALUE (3).
+
+           MOVE 27                     TO PCT-FLD-NBR (4).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+           MOVE SPACES                 TO WS-NEW-VALUE-A.
+           MOVE IN-TERM-DATE           TO WS-NEW-VALUE-DATE.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (4).
+0615       MOVE WS-NEW-VALUE-DATE-A(3:2) TO WS-REF-YEAR.
+0615       MOVE WS-NEW-VALUE-DATE-A(5:2) TO WS-REF-MM.
+0615       MOVE WS-NEW-VALUE-DATE-A(7:2) TO WS-REF-DD.
+0615       MOVE WS-REFORMAT-DATE       TO PCT-NEW-VALUE(4).
+0615****** MOVE WS-NEW-VALUE-DATE-A    TO PCT-NEW-VALUE (4).
+           MOVE 16                     TO PCT-FLD-NBR (5).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-USER-LEVEL          TO WS-ALPHA-12.
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (5).
+           MOVE IN-USER-LEVEL          TO PCT-NEW-VALUE (5).
+
+           MOVE 65                     TO PCT-FLD-NBR (6).
+           MOVE ZEROS                  TO WS-NUM-16.
+           MOVE SPACES                 TO WS-ALPHA-12.
+           MOVE IN-SHIFT               TO WS-NUM-16.
+           MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (6).
+
+           MOVE 136                    TO PCT-FLD-NBR (7).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-SCHEDULE            TO WS-ALPHA-12.
+*******    MOVE ZERO                   TO WS-NUM-16.
+           MOVE IN-SCHEDULE            TO PCT-NEW-VALUE (7).
+
+           MOVE 293                    TO PCT-FLD-NBR (8).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-WORK-SCHED          TO WS-ALPHA-12.
+*******    MOVE ZERO                   TO WS-NUM-16.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (8).
+           MOVE IN-WORK-SCHED          TO PCT-NEW-VALUE (8).
+
+           MOVE 135                    TO PCT-FLD-NBR (9).
+*******    MOVE ZEROS                  TO WS-NUM-16.
+*******    MOVE IN-PAY-GRADE           TO WS-ALPHA-12.
+*******    MOVE ZERO                   TO WS-NUM-16.
+*******    MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (9).
+           MOVE IN-PAY-GRADE           TO PCT-NEW-VALUE (9).
+
+           MOVE PEP-POS-LEVEL          TO PCT-POS-LEVEL.
+           MOVE PEP-EFFECT-DATE        TO PCT-POS-EFF-DT.
+           MOVE PEP-POSITION           TO PCT-POSITION.
+           MOVE PEP-JOB-CODE           TO PCT-JOB-CODE.
+           MOVE PEP-POSITION           TO PCT-PAY-POSITION.
+           MOVE PEP-BASE-CURRENCY      TO PCT-BASE-CURRENCY.
+           MOVE PEP-BASE-ND            TO PCT-BASE-ND.
+
+10/08      MOVE CRT-USER-NAME          TO PCT-USER-ID.
+
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE IN-EMPLOYEE            TO DB-EMPLOYEE.
+           PERFORM 840-MODIFY-EMPSET1.
+           IF (PRM-EFFECTIVE-DATE < EMP-PEND-ACT-DATE)
+           OR (EMP-PEND-ACT-DATE = ZEROS)
+               MOVE PRM-EFFECTIVE-DATE TO EMP-PEND-ACT-DATE.
+           PERFORM 820-STORE-EMPLOYEE.
+           PERFORM 8200-STORE-PERSACTION.
+       1250-END.
+005470
+005300******************************************************************
+005310 1300-PRINT-ERROR.
+005320******************************************************************
+005330
+005340     MOVE WS-TRUE                 TO WS-EMP-ERROR-SW.
+005350     MOVE WS-ERR-MSG              TO GE2-ERROR.
+005360     MOVE GEN2-ER-WITHDRW-REC     TO RPT-GROUP-REQUEST.
+005370     PERFORM 700-PRINT-RPT-GRP.
+005380     INITIALIZE                      WS-ERROR-MESSAGE
+005400                                     GE2-EMPLOYEE
+005440                                     GE2-ERROR.
+005450
+           IF (NO-ERRORS-PRINTED)
+               SET ERRORS-PRINTED       TO TRUE.
+
+005460 1300-END.
+005470
+005480******************************************************************
+005490 1000-END.
+005500******************************************************************
+005510

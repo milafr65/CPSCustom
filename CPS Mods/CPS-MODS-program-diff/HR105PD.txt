@@ -1,0 +1,27 @@
+< prod/hrsrc/HR105PD
+> vnla/hrsrc/HR105PD
+2,10d1
+<       ** ***************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by MARK GLISSEN - MG1103                             *
+<       ******************************************************************
+<       *  11/03/03  - MODIFIED REPORT TO CONTAIN TIME STAMP.  MODIFIED  *
+<       *              SORTING ORDER TO CONTAIN DATE/TIME STAMP FIRST.   *
+<       ******************************************************************
+< 
+90c81
+< MG1103         ASCENDING KEY    DSR-DATE-STAMP
+---
+> 007700         ASCENDING KEY    DSR-EMPLOYEE
+91,92d81
+< MG1103                          DSR-TIME-STAMP
+< MG1103                          DSR-EMPLOYEE
+209d197  ****     TIME-STAMP2
+< MG1103     MOVE HRH-TIME-STAMP         TO SR-TIME-STAMP.
+277d264  ****     TIME-STAMP2 
+< MG1103     MOVE HER-TIME-STAMP         TO SR-TIME-STAMP.
+333d319
+< MG1103     MOVE PRH-TIME-STAMP         TO SR-TIME-STAMP.
+441d426
+< MG1103     MOVE SR-TIME-STAMP          TO G3-LOG-TIME-STAMP.

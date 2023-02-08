@@ -1,0 +1,247 @@
+0100******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+000500
+000600 050-END.
+000700
+000800******************************************************************
+000900 100-PROGRAM-CONTROL             SECTION 10.
+001000******************************************************************
+001100 100-START.
+001200
+001300     MOVE 050                    TO CRT-MSG-NBR.
+001400     PERFORM 780-DISPLAY-MSG.
+001500
+001600     PERFORM 1000-DO-REPORT.
+001700
+001800 100-END.
+001900
+002000******************************************************************
+002100 1000-DO-REPORT                  SECTION 50.
+002200******************************************************************
+002300 1000-START.
+002400
+002500     MOVE ZEROES                 TO RPT-PAGE-COUNT (WB122-R1).
+002600
+002700     MOVE ZEROES                 TO DB-COMPANY.
+002800     MOVE SPACES                 TO DB-CUSTOMER.
+002900     PERFORM 850-FIND-NLT-ACMSET1.
+003000
+003100     PERFORM 1020-DO-ACM-COMPANY
+003200     THRU    1020-END
+003300         UNTIL (ARCUSTOMER-NOTFOUND).
+003400
+003500     GO TO 1000-END.
+003600
+003700******************************************************************
+003800 1020-DO-ACM-COMPANY.
+003900******************************************************************
+004000
+004100     MOVE ACM-COMPANY            TO WS-ACM-COMPANY.
+
+           MOVE "WB122"                TO G1-PROGRAM.
+
+           INITIALIZE WS-TTL-CURR-BAL
+                      WS-TTL-LST-STA-BAL
+                      WS-TTL-DIFF
+                      WS-GRAND-TTL-CURR-BAL.
+004200
+004500     MOVE GN1H-ACM-CUSTOMER      TO RPT-GROUP-REQUEST.
+004600     PERFORM 700-PRINT-RPT-GRP.
+004700
+004800     PERFORM 1040-DO-ACM-CUSTOMER
+004900     THRU    1040-END
+005000         UNTIL (ARCUSTOMER-NOTFOUND)
+005100         OR    (ACM-COMPANY NOT = WS-ACM-COMPANY).
+005200
+
+           MOVE WS-TTL-CURR-BAL        TO G2-TTL-CURR-BAL.
+           MOVE WS-TTL-LST-STA-BAL     TO G2-TTL-LST-STA-BAL.
+           COMPUTE G2-TTL-DIFF =
+            (WS-TTL-CURR-BAL - WS-TTL-LST-STA-BAL).
+           MOVE WS-GRAND-TTL-CURR-BAL  TO G2-GRAND-TTL-CURR-BAL.
+
+004500     MOVE GN1E-TOTAL             TO RPT-GROUP-REQUEST.
+004600     PERFORM 700-PRINT-RPT-GRP.
+
+004500     MOVE GN1F-FOOTER            TO RPT-GROUP-REQUEST.
+004600     PERFORM 700-PRINT-RPT-GRP.
+
+005300 1020-END.
+005400
+005500******************************************************************
+005600 1040-DO-ACM-CUSTOMER.
+005700******************************************************************
+005800
+           
+           INITIALIZE                  WS-CURR-BAL.
+           INITIALIZE                  WS-LST-STA-BAL.          
+           INITIALIZE                  WS-LST-PAYMENT.
+           
+           ADD ACM-CURR-BAL  TO WS-GRAND-TTL-CURR-BAL.
+
+           MOVE ACM-COMPANY            TO DB-COMPANY.
+           MOVE ACM-CUSTOMER           TO DB-CUSTOMER.
+           PERFORM 840-FIND-WBCSET1.
+
+           IF (WBPCUSTBAL-NOTFOUND)
+              IF (ACM-CURR-BAL = ZERO)
+                 GO TO 1040-NEXT-ARCUSTOMER.
+
+********* ADJUST THE AR90 BALANCE FOR UNPOSTED TRANSACTIONS *****
+
+           MOVE ACM-CURR-BAL              TO WS-CURR-BAL.
+
+           MOVE ACM-COMPANY               TO DB-COMPANY.
+           MOVE ACM-CUSTOMER              TO DB-CUSTOMER.
+           MOVE SPACES                    TO DB-TRANS-TYPE.
+           MOVE SPACES                    TO DB-INVOICE.
+           MOVE ZERO                      TO DB-PAYMENT-SEQ.
+           MOVE AITSET1-CUSTOMER          TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-AITSET1.
+           PERFORM
+           UNTIL (ARITRANS-NOTFOUND)
+               IF (AIT-TRANS-TYPE  = "C")
+                  SUBTRACT AIT-ORIG-AMT FROM WS-CURR-BAL
+               ELSE
+                  ADD AIT-ORIG-AMT      TO WS-CURR-BAL
+               END-IF
+               PERFORM 860-FIND-NXTRNG-AITSET1
+           END-PERFORM.
+
+TEMP****   IF (WS-CURR-BAL = ZERO)
+TEMP****      GO TO 1040-NEXT-ARCUSTOMER.
+
+******** ADJUST THE PREV INVOICE BALANCE FOR LATER CHECKS ALREADY ***
+*******   POSTED ON AR90 ********************************************
+           IF (WBPCUSTBAL-FOUND)
+              MOVE WBC-PB-LST-STA-BAL      TO WS-LST-STA-BAL
+           ELSE
+              MOVE ZERO                    TO WS-LST-STA-BAL.
+                                                
+********* THIS CODE FROM WBIP ****************************************
+
+           MOVE ACM-CUSTOMER             TO DB-CUSTOMER.
+           MOVE APMSET8-CUSTOMER         TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-APMSET8.
+
+           PERFORM 1340-NEW-PAYMENTS
+           THRU    1340-END
+               UNTIL (ARPAYMENT-NOTFOUND).
+
+           SUBTRACT WS-LST-PAYMENT FROM WS-LST-STA-BAL.
+
+           IF (WBPCUSTBAL-FOUND)
+              MOVE WBC-PB-LST-STA-DT        TO DB-TRANS-DATE
+              MOVE AROSET4-TRANS-DATE       TO WS-DB-BEG-RNG
+              PERFORM 850-FIND-BEGRNG-AROSET4
+
+              PERFORM 1320-NEW-ITEMS    
+              THRU    1320-END
+                  UNTIL (AROITEMS-NOTFOUND).
+
+**********************************************************************
+
+           IF (WS-CURR-BAL = WS-LST-STA-BAL)
+              GO TO 1040-NEXT-ARCUSTOMER.
+
+005900     MOVE ACM-CUSTOMER           TO G1-ACM-CUSTOMER.
+006000     MOVE ACM-ACTIVE-STATUS      TO G1-ACM-ACTIVE-STATUS.
+           MOVE WS-CURR-BAL            TO G1-ACM-CURR-BAL.
+006100     MOVE ACM-LAST-PMT-DATE      TO G1-ACM-LAST-PMT-DATE.
+006200     MOVE ACM-LAST-PMT-AMT       TO G1-ACM-LAST-PMT-AMT.
+006300***  MOVE ACM-LAST-INV-DATE      TO G1-ACM-LAST-INV-DATE.
+006400***  MOVE ACM-LAST-INV-AMT       TO G1-ACM-LAST-INV-AMT.
+           MOVE WS-LST-STA-BAL         TO G1-WBC-LST-STA-BAL.
+           COMPUTE G1-BAL-DIFF = (WS-CURR-BAL - WS-LST-STA-BAL).
+           IF (WBPCUSTBAL-FOUND)
+006700        MOVE WBC-PB-LST-STA-DT      TO G1-WBC-LST-STA-DT
+           ELSE
+006700        MOVE ZEROS                  TO G1-WBC-LST-STA-DT.
+
+006800     MOVE GN1D-ACM-CUSTOMER      TO RPT-GROUP-REQUEST.
+006900     PERFORM 700-PRINT-RPT-GRP.
+
+           ADD WS-CURR-BAL            TO WS-TTL-CURR-BAL.
+           ADD WS-LST-STA-BAL         TO WS-TTL-LST-STA-BAL.
+007000
+007100 1040-NEXT-ARCUSTOMER.
+007200     PERFORM 860-FIND-NEXT-ACMSET1.
+007300
+007400 1040-END.
+
+      ******************************************************************
+       1320-NEW-ITEMS.
+      ******************************************************************
+
+           MOVE ARO-COMPANY              TO DB-COMPANY.
+           MOVE ARO-CUSTOMER             TO DB-CUSTOMER.
+           MOVE ARO-ALT-TYPE             TO DB-TRANS-TYPE.
+           MOVE ARO-INVOICE              TO DB-INVOICE.
+           PERFORM 840-FIND-ARHSET4.
+
+           IF (ARO-LAST-STA-DATE      NOT = ZEROS)
+           OR (ARH-GL-DATE            NOT > WBC-PB-LST-STA-DT )
+           OR (ARO-DUE-DATE               < WBC-PB-LST-STA-DT )
+           OR (ARO-STATUS                 = 8)
+               GO TO 1320-NEXT.
+
+           IF (ARH-CANCEL-FLAG            = "Y")
+               MOVE ARO-PAYMENT-SEQ      TO DB-PAYMENT-SEQ
+               PERFORM 840-FIND-ARZSET1
+               IF (ARITEMAUD-FOUND)
+                   IF (ARZ-CANCEL-DATE > WBC-PB-LST-STA-DT)
+                       GO TO 1320-NEXT.
+
+           IF  (ARO-TRANS-TYPE = "C")
+               SUBTRACT ARO-TRAN-AMT   FROM WS-LST-STA-BAL
+           ELSE
+               ADD ARO-TRAN-AMT          TO WS-LST-STA-BAL.   
+
+       1320-NEXT.
+          
+           PERFORM 860-FIND-NXTRNG-AROSET4.
+
+       1320-END.
+
+      ******************************************************************
+       1340-NEW-PAYMENTS.
+      ******************************************************************
+
+           IF (APM-STATUS                  = 9)
+               GO TO 1340-NEXT.
+
+           IF  (APM-LAST-STA-DATE      NOT = ZEROS)
+               GO TO 1340-NEXT.
+
+********   IF  (APM-CANCEL-DATE        NOT = ZEROS)
+********   AND (APM-CUSTOMER               = APM-TRNS-CUST)
+********       IF (APM-CANCEL-DATE         > WBIPF1-PER-END-DATE)
+********           GO TO 1340-NEXT.
+
+           IF  (APM-CANCEL-DATE        NOT = ZEROS)
+           AND (APM-CUSTOMER           NOT = APM-TRNS-CUST)
+               GO TO 1340-NEXT.
+
+*******    MOVE APM-COMPANY                TO DB-COMPANY.
+*******    MOVE APM-BATCH-NBR              TO DB-BATCH-NBR.
+*******    PERFORM 840-FIND-APHSET1.
+*******    IF (APH-DEPOSIT-DATE            > WBIPF1-PER-END-DATE)
+*******        GO TO 1340-NEXT.
+
+           IF  (APM-CANCEL-DATE        NOT = ZEROS)
+               ADD APM-APPLD-AMT           TO WS-LST-PAYMENT
+           ELSE
+               ADD APM-TRAN-AMT            TO WS-LST-PAYMENT.
+           
+       1340-NEXT.
+          
+           PERFORM 860-FIND-NXTRNG-APMSET8.
+
+       1340-END.
+007500
+007600******************************************************************
+007700 1000-END.
+007800******************************************************************
+007900

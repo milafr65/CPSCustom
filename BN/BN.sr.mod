@@ -1,0 +1,3826 @@
+******* BN.sr 63 <553883683>
+
+****   Reapplied custom code after 9.0.1 Upgrade - M. Hunter - ACS 8/23/11
+****   Begin 8/23/11 - M. Hunter
+
+DEFINE SCRFLDS
+   Hp2  EMP-USER-FIELD                  HR04.1
+   Hp3  EMP-USER-FIELD-DESC
+   ZZO  EMP-USER-FIELD-94               HR04.1
+   Hp5  EMP-USER-FIELD-95               HR04.1
+   Wb1	BN-CRPVESTING	                ZN04.1
+   Wb2	BN-NONPARTRSN                   ZN04.1
+   Wb3  BN-SRAVESTING                   ZN04.1
+   Wb4  WBPCODE-DESC40 
+   Wba  WQH-EMPLOYER
+   Wbb  WQH-DATE
+   Wbc  WQH-EMPLOYEE
+   Wbd  WQH-PART
+   Wbe  WQH-USER
+   wb1  PNSTOPRSN
+   wb2  PNREVRSN
+
+*** End 8/23/11 - M. Hunter
+
+*** RULES ***
+
+DEFINE RULE
+       ID           BN-GLN-R-0001
+       SCRFLD       ACCOUNT-UNIT-02
+       FILENAME     GLNAMES
+       INDEX        GLNSET1
+       KEYRNG       EXP-DIST-CO, ACCOUNT-UNIT-02
+       RETURNS      DESCRIPTION    into ACCT-UNIT-DESC
+       RETURNS      ACCT-UNIT      into ACCOUNT-UNIT-02
+       REQUIRED
+
+DEFINE RULE
+       ID           BN-GLN-R-0002
+       SCRFLD       CL-ACCT-UNIT
+       FILENAME     GLNAMES
+       INDEX        GLNSET1
+       KEYRNG       CL-DIST-CO, CL-ACCT-UNIT
+       RETURNS      DESCRIPTION    into ACCT-UNIT-DESC
+       RETURNS      ACCT-UNIT      into CL-ACCT-UNIT
+       REQUIRED
+
+DEFINE RULE
+       ID           BN-GLN-R-0003
+       SCRFLD       ES-ACCT-UNIT
+       FILENAME     GLNAMES
+       INDEX        GLNSET1
+       KEYRNG       ES-DIST-CO, ES-ACCT-UNIT
+       RETURNS      DESCRIPTION    into ACCT-UNIT-DESC
+       RETURNS      ACCT-UNIT      into ES-ACCT-UNIT
+       REQUIRED
+
+DEFINE RULE
+       ID           BN-GLM-R-0004
+       SCRFLD       ACCOUNT-04, SUB-ACCOUNT-05
+       FILENAME     GLMASTER
+       INDEX        GLMSET2
+       KEYRNG       EXP-DIST-CO, ACCOUNT-UNIT-02, ACCOUNT-04, SUB-ACCOUNT-05
+       RETURNS      ACCT-DESC   into ACCOUNT-DESC
+
+DEFINE RULE
+       ID           BN-GLM-R-0005
+       SCRFLD       CL-ACCOUNT,CL-SUB-ACCT
+       FILENAME     GLMASTER
+       INDEX        GLMSET2
+       KEYRNG       CL-DIST-CO, CL-ACCT-UNIT, CL-ACCOUNT, CL-SUB-ACCT
+       RETURNS      ACCT-DESC   into CL-ACCOUNT-DESC
+
+DEFINE RULE
+       ID           BN-GLM-R-0006
+       SCRFLD       ES-ACCOUNT,ES-SUB-ACCT
+       FILENAME     GLMASTER
+       INDEX        GLMSET2
+       KEYRNG       ES-DIST-CO, ES-ACCT-UNIT, ES-ACCOUNT, ES-SUB-ACCT
+       RETURNS      ACCT-DESC   into ES-ACCOUNT-DESC
+
+DEFINE RULE
+       ID          BN-GLS-R-0001
+       SCRFLD      EXP-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      EXP-DIST-CO
+       RETURNS     COMPANY into EXP-DIST-CO
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-GLS-R-0002
+       SCRFLD      CL-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      CL-DIST-CO
+       RETURNS     COMPANY into CL-DIST-CO
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-GLS-R-0003
+       SCRFLD      ES-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      ES-DIST-CO
+       RETURNS     COMPANY into ES-DIST-CO
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PRS-R-0010
+       SCRFLD      COMPANY-01
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01, ~SPACES
+       RETURNS     NAME into HR-COMPANY-NAME
+       REQUIRED
+
+DEFINE RULE	
+       ID          BN-PRS-R-0007
+       SCRFLD      MIMIC-PROCESS-LEVEL
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01, MIMIC-PROCESS-LEVEL
+       RETURNS     NAME into MIMIC-PROC-LEV-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PRS-R-0008
+       SCRFLD      HEAD-PROC-LEV
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01, HEAD-PROC-LEV
+       RETURNS     NAME into HEAD-PROC-LEV-NAME
+
+DEFINE RULE
+       ID          BN-PRS-R-0009
+       SCRFLD      HR-PROCESS-LEVEL
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01, HR-PROCESS-LEVEL
+       RETURNS     NAME into PROC-LEV-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DPT-R-0010
+       SCRFLD      DEPARTMENT
+       FILENAME    DEPTCODE
+       INDEX       DPTSET1
+       KEYRNG      COMPANY-01, HR-PROCESS-LEVEL, DEPARTMENT
+       RETURNS     NAME into DEPARTMENT-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-EMS-R-0011
+       SCRFLD      EMP-STATUS
+       FILENAME    EMSTATUS
+       INDEX       EMSSET1
+       KEYRNG      COMPANY-01, EMP-STATUS
+       RETURNS     DESCRIPTION into EMP-STATUS-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-HSU-R-0012
+       SCRFLD      SUPERVISOR
+       FILENAME    HRSUPER
+       INDEX       HSUSET1
+       KEYRNG      COMPANY-01, SUPERVISOR
+       RETURNS     DESCRIPTION into SUPERVISOR-DESC
+       RETURNS     FULL-NAME-COND into SUPERVISOR-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-EMP-R-0013
+       SCRFLD      EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+       RETURNS     FICA-NBR  into FICA-NBR
+       RETURNS     FULL-NAME into EMPLOYEE-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-EMP-R-0014
+       SCRFLD      RET-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01, RET-EMPLOYEE
+       RETURNS     FULL-NAME into EMPLOYEE-NAME
+
+DEFINE RULE
+       ID          BN-EMD-R-0015
+       SCRFLD      DEPENDENT-NBR
+       FILENAME    EMDEPEND
+       INDEX       EMDSET1
+       KEYRNG      COMPANY-01,EMPLOYEE,DEPENDENT-NBR
+       RETURNS     FULL-NAME into DEPENDENT-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCO-R-0016
+       SCRFLD      LOCAT-CODE                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "LO", LOCAT-CODE
+       RETURNS     DESCRIPTION into   LOCAT-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCO-R-0017
+       SCRFLD      RELAT-CODE                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "DP", RELAT-CODE
+       RETURNS     DESCRIPTION into   RELAT-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCO-R-0018
+       SCRFLD      USER-LEVEL                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "UL", USER-LEVEL
+       RETURNS     DESCRIPTION into   USER-LEVEL-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PRG-R-0019
+       SCRFLD      EMPLOYEE-GROUP
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01, EMPLOYEE-GROUP
+       RETURNS     DESCRIPTION into EMPLOYEE-GROUP-DESC
+
+DEFINE RULE
+       ID          BN-DCL-R-0020
+       SCRFLD      DED-CLASS
+       FILENAME    DCCLASS
+       INDEX       DCLSET1
+       KEYRNG      COMPANY-01, DED-CLASS
+       RETURNS     DESCRIPTION into DED-CLASS-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DCL-R-0021
+       SCRFLD      DED-CLASS-1
+       FILENAME    DCCLASS
+       INDEX       DCLSET1
+       KEYRNG      COMPANY-01, DED-CLASS-1
+       RETURNS     DESCRIPTION into DED-CLASS-DESC-1
+
+DEFINE RULE
+       ID          BN-DDC-R-0022
+       SCRFLD      DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, DED-CODE
+       RETURNS     DESCRIPTION into DED-CODE-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0023
+       SCRFLD      COMP-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, COMP-DED-CODE
+       RETURNS     DESCRIPTION into COMP-DED-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0024
+       SCRFLD      PRE-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, PRE-DED-CODE
+       RETURNS     DESCRIPTION into PRE-DED-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0025
+       SCRFLD      AFT-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-DED-CODE
+       RETURNS     DESCRIPTION into AFT-DED-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0026
+       SCRFLD      FLEX-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, FLEX-DED-CODE
+       RETURNS     DESCRIPTION into FLEX-DED-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0027
+       SCRFLD      DC-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, DC-DED-CODE
+       RETURNS     DESCRIPTION into DED-CODE-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0028
+       SCRFLD      ATN-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, ATN-DED-CODE
+       RETURNS     DESCRIPTION into ATN-DED-CODE-DESC
+       RETURNS     CHECK-DESC into DED-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCL-R-0029
+       SCRFLD      PAY-CLASS
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01, PAY-CLASS
+       RETURNS     DESCRIPTION into PAY-CLASS-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCL-R-0030
+       SCRFLD      PAY-CLASS-1
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01, PAY-CLASS-1
+       RETURNS     DESCRIPTION into PAY-CLASS-DESC-1
+
+DEFINE RULE
+       ID          BN-PSG-R-0031
+       SCRFLD      PAY-SUM-GRP
+       FILENAME    PAYSUMGRP
+       INDEX       PSGSET1
+       KEYRNG      COMPANY-01, PAY-SUM-GRP
+       RETURNS     DESCRIPTION into PAY-SUM-GRP-DESC
+       RETURNS     CHECK-DESC  into PAY-SUM-CHECK-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-BNC-R-0032
+       SCRFLD      BN-COMPANY
+       FILENAME    BNCOMPANY
+       INDEX       BNCSET1
+       KEYRNG      BN-COMPANY
+       RETURNS     COMPANY into COMPANY-01
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-VSH-R-0033
+       SCRFLD      VEST-SCHED
+       FILENAME    VESTSCHDHD
+       INDEX       VSHSET1
+       KEYRNG      COMPANY-01, VEST-SCHED
+       RETURNS     DESC into VEST-SCHED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DFT-R-0034
+       SCRFLD      DED-TABLE
+       FILENAME    DEDFREQTBL
+       INDEX       DFTSET1
+       KEYRNG      COMPANY-01, DED-TABLE
+       RETURNS     DESC into DED-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-OCC-R-0035
+       SCRFLD      OCCUR-TYPE
+       FILENAME    OCCURTYPE
+       INDEX       OCCSET1
+       KEYRNG      COMPANY-01, OCCUR-TYPE
+       RETURNS     DESC into OCCUR-TYPE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-LTC-R-0036
+       SCRFLD      LETTER-CODE
+       FILENAME    LETTERCODE
+       INDEX       LTCSET1
+       KEYRNG      COMPANY-01, LETTER-CODE, ~ZEROS, ~ZEROS, ~ZEROS, ~ZEROS
+       RETURNS     LETTER-CODE into LETTER-CODE
+
+DEFINE RULE
+       ID          BN-FLP-R-0037
+       SCRFLD      FLEX-PLAN
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01, FLEX-PLAN
+       RETURNS     DESC into FLEX-PLAN-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0038
+       SCRFLD      RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET1
+       KEYRNG      COMPANY-01, RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       RETURNS     PCT-RATE-FLG into PCT-RATE-FLG
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0039
+       SCRFLD      PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+*       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0040
+       SCRFLD      HL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "HL", HL-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0041
+       SCRFLD      DN-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DN", DN-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0042
+       SCRFLD      DI-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DI", DI-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0043
+       SCRFLD      EL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "EL", EL-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0044
+       SCRFLD      DL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DL", DL-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0045
+       SCRFLD      DC-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DC", DC-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0046
+       SCRFLD      DB-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DB", DB-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0047
+       SCRFLD      VA-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "VA", VA-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0048
+       SCRFLD      RS-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "RS", RS-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0049
+       SCRFLD      SB-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "SB", SB-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0050
+       SCRFLD      SP-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "SP", SP-PLAN-CODE
+       RETURNS     DESC into PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PAR-R-0051
+       SCRFLD      PARTICIPANT
+       FILENAME    PARTICIPNT
+       INDEX       PARSET1
+       KEYRNG      COMPANY-01, PARTICIPANT
+       RETURNS     FULL-NAME into PARTICIPANT-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLM-R-0052
+       SCRFLD      PLAN-NAME
+       FILENAME    PLANMASTER
+       INDEX       PLMSET1
+       KEYRNG      COMPANY-01, PLAN-NAME
+       RETURNS     DESCRIPTION into PLAN-NAME-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-BCR-R-0053
+       SCRFLD      INS-CARRIER
+       FILENAME    BNCARRIER  
+       INDEX       BCRSET1
+       KEYRNG      INS-CARRIER
+       RETURNS     NAME into BCR-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0054
+       SCRFLD      AFT-LMT-DED-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-LMT-DED-AMT
+       RETURNS     DESCRIPTION into AFT-LMT-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0055
+       SCRFLD      PRE-DED-CODE-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, PRE-DED-CODE-PER
+       RETURNS     DESCRIPTION into PRE-PCT-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0056
+       SCRFLD      AFT-LMT-DED-PER 
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-LMT-DED-PER 
+       RETURNS     DESCRIPTION into AFT-LMT-PCT-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0057
+       SCRFLD      AFT-DED-CODE-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-DED-CODE-PER
+       RETURNS     DESCRIPTION into AFT-PCT-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0058
+       SCRFLD      CMP-DED-CODE-P 
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, CMP-DED-CODE-P
+       RETURNS     DESCRIPTION into CMP-PCT-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0059
+       SCRFLD      PRE-DED-MTCH-A 
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, PRE-DED-MTCH-A
+       RETURNS     DESCRIPTION into PRE-MTCH-A-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0060
+       SCRFLD      AFT-LMT-MTCH-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-LMT-MTCH-AMT
+       RETURNS     DESCRIPTION into AFT-LMT-MTCH-A-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0061
+       SCRFLD      AFT-DED-MTCH-A
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-DED-MTCH-A
+       RETURNS     DESCRIPTION into AFT-MTCH-A-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0062
+       SCRFLD      PRE-DED-MTCH-P
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, PRE-DED-MTCH-P
+       RETURNS     DESCRIPTION into PRE-MTCH-P-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0063
+       SCRFLD      AFT-LMT-MTCH-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-LMT-MTCH-PER
+       RETURNS     DESCRIPTION into AFT-LMT-MTCH-P-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0064
+       SCRFLD      AFT-DED-MTCH-P
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-DED-MTCH-P
+       RETURNS     DESCRIPTION into AFT-MTCH-P-DED-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PRG-R-0065
+       SCRFLD      RET-GROUP-NAME
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01, RET-GROUP-NAME
+       RETURNS     DESCRIPTION into RETIREE-GROUP-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0066
+       SCRFLD      COVER-RED-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "4 ", COVER-RED-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0067
+       SCRFLD      AGE-CREDIT-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "1 ", AGE-CREDIT-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0068
+       SCRFLD      SALARY-RATE-TABLE     
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "2 ", SALARY-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0069
+       SCRFLD      SERVICE-CREDIT-RATE-TABLE  
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "3 ", SERVICE-CREDIT-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0070
+       SCRFLD      DEPENDENT-RATE-TABLE  
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "5 ", DEPENDENT-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0071
+       SCRFLD      LIFE-STYLE-RATE-TABLE  
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "5 ", LIFE-STYLE-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCL-R-0072
+       SCRFLD      SUB-CLASS
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01, SUB-CLASS
+       RETURNS     DESCRIPTION into SUB-CLASS-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-RTH-R-0073
+       SCRFLD      OPTION-RATE-TABLE    
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, BN-TABLE-TYPE, OPTION-RATE-TABLE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PAT-R-0074
+       SCRFLD      ACTION-CODE
+       FILENAME    PERSACTYPE
+       INDEX       PATSET1
+       KEYRNG      COMPANY-01, ACTION-CODE
+       RETURNS     DESCRIPTION into ACTION-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PLN-R-0075
+       SCRFLD      BEN-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, BN-PLAN-TYPE, BEN-PLAN-CODE
+       RETURNS     DESC into BEN-PLAN-CODE-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PRP-R-0001
+       SCRFLD      PROC-GROUP
+       FILENAME    PRPROCGRP
+       INDEX       PRPSET1
+       KEYRNG      COMPANY-01, PROC-GROUP, ~SPACES
+       RETURNS     PROCESS-LEVEL into PROC-GROUP-NAME
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0076
+       SCRFLD      PRE-DED-CODE-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, PRE-DED-CODE-AMT
+       RETURNS     DESCRIPTION into PRE-DED-AMT-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0077
+       SCRFLD      AFT-DED-CODE-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, AFT-DED-CODE-AMT
+       RETURNS     DESCRIPTION into AFT-DED-AMT-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-DDC-R-0078
+       SCRFLD      COMP-DED-CODE-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, COMP-DED-CODE-AMT
+       RETURNS     DESCRIPTION into COMP-DED-AMT-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCD-R-0079
+       SCRFLD      PAY-CODE     
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01, PAY-CODE, PROCESS-LEVEL, JOB-CODE
+       RETURNS     DESCRIPTION into PAY-CODE-DESC    
+
+DEFINE RULE
+    ID             BN-BCT-R-0001
+    SCRFLD         PLAN-OPTION
+    FILENAME       BNCATEGORY
+    INDEX          BCTSET1
+    KEYRNG         PLAN-TYPE, PLAN-OPTION
+    RETURNS        DESCRIPTION   INTO DESCRIPTION
+
+DEFINE RULE
+       ID          BN-RTH-R-0080
+       SCRFLD      TABLE-CODE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, BN-TABLE-TYPE, TABLE-CODE, START-DATE
+       RETURNS     DESC into RATE-TABLE-DESC
+
+DEFINE RULE
+       ID          BN-BCY-R-0001
+       SCRFLD      CYCLE-PLAN
+       FILENAME    BNCYCLE
+       INDEX       BCYSET1
+       KEYRNG      COMPANY-01, CYCLE-PLAN, CYCLE-EFFECTIVE-DATE, CYCLE-FREQ
+       RETURNS     DESCRIPTION into   CYCLE-PLAN-DESC
+
+DEFINE RULE
+       ID          BN-EMP-R-0015
+       SCRFLD      EMPLOYEE-NAME
+       FILENAME    EMPALTNAME
+       INDEX       EANSET1 
+       KEYRNG      COMPANY-01, EMPLOYEE
+       RETURNS     FULL-NAME into EMPLOYEE-NAME
+
+*** FUNCTIONS ***
+
+
+DEFINE FUNCTION    CPY-P-CHART()
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      COMPANY-01                     
+       RETURNS     CHART-NAME 
+
+DEFINE RULE
+    ID              BN-INT-R-0001
+    SCRFLD          COUNTRY-CODE
+    FILENAME        INSTCTRYCD
+    INDEX           INTSET1
+    KEYRNG          @CURSCRFLD
+    RETURNS         COUNTRY-DESC INTO COUNTRY-DESCRIPTION
+
+DEFINE RULE
+    ID              BN-CUC-R-0001
+    SCRFLD          CURRENCY-CODE-98
+    FILENAME        CUCODES 
+    INDEX           CUCSET1
+    KEYRNG          @CURSCRFLD
+    RETURNS         DESCRIPTION   INTO CURRENCY-DESCRIPTION-98D
+    RETURNS         NBR-DECIMALS  INTO CURR-CODE-ND-98
+    RETURNS         FORMS-EXP     INTO FORMS-EXP-98
+    REQUIRED
+
+DEFINE RULE
+    ID              BN-CUC-R-0021
+    SCRFLD          BROKER          
+    FILENAME        BNBROKER
+    INDEX           BRKSET1
+    KEYRNG          BROKER    
+    RETURNS         NAME          INTO BROKER-NAME
+
+DEFINE RULE
+       ID          BN-PCO-R-0019
+       SCRFLD      HIPAA-REASON                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "BT", HIPAA-REASON
+       RETURNS     DESCRIPTION into   HIPAA-REASON-DESC
+       REQUIRED
+
+DEFINE RULE
+       ID          BN-PCO-R-0020
+       SCRFLD      TA-LEAVE-REASON
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "LR", TA-LEAVE-REASON
+       RETURNS     CODE into TA-LEAVE-REASON
+       REQUIRED
+
+DEFINE RULE
+       ID           BN-BN3-R-0000
+       SCRFLD       BN3-TOPIC
+       FILENAME     BNREGDICT
+       INDEX        BN3SET2
+       KEYRNG       COUNTRY-CODE, BN3-TOPIC-TYPE, BN3-TOPIC
+       RETURNS      TOPIC INTO BN3-TOPIC
+       RETURNS      NAME INTO BN3-TOPIC-NAME
+
+DEFINE RULE
+       ID           BN-BN3-R-0001
+       SCRFLD       BN3-FLD-NBR
+       FILENAME     BNREGDICT
+       INDEX        BN3SET3
+       KEYRNG       COUNTRY-CODE, BN3-TOPIC-TYPE, BN3-TOPIC, BN3-TOPIC-NAME, BN3-FLD-NBR
+       RETURNS      FLD-NBR INTO BN3-FLD-NBR
+       RETURNS      NAME INTO BN3-FLD-NAME
+
+DEFINE RULE
+       ID           BN-BN3-R-0003
+       SCRFLD       BN3-FLD-NBR
+       FILENAME     BNREGDICT
+       INDEX        BN3SET3
+       KEYRNG       COUNTRY-CODE, BN3-TOPIC-TYPE, BN3-TOPIC, BN3-TOPIC-NAME, BN3-FLD-NBR
+       RETURNS      FLD-NBR INTO BN3-FLD-NBR
+       RETURNS      NAME INTO BN3-FLD-NAME
+
+       DEFINE RULE
+       ID           BN-PP5-R-0001
+       SCRFLD       IRS-OBJ-ID
+       FILENAME     BN1095HDR
+       INDEX        PP5SET1
+       KEYRNG       COMPANY-01, YEAR, IRS-OBJ-ID
+       RETURNS      IRS-OBJ-ID INTO IRS-OBJ-ID
+       RETURNS      IRS-RECPT-ID INTO IRS-RECPT-ID
+
+DEFINE RULE
+       ID           BN-GHR-R-0001
+       SCRFLD       GHR-PLAN-CODE 
+       FILENAME     GHRHDRDATA
+       INDEX        GHRSET1
+       KEYRNG       COMPANY-01, "BN", "DC", GHR-PLAN-CODE, ~ZEROS
+       RETURNS      CODE INTO GHR-PLAN-CODE
+
+****   Reapplied custom code after 9.0.1 Upgrade - M. Hunter - ACS 8/23/11
+****   Begin 8/23/11 - M. Hunter
+
+DEFINE RULE
+       ID          BN-PCO-R-0032
+       SCRFLD      EMP-USER-FIELD
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      HR-TYPE, EMP-USER-FIELD 
+       RETURNS     DESCRIPTION into   EMP-USER-FIELD-DESC
+
+DEFINE RULE
+       ID          BN-PCO-R-0094
+       SCRFLD      EMP-USER-FIELD-94
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      HR-TYPE, EMP-USER-FIELD-94
+       RETURNS     DESCRIPTION into   EMP-USER-FIELD-DESC
+
+DEFINE RULE
+       ID          BN-PCO-R-0095
+       SCRFLD      EMP-USER-FIELD-95
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      HR-TYPE, EMP-USER-FIELD-95 
+       RETURNS     DESCRIPTION into   EMP-USER-FIELD-DESC
+
+DEFINE RULE
+       ID          BN-WPC-0001
+       SCRFLD      BN-CRPVESTING
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "CRPVESTING", BN-CRPVESTING 
+       RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+
+DEFINE RULE
+       ID          BN-WPC-0002
+       SCRFLD      BN-NONPARTRSN
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "NONPARTRSN", BN-NONPARTRSN
+       RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+
+DEFINE RULE
+       ID          BN-WPC-0003
+       SCRFLD      BN-SRAVESTING
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "SRAVESTING", BN-SRAVESTING 
+       RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+
+DEFINE RULE
+       ID          BN-WQH-0001
+       SCRFLD      WQH-EMPLOYER 
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET1
+       KEYRNG      COMPANY-01, WQH-EMPLOYER, ~ZEROS, ~ZEROS, ~SPACES, ~ZEROS, ~ZEROS
+       RETURNS     PROCESS-LEVEL into WQH-EMPLOYER
+
+DEFINE RULE
+       ID          BN-WQH-0002
+       SCRFLD      WQH-DATE       
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET2
+       KEYRNG      COMPANY-01, WQH-DATE, ~ZEROS, ~SPACES, ~ZEROS, ~ZEROS, ~SPACES
+       RETURNS     DATE      into WQH-DATE
+
+DEFINE RULE
+       ID          BN-WQH-0003
+       SCRFLD      WQH-EMPLOYEE   
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET3
+       KEYRNG      COMPANY-01, WQH-EMPLOYEE, ~ZEROS, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES
+       RETURNS     EMPLOYEE  into WQH-EMPLOYEE
+
+DEFINE RULE
+       ID          BN-WQH-0004
+       SCRFLD      WQH-PART       
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET4
+       KEYRNG      COMPANY-01, WQH-PART, ~ZEROS, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES
+       RETURNS     PARTICIPNT into WQH-PART
+
+DEFINE RULE
+       ID          BN-WQH-0006
+       SCRFLD      WQH-USER   
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET6
+       KEYRNG      COMPANY-01, WQH-USER, ~ZEROS, ~ZEROS, ~ZEROS, ~ZEROS, ~SPACES
+       RETURNS     USER-ID  into WQH-USER
+
+
+DEFINE RULE
+       ID          BN-WPC-0011
+       SCRFLD      PNREVRSN      
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "BENREVRSN ", PNREVRSN 
+       RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+
+DEFINE RULE
+       ID          BN-WPC-0010
+       SCRFLD      PNSTOPRSN    
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "BENSTPRSN ", PNSTOPRSN     
+       RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+
+**** End 8/23/11 - M. Hunter
+
+*** SELECTS ***
+
+DEFINE SELECT      "Company"
+       ID          BN-PRS-S-0001
+       SCRFLD      COMPANY-01
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       NXTKEY      COMPANY-01
+       CONDITION   COMPANY
+       DSPFLDS     COMPANY, NAME
+       RETURNS     COMPANY
+
+*DEFINE SELECT      "Project"
+*       ID          BN-STP-S-0002
+*       SCRFLD      PROJECT
+*       FILENAME    SUMMTYPE
+*       INDEX       STPSET1
+*       KEYRNG      COMPANY-01
+*       NXTKEY      PROJECT
+*       DSPFLDS     SUMMARY-TYPE, DESCRIPTION
+*       RETURNS     SUMMARY-TYPE
+
+DEFINE SELECT      "Distribution Company"
+       ID          BN-GLS-S-0004
+       SCRFLD      EXP-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       NXTKEY      EXP-DIST-CO
+       DSPFLDS     COMPANY, NAME
+       RETURNS     COMPANY
+
+DEFINE SELECT   "Distribution Company"
+    ID          BN-GLS-S-0117
+    SCRFLD      CL-DIST-CO
+    FILENAME    GLSYSTEM
+    INDEX       GLSSET1
+    NXTKEY      CL-DIST-CO
+    DSPFLDS     COMPANY, NAME
+    RETURNS     COMPANY
+
+DEFINE SELECT   "Distribution Company"
+    ID          BN-GLS-S-0118
+    SCRFLD      ES-DIST-CO
+    FILENAME    GLSYSTEM
+    INDEX       GLSSET1
+    NXTKEY      ES-DIST-CO
+    DSPFLDS     COMPANY, NAME
+    RETURNS     COMPANY
+
+DEFINE SELECT      "Accounting Unit"
+       ID          BN-GLN-S-0001
+       SCRFLD      ACCOUNT-UNIT-02
+       FILENAME    GLNAMES
+       INDEX       GLNSET1
+       KEYRNG      EXP-DIST-CO
+       NXTKEY      @CURSCRFLD
+       DSPFLDS     ACCT-UNIT, DESCRIPTION
+       RETURNS     ACCT-UNIT into ACCOUNT-UNIT-02
+
+DEFINE SELECT      "Accounting Unit"
+       ID          BN-GLN-S-0002
+       SCRFLD      CL-ACCT-UNIT
+       FILENAME    GLNAMES
+       INDEX       GLNSET1
+       KEYRNG      CL-DIST-CO
+       NXTKEY      @CURSCRFLD
+       DSPFLDS     ACCT-UNIT, DESCRIPTION
+       RETURNS     ACCT-UNIT into CL-ACCT-UNIT
+
+DEFINE SELECT      "Accounting Unit"
+       ID          BN-GLN-S-0003
+       SCRFLD      ES-ACCT-UNIT
+       FILENAME    GLNAMES
+       INDEX       GLNSET1
+       KEYRNG      ES-DIST-CO
+       NXTKEY      @CURSCRFLD
+       DSPFLDS     ACCT-UNIT, DESCRIPTION
+       RETURNS     ACCT-UNIT into ES-ACCT-UNIT
+
+DEFINE SELECT      "Account Number within Account Unit"
+       ID          BN-GLM-S-0007
+       SCRFLD      ACCOUNT-04, SUB-ACCOUNT-05
+       FILENAME    GLMASTER
+       INDEX       GLMSET2
+       KEYRNG      EXP-DIST-CO, ACCOUNT-UNIT-02
+       NXTKEY      ACCOUNT-04, SUB-ACCOUNT-05
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCT-DESC
+       RETURNS     ACCOUNT into ACCOUNT-04
+       RETURNS     SUB-ACCOUNT into SUB-ACCOUNT-05
+
+DEFINE SELECT      "Account Number within Account Unit"
+       ID          BN-GLM-S-0002
+       SCRFLD      CL-ACCOUNT, CL-SUB-ACCT    
+       FILENAME    GLMASTER
+       INDEX       GLMSET2
+       KEYRNG      CL-DIST-CO, CL-ACCT-UNIT   
+       NXTKEY      CL-ACCOUNT, CL-SUB-ACCT    
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCT-DESC
+       RETURNS     ACCOUNT into CL-ACCOUNT
+       RETURNS     SUB-ACCOUNT into CL-SUB-ACCT
+
+DEFINE SELECT      "Account Number within Account Unit"
+       ID          BN-GLM-S-0003
+       SCRFLD      ES-ACCOUNT, ES-SUB-ACCT    
+       FILENAME    GLMASTER
+       INDEX       GLMSET2
+       KEYRNG      ES-DIST-CO, ES-ACCT-UNIT   
+       NXTKEY      ES-ACCOUNT, ES-SUB-ACCT    
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCT-DESC
+       RETURNS     ACCOUNT into ES-ACCOUNT
+       RETURNS     SUB-ACCOUNT into ES-SUB-ACCT
+
+DEFINE SELECT      "Existing Accounts"
+       ID          BN-GLM-S-0004
+       SCRFLD      ACCOUNT-04, SUB-ACCOUNT-05 
+       FILENAME    GLMASTER
+       INDEX       GLMSET3
+       KEYRNG      EXP-DIST-CO                 
+       NXTKEY      ACCOUNT-04, SUB-ACCOUNT-05
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCT-DESC
+       RETURNS     ACCOUNT into ACCOUNT-04
+       RETURNS     SUB-ACCOUNT into SUB-ACCOUNT-05
+
+
+DEFINE SELECT      "Existing Accounts"
+       ID          BN-GLM-S-0005
+       SCRFLD      CL-ACCOUNT, CL-SUB-ACCT 
+       FILENAME    GLMASTER
+       INDEX       GLMSET3
+       KEYRNG      CL-DIST-CO              
+       NXTKEY      CL-ACCOUNT, CL-SUB-ACCT
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCT-DESC
+       RETURNS     ACCOUNT into CL-ACCOUNT
+       RETURNS     SUB-ACCOUNT into CL-SUB-ACCT
+
+DEFINE SELECT      "Existing Accounts"
+       ID          BN-GLM-S-0006
+       SCRFLD      ES-ACCOUNT, ES-SUB-ACCT
+       FILENAME    GLMASTER
+       INDEX       GLMSET3
+       KEYRNG      ES-DIST-CO              
+       NXTKEY      ES-ACCOUNT, ES-SUB-ACCT
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCT-DESC
+       RETURNS     ACCOUNT into ES-ACCOUNT
+       RETURNS     SUB-ACCOUNT into ES-SUB-ACCT
+
+DEFINE SELECT      "Chart of Accounts"
+       ID          BN-GDT-S-0001
+       SCRFLD      ACCOUNT-04, SUB-ACCOUNT-05 
+       FILENAME    GLCHARTDTL
+       INDEX       GDTSET2
+       KEYRNG      CPY-P-CHART()              
+       NXTKEY      ACCOUNT-04, SUB-ACCOUNT-05
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCOUNT-DESC=30
+       RETURNS     ACCOUNT into ACCOUNT-04
+       RETURNS     SUB-ACCOUNT into SUB-ACCOUNT-05
+
+DEFINE SELECT      "Chart of Accounts"
+       ID          BN-GDT-S-0002
+       SCRFLD      CL-ACCOUNT, CL-SUB-ACCT 
+       FILENAME    GLCHARTDTL
+       INDEX       GDTSET2
+       KEYRNG      CPY-P-CHART()           
+       NXTKEY      CL-ACCOUNT, CL-SUB-ACCT
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCOUNT-DESC=30
+       RETURNS     ACCOUNT into CL-ACCOUNT
+       RETURNS     SUB-ACCOUNT into CL-SUB-ACCT
+
+DEFINE SELECT      "Chart of Accounts"
+       ID          BN-GDT-S-0003
+       SCRFLD      ES-ACCOUNT, ES-SUB-ACCT
+       FILENAME    GLCHARTDTL
+       INDEX       GDTSET2
+       KEYRNG      CPY-P-CHART()           
+       NXTKEY      ES-ACCOUNT, ES-SUB-ACCT
+       DSPFLDS     ACCOUNT, SUB-ACCOUNT, ACCOUNT-DESC=30
+       RETURNS     ACCOUNT into ES-ACCOUNT
+       RETURNS     SUB-ACCOUNT into ES-SUB-ACCT
+
+DEFINE SELECT      "Process Level"
+       ID          BN-PRS-S-0007
+       SCRFLD      HR-PROCESS-LEVEL
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      HR-PROCESS-LEVEL
+       CONDITION   PROCESS-LEVEL
+       DSPFLDS     PROCESS-LEVEL:"Process Level", NAME:"Description", ACTIVE-FLAG:"Status"
+       RETURNS     PROCESS-LEVEL
+
+DEFINE SELECT      "Canada Payroll Account Number"
+       ID          PR-PBG-S-0001
+       SCRFLD      BUS-NBR-GRP
+       FILENAME    PRBUSGRP
+       INDEX       PBGSET1
+       KEYRNG      COMPANY-01
+       CONDITION   PROCESS-LEVEL
+       DSPFLDS     COMPANY:"Company", PROCESS-LEVEL:"Process Level", BUS-NBR-GRP:"Group", BUS-NBR:"PR Acct Nbr"
+       RETURNS     BUS-NBR-GRP INTO BUS-NBR-GRP
+       RETURNS     PROCESS-LEVEL INTO PROCESS-LEVEL
+
+DEFINE SELECT      "Quebec Enterprise Number"
+       ID          PR-PQC-S-0001
+       SCRFLD      QC-ENT-NBR-GRP
+       FILENAME    PRQCENTGRP
+       INDEX       PQCSET1
+       KEYRNG      COMPANY-01
+       CONDITION   PROCESS-LEVEL
+       DSPFLDS     COMPANY:"Company", PROCESS-LEVEL:"Process Level", QC-ENT-NBR-GRP:"Group", QC-ENT-NBR:"Enterprise Nbr"
+       RETURNS     QC-ENT-NBR-GRP INTO QC-ENT-NBR-GRP
+       RETURNS     PROCESS-LEVEL INTO PROCESS-LEVEL
+
+DEFINE SELECT      "Process Level"
+       ID          BN-PRS-S-0017
+       SCRFLD      MIMIC-PROCESS-LEVEL, HEAD-PROC-LEV
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      MIMIC-PROCESS-LEVEL
+       CONDITION   PROCESS-LEVEL
+       DSPFLDS     PROCESS-LEVEL:"PL", NAME:"Description", ACTIVE-FLAG:"Status", CURRENCY-CODE:"Currency", PL-OPTION=3:"Indep"
+       RETURNS     PROCESS-LEVEL
+
+DEFINE SELECT      "Department"
+       ID          BN-DPT-S-0008
+       SCRFLD      DEPARTMENT
+       FILENAME    DEPTCODE
+       INDEX       DPTSET1
+       KEYRNG      COMPANY-01, HR-PROCESS-LEVEL
+       NXTKEY      DEPARTMENT
+       DSPFLDS     DEPARTMENT:"Department", NAME:"Description",ACTIVE-FLAG:"Status"
+       RETURNS     DEPARTMENT
+
+DEFINE SELECT      "Supervisor"
+       ID          BN-HSU-S-0009
+       SCRFLD      SUPERVISOR
+       FILENAME    HRSUPER
+       INDEX       HSUSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      SUPERVISOR
+       DSPFLDS     CODE, DESCRIPTION, SHRT-NAME-COND
+       RETURNS     CODE
+
+DEFINE SELECT      "Employee Status"
+       ID          BN-EMS-S-0010
+       SCRFLD      EMP-STATUS
+       FILENAME    EMSTATUS
+       INDEX       EMSSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      EMP-STATUS
+       CONDITION   EMPLOYEE
+       DSPFLDS     EMP-STATUS:"Status", DESCRIPTION:"Description",ACTIVE-FLAG:"Code Status",PAY-STATUS:"Pay Status"
+       RETURNS     EMP-STATUS
+
+DEFINE SELECT      "Location"
+       ID          BN-PCO-S-0011
+       SCRFLD      LOCAT-CODE                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "LO"
+       NXTKEY      LOCAT-CODE
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE
+
+DEFINE SELECT      "Relationship"
+       ID          BN-PCO-S-0012
+       SCRFLD      RELAT-CODE                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "DP"
+       NXTKEY      RELAT-CODE
+       CONDITION   BENEFICIARY
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE
+
+DEFINE SELECT      "User-defined Level"
+       ID          BN-PCO-S-0013
+       SCRFLD      USER-LEVEL                  
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "UL"
+       NXTKEY      USER-LEVEL
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE
+
+DEFINE SELECT      "Employee - By Name"
+       ID          BN-EMP-S-0015
+       SCRFLD      EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET6
+       KEYRNG      COMPANY-01
+       DSPFLDS     LAST-NAME-UC:"Last Name",FIRST-NAME-UC:"First Name",MIDDLE-INIT:"Middle Initial", EMPLOYEE:"Employee", FICA-NBR:"Social Nbr"
+       FNDFLDS     PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Number"
+       ID          BN-EMP-S-0014
+       SCRFLD      EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      EMPLOYEE
+       DSPFLDS     EMPLOYEE:"Employee", SHORT-NAME:"Name", FICA-NBR:"Social Nbr"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Process Level/Dept"
+       ID          BN-EMP-S-0016
+       SCRFLD      EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET2
+       KEYRNG      COMPANY-01
+       DSPFLDS     PROCESS-LEVEL:"P/L", DEPARTMENT:"Dept", EMPLOYEE:"Employee", SHORT-NAME:"Name"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Social Nbr"
+       ID          BN-EMP-S-0017
+       SCRFLD      EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET4
+       KEYRNG      COMPANY-01
+       DSPFLDS     FICA-NBR:"Social Nbr", EMPLOYEE:"Employee", SHORT-NAME:"Name"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Employee Group"
+       ID          BN-PGE-S-0018
+       SCRFLD      EMPLOYEE
+       FILENAME    PGEMPLOYEE
+       INDEX       PGESET1
+       KEYRNG      COMPANY-01
+       DSPFLDS     GROUP-NAME:"Emp Group", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Location"
+       ID          BN-PTF-S-0019
+       SCRFLD      EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0017"
+       DSPFLDS     FLD-VALUE:"Location", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By User Level"
+       ID          BN-PTF-S-0023
+       SCRFLD      EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0016"
+       DSPFLDS     FLD-VALUE:"User Lev", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Job Code"
+       ID          BN-PTF-S-0021
+       SCRFLD      EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0019"
+       DSPFLDS     FLD-VALUE:"Job Code", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Supervisor"
+       ID          BN-PTF-S-0022
+       SCRFLD      EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0018"
+       DSPFLDS     FLD-VALUE:"Supervisor", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Retiree - By Name"
+       ID          BN-EMP-S-0024
+       SCRFLD      RET-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET6
+       KEYRNG      COMPANY-01
+       CONDITION   RETIRED
+       DSPFLDS     LAST-NAME-UC:"Last Name",FIRST-NAME-UC:"First Name",MIDDLE-INIT:"Middle Initial",EMP-STATUS:"Status",PAEMPLOYEE.CUR-AGE:"Age",
+                   TERM-DATE:"Term Date"
+       FNDFLDS     EMPLOYEE, PROCESS-LEVEL, DEPARTMENT, PAEMPLOYEE.LOCAT-CODE, USER-LEVEL
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Retiree - By Number"
+       ID          BN-EMP-S-0023
+       SCRFLD      RET-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      RET-EMPLOYEE
+       CONDITION   RETIRED
+       DSPFLDS     SHORT-NAME:"Name",EMP-STATUS:"Status",PAEMPLOYEE.CUR-AGE:"Age",
+                   TERM-DATE:"Term Date"
+       FNDFLDS     EMPLOYEE, LAST-NAME-UC, FIRST-NAME-UC, PROCESS-LEVEL, DEPARTMENT,
+                   PAEMPLOYEE.LOCAT-CODE, USER-LEVEL
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Name"
+       ID          BN-EMP-S-0026
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET6
+       KEYRNG      COMPANY-01
+       DSPFLDS     LAST-NAME-UC:"Last Name",FIRST-NAME-UC:"First Name",MIDDLE-INIT:"Middle Initial", EMPLOYEE:"Employee", FICA-NBR:"Social Nbr"
+       FNDFLDS     PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Number"
+       ID          BN-EMP-S-0025
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      EMPLOYEE
+       DSPFLDS     EMPLOYEE:"Employee", SHORT-NAME:"Name", FICA-NBR:"Social Nbr"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Process Level/Dept"
+       ID          BN-EMP-S-0027
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET2
+       KEYRNG      COMPANY-01
+       DSPFLDS     PROCESS-LEVEL:"P/L", DEPARTMENT:"Dept", EMPLOYEE:"Employee", SHORT-NAME:"Name"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Social Nbr"
+       ID          BN-EMP-S-0028
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET4
+       KEYRNG      COMPANY-01
+       DSPFLDS     FICA-NBR:"Social Nbr", EMPLOYEE:"Employee", SHORT-NAME:"Name"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Employee Group"
+       ID          BN-PGE-S-0019
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    PGEMPLOYEE
+       INDEX       PGESET1
+       KEYRNG      COMPANY-01
+       DSPFLDS     GROUP-NAME:"Emp Group", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Location"
+       ID          BN-PTF-S-0024
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0017"
+       DSPFLDS     FLD-VALUE:"Location", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By User Level"
+       ID          BN-PTF-S-0025
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0016"
+       DSPFLDS     FLD-VALUE:"User Lev", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Job Code"
+       ID          BN-PTF-S-0026
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0019"
+       DSPFLDS     FLD-VALUE:"Job Code", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Supervisor"
+       ID          BN-PTF-S-0029
+       SCRFLD      BEG-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0018"
+       DSPFLDS     FLD-VALUE:"Supervisor", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Name"
+       ID          BN-EMP-S-0019
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET6
+       KEYRNG      COMPANY-01
+       DSPFLDS     LAST-NAME-UC:"Last Name",FIRST-NAME-UC:"First Name",MIDDLE-INIT:"Middle Initial",EMPLOYEE:"Employee", FICA-NBR:"Social Nbr"
+       FNDFLDS     PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Number"
+       ID          BN-EMP-S-0018
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      EMPLOYEE
+       DSPFLDS     EMPLOYEE:"Employee", SHORT-NAME:"Name", FICA-NBR:"Social Nbr"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Process Level/Dept"
+       ID          BN-EMP-S-0020
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET2
+       KEYRNG      COMPANY-01
+       DSPFLDS     PROCESS-LEVEL:"P/L", DEPARTMENT:"Dept", EMPLOYEE:"Employee", SHORT-NAME:"Name"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Social Nbr"
+       ID          BN-EMP-S-0021
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET4
+       KEYRNG      COMPANY-01
+       DSPFLDS     FICA-NBR:"Social Nbr", EMPLOYEE:"Employee", SHORT-NAME:"Name"
+       FNDFLDS     LAST-NAME-UC,FIRST-NAME-UC,PROCESS-LEVEL,DEPARTMENT,PAEMPLOYEE.LOCAT-CODE,
+                   USER-LEVEL,EMP-STATUS,SUPERVISOR,SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Employee Group"
+       ID          BN-PGE-S-0020
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    PGEMPLOYEE
+       INDEX       PGESET1
+       KEYRNG      COMPANY-01
+       DSPFLDS     GROUP-NAME:"Emp Group", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Location"
+       ID          BN-PTF-S-0027
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0017"
+       DSPFLDS     FLD-VALUE:"Location", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By User Level"
+       ID          BN-PTF-S-0020
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0016"
+       DSPFLDS     FLD-VALUE:"User Lev", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Job Code"
+       ID          BN-PTF-S-0028
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0019"
+       DSPFLDS     FLD-VALUE:"Job Code", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Employee - By Supervisor"
+       ID          BN-PTF-S-0030
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    PATHFIND
+       INDEX       PTFSET2
+       KEYRNG      COMPANY-01, "0018"
+       DSPFLDS     FLD-VALUE:"Supervisor", EMPLOYEE:"Employee", EMPLOYEE.SHORT-NAME:"Name"
+       FNDFLDS     EMPLOYEE.LAST-NAME-UC,EMPLOYEE.FIRST-NAME-UC,EMPLOYEE.PROCESS-LEVEL,EMPLOYEE.DEPARTMENT,PA-EMPLOYEE.LOCAT-CODE,
+                   EMPLOYEE.USER-LEVEL,EMPLOYEE.EMP-STATUS,EMPLOYEE.SUPERVISOR,EMPLOYEE.SALARY-CLASS
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "Dependents"
+       ID          BN-EMD-S-0025
+       SCRFLD      DEPENDENT-NBR
+       FILENAME    EMDEPEND
+       INDEX       EMDSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+       NXTKEY      DEPENDENT-NBR        
+       DSPFLDS     LABEL-NAME-1,REL-CODE.DESCRIPTION, SEQ-NBR, ACTIVE-FLAG
+       FNDFLDS     LAST-NAME,FIRST-NAME,BIRTHDATE,REL-CODE,SEQ-NBR
+       RETURNS     SEQ-NBR
+
+DEFINE SELECT      "All Employee Groups"
+       ID          BN-PRG-S-0026
+       SCRFLD      EMPLOYEE-GROUP
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      EMPLOYEE-GROUP
+       DSPFLDS     GROUP-NAME:"Group", DESCRIPTION:"Description",ACTIVE-FLAG:"Active"
+       RETURNS     GROUP-NAME 
+
+DEFINE SELECT      "Active Employee Groups"
+       ID          BN-PRG-S-0027
+       SCRFLD      EMPLOYEE-GROUP
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      EMPLOYEE-GROUP
+       CONDITION   ACTIVE
+       DSPFLDS     GROUP-NAME:"Group", DESCRIPTION:"Description",ACTIVE-FLAG:"Active"
+       RETURNS     GROUP-NAME
+
+DEFINE SELECT      "Deduction Class"
+       ID          BN-DCL-S-0027
+       SCRFLD      DED-CLASS
+       FILENAME    DCCLASS
+       INDEX       DCLSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      DED-CLASS
+       DSPFLDS     DED-CLASS, DESCRIPTION
+       RETURNS     DED-CLASS
+
+DEFINE SELECT      "Deduction Class"
+       ID          BN-DCL-S-0028
+       SCRFLD      DED-CLASS-1
+       FILENAME    DCCLASS
+       INDEX       DCLSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      DED-CLASS-1
+       DSPFLDS     DED-CLASS, DESCRIPTION
+       RETURNS     DED-CLASS
+
+DEFINE SELECT      "Deduction Code"
+       ID          BN-DDC-S-0029
+       SCRFLD      DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      DED-CODE
+       DSPFLDS     DED-CODE, DESCRIPTION
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS, ADJUST-PAY
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0030
+       SCRFLD      COMP-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      COMP-DED-CODE
+       CONDITION   COMPANY-PAID
+       DSPFLDS     DED-CODE, DESCRIPTION
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Pretax Deductions"
+       ID          BN-DDC-S-0031
+       SCRFLD      PRE-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PRE-DED-CODE
+       CONDITION   PRE-TAX
+       DSPFLDS     DED-CODE, DESCRIPTION
+       FNDFLDS     DED-CLASS, REQ-CODE
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0032
+       SCRFLD      AFT-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-DED-CODE
+       CONDITION   AFTER-TAX
+       DSPFLDS     DED-CODE, DESCRIPTION
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0033
+       SCRFLD      FLEX-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      FLEX-DED-CODE
+       CONDITION   FLEX-DED-CODE
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0034
+       SCRFLD      DC-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      DC-DED-CODE
+       CONDITION   EMPLOYEE-PAID
+       DSPFLDS     DED-CODE, DESCRIPTION
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Add-to-Net Deductions"
+       ID          BN-DDC-S-0035
+       SCRFLD      ATN-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      ATN-DED-CODE
+       CONDITION   ADD-TO-NET
+       DSPFLDS     DED-CODE, DESCRIPTION
+       FNDFLDS     DED-CLASS, REQ-CODE
+       RETURNS     DED-CODE
+      
+DEFINE SELECT      "Employee Deduction"
+       ID          BN-EDM-S-0036
+       SCRFLD      EMP-DED-CODE
+       FILENAME    EMDEDMASTR
+       INDEX       EDMSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+       NXTKEY      EMP-DED-CODE
+       DSPFLDS     DED-CODE, DEDUCTION-CODE.DESCRIPTION
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Pay Class"
+       ID          BN-PCL-S-0037
+       SCRFLD      PAY-CLASS
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-CLASS
+       DSPFLDS     PAY-CLASS, DESCRIPTION
+       RETURNS     PAY-CLASS
+
+DEFINE SELECT      "Pay Class"
+       ID          BN-PCL-S-0038
+       SCRFLD      PAY-CLASS-1
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-CLASS-1
+       DSPFLDS     PAY-CLASS, DESCRIPTION
+       RETURNS     PAY-CLASS
+
+DEFINE SELECT      "Pay Summary Group"
+       ID          BN-PSG-S-0039
+       SCRFLD      PAY-SUM-GRP
+       FILENAME    PAYSUMGRP
+       INDEX       PSGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-SUM-GRP
+       DSPFLDS     PAY-SUM-GRP, DESCRIPTION
+       RETURNS     PAY-SUM-GRP
+
+DEFINE SELECT      "Pay Code"
+       ID          BN-PCD-S-0040
+       SCRFLD      PAY-CODE
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-CODE
+       DSPFLDS     PAY-CODE:"Pay Code", DESCRIPTION, JOB-CODE:"Job Code",
+                   PROCESS-LEVEL:"Proc Lev", ACTIVE-FLAG:"Status"
+       RETURNS     PAY-CODE
+       RETURNS     DESCRIPTION into PAY-CODE-DESC
+
+DEFINE SELECT      "Active Pay Code"
+       ID          BN-PCD-S-0041
+       SCRFLD      PAY-CODE
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-CODE
+       CONDITION   ACTIVE-PAYCODE
+       DSPFLDS     PAY-CODE:"Pay Code", DESCRIPTION, JOB-CODE:"Job Code",
+                   PROCESS-LEVEL:"Proc Lev", ACTIVE-FLAG:"Status"
+       RETURNS     PAY-CODE
+       RETURNS     DESCRIPTION into PAY-CODE-DESC
+
+DEFINE SELECT      "Benefits Company"
+       ID          BN-BNC-S-0041
+       SCRFLD      BN-COMPANY
+       FILENAME    BNCOMPANY
+       INDEX       BNCSET1
+       DSPFLDS     COMPANY, PR-COMPANY.NAME
+       RETURNS     COMPANY
+
+DEFINE SELECT      "COBRA Occurrence Type"
+       ID          BN-OCC-S-0042
+       SCRFLD      OCCUR-TYPE
+       FILENAME    OCCURTYPE
+       INDEX       OCCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      OCCUR-TYPE
+       DSPFLDS     OCCUR-TYPE, DESC
+       RETURNS     OCCUR-TYPE
+
+DEFINE SELECT      "Flex Plan"
+       ID          BN-FLP-S-0043
+       SCRFLD      FLEX-PLAN
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      FLEX-PLAN
+       DSPFLDS     FLEX-PLAN, DESC, CURRENCY-CODE
+       RETURNS     FLEX-PLAN
+
+*DEFINE SELECT      "Flexible Benefits Plan Year"
+*       ID          BN-FLD-S-0044
+*       SCRFLD      FLEX-START-DATE
+*       FILENAME    FLEXDOLLAR
+*       INDEX       FLDSET2
+*       KEYRNG      COMPANY-01, FLEX-PLAN
+*       NXTKEY      FLEX-START-DATE
+*       DSPFLDS     FLEXIBLE-PLAN.DESC, START-DATE
+*       RETURNS     START-DATE
+
+DEFINE SELECT      "Rate Table"
+       ID          BN-RTH-S-0045
+       SCRFLD      RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, TABLE-TYPE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Vesting Schedule"
+       ID          BN-VSH-S-0046
+       SCRFLD      VEST-SCHED
+       FILENAME    VESTSCHDHD
+       INDEX       VSHSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      VEST-SCHED
+       DSPFLDS     VEST-SCHED, DESC
+       RETURNS     VEST-SCHED
+
+DEFINE SELECT      "Deduction Frequency Table"
+       ID          BN-DFT-S-0047
+       SCRFLD      DED-TABLE
+       FILENAME    DEDFREQTBL
+       INDEX       DFTSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      DED-TABLE
+       DSPFLDS     TABLE-CODE, DESC
+       RETURNS     TABLE-CODE
+
+DEFINE SELECT      "Letter Code"
+       ID          BN-LTC-S-0048
+       SCRFLD      LETTER-CODE
+       FILENAME    LETTERCODE
+       INDEX       LTCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      LETTER-CODE
+       CONDITION   STANDARD
+       DSPFLDS     LETTER-CODE
+       RETURNS     LETTER-CODE
+
+DEFINE SELECT      "Benefit Plan"
+       ID          BN-PLN-S-0049
+       SCRFLD      BN-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Benefit Plan"
+       ID          BN-PLN-S-0050
+       SCRFLD      PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE
+       NXTKEY      PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Health"
+       ID          BN-PLN-S-0051
+       SCRFLD      HL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "HL"
+       NXTKEY      HL-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Dental"
+       ID          BN-PLN-S-0052
+       SCRFLD      DN-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DN"
+       NXTKEY      DN-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Disability"
+       ID          BN-PLN-S-0053
+       SCRFLD      DI-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DI"
+       NXTKEY      DI-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Employee Life"
+       ID          BN-PLN-S-0054
+       SCRFLD      EL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "EL"
+       NXTKEY      EL-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Dependent Life"
+       ID          BN-PLN-S-0055
+       SCRFLD      DL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DL"
+       NXTKEY      DL-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Defined Contribution"
+       ID          BN-PLN-S-0056
+       SCRFLD      DC-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DC"
+       NXTKEY      DC-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Defined Benefit"
+       ID          BN-PLN-S-0057
+       SCRFLD      DB-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DB"
+       NXTKEY      DB-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Vacation Buy/Sell"
+       ID          BN-PLN-S-0058
+       SCRFLD      VA-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "VA"
+       NXTKEY      VA-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Reserve Account"
+       ID          BN-PLN-S-0059
+       SCRFLD      RS-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "RS"
+       NXTKEY      RS-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Savings Bonds"
+       ID          BN-PLN-S-0060
+       SCRFLD      SB-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "SB"
+       NXTKEY      SB-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Stock Purchase"
+       ID          BN-PLN-S-0061
+       SCRFLD      SP-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "SP"
+       NXTKEY      SP-PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Prerequisite Benefit Plan"
+       ID          BN-PLN-S-0062
+       SCRFLD      LINKED-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, LINKED-PLAN-TYPE
+       NXTKEY      PLAN-CODE
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Savings Bond Beneficiary"
+       ID          BN-SBB-S-0062
+       SCRFLD      SB-BENEFICIARY
+       FILENAME    SBBEN
+       INDEX       SBBSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+       NXTKEY      SB-BENEFICIARY
+       DSPFLDS     FULL-NAME, BNFC-NBR
+       RETURNS     BNFC-NBR
+
+DEFINE SELECT      "COBRA Participant - By Name"
+       ID          BN-PAR-S-0064
+       SCRFLD      PARTICIPANT
+       FILENAME    PARTICIPNT
+       INDEX       PARSET2
+       KEYRNG      COMPANY-01
+       DSPFLDS     FULL-NAME:"Name", PARTICIPNT:"Participant", EMPLOYEE:"Employee"
+       FNDFLDS     BIRTHDATE,OCCUR-TYPE,OCCUR-DATE
+       RETURNS     PARTICIPNT
+
+DEFINE SELECT      "COBRA Participant - By Number"
+       ID          BN-PAR-S-0063
+       SCRFLD      PARTICIPANT
+       FILENAME    PARTICIPNT
+       INDEX       PARSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PARTICIPANT
+       DSPFLDS     FULL-NAME, PARTICIPNT:"Participant", EMPLOYEE:"Employee"
+       FNDFLDS     BIRTHDATE,OCCUR-TYPE,OCCUR-DATE
+       RETURNS     PARTICIPNT
+
+DEFINE SELECT      "Insurer"
+       ID          BN-BCR-S-0066
+       SCRFLD      INS-CARRIER
+       FILENAME    BNCARRIER
+       INDEX       BCRSET1
+       NXTKEY      INS-CARRIER
+       DSPFLDS     INS-CARRIER, NAME       
+       RETURNS     INS-CARRIER
+
+DEFINE SELECT      "Alternate Pay Rates"
+       ID          BN-PRR-S-0067
+       SCRFLD      PAY-RATE
+       FILENAME    PRRATES
+       INDEX       PRRSET2
+       KEYRNG      COMPANY-01, EMPLOYEE
+       CONDITION   HOURLY
+       DSPFLDS     PAY-RATE:"Pay Rate ",JOB-CODE:"Job Code",PAY-CODE:"Pay Code",
+                   EFFECT-DATE:"Eff Date",END-DATE:"End Date"
+       RETURNS     PAY-RATE
+
+DEFINE SELECT      "Retiree Invoices"
+       ID          BN-BID-S-0068
+       SCRFLD      MAN-INV-NBR
+       FILENAME    BNINVDETL
+       INDEX       BIDSET2
+       KEYRNG      COMPANY-01, "M", RET-EMPLOYEE, ~ZEROES      
+       CONDITION   EMPLOYEE
+       DSPFLDS     INV-NUMBER:"Invoice ",PLAN-TYPE:"Plan Type",PLAN-CODE:"Plan Code",
+                   START-DATE:"Start Date",DUE-DATE:"Due Date",INV-AMOUNT:"Amount"
+       RETURNS     INV-NUMBER
+
+DEFINE SELECT      "Participant Invoices"
+       ID          BN-BID-S-0069
+       SCRFLD      MAN-INV-NBR
+       FILENAME    BNINVDETL
+       INDEX       BIDSET2
+       KEYRNG      COMPANY-01, "M", ~ZEROES, PARTICIPANT
+       CONDITION   PARTICIPANT
+       DSPFLDS     INV-NUMBER:"Invoice ",PLAN-TYPE:"Plan Type",PLAN-CODE:"Plan Code",
+                   START-DATE:"Start Date",DUE-DATE:"Due Date",INV-AMOUNT:"Amount"
+       RETURNS     INV-NUMBER
+
+DEFINE SELECT      "Postal Code Tables"
+       ID          BN-BPC-S-0070
+       SCRFLD      POST-CODE-TBL
+       FILENAME    BNPOSTCODE
+       INDEX       BPCSET1
+       DSPFLDS     POST-CODE-TBL
+       RETURNS     POST-CODE-TBL
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0071
+       SCRFLD      AFT-LMT-DED-AMT 
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-LMT-DED-AMT
+       CONDITION   EMP-AMT-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Pretax Deductions"
+       ID          BN-DDC-S-0072
+       SCRFLD      PRE-DED-CODE-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PRE-DED-CODE-PER
+       CONDITION   EMP-PCT-PRETAX
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0073
+       SCRFLD      AFT-LMT-DED-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-LMT-DED-PER
+       CONDITION   EMP-PCT-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0074
+       SCRFLD      AFT-DED-CODE-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-DED-CODE-PER
+       CONDITION   EMP-PCT-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0075
+       SCRFLD      CMP-DED-CODE-P
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      CMP-DED-CODE-P
+       CONDITION   COMPANY-PCT  
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0076
+       SCRFLD      PRE-DED-MTCH-A
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PRE-DED-MTCH-A
+       CONDITION   CO-MATCH-PRE
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0077
+       SCRFLD      AFT-LMT-MTCH-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-LMT-MTCH-AMT
+       CONDITION   CO-MATCH-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0078
+       SCRFLD      AFT-DED-MTCH-A
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-DED-MTCH-A
+       CONDITION   CO-MATCH-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0079
+       SCRFLD      PRE-DED-MTCH-P
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PRE-DED-MTCH-P
+       CONDITION   CO-MATCH-PRE
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0080
+       SCRFLD      AFT-LMT-MTCH-PER
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-LMT-MTCH-PER
+       CONDITION   CO-MATCH-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0081
+       SCRFLD      AFT-DED-MTCH-P
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-DED-MTCH-P
+       CONDITION   CO-MATCH-AFTER
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE, TAX-STATUS
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "All Employee Groups"
+       ID          BN-PRG-S-0082
+       SCRFLD      RET-GROUP-NAME
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      RET-GROUP-NAME
+       DSPFLDS     GROUP-NAME:"Group", DESCRIPTION:"Description",ACTIVE-FLAG:"Active"
+       RETURNS     GROUP-NAME
+       
+DEFINE SELECT      "Active Employee Group"
+       ID          BN-PRG-S-0083
+       SCRFLD      RET-GROUP-NAME
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      RET-GROUP-NAME
+       CONDITION   ACTIVE
+       DSPFLDS     GROUP-NAME:"Group", DESCRIPTION:"Description",ACTIVE-FLAG:"Active"
+       RETURNS     GROUP-NAME         
+
+DEFINE SELECT      "Coverage Reduction Rate Table"
+       ID          BN-RTH-S-0083
+       SCRFLD      COVER-RED-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "4 " 
+       NXTKEY      COVER-RED-RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Age Rate Table"
+       ID          BN-RTH-S-0084
+       SCRFLD      AGE-CREDIT-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "1 "
+       NXTKEY      AGE-CREDIT-RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Salary Rate Table"
+       ID          BN-RTH-S-0085
+       SCRFLD      SALARY-RATE-TABLE    
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "2 "
+       NXTKEY      SALARY-RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Service Rate Table"
+       ID          BN-RTH-S-0086
+       SCRFLD      SERVICE-CREDIT-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "3 "
+       NXTKEY      SERVICE-CREDIT-RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Credit Rate Table"
+       ID          BN-RTH-S-0087
+       SCRFLD      DEPENDENT-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "5 "
+       NXTKEY      DEPENDENT-RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Credit Rate Table"
+       ID          BN-RTH-S-0088
+       SCRFLD      LIFE-STYLE-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, "5 "
+       NXTKEY      LIFE-STYLE-RATE-TABLE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Pay Code"
+       ID          BN-PCD-S-0089
+       SCRFLD      PAY-CODE-2
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-CODE-2
+       DSPFLDS     PAY-CODE:"Pay Code", DESCRIPTION, JOB-CODE:"Job Code",
+                   PROCESS-LEVEL:"Proc Lev", ACTIVE-FLAG:"Status"
+       RETURNS     PAY-CODE
+       RETURNS     DESCRIPTION into PAY-CODE-DESC-2
+
+DEFINE SELECT      "Active Pay Code"
+       ID          BN-PCD-S-0090
+       SCRFLD      PAY-CODE-2
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01
+       NXTKEY      PAY-CODE-2
+       CONDITION   ACTIVE-PAYCODE
+       DSPFLDS     PAY-CODE:"Pay Code", DESCRIPTION, JOB-CODE:"Job Code",
+                   PROCESS-LEVEL:"Proc Lev", ACTIVE-FLAG:"Status"
+       RETURNS     PAY-CODE
+       RETURNS     DESCRIPTION into PAY-CODE-DESC-2
+
+DEFINE SELECT      "Pay Class"
+       ID          BN-PCL-S-0090
+       SCRFLD      SUB-CLASS
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      SUB-CLASS
+       DSPFLDS     PAY-CLASS, DESCRIPTION
+       RETURNS     PAY-CLASS
+
+DEFINE SELECT      "Rate Table"
+       ID          BN-RTH-S-0091
+       SCRFLD      OPTION-RATE-TABLE   
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, BN-TABLE-TYPE
+       NXTKEY      OPTION-RATE-TABLE    
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG, CURRENCY-CODE
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+DEFINE SELECT      "Premiums " 
+       ID          BN-PRE-S-0092
+       SCRFLD      BN-PREMIUM          
+       FILENAME    PREMIUM   
+       INDEX       PRESET3
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       NXTKEY      BN-PREMIUM      
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, COVER-TYPE, START-DATE, GROUP-NAME 
+       RETURNS     PLAN-CODE 
+
+DEFINE SELECT      "Action Code"
+       ID          BN-PAT-S-0093
+       SCRFLD      ACTION-CODE
+       FILENAME    PERSACTYPE
+       INDEX       PATSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      ACTION-CODE
+       DSPFLDS     ACTION-CODE, DESCRIPTION
+       RETURNS     ACTION-CODE
+
+DEFINE SELECT      "Benefit Plan"
+       ID          BN-PLN-S-0094
+       SCRFLD      BEN-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, BN-PLAN-TYPE
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+
+DEFINE SELECT      "Processing Group"
+       ID          BN-PRP-S-0001
+       SCRFLD      PROC-GROUP
+       FILENAME    PRPROCGRP
+       INDEX       PRPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PROC-GROUP
+       CONDITION   NO-PROC-LEV
+       DSPFLDS     PROC-GROUP
+       RETURNS     PROC-GROUP
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0095
+       SCRFLD      PRE-DED-CODE-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PRE-DED-CODE-AMT
+       CONDITION   EMP-AMT-PRETAX
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Employee Paid Deductions"
+       ID          BN-DDC-S-0096
+       SCRFLD      AFT-DED-CODE-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      AFT-DED-CODE-AMT
+       CONDITION   EMP-AMT-AFTER 
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Company Paid Deductions"
+       ID          BN-DDC-S-0097
+       SCRFLD      COMP-DED-CODE-AMT
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      COMP-DED-CODE-AMT
+       CONDITION   COMPANY-AMOUNT 
+       DSPFLDS     DED-CODE, DESCRIPTION, TAX-STATUS
+       FNDFLDS     DED-CLASS, REQ-CODE
+       RETURNS     DED-CODE
+
+DEFINE SELECT      "Premiums " 
+       ID          BN-PRE-S-0098
+       SCRFLD      BN-PREMIUM-START-DATE          
+       FILENAME    PREMIUM   
+       INDEX       PRESET3
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       NXTKEY      BN-PREMIUM-START-DATE      
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, COVER-TYPE, START-DATE, GROUP-NAME 
+       RETURNS     COVER-TYPE INTO COVER-TYPE
+       RETURNS     START-DATE INTO BN-PREMIUM-START-DATE
+       RETURNS     GROUP-NAME INTO EMPLOYEE-GROUP
+
+DEFINE SELECT      "Coverages " 
+       ID          BN-CVR-S-0099
+       SCRFLD      BN-COVERAGE-START-DATE          
+       FILENAME    BNCOVERAGE
+       INDEX       CVRSET2
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       NXTKEY      BN-COVERAGE-START-DATE      
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, COVER-TYPE, START-DATE, GROUP-NAME 
+       RETURNS     COVER-TYPE INTO COVER-TYPE
+       RETURNS     START-DATE INTO BN-COVERAGE-START-DATE
+       RETURNS     GROUP-NAME INTO EMPLOYEE-GROUP
+        
+DEFINE SELECT      "Coverage Defaults " 
+       ID          BN-BCD-S-0100
+       SCRFLD      BN-COV-DFT-START-DATE          
+       FILENAME    BNCOVDFT   
+       INDEX       BCDSET4
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       NXTKEY      BN-COV-DFT-START-DATE      
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, COVER-TYPE, START-DATE, GROUP-NAME, COVERAGE-OPT
+       RETURNS     COVER-TYPE INTO COVER-TYPE
+       RETURNS     START-DATE INTO BN-COV-DFT-START-DATE
+       RETURNS     GROUP-NAME INTO EMPLOYEE-GROUP
+
+DEFINE SELECT      "Benefit Accounts"
+       ID          BN-BNA-S-0101
+       SCRFLD      BN-ACCOUNTS-START-DATE          
+       FILENAME    BNACCOUNTS
+       INDEX       BNASET2
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       NXTKEY      BN-ACCOUNTS-START-DATE      
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, START-DATE, GROUP-NAME 
+       RETURNS     START-DATE
+       RETURNS     GROUP-NAME INTO EMPLOYEE-GROUP
+
+DEFINE SELECT      "Benefit Rules "
+       ID          BN-BWT-S-0102
+       SCRFLD      BN-WAIT-START-DATE          
+       FILENAME    BNWAIT     
+       INDEX       BWTSET2
+       KEYRNG      COMPANY-01, RULE-TYPE, PLAN-TYPE, PLAN-FLEX
+       NXTKEY      BN-WAIT-START-DATE      
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, START-DATE, GROUP-NAME, ACTION-CODE 
+       RETURNS     START-DATE
+       RETURNS     GROUP-NAME INTO EMPLOYEE-GROUP
+       RETURNS     ACTION-CODE INTO ACTION-CODE
+
+DEFINE SELECT      "Category "
+       ID          BN-BCT-S-0103
+       SCRFLD      PLAN-OPTION
+       FILENAME    BNCATEGORY
+       INDEX       BCTSET1
+       KEYRNG      PLAN-TYPE
+       NXTKEY      PLAN-OPTION
+       DSPFLDS     PLAN-OPTION, DESCRIPTION
+       RETURNS     PLAN-OPTION
+       RETURNS     DESCRIPTION INTO DESCRIPTION
+       
+DEFINE SELECT      "Flex Plan"
+       ID          BN-FLP-S-0104
+       SCRFLD      PLAN-FLEX
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PLAN-FLEX
+       DSPFLDS     FLEX-PLAN, DESC
+       RETURNS     FLEX-PLAN
+       RETURNS     DESC into PLAN-FLEX-DESC
+
+DEFINE SELECT      "Benefit Plan (Type Entered)"
+       ID          BN-PLN-S-0105
+       SCRFLD      PLAN-FLEX
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE
+       NXTKEY      PLAN-FLEX
+       DSPFLDS     PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+       RETURNS     DESC into PLAN-FLEX-DESC
+
+DEFINE SELECT      "All Benefit Plans"
+       ID          BN-PLN-S-0108
+       SCRFLD      PLAN-FLEX
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PLAN-FLEX
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+       RETURNS     DESC into PLAN-FLEX-DESC
+
+DEFINE SELECT      "Flex Plan"
+       ID          BN-FLP-S-0107
+       SCRFLD      PLAN-FLEX2
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PLAN-FLEX
+       DSPFLDS     FLEX-PLAN, DESC
+       RETURNS     FLEX-PLAN
+       RETURNS     DESC into PLAN-FLEX-DESC
+
+DEFINE SELECT      "All Benefit Plans"
+       ID          BN-PLN-S-0109
+       SCRFLD      PLAN-FLEX2
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PLAN-FLEX
+       DSPFLDS     PLAN-TYPE, PLAN-CODE, DESC
+       RETURNS     PLAN-CODE
+       RETURNS     DESC into PLAN-FLEX-DESC
+
+DEFINE SELECT      "Noncash Pay Code"
+       ID          BN-PCD-S-0106
+       SCRFLD      NON-CASH-PAYCODE
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01
+       NXTKEY      NON-CASH-PAYCODE
+       CONDITION   NON-CASH
+       DSPFLDS     PAY-CODE:"Pay Code", DESCRIPTION, JOB-CODE:"Job Code",
+                   PROCESS-LEVEL:"Proc Lev", ACTIVE-FLAG:"Status"
+       RETURNS     PAY-CODE
+       RETURNS     DESCRIPTION into PAY-CODE-DESC
+
+DEFINE SELECT       "Countries"
+    ID              BN-INT-S-0001
+    SCRFLD          COUNTRY-CODE
+    FILENAME        INSTCTRYCD
+    INDEX           INTSET1
+    NXTKEY          @CURSCRFLD
+    DSPFLDS         COUNTRY-CODE:"Country Code",COUNTRY-DESC:"Name"
+    RETURNS         COUNTRY-CODE
+    RETURNS         COUNTRY-DESC INTO COUNTRY-DESCRIPTION
+
+DEFINE SELECT      "Web Benefits Plan Group"
+       ID          BN-BPG-S-0001
+       SCRFLD      BENEFIT-PLAN-GROUP
+       FILENAME    BNPLNGROUP
+       INDEX       BPGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PLAN-GROUP
+       DSPFLDS     PLAN-GROUP:"Plan Group", PROCESS-ORDER:"Process Order", NBR-PLANS:"Number of Plans"
+       RETURNS     PLAN-GROUP
+
+DEFINE SELECT       "Currency Codes"
+    ID              BN-CUC-S-0001	
+    SCRFLD          CURRENCY-CODE-98
+    FILENAME        CUCODES
+    INDEX           CUCSET1
+    NXTKEY          @CURSCRFLD    
+    DSPFLDS         CURRENCY-CODE:"Curr",DESCRIPTION:"Description",FORMS-EXP:"Expression",NBR-DECIMALS:"Decimals"
+    RETURNS         CURRENCY-CODE INTO CURRENCY-CODE-98
+    RETURNS         NBR-DECIMALS  INTO CURR-CODE-ND-98
+
+DEFINE SELECT      "Rate Table"
+       ID          BN-RTH-S-0116
+       SCRFLD      TABLE-CODE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET3
+       KEYRNG      COMPANY-01, BN-TABLE-TYPE
+       NXTKEY      TABLE-CODE
+       DSPFLDS     TABLE-CODE, DESC, START-DATE, PCT-RATE-FLG
+       RETURNS     TABLE-CODE
+       RETURNS     START-DATE INTO START-DATE
+
+****   Reapplied custom code after 9.0.1 Upgrade - M. Hunter - ACS 8/23/11
+****   Begin 8/23/11 - M. Hunter
+
+DEFINE SELECT      "LCMS Roster       "
+       ID          BN-PCO-S-0045
+       SCRFLD      EMP-USER-FIELD-95
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "95"   
+       NXTKEY      EMP-USER-FIELD-95
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE
+
+DEFINE SELECT      "Soc Sec Participtn"
+       ID          BN-PCO-S-0046
+       SCRFLD      EMP-USER-FIELD-94
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "94"   
+       NXTKEY      EMP-USER-FIELD-94
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE
+
+****   End 8/23/11 - M. Hunter
+
+DEFINE SELECT       "Name Suffix"
+    ID              BN-CTC-S-0062
+    SCRFLD          NAME-SUFFIX
+    FILENAME        HRCTRYCODE
+    INDEX           CTCSET1
+    KEYRNG          "SU"
+    NXTKEY          NAME-SUFFIX    
+    DSPFLDS         HRCTRY-CODE:"Suffix", DESCRIPTION=20:"Description",COUNTRY.COUNTRY-DESC=20:"Country",ACTIVE-FLAG:"Status"
+    RETURNS         HRCTRY-CODE into NAME-SUFFIX
+    RETURNS         DESCRIPTION into NAME-SUFFIX-DESC
+
+DEFINE SELECT       "Broker"
+    ID              BN-BRK-S-0062
+    SCRFLD          BROKER
+    FILENAME        BNBROKER
+    INDEX           BRKSET1
+    NXTKEY          BROKER
+    DSPFLDS         BROKER:"Broker", NAME:"Name"
+    RETURNS         BROKER into BROKER
+    RETURNS         NAME into BROKER-NAME
+
+DEFINE SELECT       "Stock"
+    ID              BN-BSK-S-0062
+    SCRFLD          STOCK
+    FILENAME        BNSTOCK
+    INDEX           BSKSET1
+    NXTKEY          STOCK
+    DSPFLDS         STOCK-SYMBOL:"Stock", DESCRIPTION:"Description", CURRENCY-CODE:"Currency"
+    RETURNS         STOCK-SYMBOL into STOCK
+    RETURNS         DESCRIPTION into STOCK-NAME
+
+DEFINE SELECT       "Grant"
+    ID              BN-BSG-S-0062
+    SCRFLD          GRANT
+    FILENAME        BNSTKGNT
+    INDEX           BSGSET1
+    KEYRNG          COMPANY-01
+    NXTKEY          GRANT
+    DSPFLDS         OPT-GRANT-NBR:"Grant", GRANT-DATE:"Grant Date",
+                    OPTION-TYPE:"Option Type", STOCK-SYMBOL:"Stock", ACTIVE-FLAG:"Status"
+    RETURNS         OPT-GRANT-NBR into GRANT
+
+DEFINE SELECT       "Grant"
+    ID              BN-BXR-S-0062
+    SCRFLD          BXR-GRANT
+    FILENAME        BNEMPGRNT
+    INDEX           BEGSET1
+    KEYRNG          COMPANY-01,BXR-EMPLOYEE
+    NXTKEY          BXR-GRANT
+    DSPFLDS         OPT-GRANT-NBR:"Grant", GRANT-DATE:"Grant Date",
+                    OPTION-TYPE:"Option Type" 
+    RETURNS         OPT-GRANT-NBR into BXR-GRANT
+
+DEFINE SELECT       "Certificate"
+    ID              BN-BEG-S-0062
+    SCRFLD          CERTIFICATE
+    FILENAME        BNEMPGRNT
+    INDEX           BEGSET1
+    KEYRNG          COMPANY-01, BEG-EMPLOYEE, GRANT
+    NXTKEY          CERTIFICATE
+    DSPFLDS         STOCK-CTF:"Certificate", GRANT-DATE:"Grant Date"
+    RETURNS         STOCK-CTF into CERTIFICATE
+
+DEFINE SELECT       "Certificate"
+    ID              BN-BXR-S-0063
+    SCRFLD          BXR-CERTIFICATE
+    FILENAME        BNEMPEXER
+    INDEX           BXRSET1
+    KEYRNG          COMPANY-01, BXR-EMPLOYEE, BXR-GRANT
+    NXTKEY          BXR-CERTIFICATE
+    DSPFLDS         STOCK-CTF:"Certificate", EXERCISE-DATE:"Exercise Date",
+                    SEQ-NBR:"Sequence Number"
+    RETURNS         STOCK-CTF into BXR-CERTIFICATE
+
+DEFINE SELECT      "Reason"
+       ID          BN-PCO-S-0014
+       SCRFLD      HIPAA-REASON
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "BT"
+       NXTKEY      HIPAA-REASON
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE
+
+DEFINE SELECT      "Coverage Option"
+       ID          BN-COP-S-0001
+       SCRFLD      COVERAGE-OPTION
+       FILENAME    BNCOVOPT
+       INDEX       COPSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+       NXTKEY      COVERAGE-OPTION
+       CONDITION   COV-OPT-1
+       DSPFLDS     COVERAGE-OPT, COV-DESC, ACTIVE-FLAG
+       RETURNS     COVERAGE-OPT
+
+****   Reapplied custom code after 9.0.1 Upgrade - M. Hunter - ACS 8/23/11
+****   Begin 8/23/11  - M. Hunter
+
+DEFINE SELECT      "CRP Vesting Codes "
+       ID          BN-WPC-1001  
+       SCRFLD      BN-CRPVESTING        
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "CRPVESTING"   
+       NXTKEY      BN-CRPVESTING
+       DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+       RETURNS     CODE-VALUE
+
+DEFINE SELECT      "Non Partic Reason"
+       ID          BN-WPC-1002
+       SCRFLD      BN-NONPARTRSN
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "NONPARTRSN"   
+       NXTKEY      BN-NONPARTRSN
+       DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+       RETURNS     CODE-VALUE
+
+DEFINE SELECT      "SRA Vesting Codes "
+       ID          BN-WPC-1003  
+       SCRFLD      BN-SRAVESTING        
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "SRAVESTING"   
+       NXTKEY      BN-SRAVESTING
+       DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+       RETURNS     CODE-VALUE
+
+DEFINE SELECT      "WQH Employers "
+       ID          BN-WQH-1001  
+       SCRFLD      WQH-EMPLOYER         
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET1
+       KEYRNG      COMPANY-01    
+       NXTKEY      WQH-EMPLOYER 
+       DSPFLDS     PROCESS-LEVEL:"Employer", MAIN-TAB-NAME:"Main Tab Name",DATE:"Date"
+       RETURNS     PROCESS-LEVEL
+
+DEFINE SELECT      "WQH Date "
+       ID          BN-WQH-1002  
+       SCRFLD      WQH-DATE         
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET2
+       KEYRNG      COMPANY-01    
+       NXTKEY      WQH-DATE 
+       DSPFLDS     DATE:"Date", MAIN-TAB-NAME:"Main Tab Name"
+       RETURNS     DATE
+
+DEFINE SELECT      "WQH Employee "
+       ID          BN-WQH-1003  
+       SCRFLD      WQH-EMPLOYEE         
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET3
+       KEYRNG      COMPANY-01    
+       NXTKEY      WQH-EMPLOYEE 
+       DSPFLDS     EMPLOYEE:"Employee", MAIN-TAB-NAME:"Main Tab Name"
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "WQH Participnt"
+       ID          BN-WQH-1004  
+       SCRFLD      WQH-PART       
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET4
+       KEYRNG      COMPANY-01    
+       NXTKEY      WQH-PART 
+       DSPFLDS     PARTICIPNT:"Participnt", MAIN-TAB-NAME:"Main Tab Name"
+       RETURNS     PARTICIPNT
+
+DEFINE SELECT      "WQH User-ID "
+       ID          BN-WQH-1006  
+       SCRFLD      WQH-USER         
+       FILENAME    WBPQTHSTRY
+       INDEX       WQHSET6
+       KEYRNG      COMPANY-01    
+       NXTKEY      WQH-USER 
+       DSPFLDS     USER-ID:"User-ID", MAIN-TAB-NAME:"Main Tab Name"
+       RETURNS     USER-ID
+
+DEFINE SELECT      "Ben Stop Reason "
+       ID          BN-WPC-1010  
+       SCRFLD      PNSTOPRSN         
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "BENSTPRSN "   
+       NXTKEY      PNSTOPRSN
+       DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+       RETURNS     CODE-VALUE
+
+DEFINE SELECT      "Ben Reveiew Reason"
+       ID          BN-WPC-1011  
+       SCRFLD      PNREVRSN             
+       FILENAME    WBPCODES
+       INDEX       WPCSET1
+       KEYRNG      "BENREVRSN "   
+       NXTKEY      PNREVRSN
+       DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+       RETURNS     CODE-VALUE 
+
+*** End 8/23/11 - M. Hunter
+
+DEFINE SELECT      "Absence Plan"
+       ID          BN-PLM-S-0119
+       SCRFLD      PLAN-NAME
+       FILENAME    TAPLAN
+       INDEX       TAPSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      PLAN-NAME
+       DSPFLDS     PLAN, DESCRIPTION
+       RETURNS     PLAN
+
+DEFINE SELECT      "Current Benefit Cycle Rules"
+       ID          BN-BCY-S-0001
+       SCRFLD      OT-PLAN-CODE
+       FILENAME    BNCYCLE   
+       INDEX       BCYSET2
+       KEYRNG      COMPANY-01
+       NXTKEY      CYCLE-PLAN  
+       DSPFLDS     CYCLE-PLAN:"Code",DESCRIPTION, EFFECT-DATE:"Effective",
+                   CYCLE-FREQ:"Frequency"
+       RETURNS     CYCLE-PLAN
+       RETURNS     EFFECT-DATE   into BEG-DATE
+       RETURNS     DESCRIPTION   into OT-PLAN-DESC
+       RETURNS     CYCLE-FREQ    into CYCLE-FREQ
+       RETURNS     PER-END-DATE  into CYCLE-PER-END-DATE
+
+DEFINE SELECT      "Overtime Plans"
+       ID          BN-PRO-S-0104
+       SCRFLD      OT-PLAN-CODE
+       FILENAME    PROVERTIME
+       INDEX       PROSET2
+       KEYRNG      COMPANY-01
+       NXTKEY      OT-PLAN-CODE
+       CONDITION   OVERTIME-YES
+       DSPFLDS     PLAN-CODE:"Code",DESCRIPTION, EFFECT-DATE:"Effective",
+                   PAY-FREQUENCY:"Frequency"
+       RETURNS     PLAN-CODE
+       RETURNS     EFFECT-DATE   into BEG-DATE
+       RETURNS     DESCRIPTION   into OT-PLAN-DESC
+       RETURNS     PAY-FREQUENCY into CYCLE-FREQ
+       RETURNS     PER-END-DATE  into CYCLE-PER-END-DATE
+
+DEFINE SELECT      "Payroll Schedules"
+       ID          BN-PRO-S-0105
+       SCRFLD      OT-PLAN-CODE
+       FILENAME    PROVERTIME
+       INDEX       PROSET2
+       KEYRNG      COMPANY-01
+       NXTKEY      OT-PLAN-CODE
+       CONDITION   OVERTIME-NO
+       DSPFLDS     PLAN-CODE:"Code",DESCRIPTION, EFFECT-DATE:"Effective",
+                   PAY-FREQUENCY:"Frequency"
+       RETURNS     PLAN-CODE
+       RETURNS     EFFECT-DATE   into BEG-DATE
+       RETURNS     DESCRIPTION   into OT-PLAN-DESC
+       RETURNS     PAY-FREQUENCY into CYCLE-FREQ
+       RETURNS     PER-END-DATE  into CYCLE-PER-END-DATE
+
+
+DEFINE SELECT      "Reason for Leave"
+       ID          BN-PCO-S-0020
+       SCRFLD      TA-LEAVE-REASON
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "LR"
+       NXTKEY      TA-LEAVE-REASON
+       DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+       RETURNS     CODE INTO TA-LEAVE-REASON
+
+DEFINE SELECT      "Topic     "
+       ID          BN-BN3-S-0018
+       SCRFLD      BN3-TOPIC
+       FILENAME    BNREGDICT
+       INDEX       BN3SET2
+       KEYRNG      COUNTRY-CODE, BN3-TOPIC-TYPE
+       NXTKEY      TOPIC
+       DSPFLDS     TOPIC, NAME
+       RETURNS     TOPIC INTO BN3-TOPIC
+       RETURNS     NAME INTO BN3-TOPIC-NAME
+
+DEFINE SELECT      "Field Number   "
+       ID          BN-BN3-S-0019
+       SCRFLD      BN3-FLD-NBR
+       FILENAME    BNREGDICT
+       INDEX       BN3SET3
+*      KEYRNG      COUNTRY-CODE, REG-TOPIC-TYPE, REG-TOPIC-E1
+       KEYRNG      COUNTRY-CODE, BN3-TOPIC-TYPE, BN3-TOPIC
+       NXTKEY      NAME
+       DSPFLDS     TOPIC, FLD-NBR, NAME
+       RETURNS     FLD-NBR INTO BN3-FLD-NBR
+       RETURNS     NAME INTO BN3-FLD-NAME
+
+DEFINE SELECT      "Head Process Level"
+       ID          BN-TXG-S-0001
+       SCRFLD      HEAD-PROC-LEV
+       FILENAME    TAXGROUP
+       INDEX       TXGSET1
+       KEYRNG      COMPANY-01
+       NXTKEY      HEAD-PROC-LEV
+       DSPFLDS     HEAD-PROC-LEV:"Head PL", PROCESS-LEVEL:" P/L", PROCESS-LEVEL.NAME:"Description", PL-OPTION=3:"Indep"
+       RETURNS     HEAD-PROC-LEV
+
+DEFINE SELECT      "IRS Receipt ID"
+       ID          BN-PP5-S-0001
+       SCRFLD      IRS-RECPT-ID
+       FILENAME    BN1095HDR
+       INDEX       PP5SET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR
+       NXTKEY      IRS-RECPT-ID
+       CONDITION   RECEIPT
+       DSPFLDS     IRS-RECPT-ID
+       RETURNS     IRS-RECPT-ID INTO IRS-RECPT-ID
+       RETURNS     IRS-OBJ-ID   INTO IRS-OBJ-ID
+
+DEFINE SELECT      "ACA Employee"
+       ID          BN-PPI-S-0001
+       SCRFLD      ACA-EMPLOYEE
+       FILENAME    BNACAIRS
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR 
+       CONDITION   EMP-OR-RETIREE
+       DSPFLDS     EMPLOYEE, FIRST-NAME, LAST-NAME, REPORT-ENTITY
+       RETURNS     EMPLOYEE
+
+DEFINE SELECT      "ACA COBRA"
+       ID          BN-PPI-S-0002
+       SCRFLD      ACA-COBRA
+       FILENAME    BNACAIRS
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR 
+       CONDITION   COBRA
+       DSPFLDS     PARTICIPNT, FIRST-NAME, LAST-NAME, REPORT-ENTITY
+       RETURNS     PARTICIPNT
+
+DEFINE SELECT      "ACA Resource"
+       ID          BN-PPI-S-0003
+       SCRFLD      ACA-RESOURCE
+       FILENAME    BNACAIRS
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR 
+       CONDITION   RESOURCE
+       DSPFLDS     PARTICIPNT, FIRST-NAME, LAST-NAME, REPORT-ENTITY
+       RETURNS     PARTICIPNT      INTO ACA-RESOURCE
+       RETURNS     REPORT-ENTITY   INTO REPORT-ENTITY
+
+DEFINE SELECT	   "ACA Object Id"
+	   ID          BN-PPA-S-0001
+       SCRFLD      ACA-PARAMETER
+       FILENAME    BNACAPARM
+       INDEX       PPASET1
+       KEYRNG      COMPANY-01
+       DSPFLDS     ACA-OBJ-ID:"Object Id", CREATE-USER-ID:"User Id", CREATE-DATE:"Date", CREATE-TIME:"Time", HDA-BEG-DATE:"Initial Beg Dt", HDA-END-DATE:"Initial End Dt", YEAR:"Monthly Year", START-MONTH:"Start Month"
+       RETURNS     CREATE-USER-ID INTO USER-ID
+       RETURNS     CREATE-DATE INTO CREATE-DATE
+       RETURNS     CREATE-TIME INTO CREATE-TIME
+       RETURNS     REPORT-ENTITY INTO REPORT-ENTITY
+       RETURNS     PROCESS-LEVEL INTO PROCESS-LEVEL
+       RETURNS     RPT-ENT-OPT INTO RPT-ENT-OPT
+       RETURNS     ACA-OBJ-ID INTO ACA-PARAMETER
+
+DEFINE SELECT      "DC Compensation Plan Code"
+       ID          BN-GHR-S-0001
+       SCRFLD      GHR-PLAN-CODE
+       FILENAME    GHRHDRDATA
+       INDEX       GHRSET1
+       KEYRNG      COMPANY-01, "BN", "DC"
+       NXTKEY      GHR-PLAN-CODE
+       DSPFLDS     CODE, DESCRIPTION   
+       RETURNS     CODE INTO GHR-PLAN-CODE
+
+
+*** SCRDTL ***
+
+DEFINE SCRDTL      "Comments"
+       ID          BN-COD-D-0001
+       SCRFLD      PLAN-YEAR
+       FILENAME    CODA
+       INDEX       CODSET2 
+       KEYRNG      COMPANY-01, EMPLOYEE, PLAN-TYPE, PLAN-CODE, PLAN-YEAR, HR-PROCESS-LEVEL, BUS-NBR-GRP, QC-ENT-NBR-GRP
+
+DEFINE SCRDTL      "Distribution Company"
+       ID          BN-GLS-D-0001
+       SCRFLD      EXP-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      EXP-DIST-CO
+
+DEFINE SCRDTL      "Accounting Unit"
+       ID          BN-GLN-D-0001
+       SCRFLD      ACCOUNT-UNIT-02 
+       FILENAME    GLNAMES 
+       INDEX       GLNSET1
+       KEYRNG      EXP-DIST-CO,ACCOUNT-UNIT-02
+
+DEFINE SCRDTL      "Account"
+       ID          BN-GLM-D-0002
+       SCRFLD      ACCOUNT-04, SUB-ACCOUNT-05 
+       FILENAME    GLMASTER 
+       INDEX       GLMSET2
+       KEYRNG      EXP-DIST-CO,ACCOUNT-UNIT-02,ACCOUNT-04,SUB-ACCOUNT-05
+
+DEFINE SCRDTL      "Distribution Company"
+       ID          BN-GLS-D-0002
+       SCRFLD      CL-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      CL-DIST-CO
+
+DEFINE SCRDTL       "Accounting Unit"
+    ID              BN-GLN-D-0003
+    SCRFLD          CL-ACCT-UNIT 
+    FILENAME        GLNAMES 
+    INDEX           GLNSET1
+    KEYRNG          CL-DIST-CO,CL-ACCT-UNIT
+
+DEFINE SCRDTL       "Account"
+    ID              BN-GLM-D-0004
+    SCRFLD          CL-ACCOUNT, CL-SUB-ACCT 
+    FILENAME        GLMASTER 
+    INDEX           GLMSET2
+    KEYRNG          CL-DIST-CO,CL-ACCT-UNIT,CL-ACCOUNT,CL-SUB-ACCT
+
+DEFINE SCRDTL      "Distribution Company"
+       ID          BN-GLS-D-0003
+       SCRFLD      ES-DIST-CO
+       FILENAME    GLSYSTEM
+       INDEX       GLSSET1
+       KEYRNG      ES-DIST-CO
+
+DEFINE SCRDTL       "Accounting Unit"
+    ID              BN-GLN-D-0004
+    SCRFLD          ES-ACCT-UNIT 
+    FILENAME        GLNAMES 
+    INDEX           GLNSET1
+    KEYRNG          ES-DIST-CO,ES-ACCT-UNIT
+
+DEFINE SCRDTL       "Account"
+    ID              BN-GLM-D-0005
+    SCRFLD          ES-ACCOUNT, ES-SUB-ACCT 
+    FILENAME        GLMASTER 
+    INDEX           GLMSET2
+    KEYRNG          ES-DIST-CO,ES-ACCT-UNIT,ES-ACCOUNT,ES-SUB-ACCT
+
+DEFINE SCRDTL      "Company"
+       ID          BN-PRS-D-0003
+       SCRFLD      COMPANY-01
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01, ~SPACES
+
+DEFINE SCRDTL      "Process Level"
+       ID          BN-PRS-D-0004
+       SCRFLD      HR-PROCESS-LEVEL
+       FILENAME    PRSYSTEM
+       INDEX       PRSSET1
+       KEYRNG      COMPANY-01, HR-PROCESS-LEVEL
+
+DEFINE SCRDTL      "Department"
+       ID          BN-DPT-D-0005
+       SCRFLD      DEPARTMENT
+       FILENAME    DEPTCODE
+       INDEX       DPTSET1
+       KEYRNG      COMPANY-01, HR-PROCESS-LEVEL, DEPARTMENT
+
+DEFINE SCRDTL      "Employee"
+       ID          BN-EMP-D-0006
+       SCRFLD      EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+
+DEFINE SCRDTL      "Employee"
+       ID          BN-PEM-D-0007
+       SCRFLD      EMPLOYEE
+       FILENAME    PAEMPLOYEE
+       INDEX       PEMSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+
+DEFINE SCRDTL      "Employee"
+       ID          BN-EMP-D-0008
+       SCRFLD      RET-EMPLOYEE
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01, RET-EMPLOYEE
+
+DEFINE SCRDTL      "Dependent"
+       ID          BN-EMD-D-0009
+       SCRFLD      DEPENDENT-NBR
+       FILENAME    EMDEPEND
+       INDEX       EMDSET1
+       KEYRNG      COMPANY-01, EMPLOYEE, DEPENDENT-NBR
+
+DEFINE SCRDTL      "Employee Group"
+       ID          BN-PRG-D-0010
+       SCRFLD      EMPLOYEE-GROUP
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01, EMPLOYEE-GROUP
+
+DEFINE SCRDTL      "Company"
+       ID          BN-BNC-D-0011
+       SCRFLD      COMPANY-01
+       FILENAME    BNCOMPANY
+       INDEX       BNCSET1
+       KEYRNG      COMPANY-01
+                   
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0012
+       SCRFLD      PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0013
+       SCRFLD      HL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "HL", HL-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0014
+       SCRFLD      DN-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DN", DN-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0015
+       SCRFLD      DI-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DI", DI-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0016
+       SCRFLD      EL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "EL", EL-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0017
+       SCRFLD      DL-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DL", DL-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0018
+       SCRFLD      DC-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DC", DC-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0019
+       SCRFLD      DB-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "DB", DB-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0020
+       SCRFLD      VA-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "VA", VA-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0021
+       SCRFLD      RS-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "RS", RS-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0022
+       SCRFLD      SB-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "SB", SB-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0023
+       SCRFLD      SP-PLAN-CODE
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, "SP", SP-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0024
+       SCRFLD      HL-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "HL", EMPLOYEE, BEG-DATE, HL-PLAN-CODE
+
+DEFINE SCRDTL      "Participant Benefit"
+       ID          BN-PTB-D-0025
+       SCRFLD      HL-PLAN-CODE
+       FILENAME    PARTBEN
+       INDEX       PTBSET1
+       KEYRNG      COMPANY-01, "HL", PARTICIPANT,RET-EMPLOYEE, BEG-DATE, HL-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0026
+       SCRFLD      DN-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "DN", EMPLOYEE, BEG-DATE, DN-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0027
+       SCRFLD      DI-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "DI", EMPLOYEE, BEG-DATE, DI-PLAN-CODE
+
+DEFINE SCRDTL      "Participant Benefit"
+       ID          BN-PTB-D-0028
+       SCRFLD      DN-PLAN-CODE
+       FILENAME    PARTBEN
+       INDEX       PTBSET1
+       KEYRNG      COMPANY-01, "DN", PARTICIPANT,RET-EMPLOYEE, BEG-DATE, DN-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0029
+       SCRFLD      EL-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "EL", EMPLOYEE, BEG-DATE, EL-PLAN-CODE
+
+DEFINE SCRDTL      "Participant Benefit"
+       ID          BN-PTB-D-0030
+       SCRFLD      EL-PLAN-CODE
+       FILENAME    PARTBEN
+       INDEX       PTBSET1
+       KEYRNG      COMPANY-01, "EL", PARTICIPANT,RET-EMPLOYEE, BEG-DATE, EL-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0031
+       SCRFLD      DL-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "DL", EMPLOYEE, BEG-DATE, DL-PLAN-CODE
+
+DEFINE SCRDTL      "Participant Benefit"
+       ID          BN-PTB-D-0032
+       SCRFLD      DL-PLAN-CODE
+       FILENAME    PARTBEN
+       INDEX       PTBSET1
+       KEYRNG      COMPANY-01, "DL", PARTICIPANT,RET-EMPLOYEE, BEG-DATE, DL-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0033
+       SCRFLD      DC-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "DC", EMPLOYEE, BEG-DATE, DC-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0034
+       SCRFLD      DB-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "DB", EMPLOYEE, BEG-DATE, DB-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0035
+       SCRFLD      VA-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "VA", EMPLOYEE, BEG-DATE, VA-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0036
+       SCRFLD      RS-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "RS", EMPLOYEE, BEG-DATE, RS-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0037
+       SCRFLD      SB-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "SB", EMPLOYEE, BEG-DATE, SB-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-BEN-D-0038
+       SCRFLD      SP-PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+       KEYRNG      COMPANY-01, "SP", EMPLOYEE, BEG-DATE, SP-PLAN-CODE
+
+DEFINE SCRDTL      "Benefit"
+       ID          BN-BEN-D-0039
+       SCRFLD      PLAN-CODE
+       FILENAME    BENEFIT
+       INDEX       BENSET1
+*      KEYRNG      COMPANY-01, PLAN-TYPE, EMPLOYEE, BEG-DATE, PLAN-CODE
+       KEYRNG      COMPANY-01, PLAN-TYPE, EMPLOYEE, START-DATE, PLAN-CODE
+
+DEFINE SCRDTL      "Flex Credits"
+       ID          BN-EFD-D-0040
+       SCRFLD      FLEX-START-DATE
+       FILENAME    EMPFLEXDOL
+       INDEX       EFDSET2
+       KEYRNG      COMPANY-01, EMPLOYEE, FLEX-START-DATE
+
+DEFINE SCRDTL      "Participant"
+       ID          BN-PAR-D-0041
+       SCRFLD      PARTICIPANT
+       FILENAME    PARTICIPNT
+       INDEX       PARSET1
+       KEYRNG      COMPANY-01, PARTICIPANT
+
+DEFINE SCRDTL      "Premiums"
+       ID          BN-PRE-D-0042
+       SCRFLD      HL-COV-OPTION
+       FILENAME    PREMIUM
+       INDEX       PRESET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, HL-PLAN-CODE, COVER-TYPE,
+                   START-DATE, GROUP-NAME
+
+DEFINE SCRDTL      "Premiums"
+       ID          BN-PRE-D-0043
+       SCRFLD      DN-COV-OPTION
+       FILENAME    PREMIUM
+       INDEX       PRESET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, DN-PLAN-CODE, COVER-TYPE,
+                   START-DATE, GROUP-NAME
+
+DEFINE SCRDTL      "Premiums"
+       ID          BN-PRE-D-0044
+       SCRFLD      RET-HL-COV-OPTION
+       FILENAME    PREMIUM
+       INDEX       PRESET1
+       KEYRNG      COMPANY-01, "HL", HL-PLAN-CODE, COVER-TYPE, 
+                   START-DATE, GROUP-NAME
+
+DEFINE SCRDTL      "Premiums"
+       ID          BN-PRE-D-0045
+       SCRFLD      RET-DN-COV-OPTION
+       FILENAME    PREMIUM
+       INDEX       PRESET1
+       KEYRNG      COMPANY-01, "DN", DN-PLAN-CODE, COVER-TYPE, 
+                   START-DATE, GROUP-NAME
+
+DEFINE SCRDTL      "Pay Class"
+       ID          BN-PCL-D-0046
+       SCRFLD      PAY-CLASS
+       FILENAME    PAYCLASS
+       INDEX       PCLSET1
+       KEYRNG      COMPANY-01, PAY-CLASS
+
+DEFINE SCRDTL      "Location"
+       ID          BN-PCO-D-0047
+       SCRFLD      LOCAT-CODE
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "LO",LOCAT-CODE
+
+DEFINE SCRDTL      "User Level"
+       ID          BN-PCO-D-0048
+       SCRFLD      USER-LEVEL
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "UL",USER-LEVEL
+
+DEFINE SCRDTL      "Supervisor"
+       ID          BN-HSU-D-0049
+       SCRFLD      SUPERVISOR
+       FILENAME    HRSUPER
+       INDEX       HSUSET1
+       KEYRNG      COMPANY-01,SUPERVISOR
+
+DEFINE SCRDTL      "Pay Code"
+       ID          BN-PCD-D-0050
+       SCRFLD      PAY-CODE
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01, PAY-CODE
+       DSPFLDS     DESCRIPTION:"Description", PROCESS-LEVEL:"Proc Lev", JOB-CODE:"Job Code", ACTIVE-FLAG:"Status"
+
+DEFINE SCRDTL      "Employee"
+       ID          BN-EMP-D-0051
+       SCRFLD      EMPLOYEE-NAME
+       FILENAME    EMPLOYEE
+       INDEX       EMPSET1
+       KEYRNG      COMPANY-01, EMPLOYEE
+
+DEFINE SCRDTL      "Deduction Code"
+       ID          BN-DDC-D-0052
+       SCRFLD      DED-CODE, COMP-DED-CODE, PRE-DED-CODE, AFT-DED-CODE, FLEX-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+
+DEFINE SCRDTL      "Deduction Code"
+       ID          BN-DDC-D-0053
+       SCRFLD      DC-DED-CODE, COMP-DED-CODE, PRE-DED-CODE, AFT-DED-CODE
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+
+DEFINE SCRDTL      "Flex Plan"
+       ID          BN-FLP-D-0054
+       SCRFLD      FLEX-PLAN
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01, FLEX-PLAN
+
+DEFINE SCRDTL      "Employee Group"
+       ID          BN-PRG-D-0055
+       SCRFLD      RET-GROUP-NAME
+       FILENAME    PERSGROUP
+       INDEX       PRGSET1
+       KEYRNG      COMPANY-01, RET-GROUP-NAME
+
+DEFINE SCRDTL      "Deduction Code"
+       ID          BN-DDC-D-0056
+       SCRFLD      AFT-LMT-DED-AMT, PRE-DED-CODE-PER, AFT-LMT-DED-PER, AFT-DED-CODE-PER 
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+
+DEFINE SCRDTL      "Deduction Code"
+       ID          BN-DDC-D-0057
+       SCRFLD      CMP-DED-CODE-P, PRE-DED-MTCH-A, AFT-LMT-MTCH-AMT, AFT-DED-MTCH-A 
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+
+DEFINE SCRDTL      "Deduction Code"
+       ID          BN-DDC-D-0058
+       SCRFLD      PRE-DED-MTCH-P, AFT-LMT-MTCH-PER, AFT-DED-MTCH-P        
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+
+DEFINE SCRDTL      "Action Code"
+       ID          BN-PAT-D-0059
+       SCRFLD      ACTION-CODE
+       FILENAME    PERSACTYPE
+       INDEX       PATSET1
+       KEYRNG      COMPANY-01, ACTION-CODE
+
+DEFINE SCRDTL      "Benefit Plan"
+       ID          BN-PLN-D-0060
+       SCRFLD      LINE-FC-PLAN
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-CODE
+
+DEFINE SCRDTL      "Processing Group"
+       ID          BN-PRP-D-0001
+       SCRFLD      PROC-GROUP
+       FILENAME    PRPROCGRP
+       INDEX       PRPSET1
+       KEYRNG      COMPANY-01, PROC-GROUP, ~SPACES
+
+DEFINE SCRDTL      "Deduction Code"
+       ID          BN-DDC-D-0063
+       SCRFLD      PRE-DED-CODE-AMT, AFT-DED-CODE-AMT, COMP-DED-CODE-AMT   
+       FILENAME    DEDCODE
+       INDEX       DDCSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+
+DEFINE SCRDTL      "PLAN-FLEX"
+       ID          BN-PLN-D-0065
+       SCRFLD      PLAN-FLEX
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE,PLAN-CODE
+
+DEFINE SCRDTL      "PLAN-FLEX"
+       ID          BN-FLP-D-0066
+       SCRFLD      PLAN-FLEX
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01, FLEX-PLAN
+
+DEFINE SCRDTL      "Noncash Pay Code"
+       ID          BN-PCD-D-0067
+       SCRFLD      NON-CASH-PAYCODE
+       FILENAME    PRPAYCODE
+       INDEX       PCDSET4
+       KEYRNG      COMPANY-01, PAY-CODE
+       DSPFLDS     DESCRIPTION:"Description", PROCESS-LEVEL:"Proc Lev", JOB-CODE:"Job Code", ACTIVE-FLAG:"Status"
+
+DEFINE SCRDTL      "Rate Table"
+       ID          BN-RTH-D-0068
+       SCRFLD      AGE-CREDIT-RATE-TABLE, SERVICE-CREDIT-RATE-TABLE, DEPENDENT-RATE-TABLE  
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+       DSPFLDS     DESC:"Description",TABLE-TYPE:"Type",START-DATE:"Start Date",PCT-RATE-FLG:"Pct/Amt",CURRENCY-CODE:"Currency"
+
+
+DEFINE SCRDTL      "Rate Table"
+       ID          BN-RTH-D-0069
+       SCRFLD      LIFE-STYLE-RATE-TABLE, COVER-RED-RATE-TABLE, RATE-TABLE, OPTION-RATE-TABLE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+       DSPFLDS     DESC:"Description",TABLE-TYPE:"Type",START-DATE:"Start Date",PCT-RATE-FLG:"Pct/Amt",CURRENCY-CODE:"Currency"
+
+DEFINE SCRDTL      "PLAN-FLEX"
+       ID          BN-PLN-D-0070
+       SCRFLD      PLAN-FLEX
+       FILENAME    PLAN
+       INDEX       PLNSET1
+       KEYRNG      COMPANY-01, PLAN-TYPE, PLAN-FLEX
+
+DEFINE SCRDTL      "PLAN-FLEX"
+       ID          BN-FLP-D-0071
+       SCRFLD      PLAN-FLEX
+       FILENAME    FLEXPLAN
+       INDEX       FLPSET1
+       KEYRNG      COMPANY-01, PLAN-FLEX
+
+DEFINE SCRDTL      "Correspondence"
+       ID          BN-PAR-D-0042
+       SCRFLD      PARTICIPANT
+       FILENAME    PARTICIPNT
+       INDEX       PARSET1
+       KEYRNG      COMPANY-01, PARTICIPANT
+
+DEFINE SCRDTL      "Attendance History"
+       ID          BN-ATH-D-0001
+       SCRFLD      EMPLOYEE
+       FILENAME    ATTENDHIST
+       INDEX       ATHSET2
+       KEYRNG      COMPANY-01, EMPLOYEE
+       DSPFLDS     DATE: "Date",ATTEND-CODE:"Attend Code",HOURS:"Hours",POINTS:"Points",OCCURRENCE:"Occurrence"
+
+DEFINE SCRDTL     "Currency Code"
+    ID            BN-CUC-D-0001
+    SCRFLD        CURRENCY-CODE-98
+    FILENAME      CUCODES
+    INDEX         CUCSET1
+    KEYRNG        @CURSCRFLD
+
+DEFINE SCRDTL      "Rate Table"
+       ID          BN-RTH-D-0073
+       SCRFLD      TABLE-CODE
+       FILENAME    RATETBLHDR
+       INDEX       RTHSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+       DSPFLDS     START-DATE:"Start Date"
+
+DEFINE SCRDTL	   " Broker"
+       ID          BN-BRK-D-0074
+       SCRFLD      BROKER
+       FILENAME    BNBROKER
+       INDEX       BRKSET1
+       KEYRNG      BROKER
+
+DEFINE SCRDTL      " Employee "
+       ID          BN-BXR-D-0075
+       SCRFLD      BXR-EMPLOYEE
+       FILENAME    BNEMPEXER
+       INDEX       BXRSET1
+       KEYRNG      COMPANY-01, BXR-EMPLOYEE
+       DSPFLDS     OPT-GRANT-NBR:"Grant", STOCK-CTF:"Certificate",
+                   EXERCISE-DATE:"Exercise Date", SEQ-NBR:"Sequence Number"
+
+DEFINE SCRDTL      " Grant "
+       ID          BN-BXR-D-0076
+       SCRFLD      BXR-GRANT
+       FILENAME    BNEMPEXER
+       INDEX       BXRSET1
+       KEYRNG      COMPANY-01, BXR-EMPLOYEE, BXR-GRANT
+       DSPFLDS     STOCK-CTF:"Certificate", EXERCISE-DATE:"Exercise Date",
+                   SEQ-NBR:"Sequence Number"
+
+DEFINE SCRDTL      " Grant "
+       ID          BN-BSG-D-0075
+       SCRFLD      GRANT
+       FILENAME    BNSTKGNT
+       INDEX       BSGSET1
+       KEYRNG      COMPANY-01, GRANT
+
+DEFINE SCRDTL      " Certificate "
+       ID          BN-BEG-D-0075
+       SCRFLD      CERTIFICATE
+       FILENAME    BNEMPGRNT
+       INDEX       BEGSET1
+       KEYRNG      COMPANY-01, BEG-EMPLOYEE, GRANT, CERTIFICATE
+
+DEFINE SCRDTL      "HIPAA Reason"
+       ID          BN-PCO-D-0049
+       SCRFLD      HIPAA-REASON
+       FILENAME    PCODES
+       INDEX       PCOSET1
+       KEYRNG      "BT",HIPAA-REASON
+
+DEFINE SCRDTL      "Pending Position Actions"
+       ID          BN-PCT-D-0001
+       SCRFLD      EMPLOYEE
+       FILENAME    PERSACTION
+       INDEX       PCTSET2
+       KEYRNG      COMPANY-01, "L", EMPLOYEE
+       DPSFLDS     EFFECT-DATE:"Effective",
+                   ACTION-CODE:"Action Code",
+                   ACTION-CODE.DESCRIPTION:"Description",
+                   ACTION-NBR:"Action Nbr",
+                   POS-LEVEL:"Position Level"
+
+DEFINE SCRDTL      " Cycle Plan "
+       ID          BN-BCY-D-0001
+       SCRFLD      CYCLE-PLAN 
+       FILENAME    BNCYCLE  
+       INDEX       BCYSET1
+       KEYRNG      COMPANY-01, CYCLE-PLAN, CYCLE-EFFECTIVE-DATE, CYCLE-FREQ
+       
+DEFINE SCRDTL      "Overtime Plan/Payroll Schedule"
+       ID          BN-PRO-D-0042
+       SCRFLD      OT-PLAN-CODE
+       FILENAME    PROVERTIME
+       INDEX       PROSET1
+       KEYRNG      COMPANY-01, @CURSCRFLD
+       DSPFLDS     EFFECT-DATE:"Effective Date"
+
+DEFINE SCRDTL      "ACA Offer Detail"
+       ID          BN-PPO-D-0001
+       SCRFLD      ACA-OFFER
+       FILENAME    BNACAOFFER
+       INDEX       PPOSET1
+       KEYRNG      COMPANY-01, EMPLOYEE, START-DATE, PLAN-TYPE, PLAN-CODE   
+       
+DEFINE SCRDTL      "ACA Dates Detail"
+       ID          BN-PPD-D-0001
+       SCRFLD      ACA-DATES
+       FILENAME    BNACADATES
+       INDEX       PPDSET1
+       KEYRNG      COMPANY-01, EMPLOYEE, REPORT-ENTITY, ACA-OBJ-ID 
+
+DEFINE SCRDTL      "Frequency Table"
+       ID          BN-DFT-D-0001
+       SCRFLD      DED-TABLE
+       FILENAME    DEDFREQTBL
+       INDEX       DFTSET1
+       KEYRNG      COMPANY-01, DED-TABLE
+       
+DEFINE SCRDTL      "Vesting Hours"
+       ID          BN-VES-D-0001
+       SCRFLD      PLAN-CODE
+       FILENAME    VESTHOURS
+       INDEX       VESSET1
+       KEYRNG      COMPANY-01, EMPLOYEE, PLAN-TYPE, PLAN-CODE
+       DSPFLDS     PLAN-YEAR:"Plan Year"
+       
+DEFINE SCRDTL      "Benefit Limits"
+       ID          BN-BNL-D-0001
+       SCRFLD      YEAR
+       FILENAME    BNLIMITS
+       INDEX       BNLSET1
+       KEYRNG      YEAR
+              
+DEFINE SCRDTL      "Pending Dependent Benefit"
+       ID          BN-DEP-D-0001
+       SCRFLD      DEPENDENT-NBR
+       FILENAME    DEPBEN
+       INDEX       DEPSET1
+       KEYRNG      COMPANY-01, EMPLOYEE, DEPENDENT-NBR,PLAN-TYPE, PLAN-CODE
+       DSPFLDS     EMP-START:"Employee Start Date", START-DATE:"Start Date" 
+
+DEFINE SCRDTL      "Pending Employee Benefit"
+       ID          BN-BNB-D-0001
+       SCRFLD      EMPLOYEE
+       FILENAME    BNBEN
+       INDEX       BNBSET1
+       KEYRNG      COMPANY-01, EMPLOYEE,PLAN-TYPE, PLAN-CODE
+       DSPFLDS     START-DATE:"Start Date"        
+
+DEFINE SCRDTL      "Lifestyle Credits"
+       ID          HR-HRH-D-0147
+       SCRFLD      EMPLOYEE
+       FILENAME    HRHISTORY
+       INDEX       HRHSET2
+       KEYRNG      COMPANY-01, EMPLOYEE, ~ZEROS, "0147", "01"
+       DSPFLDS     BEG-DATE:"  Date", N-VALUE:"Credit"
+
+DEFINE SCRDTL      "ACA 1095 Heading"
+       ID          BN-PP5-D-0002
+       SCRFLD      ACA-1095-HEADING
+       FILENAME    BN1095HDR 
+       INDEX       PP5SET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR, IRS-OBJ-ID   
+
+ DEFINE SCRDTL      "ACA Employee"
+       ID          BN-PPI-D-0001
+       SCRFLD      ACA-EMPLOYEE
+       FILENAME    BNACAIRS 
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR, ACA-TYPE, ACA-EMPLOYEE
+       DPSFLDS     FIRST-NAME:"First Name",
+                   LAST-NAME:"Last Name",
+                   TYPE:"Type",
+                   ACA-FORM:"Form",
+                   REPORT-ENTITY:"Report Entity"
+        
+ DEFINE SCRDTL      "ACA COBRA"
+       ID          BN-PPI-D-0002
+       SCRFLD      ACA-COBRA
+       FILENAME    BNACAIRS 
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR, ACA-TYPE, ~ZEROES, ACA-COBRA
+       DPSFLDS     FIRST-NAME:"First Name",
+                   LAST-NAME:"Last Name",
+                   TYPE:"Type",
+                   ACA-FORM:"Form",
+                   REPORT-ENTITY:"Report Entity"
+
+ DEFINE SCRDTL      "ACA Resource"
+       ID          BN-PPI-D-0003
+       SCRFLD      ACA-RESOURCE
+       FILENAME    BNACAIRS 
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR, ACA-TYPE, ~ZEROES, ACA-RESOURCE
+       DPSFLDS     FIRST-NAME:"First Name",
+                   LAST-NAME:"Last Name",
+                   TYPE:"Type",
+                   ACA-FORM:"Form",
+                   REPORT-ENTITY:"Report Entity"
+      
+ DEFINE SCRDTL      "ACA Form Print"
+       ID          BN-PPI-D-0004
+       SCRFLD      ACA-FORM-OVERRIDE
+       FILENAME    BNACAIRS 
+       INDEX       PPISET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR, ACA-TYPE, ACA-EMPLOYEE, ACA-COBRA
+       DPSFLDS     REPORT-ENTITY:"Report Entity",
+                   FORM-CREATE:"Form Create",
+                   FORM-OVERRIDE:"Form Override" 
+
+ DEFINE SCRDTL      "ACA Form Print Dt"
+       ID          BN-PPI-D-0005
+       SCRFLD      ACA-FORM-OVERRIDE-DT
+       FILENAME    BNACAIRSDT
+       INDEX       PP1SET1
+       KEYRNG      COMPANY-01, PAYROLL-YEAR, ACA-TYPE, EMPLOYEE
+       DPSFLDS     FORM-CREATE:"Form Create",
+                   FORM-OVERRIDE:"Form Override" 
+

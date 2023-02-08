@@ -1,0 +1,43 @@
+000100******************************************************************
+000200*                            ZN550WS                             *
+000300******************************************************************
+000400 01  ZN550WS.
+000500     02  WS-WBP-COMPANY          PIC 9(04) VALUE ZEROES.
+000600     02  WS-WBP-EMPLOYEE         PIC 9(09) VALUE ZEROES.
+000700     02  WS-WBP-PARTICIPNT       PIC 9(09) VALUE ZEROES.
+000800     02  WS-WBP-PLAN-TYPE        PIC X(02) VALUE SPACES.
+000900     02  WS-WBP-PLAN-CODE        PIC X(04) VALUE SPACES.
+           02  WS-RPT-WRITTEN          PIC X(01) VALUE SPACES.
+           02  WS-ACTION-NBR           PIC 9(04) VALUE ZEROES. 
+           02  WS-DATE-FIELD.
+               05  WS-CCYY             PIC X(04) VALUE SPACES.
+               05  WS-CCYY-N REDEFINES WS-CCYY  PIC 9(04).           
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-MM               PIC X(02) VALUE SPACES.
+               05  WS-MM-N REDEFINES WS-MM PIC 9(02).
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-DD               PIC X(02) VALUE SPACES.
+               05  WS-DD-N REDEFINES WS-DD PIC 9(02).
+               05  FILLER              PIC X(08) VALUE SPACES.       
+           02  WS-DATE-NUMBER          PIC 9(08) VALUE ZEROS. 
+           02  WS-DATE-REFORMAT-N REDEFINES WS-DATE-NUMBER.
+               05  WS-MM-REF            PIC 9(02).
+               05  WS-DD-REF            PIC 9(02). 
+               05  WS-CCYY-REF          PIC 9(04).
+               
+           02 WS-REF-EFF-DATE          PIC 9(08) VALUE ZEROS.
+           02  WS-DATE-EFF-N REDEFINES WS-REF-EFF-DATE.
+               05  WS-CCYY-EFF          PIC 9(04).
+               05  WS-MM-EFF            PIC 9(02).
+               05  WS-DD-EFF            PIC 9(02). 
+               
+           02 WS-REF-TERM-DATE          PIC 9(08) VALUE ZEROS.
+           02  WS-DATE-TERM-N REDEFINES WS-REF-TERM-DATE.
+               05  WS-CCYY-TERM         PIC 9(04).
+               05  WS-MM-TERM           PIC 9(02).
+               05  WS-DD-TERM           PIC 9(02). 
+               
+            
+                
+                                                      
+001000

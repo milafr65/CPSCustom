@@ -1,0 +1,260 @@
+<UIDEF default="true" id="BN72.1_CUSTOM" token="BN72.1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="BN" TITLE="Retiree Benefit Entry" TOKEN="BN72.1" TYPE="ONLINE" XMLGenBy="xscrgen 10.0.9.0.1794 2020-06-25 18:10:31" XMLGenDT="20201229 1443" chg="C" custom="1" datareq="C" defaultFC="I" defaultui="true" evttype="" formid="BN72.1_CUSTOM" gHeight="24" gWidth="13" height="24" hiddenFC="0" id="form1" inq="I" iosleadingzeroes="DEFAULT" keycheck="C" ladd="A" lchg="C" ldatareq="AC" line="HTM" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pairs="CACCCDIXCS" pdl="LSAPPS" prefc="" rtntype="ALL" staticsize="1" targetid="detail" typ="o" width="80" workflow="0">
+		<transfers id="transfers1" nbr="_l1">
+			<frm_trans FC="I" PROD="LSAPPS" TITLE="COBRA Participant" TOKEN="BN70.1" id="frm_trans1" nbr="_l2"/>
+			<frm_trans PROD="LSAPPS" TITLE="Benefit Plan" TOKEN="BN15.1" id="frm_trans2" nbr="_l3"/>
+			<frm_trans PROD="LSAPPS" TITLE="COBRA and Retiree Benefit Report" TOKEN="BN233" id="frm_trans3" nbr="_l4"/>
+		</transfers>
+		<fld al="right" col="17" height="1" id="label1" nbr="_l5" nm="Company:" row="2" sz="8" tp="label"/>
+		<fld al="right" col="17" id="label2" nbr="_l6" nm="Retiree:" row="3" sz="8" tp="label"/>
+		<fld al="right" col="14" id="label3" nbr="_l7" nm="As of Date:" row="4" sz="11" tp="label"/>
+		<fld al="right" col="51" id="label4" nbr="_l8" nm="Go To: Type" row="4" sz="12" tp="label"/>
+		<fld al="right" col="68" id="label5" nbr="_l9" nm="Plan" row="4" sz="5" tp="label"/>
+		<fld al="left" blankzero="1" col="1" defval="BN72.1" hsel="1" id="hidden1" nbr="_f0" nm="TC" row="0" sz="6" tp="Hidden"/>
+		<toolbar al="left" blankzero="1" col="9" customTbrOrder="0" defval="I" ed="upper" hsel="1" id="toolbar1" nbr="_f1" nm="FC" req="1" row="0" sz="1">
+			<button Disp="C" id="button1" nbr="_l10" nm="Change" value="C" visible="1"/>
+			<button Disp="I" id="button2" nbr="_l11" nm="Inquire" value="I" visible="1"/>
+			<button Disp="N" id="button3" nbr="_l12" nm="Next" value="N" visible="1"/>
+			<button Disp="P" id="button4" nbr="_l13" nm="Previous" value="P" visible="1"/>
+			<button Disp="+" id="button5" nbr="_l14" nm="PageDown" value="+" visible="0"/>
+			<button Disp="-" id="button6" nbr="_l15" nm="PageUp" value="-" visible="0"/>
+			<button Disp="NN" id="button7" nbr="_l16" nm="NextScreen" value="NN" visible="0"/>
+			<button Disp="PP" id="button8" nbr="_l17" nm="PrevScreen" value="PP" visible="0"/>
+		</toolbar>
+		<fld al="left" blankzero="0" ed="upper" id="hidden2" nbr="_f2" nm="FIRST-XMIT" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="upper" id="hidden3" nbr="_f3" nm="PT-PTB-PLAN-TYPE" sz="2" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="upper" id="hidden4" nbr="_f4" nm="PT-PTB-PLAN-CODE" sz="4" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="date" id="hidden5" nbr="_f5" nm="PT-PTB-START-DATE" sz="8" tp="Hidden"/>
+		<fld al="left" blankzero="1" ed="upper" id="hidden6" nbr="_f6" nm="ORIGINATOR" sz="6" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="upper" id="hidden7" nbr="_f7" nm="PT-RECORD-ORIG" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="1" defval="PT" ed="upper" id="hidden8" keynbr="H20" nbr="_f8" nknimp="1" nm="BCM-CMT-TYPE" sz="2" tp="Hidden"/>
+		<fld al="left" blankzero="1" defval="R" ed="upper" id="hidden9" keynbr="Hhu" nbr="_f9" nknimp="1" nm="PTB-COVER-TYPE" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="1" defval="0012" ed="numeric" id="hidden10" nbr="_f10" nm="DETAIL-SIZE" sz="4" tp="Hidden"/>
+		<fld al="right" blankzero="1" col="26" deftkn="HR00.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text1" key="1" keynbr="01" label="Company:" nbr="_f11" nextreq="1" nm="PTB-COMPANY" req="1" row="2" sz="4" tp="Text"/>
+		<fld al="left" blankzero="1" col="38" id="out1" keynbr="CN" nbr="_f12" nm="PRS-NAME" row="2" sz="30" tp="Out"/>
+		<fld al="right" blankzero="1" btnnm="HCU" col="26" deftkn="HR11.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text2" key="1" keynbr="H07" label="Retiree:" nbr="_f13" nm="PTB-EMPLOYEE" req="1" row="3" sz="9" tp="Text"/>
+		<fld al="left" blankzero="1" col="38" drlnokeys="0" hdet="1" hrul="1" id="out2" keynbr="HEN" nbr="_f14" nm="EMP-NAME" row="3" sz="40" tp="Out"/>
+		<fld al="left" blankzero="1" col="26" ed="date" id="text3" key="1" keynbr="H10" label="As of Date:" nbr="_f15" nm="ENROLLMENT-DATE" row="4" sz="6" tp="Text"/>
+		<fld al="left" blankzero="1" col="64" ed="upper" id="text4" label="Go To: Type" nbr="_f16" nm="GO-TO-PLAN-TYPE" row="4" sz="2" tp="Text"/>
+		<fld al="left" blankzero="1" col="74" ed="upper" id="text5" label="Plan" nbr="_f17" nm="GO-TO-PLAN-CODE" row="4" sz="4" tp="Text"/>
+		<detail col="1" hdrsize="1" height="12" id="detail1" nbr="DT0" row="6" rows="12" rowspan="1" tp="Detail" width="79">
+			<fld al="left" col="1" dtlhdr="1" id="label6" nbr="_l18" nm="FC" par="DT0" row="0" sz="3" tp="label"/>
+			<fld al="left" col="5" dtlhdr="1" id="label7" nbr="_l19" nm="*" par="DT0" row="0" sz="1" tp="label"/>
+			<fld al="left" col="7" dtlhdr="1" id="label8" nbr="_l20" nm="Tp" par="DT0" row="0" sz="2" tp="label"/>
+			<fld al="left" col="10" dtlhdr="1" id="label9" nbr="_l21" nm="Plan" par="DT0" row="0" sz="4" tp="label"/>
+			<fld al="left" col="15" dtlhdr="1" id="label10" nbr="_l22" nm="Description" par="DT0" row="0" sz="16" tp="label"/>
+			<fld al="left" col="32" dtlhdr="1" id="label11" nbr="_l23" nm="Start" par="DT0" row="0" sz="8" tp="label"/>
+			<fld al="left" col="41" dtlhdr="1" id="label12" nbr="_l24" nm="Stop" par="DT0" row="0" sz="6" tp="label"/>
+			<fld al="left" col="48" dtlhdr="1" id="label13" nbr="_l25" nm="Opt" par="DT0" row="0" sz="3" tp="label"/>
+			<fld al="left" col="52" dtlhdr="1" id="label14" nbr="_l26" nm="SM" par="DT0" row="0" sz="3" tp="label"/>
+			<fld al="left" col="56" dtlhdr="1" height="1" id="label15" nbr="_l27" nm="Monthly Cont." par="DT0" row="0" sz="9" tp="label"/>
+			<fld al="left" col="68" dtlhdr="1" id="label16" nbr="_l28" nm="Dep" par="DT0" row="0" sz="3" tp="label"/>
+			<fld al="left" blankzero="1" clabel="FC" col="1" det="DT0" detFC="1" drlnokeys="0" ed="upper" hdet="1" hsel="1" id="fc1" keynbr="Hhe" nbr="_f18r0" nm="LINE-FC" oc="0" par="DT0" row="1" rowId="0" sz="1" tp="Fc">
+				<vals Disp="A" Tran="A" id="vals1" nbr="_l29">Add</vals>
+				<vals Disp="C" Tran="C" id="vals2" nbr="_l30">Change</vals>
+				<vals Disp="D" Tran="D" id="vals3" nbr="_l31">Delete</vals>
+				<vals Disp="S" Tran="S" id="vals4" nbr="_l32">Stop</vals>
+			</fld>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="upper" hdet="1" id="hidden11" nbr="_f19r0" nm="RECORD-ORIG" oc="0" par="DT0" rowId="0" sz="1" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="upper" hdet="1" id="hidden12" nbr="_f20r0" nm="PLAN-INFO" oc="0" par="DT0" rowId="0" sz="1" tp="Hidden"/>
+			<fld al="left" blankzero="1" clabel="*" col="5" det="DT0" drlnokeys="0" hdet="1" id="out3" nbr="_f21r0" nm="HILIGHT" oc="0" par="DT0" row="1" rowId="0" sz="1" tp="Out"/>
+			<fld al="left" blankzero="1" clabel="Tp" col="7" det="DT0" drlnokeys="0" hdet="1" id="out4" keynbr="HTL" nbr="_f22r0" nm="PTB-PLAN-TYPE" oc="0" par="DT0" row="1" rowId="0" sz="2" tp="Out">
+				<vals Disp="HL" Tran="HL" id="vals5" nbr="_l33">Health</vals>
+				<vals Disp="DN" Tran="DN" id="vals6" nbr="_l34">Dental</vals>
+				<vals Disp="EL" Tran="EL" id="vals7" nbr="_l35">Life</vals>
+				<vals Disp="DL" Tran="DL" id="vals8" nbr="_l36">Dependent Life</vals>
+			</fld>
+			<fld al="left" blankzero="1" clabel="Plan" col="10" deftkn="BN15.1" det="DT0" drlnokeys="0" hdef="1" hdet="1" hrul="1" hselrul="1" id="out5" keynbr="HTM" nbr="_f23r0" nm="PTB-PLAN-CODE" oc="0" par="DT0" row="1" rowId="0" sz="4" tp="Out"/>
+			<fld al="left" blankzero="1" clabel="Description" col="15" det="DT0" drlnokeys="0" hdet="1" id="out6" keynbr="HTN" nbr="_f24r0" nm="PLN-DISPLAY-DESC" oc="0" par="DT0" row="1" rowId="0" sz="15" tp="Out"/>
+			<fld al="left" blankzero="1" clabel="Start" col="32" det="DT0" drlnokeys="0" ed="date" hdet="1" id="text6" keynbr="H37" nbr="_f25r0" nm="PTB-START-DATE" oc="0" par="DT0" row="1" rowId="0" sz="6" tp="Text"/>
+			<fld al="left" blankzero="1" clabel="Stop" col="40" det="DT0" drlnokeys="0" ed="date" hdet="1" id="text7" keynbr="H38" nbr="_f26r0" nm="PTB-STOP-DATE" oc="0" par="DT0" row="1" rowId="0" sz="6" tp="Text"/>
+			<fld al="right" blankzero="1" clabel="Opt" col="48" det="DT0" drlnokeys="0" ed="numeric" hdet="1" hsel="1" hselrul="1" id="text8" keynbr="HAs" nbr="_f27r0" nm="PTB-COV-OPTION" oc="0" par="DT0" row="1" rowId="0" sz="2" tp="Text"/>
+			<fld al="left" blankzero="1" clabel="SM" col="52" det="DT0" drlnokeys="0" ed="upper" hdet="1" hsel="1" id="select1" nbr="_f28r0" nm="PTB-SMOKER" oc="0" par="DT0" row="1" rowId="0" seltype="" sz="1" tp="Select">
+				<vals Disp="N" Tran="N" id="vals9" nbr="_l37">No</vals>
+				<vals Disp="Y" Tran="Y" id="vals10" nbr="_l38">Yes</vals>
+			</fld>
+			<fld al="right" blankzero="1" clabel="Coverage" col="55" decsz="2" det="DT0" drlnokeys="0" ed="numeric" hdet="1" id="hidden21" nbr="_f29r0" nm="PTB-COVER-AMT" oc="0" par="DT0" row="1" rowId="0" sz="11" tp="Hidden"/>
+			<fld al="right" blankzero="1" clabel="Coverage" col="55" decsz="2" det="DT0" drlnokeys="0" ed="numeric" id="hidden22" keynbr="" nbr="_f310" nm="" oc="0" par="DT0" row="1" rowId="0" sz="11" tp="Hidden"/>
+			<push al="center" blankzero="0" btnnm="Dep" clabel="Dep" col="67" det="DT0" hdef="1" height="1" id="push1" keynbr="HR13.4" nbr="_f30r0" nm="DEP" oc="0" par="DT0" row="1" rowId="0" sz="4"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="upper" fldbtn="_f31" hdet="1" id="hidden13" keynbr="HBk" nbr="_f32r0" nm="BNT-CREATE-TRANS" oc="0" par="DT0" rowId="0" sz="1" tp="Hidden"/>
+			<fld al="left" blankzero="0" deftkn="HR83.7" det="DT0" drlnokeys="0" ed="upper" fldbtn="_f31" hdef="1" hdet="1" hsel="1" hselrul="1" id="hidden14" keynbr="HBi" nbr="_f33r0" nm="BNT-REASON" oc="0" par="DT0" rowId="0" sz="10" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="numeric" fldbtn="_f31" hdet="1" id="hidden15" keynbr="HBj" nbr="_f34r0" nm="BNT-MEMBER-ID" oc="0" par="DT0" rowId="0" sz="1" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="upper" hdet="1" id="hidden16" nbr="_f35r0" nm="PT-CREATE-TRANS" oc="0" par="DT0" rowId="0" sz="1" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="numeric" hdet="1" id="hidden17" nbr="_f36r0" nm="CREATION-DATE" oc="0" par="DT0" rowId="0" sz="8" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="numeric" hdet="1" id="hidden18" nbr="_f37r0" nm="UPD-DATE" oc="0" par="DT0" rowId="0" sz="8" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="numeric" hdet="1" id="hidden19" nbr="_f38r0" nm="TIME-STAMP" oc="0" par="DT0" rowId="0" sz="6" tp="Hidden"/>
+			<fld al="left" blankzero="0" det="DT0" drlnokeys="0" ed="upper" hdet="1" id="hidden20" nbr="_f39r0" nm="USER-ID" oc="0" par="DT0" rowId="0" sz="10" tp="Hidden"/>
+			<tabregion col="0" det="1" grp="tab1" height="2" id="tabregion1" nbr="TR0" row="19" scroll="0" width="80">
+				<tab id="tab1" nbr="TF0-0" nm=" Additional Info" par="TR0" secnm="INFO" tabprot="0">
+					<fld al="left" col="1" id="label17" nbr="_l39" nm="Process Level" par="TF0-0" row="0" sz="13" tp="label"/>
+					<fld al="left" blankzero="1" det="DT0" drlnokeys="0" ed="upper" hdet="1" id="tabfld1" nbr="_f40" nm="INFO" oc="0" par="TF0-0" sz="17" tp="Tab"/>
+					<fld al="left" blankzero="1" clabel="Process Level" col="5" deftkn="HR01.1" det="DT0" drlnokeys="0" ed="upper" hdef="1" hdet="1" hsel="1" hselrul="1" id="text10" keynbr="H03" nbr="_f41r0" nm="PTB-PROC-LEVEL" oc="0" par="TF0-0" row="1" rowId="0" sz="5" tp="Text"/>
+				</tab>
+			</tabregion>
+			<fld al="right" col="55" defval="" det="DT0" height="1" id="text11" mxsz="10" nbr="_f311r0" nm="" par="DT0" row="1" sz="10" tooltip="" tp="Out"/>
+			<row col="1" id="row1" nbr="_l40" row="1" rowID="0"/>
+			<row col="1" id="row2" nbr="_l41" row="2" rowID="1"/>
+			<row col="1" id="row3" nbr="_l42" row="3" rowID="2"/>
+			<row col="1" id="row4" nbr="_l43" row="4" rowID="3"/>
+			<row col="1" id="row5" nbr="_l44" row="5" rowID="4"/>
+			<row col="1" id="row6" nbr="_l45" row="6" rowID="5"/>
+			<row col="1" id="row7" nbr="_l46" row="7" rowID="6"/>
+			<row col="1" id="row8" nbr="_l47" row="8" rowID="7"/>
+			<row col="1" id="row9" nbr="_l48" row="9" rowID="8"/>
+			<row col="1" id="row10" nbr="_l49" row="10" rowID="9"/>
+			<row col="1" id="row11" nbr="_l50" row="11" rowID="10"/>
+			<row col="1" id="row12" nbr="_l51" row="12" rowID="11"/>
+		</detail>
+		<push al="center" blankzero="0" col="30" hdef="1" id="push2" keynbr="ZN35.1" nbr="_f306" nm="RETRO-BTN" row="23" sz="6"/>
+		<push al="center" blankzero="0" btnnm=" Comments" col="43" hdef="1" id="push3" keynbr="BN90.1" nbr="_f307" nm="COMMENTS" row="23" sz="10"/>
+		<fld al="left" blankzero="1" col="55" id="out7" nbr="_f308" nm="COMMENTS-FLAG" row="23" sz="1" tp="Out"/>
+		<fld al="left" blankzero="0" ed="upper" id="sp1" nbr="_f309" nm="_HK" req="1" sz="21" tp="Sp"/>
+		<PATH id="path1" nbr="_l52"/>
+		<msgBar bMsgArea="1" id="msgbar1" nbr="msgBar"/>
+		<XSCRIPT id="script1" nbr="_s1">
+			<![CDATA[
+/*
+ * This script populates a "Monthly Contribution" field for Lawson form BN72.1
+ * The Monthly Contribution field is set as textbox: "text9"
+ * MLF Monthly Contribution was text10 in the original mod
+ * MLF Mod had to be rewritten for upgrade to 10.1.1.17 10/15/2020
+ * MLF and text10 became text9
+ * MLF f285 remained the same
+ * MLF
+ * MLF Rewritten for EOY patching 12/30/2020
+ * MLF Output field became text11
+ * MLF Field nbr became f311
+ * Written by Jonathan McGuire 10/13/2011
+ *
+*/
+
+function FORM_OnAfterTransaction(data)
+{
+	//v=lawForm.getDataValue("PTB-EMPLOYEE");
+	//alert("Retire Number: "+v);
+	//alert(data.selectSingleNode("//_f1").text);
+	
+	// Set the transaction code
+	// Change: C; Inquire: I; Next: N; Previous: P;
+	transCode = data.selectSingleNode("//_f1").text;
+	
+	// Calculate the contribution only if not changing
+	if((transCode != "C") && (lawForm.getMessageNbr() == "000"))
+	{
+		// Test emp contribution
+		/*
+		for (i = 0; i < 12; i++)
+		{
+			lawForm.setFormValue("text11","test", i);
+		}
+		*/
+
+		headerFlag = false; // Has the header been created?
+
+		for (i = 0; i < 12; i++)
+		{
+			//alert("The value of i is: "+i);
+			if (lawForm.getDataValue("HILIGHT", i) == "*") // The * denotes those who are active
+			{
+				// Build the DMEHeader once for row independent values
+				if (!headerFlag)
+				{
+					// Get row independent values for the DME API string
+					company = lawForm.getDataValue("PTB-COMPANY"); // Company Number
+					employee = lawForm.getDataValue("PTB-EMPLOYEE"); // Employee Number
+					participantNum = 0; // Is always zero for this form
+	
+					// Build the DME API string header
+					DMEHeader = "/servlet/Router/Data/Erp?PROD=";
+					DMEHeader += strPDL; // Product line, enviromental variable
+					DMEHeader += "&FILE=PARTBEN&FIELD=EMP-AFT-CONT;&INDEX=PTBSET1&KEY=";
+					DMEHeader += company+"=";
+
+					headerFlag = true;
+				}
+
+				// Get row dependent values for the DME API string
+				planType = lawForm.getDataValue("PTB-PLAN-TYPE", i);
+				planCode = lawForm.getDataValue("PTB-PLAN-CODE", i);
+				startDate = lawForm.getDataValue("PTB-START-DATE", i);
+
+				// Pin the remaining values to the DME API string
+				DMEString = DMEHeader;
+				DMEString += planType+"=";
+				DMEString += participantNum+"=";
+				DMEString += employee+"=";
+				DMEString += startDate+"=";
+				DMEString += planCode;
+				DMEString += "&OUT=XML";
+
+				//alert("line "+i+" Type "+planType+ " code "+planCode+" start "+startDate);				
+				//alert("DME-API String: "+DMEString);
+
+				// Do the DME query
+				empAnualCont = DoDME(DMEString);
+
+				// Quit if DME failed
+				if (!empAnualCont)
+				{
+					return false;
+				}
+		
+				//alert("After return "+empAnualCont);
+				
+				// Divide anual contribution by 12 months and print to the form
+				lawForm.setFormValue("text11", (empAnualCont /12).toFixed(2), i);
+				// Re-initialize DMEString
+				DMEString = "";
+			}
+		}
+	}
+}
+
+// Do the DME query
+function DoDME(DMEString)
+{	
+	//alert(DMEString);
+	DMEInfo = portalWnd.httpRequest(DMEString);
+
+	if(!DMEInfo || DMEInfo.status)
+	{
+		alert ("Error executing DME");
+		return false;
+	}
+
+	DMEVal = new portalWnd.DataStorage(DMEInfo);
+	records = DMEVal.document.getElementsByTagName("RECORD");
+
+	if (records.length == 0)
+	{
+		alert("No values returned from DME");
+		return false;
+	}
+	
+        cols = records[0].getElementsByTagName("COL");
+        // new line 10.22.2020
+          empAnualCont = DMEVal.getElementCDataValue("COL",0); 
+        // next line commented out 10.22.2020
+	//empAnualCont = cols[0].firstChild.data;
+	return empAnualCont;
+}
+
+
+function FORM_OnBeforeTransaction(fc)
+{
+	
+	//alert("The code is: "+fc);
+	// Clear contribution fields when not changing
+	if (fc != "C")
+	{
+		tranMagic.clearFormData("_f311");
+	}
+	return true;
+}
+
+
+]]>
+		</XSCRIPT>
+	</form>
+	<TRANSACTION trantype="ALL"/>
+</UIDEF>

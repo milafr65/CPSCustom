@@ -1,0 +1,71 @@
+******* ZN423.scr 2 <2589909661>
+$RELEASE   08.0
+*******************************************************************************
+*                           SCREEN   ZN423
+*******************************************************************************
+$FORM      ZN423    R
+$MENU      HRMN0
+$SECURITY  NO
+$DECIMALS  NO
+$NOLFCOK
+$KEYFCS    CD
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN423    R
+[HRRP[ ]              ?*** EMPLOYMENT File Extract ***         +N]
+                             ?;                                        ;
+   Report          [ZN423]     Priority    [ ]     Save Params (Y/N) [ ]
+   User Name  [          ]
+   Job Name   [          ] --- This will be the name on your report
+   Run After  [          ] --- NOW, HOLD, Time (1230 pm), Job Name
+   Frequency           [ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\  Comments   [                                                  ]\
+
+                     |Company:&    ]       ;                              ;
+
+|           Period Date Range:&      ] - &      ]
+
+                                            
+
+$END-SCR   ZN423    R
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN423    R
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     UPDATE-SW             A     01          SB 
+  2     SCREEN-MSG            O     40          SB 
+  2     TRANCODE              A     05          RP 
+  2     HEADER                G     00        
+   3    Q-PRIORITY            N     01          SB 
+   3    SAVE-PARAMS           A     01          SB 
+   3    USER-NAME             A     10          SK 
+   3    JOB-NAME              A     10          SK 
+   3    RUN-AFTER             A     10          SB 
+   3    FREQUENCY             A     01          SB 
+   3    COMMENTS              A     50          SB 
+  2     RUN-PARAMS            G     00        
+*
+   3    COMPANY               N     04          SR    01  C
+   3    PRS-NAME              AL    30          SB    CN
+   3    PERIOD-START          F     06          SB
+   3    PERIOD-END            F     06          SB
+$END-TRANS ZN423    R                              
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     ZN423    R
+  FC                                          A,C,D,I
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  JOB-NAME                                    R.00000000:R.ZZZZZZZZ
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+  COMPANY               1000                                    
+$END-EDITS ZN423    R
+

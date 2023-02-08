@@ -1,0 +1,80 @@
+000010******************************************************************
+000020 050-EDIT-PARAMETERS             SECTION 10.
+      ******************************************************************
+      *                  MODIFICATION LOG
+      ******************************************************************
+      *
+      ******************************************************************
+000040 050-START.
+000050
+000070     IF (PRM-COMPANY NOT = ZEROES)
+000080         MOVE PRM-COMPANY            TO DB-COMPANY
+000090         MOVE SPACES                 TO DB-PROCESS-LEVEL
+000100         PERFORM 840-FIND-PRSSET1
+000110         IF (PRSYSTEM-NOTFOUND)
+000120             MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+000130             MOVE 100                TO CRT-ERROR-NBR
+000140             MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+000150             PERFORM 780-PRINT-ERROR-MSG
+000160             GO TO 050-END
+000190         END-IF.
+
+001760 050-END.
+001770
+002230******************************************************************
+002240 100-PROGRAM-CONTROL             SECTION 10.
+002250******************************************************************
+002260 100-START.
+002270
+002280     MOVE 052                        TO CRT-MSG-NBR.
+002290     PERFORM 780-DISPLAY-MSG.
+002300
+002350     PERFORM 800-OPENOUTPUTCSV-ZN420IN. 
+           PERFORM 800-ALLUSEDCSV-ZN420IN. 
+
+           PERFORM 200-PROCESS-CSV.
+
+002450     PERFORM 800-CLOSECSV-ZN420IN.   
+002470
+002480 100-END.
+002490
+
+002230******************************************************************
+       200-PROCESS-CSV                 SECTION 50.
+002230******************************************************************
+
+           PERFORM 210-PROCESS-CSV-REC
+           THRU    210-END
+           VARYING I1 FROM 1 BY 1
+              UNTIL (I1 > WS-NBR-OF-OVERRIDES).
+              
+           GO TO 200-END.
+              
+002230******************************************************************
+       210-PROCESS-CSV-REC.
+002230******************************************************************
+       
+           IF (PRM-EMP-NUM (I1) = 0)
+               GO TO 210-END.
+               
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE PRM-EMP-NUM (I1)       TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           
+           IF (EMPLOYEE-NOTFOUND)
+               DISPLAY "OVERRIDE FAILED - EMPLOYEE ", 
+                       PRM-EMP-NUM(I1), " INVALID"
+               GO TO 210-END
+           END-IF.
+           
+           MOVE EMP-EMPLOYEE           TO OUT-EMPLOYEE.
+           MOVE EMP-LAST-NAME          TO OUT-LAST-NAME.
+           MOVE EMP-FIRST-NAME         TO OUT-FIRST-NAME.
+           
+           PERFORM 800-WRITECSV-ZN420IN.
+          
+       210-END.
+       
+002230******************************************************************
+       200-END.
+002230******************************************************************

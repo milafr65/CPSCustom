@@ -1,0 +1,72 @@
+< IS PROD\PDLIB\HRDEPPD
+> IS VNLA\PDLIB\HRDEPPD
+3,18d2
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+< SN0406*  SN0406  04/03/06  MODIFY TO ALLOW 4 MORE FIELDS: DISABILITY   *
+< SN0406*                    APPROVED FOR CDSP, DISABILITY APPROVED FOR  *
+< SN0406*                    CDSP DATE, DISABILITY APPROVED FOR CHP,     *
+< SN0406*                    DISABILITY APPROVED FOR CHP DATE.           *
+< SN0406*                                                                *
+< SN0306*  SN0306  03/29/06  MODIFY TO ALLOW HIC NUMBER.                 *
+< SN0306*                                                                *
+<       *  AI0080  03/25/03  MODIFY TO ALLOW 3 MORE DATES: DIVORCE,      *
+<       *                    MARRIAGE, AND STUDENT STATUS REVIEW DATES.  *
+<       ******************************************************************
+< 
+917,921d900
+< 101105****
+< 101105     IF (HRDEP-FC                    = "C")
+< 101105         MOVE HRDEP-EMD-STUDENT      TO EMD-STUDENT.
+< 
+< 
+1009,1017d987
+< 
+< AI0080     MOVE HRDEP-EMD-COMPANY         TO DB-COMPANY.
+< AI0080     MOVE HRDEP-EMD-EMPLOYEE        TO DB-EMPLOYEE.
+< AI0080     MOVE HRDEP-EMD-SEQ-NBR         TO DB-SEQ-NBR.
+< AI0080     PERFORM 840-FIND-WBDSET1.
+< AI0080     IF (WBPDEPEND-FOUND)
+< AI0080         PERFORM 840-MODIFY-WBDSET1   
+< AI0080     ELSE
+< AI0080         PERFORM 800-CREATE-WBPDEPEND.
+1034d1003
+< AI0080     PERFORM 820-STORE-WBPDEPEND.
+1084,1093d1052
+< 
+< AI0080     MOVE HRDEP-EMD-COMPANY         TO DB-COMPANY.
+< AI0080     MOVE HRDEP-EMD-EMPLOYEE        TO DB-EMPLOYEE.
+< AI0080     MOVE HRDEP-EMD-SEQ-NBR         TO DB-SEQ-NBR.
+< AI0080     PERFORM 840-FIND-WBDSET1.
+< AI0080     IF (WBPDEPEND-FOUND)
+< AI0080         PERFORM 840-MODIFY-WBDSET1   
+< AI0080     ELSE
+< AI0080         PERFORM 800-CREATE-WBPDEPEND.
+< 
+1161d1119
+< AI0080     PERFORM 820-STORE-WBPDEPEND.
+1187d1144
+< AI0080     PERFORM 840-MODIFY-WBDSET1.
+1234,1235d1190
+< AI0080     IF (WBPDEPEND-FOUND)
+< AI0080        PERFORM 830-DELETE-WBPDEPEND.
+1422,1437d1376
+< 
+< AI0080     MOVE HRDEP-EMD-COMPANY         TO WBD-COMPANY.
+< AI0080     MOVE HRDEP-EMD-EMPLOYEE        TO WBD-EMPLOYEE.
+< AI0080     MOVE HRDEP-EMD-SEQ-NBR         TO WBD-SEQ-NBR.
+< AI0080     MOVE HRDEP-DIVORCE-DATE        TO WBD-DIVORCE-DATE.
+< AI0080     MOVE HRDEP-MARRIAGE-DATE       TO WBD-MARRIAGE-DATE.
+< AI0080     MOVE HRDEP-DISABLED-DATE       TO WBD-DISABLED-DATE.
+< AI0080     MOVE HRDEP-STUDENT-DATE        TO WBD-STUDENT-DATE.
+< AI0080     MOVE WS-SYSTEM-DATE-YMD        TO WBD-DATE-STAMP.
+< AI0080     MOVE HHMMSS                    TO WBD-TIME-STAMP.
+< AI0080     MOVE CRT-USER-NAME             TO WBD-USER-ID.
+< SN0306     MOVE HRDEP-HIC-NUMBER          TO WBD-HIC-NUMBER.
+< SN0406     MOVE HRDEP-DIS-APR-CDSP        TO WBD-DIS-APR-CDSP.
+< SN0406     MOVE HRDEP-DIS-APR-CDSP-D      TO WBD-DIS-APR-CDSP-D.
+< SN0406     MOVE HRDEP-DIS-APR-CHP         TO WBD-DIS-APR-CHP.
+< SN0406     MOVE HRDEP-DIS-APR-CHP-D       TO WBD-DIS-APR-CHP-D.

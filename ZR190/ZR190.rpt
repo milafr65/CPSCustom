@@ -1,0 +1,215 @@
+******* ZR190.rpt 11 <1681578075>
+******************************************************************
+$PROGRAM   ZR190
+******************************************************************
+
+****************************************************
+$REPORT    ZR190-R1
+****************************************************
+
+**************************************
+$GROUP     BROADCAST-TAG-LINE-R1
+**************************************
+$PREFIX    CHN1-
+$LEVEL     A
+$FORMAT
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
+A
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES           
+ ---   --------------------   --------------  --   ----------  ---------------- 
+ A     TAG-LINE
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN1-COMPANY
+**************************************
+$PREFIX    G1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+ZR190 Date ZZ/ZZ/ZZ                 Company  ZZZZ - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX     XXXXX                               Page ZZZZ
+      |  ; A                        |      ; B      C                                  D                                   |  ; E
+      Time 99:99                                   Application Closing Chargeback Report
+      |  ; F                                       |                 ; |                            ;
+%
+ Chargeback          Chargeback Amt     CB Type   Reason   Description                   Cross Reference  Payment        Co
+ |                 ; |                ; |       ; |      ; |                   ;         |              ; |            ; |     ;
+%-   ----------   -----------------     -------   ----     ------------------------------  -  ----------  ------------- ----
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DATE                                   TD    
+ B     COMPANY                             
+ C     ACO-NAME                        
+ D     ACO-CURRENCY-CD                        
+ E     PAGE                                   PN    
+ F     TIME                                   CT    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1-DETAIL
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$FORMAT
+ X   XXXXXXXXXX   ZZZZZZZZZZZZZZ.99-    XXXXXXX   XXXX     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  X  XXXXXXXXXX  X  XXXXXXXXXX XXXX
+ A   B            C                     D         E        F                               G  H           I  J          K
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TRANS-TYPE                        
+ B     INVOICE                        
+ C     TRAN-AMT                               DV    
+ D     CB-TYPE                        
+ E     REASON-CODE                        
+ F     DESC                        
+ G     XREF-TYPE                        
+ H     XREF-NBR                        
+ I     CR-TYPE                        
+ J     CR-NBR                        
+ K     CR-COMPANY                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN12-DETAIL
+**************************************
+$PREFIX    G12-
+$LEVEL     B
+$FORMAT
+ X   XXXXXXXXXX   ZZZZZZZZZZZZZZ.99-    XXXXXXX   XXXX     XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  X  XXXXXXXXXXXXXXXXXXXXXX        
+ A   B            C                     D         E        F                               G  H                           
+                                                                                                          X  XXXXXXXXXX XXXX
+                                                                                                          I  J          K
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TRANS-TYPE                        
+ B     INVOICE                        
+ C     TRAN-AMT                               DV    
+ D     CB-TYPE                        
+ E     REASON-CODE                        
+ F     DESC                        
+ G     XREF-TYPE                        
+ H     XREF-NBR                        
+ I     CR-TYPE                        
+ J     CR-NBR                        
+ K     CR-COMPANY                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN2-CUSTOMER
+**************************************
+$PREFIX    G2-
+$LEVEL     B
+$FORMAT
+                  ZZZZZZZZZZZZZZ.ZZ-    XXXXX     Customer:  XXXXXXXXX    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                  A                     B         |        ; C            D
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ORIG-AMT                               DV    
+ B     ORIG-CURRENCY                        
+ C     CB-CUSTOMER                        
+ D     NAME                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN3-XREF
+**************************************
+$PREFIX    G3-
+$LEVEL     C
+$FORMAT
+                                                  XXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  X  XXXXXXXXXXXXXXXXXXXXXX
+                                                  A        B                               C  D
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     REASON-CODE                        
+ B     DESC                        
+ C     XREF-TYPE                        
+ D     XREF-NBR                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     TN0-TOTALS
+**************************************
+$PREFIX    T0-
+$FORMAT
+%
+%
+                  Report Totals:      Detail  ZZZZZZZZZZZZZZ.99-     ZZZZZZZZZZZZZZ.ZZ-   XXXXX
+                  |                 ; |    ;  A                      E                    I
+                                      Memo    ZZZZZZZZZZZZZZ.99-     ZZZZZZZZZZZZZZ.ZZ-   XXXXX
+                                      |     ; B                      F                    J
+                                      Summary ZZZZZZZZZZZZZZ.99-     ZZZZZZZZZZZZZZ.ZZ-   XXXXX
+                                      |     ; C                      G                    K
+                                              -----------------      XXXXXXXXXXXXXXXXX
+                                                                     M
+                                              ZZZZZZZZZZZZZZ.99-     ZZZZZZZZZZZZZZ.ZZ-   XXXXX
+                                              D                      H                    L
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DETAIL-AMOUNT                          DV    
+ B     MEMO-AMOUNT                            DV    
+ C     SUMMARY-AMOUNT                         DV    
+ D     TOTAL-AMOUNT                           DV    
+ E     ORIG-DETAIL-AMOUNT                     DV    
+ F     ORIG-MEMO-AMOUNT                       DV    
+ G     ORIG-SUMMARY-AMOUNT                    DV    
+ H     ORIG-TOTAL-AMOUNT                      DV
+ I     DETAIL-CURRENCY
+ J     MEMO-CURRENCY
+ K     SUMMARY-CURRENCY
+ L     ALL-CURRENCY
+ M     MEMO-DASH-LINE
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     T12-REPORT-MESSAGE
+**************************************
+$LEVEL     B
+$FORMAT
+%
+%
+%
+*** Report Completed ***
+|                                  ; 
+%
+$ENDFMT
+$ENDGRP
+**************************************
+$GROUP     T11-REPORT-MESSAGE
+**************************************
+$LEVEL     B
+$FORMAT
+%
+%
+%
+*** Report Completed - Applications Processed ***
+|                                  ; 
+%
+$ENDFMT
+$ENDGRP
+$ENDRPT
+
+
+$ENDPGM

@@ -1,0 +1,16 @@
+< prod/pasrc/PA02PD
+607,620d606
+<            PERFORM 1000-OPEN-WORKFLOW-DB.
+< 
+<            MOVE PA02F1-POS-COMPANY       TO WFAPI-CRITERION-1.
+<            MOVE "COMPANY"                TO WFAPI-I-VARIABLE-NAME (1).
+<            MOVE PA02F1-POS-COMPANY       TO WFAPI-I-VARIABLE-VAL  (1).
+<            MOVE "POSITION"               TO WFAPI-I-VARIABLE-NAME (2).
+<            MOVE PA02F1-POS-POSITION      TO WFAPI-I-VARIABLE-VAL  (2).
+<            MOVE "DATE"                   TO WFAPI-I-VARIABLE-NAME (3).
+<            MOVE PA02F1-POS-EFFECT-DATE   TO WFAPI-I-VARIABLE-VAL  (3).
+<            MOVE "DESCRIPTION"            TO WFAPI-I-VARIABLE-NAME (4).
+<            MOVE PA02F1-POS-DESCRIPTION   TO WFAPI-I-VARIABLE-VAL  (4).
+< 
+<            PERFORM 1000-PROCESS-FLOW.
+< 

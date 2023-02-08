@@ -1,0 +1,74 @@
+******* WB103.scr 1 <297100977>
+$RELEASE   02.1
+*******************************************************************************
+*                           SCREEN   WB103
+*******************************************************************************
+$FORM      WB103    R
+$MENU      PAMN0
+$SECURITY  NO
+$DECIMALS  NO
+$NOLFCOK
+$KEYFCS    CD
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    WB103    R
+[PARP[ ]             ?*** Create Pers Acts for ER-WITHDRW ***         +Y]
+                             ?;                                        ;
+   Report          [WB103]     Priority    [ ]     Save Params (Y/N) [ ]
+   User Name  [          ]
+   Job Name   [          ] --- This will be the name on your report
+   Run After  [          ] --- NOW, HOLD, Time (1230 pm), Job Name
+   Frequency           [ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\  Comments   [                                                  ]\
+
+|                  Company:&    ]      ;                              ;
+
+|           Effective Date:&      ]      Reason: [          ]
+
+|                   Update:[ ]         ;           ;
+
+
+$END-SCR   WB103    R
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     WB103    R
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     UPDATE-SW             A     01          SB 
+  2     SCREEN-MSG            O     40          SB 
+  2     TRANCODE              A     05          RP 
+  2     HEADER                G     00        
+   3    Q-PRIORITY            N     01          SB 
+   3    SAVE-PARAMS           A     01          SB 
+   3    USER-NAME             A     10          SK 
+   3    JOB-NAME              A     10          SK 
+   3    RUN-AFTER             A     10          SB 
+   3    FREQUENCY             A     01          SB 
+   3    COMMENTS              A     50          SB 
+  2     RUN-PARAMS            G     00        
+   3    COMPANY               N     04          SR    01  C
+   3    PRS-NAME              A     30          SB    CN
+   3    EFFECTIVE-DATE        F     08          SR    HQ2
+   3    PCT-REASON            A     10          SR   *HBB
+   3    UPDATE                A     01          SB
+   3    UPDATE                X     11          SB
+$END-TRANS WB103    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     WB103    R
+  FC                                          A,C,D,I
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  JOB-NAME                                    R.00000000:R.ZZZZZZZZ
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+  UPDATE                N                     N=Report Only
+                                              Y=Update
+$END-EDITS WB103    R
+

@@ -1,0 +1,72 @@
+******* ZN420WS 1.1.2 <577138916>
+000010******************************************************************
+000020*                            ZN420WS                             *
+000030******************************************************************
+      *                        MODIFICATION LOG                        *
+      ******************************************************************
+WO5483* 04/16/2014   MLF   WO5483                                      *
+WO5483*                    ADDED EMPLOYEE OVERRIDE CAPABILITY          *
+SR4177* 05/07/2018   MLF   MULTIPLE CHANGES                            *
+SR4177*                  - ADD MOBILE PHONE TO PERSONAL RECORD         *
+SR4177*                  - GENERATE BENEFICIARY RECORD IF EMDEPEND -OR-*
+SR4177*                    WBPDEPEND WAS UPDATED DURING RPT DATE RANGE *
+SR4177*                  - TO CORRECT ISSUE WITH DECEASED DEPENDENTS,  *
+SR4177*                    BENE-CD4 WILL BE THE HIC# FROM WBPDEPEND    *
+      ******************************************************************
+000040 01  ZN420WS.
+           02  WS-RECORD-COUNT                 PIC 9(13) VALUE ZEROES. 
+           02  WS-BEN-RECORD-COUNT             PIC 9(13) VALUE ZEROES. 
+           02  WS-PERS-HDR-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-PERS-DTL-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-PERS-TRLR-FILE               PIC X(90) VALUE SPACES. 
+           02  WS-PERSONAL-OUT                 PIC X(90) VALUE SPACES. 
+           02  WS-BENE-HDR-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-BENE-DTL-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-BENE-TRLR-FILE               PIC X(90) VALUE SPACES. 
+           02  WS-BENEFIC-OUT                  PIC X(90) VALUE SPACES. 
+           02  WS-COMMAND.
+               03  WS-COMMAND-STRING           PIC X(600) VALUE SPACES.
+               03  FILLER                      PIC X(01)  VALUE X"00".
+               
+SR4177     02  WS-DB-NULL-DATE                 PIC 9(08) VALUE 17530101.
+
+           02  WS-EMPLOYEE-ID.
+               03 WS-EMPLOYEE-NBR              PIC 9(09) VALUE ZEROES. 
+           02  WS-150-DAYS                     PIC 9(08) VALUE ZEROES.  
+           02  WS-PERIOD-START-DATE.                                   
+               03  WS-PERIOD-START-CCYY        PIC 9(04) VALUE ZEROES.
+               03  WS-PERIOD-START-MM          PIC 9(02) VALUE ZEROES.
+               03  WS-PERIOD-START-DD          PIC 9(02) VALUE ZEROES.
+           02  FILLER REDEFINES WS-PERIOD-START-DATE.
+               03  WS-PERIOD-START             PIC 9(08).               
+           02  WS-PERIOD-END-DATE.                                     
+               03  WS-PERIOD-END-CCYY          PIC 9(04) VALUE ZEROES.
+               03  WS-PERIOD-END-MM            PIC 9(02) VALUE ZEROES.
+               03  WS-PERIOD-END-DD            PIC 9(02) VALUE ZEROES.
+           02  FILLER REDEFINES WS-PERIOD-END-DATE.
+               03  WS-PERIOD-END               PIC 9(08).               
+           02  WS-CURR-YEAR-END-A              PIC X(08) VALUE ZEROES. 
+           02  WS-CURR-YEAR-END-N REDEFINES WS-CURR-YEAR-END-A.
+               03  WS-CURR-YEAR-END         PIC 9(08).
+           02  WS-PTB-START-DATE               PIC 9(08) VALUE ZEROES.
+           02  WS-PTB-STOP-DATE                PIC 9(08) VALUE ZEROES.
+           02  WS-PTB-COV-OPTION               PIC 9(02) VALUE ZEROES.
+           02  WS-PTB-PLAN-CODE                PIC X(04) VALUE SPACES.
+           
+SR4177     02  WS-PREV-STATUS                  PIC X(02) VALUE SPACES.
+SR4177     02  WS-HRH-DATAITEM-STATUS          PIC 9(02) VALUE 20.
+           
+SR4177     02  WS-HCN-PROC-FLAG                PIC 9(01) VALUE 0.
+SR4177     02  WS-HCN-PHONE                    LIKE PHONE.
+SR4177     02  WS-HCN-PHONE-EXT                LIKE PHONE-EXT.
+
+           02 LOWER-CASE PIC X(26) VALUE "abcdefghijklmnopqrstuvwxyz".
+           02 UPPER-CASE PIC X(26) VALUE "ABCDEFGHIJKLMNOPQRSTUVWXYZ".
+           
+WO5483     02 WS-OVERRIDE-FOUND-FLAG           PIC 9(01) VALUE 0.
+WO5483     02 WS-MAX-OVERRIDES                 PIC 9(04) VALUE 1000.
+WO5483     02 WS-NBR-OF-OVERRIDES              PIC 9(04) VALUE 0.
+WO5483     02 WS-OVERRIDE-TABLE.
+WO5483        03  WS-OVERRIDE-EMP              PIC 9(09)
+WO5483                                         OCCURS 1000 TIMES.
+AI0001     02 WS-WEN-PLAN-CODE-PFX             PIC X(02) VALUE SPACES.

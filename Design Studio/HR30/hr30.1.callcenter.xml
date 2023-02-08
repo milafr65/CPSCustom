@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<UIDEF default="true" id="HR30.1_CALLCENTER" pdl="LSAPPS" token="HR30.1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="HR" TITLE="Correspondence Tracking" TOKEN="HR30.1" TYPE="ONLINE" XMLGenBy="xscrgen 9.0.1.7.181 2010-08-10 04:00:00 (201010)" XMLGenDT="20111029 1333" add="A" chg="C" custom="1" datareq="AC" dblXmit="D" defaultFC="I" defaultui="true" del="D" evttype="" formid="HR30.1_CALLCENTER" gHeight="24" gWidth="14" height="24" hiddenFC="0" id="form1" inq="I" keycheck="CD" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="" rtntype="ALL" staticsize="1" targetid="junk" typ="o" width="80" workflow="0">
+		<PATH id="path1" nbr="_l1">
+			<POSITION PROD="LSAPPS" TITLE="Main Menu LSAPPS" TOKEN="LAMN.0" id="position1" nbr="_l2"/>
+			<POSITION PROD="LSAPPS" TITLE="Human Resources" TOKEN="HRMN.0" id="position2" nbr="_l3"/>
+			<POSITION PROD="LSAPPS" TITLE="Human Resources Processing" TOKEN="HRMN.2" id="position3" nbr="_l4"/>
+			<POSITION PROD="LSAPPS" TITLE="Correspondence Tracking" TOKEN="HR30.1" id="position4" nbr="_l5"/>
+		</PATH>
+		<transfers id="transfers1" nbr="_l6">
+			<frm_trans PROD="LSAPPS" TITLE="Employee Profile" TOKEN="PA311" id="frm_trans1" nbr="_l7"/>
+			<frm_trans PROD="LSAPPS" TITLE="Prior Work History Listing" TOKEN="PA219" id="frm_trans2" nbr="_l8"/>
+			<frm_trans PROD="LSAPPS" TITLE="Interview Listing" TOKEN="PA241" id="frm_trans3" nbr="_l9"/>
+			<frm_trans PROD="LSAPPS" TITLE="Position and Job Listing" TOKEN="PA213" id="frm_trans4" nbr="_l10"/>
+			<frm_trans PROD="LSAPPS" TITLE="Grievance and Disciplinary Listing" TOKEN="PA259" id="frm_trans5" nbr="_l11"/>
+			<frm_trans PROD="LSAPPS" TITLE="Action History Listing" TOKEN="PA340" id="frm_trans6" nbr="_l12"/>
+			<frm_trans PROD="LSAPPS" TITLE="Applicant Profile" TOKEN="PA231" id="frm_trans7" nbr="_l13"/>
+			<frm_trans PROD="LSAPPS" TITLE="Applicant Reference Listing" TOKEN="PA232" id="frm_trans8" nbr="_l14"/>
+			<frm_trans PROD="LSAPPS" TITLE="Applicant Job History Listing" TOKEN="PA233" id="frm_trans9" nbr="_l15"/>
+			<frm_trans PROD="LSAPPS" TITLE="Applicant Medical Listing" TOKEN="PA240" id="frm_trans10" nbr="_l16"/>
+			<frm_trans PROD="LSAPPS" TITLE="Instructor Listing" TOKEN="TR207" id="frm_trans11" nbr="_l17"/>
+			<frm_trans PROD="LSAPPS" TITLE="COBRA Participant Listing" TOKEN="BN270" id="frm_trans12" nbr="_l18"/>
+			<frm_trans PROD="LSAPPS" TITLE="Human Resource Writer Title Creation" TOKEN="HR65.1" id="frm_trans13" nbr="_l19"/>
+			<frm_trans PROD="LSAPPS" TITLE="Correspondence Tracking Listng" TOKEN="HR230" id="frm_trans14" nbr="_l20"/>
+		</transfers>
+		<fld al="right" col="18" id="label1" nbr="_l21" nm="Company:" row="2" sz="8" tp="label"/>
+		<fld al="right" col="11" id="label2" nbr="_l22" nm="Requester Type:" row="3" sz="15" tp="label"/>
+		<fld al="right" col="9" id="label3" nbr="_l23" nm="Requester Number:" row="4" sz="17" tp="label"/>
+		<fld al="right" col="16" id="label4" nbr="_l24" nm="Dependent:" row="5" sz="10" tp="label"/>
+		<fld al="left" blankzero="1" col="1" defval="HR30.1" hsel="1" id="hidden1" nbr="_f0" nm="TC" row="0" sz="6" tp="Hidden"/>
+		<toolbar al="left" blankzero="1" col="9" defval="I" ed="upper" hsel="1" id="toolbar1" nbr="_f1" nm="FC" req="1" row="0" sz="1">
+			<button Disp="I" id="button1" nbr="_l25" nm="Inquire" value="I" visible="1"/>
+			<button Disp="N" id="button2" nbr="_l26" nm="Next" value="N" visible="1"/>
+			<button Disp="P" id="button3" nbr="_l27" nm="Previous" value="P" visible="1"/>
+			<button Disp="A" id="button4" nbr="_l28" nm="Add" value="A" visible="1"/>
+			<button Disp="C" id="button5" nbr="_l29" nm="Change" value="C" visible="1"/>
+			<button Disp="D" id="button6" nbr="_l30" nm="Delete" value="D" visible="1"/>
+		</toolbar>
+		<fld al="left" blankzero="1" ed="upper" id="hidden2" nbr="_f2" nm="ORIGINATOR" sz="6" tp="Hidden"/>
+		<fld al="right" blankzero="1" col="27" deftkn="HR00.1" drlnokeys="1" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text1" key="1" keynbr="01" label="Company:" nbr="_f3" nm="HCP-COMPANY" req="1" row="2" sz="4" tp="Text"/>
+		<fld al="left" blankzero="1" col="40" id="out1" keynbr="CN" nbr="_f4" nm="PRS-NAME" row="2" sz="30" tp="Out"/>
+		<fld al="left" att_comment="1" blankzero="1" col="27" ed="upper" hsel="1" id="select1" key="1" keynbr="hct" label="Requester Type:" nbr="_f5" nm="HCP-REQ-TYPE" req="1" row="3" seltype="" sz="1" tp="Select">
+			<vals Disp="1" Tran="1" id="vals1" nbr="_l31">Employee</vals>
+			<vals Disp="2" Tran="2" id="vals2" nbr="_l32">Applicant</vals>
+			<vals Disp="3" Tran="3" id="vals3" nbr="_l33">Cobra Participant</vals>
+			<vals Disp="4" Tran="4" id="vals4" nbr="_l34">Dependent</vals>
+			<vals Disp="5" Tran="5" id="vals5" nbr="_l35">Instructor</vals>
+			<vals Disp="6" Tran="6" id="vals6" nbr="_l36">Other</vals>
+		</fld>
+		<fld al="left" blankzero="1" col="40" defval="_f5" id="out2" isxlt="_f5" nbr="_f6" nm="HCP-REQ-TYPE" row="3" sz="20" tp="Out"/>
+		<fld al="left" blankzero="1" col="67" ed="numeric" id="out3" key="1" keynbr="hcs" nbr="_f7" nm="HCP-SEQ-NBR" req="1" row="3" sz="4" tp="Out"/>
+		<fld al="right" att_comment="1" blankzero="1" col="27" drlnokeys="0" ed="numeric" hdet="1" hsel="1" hselrul="1" id="text2" key="1" keynbr="hcr" label="Requester Number:" nbr="_f8" nm="HCP-ID-NBR" req="1" row="4" sz="10" tp="Text"/>
+		<fld al="left" blankzero="1" col="40" id="out4" keynbr="hcl" nbr="_f9" nm="HCP-REQ-NAME" row="4" sz="30" tp="Out"/>
+		<fld al="right" att_comment="1" blankzero="1" col="27" drlnokeys="0" ed="numeric" hdet="1" hsel="1" hselrul="1" id="text3" keynbr="hcd" label="Dependent:" nbr="_f10" nm="HCP-DEPENDENT" row="5" sz="4" tp="Text"/>
+		<fld al="left" blankzero="1" col="40" id="out5" keynbr="hcn" nbr="_f11" nm="HCP-DEP-NAME" row="5" sz="30" tp="Out"/>
+		<tabregion col="1" det="0" folders="1" grp="tab1" height="12" id="tabregion1" nbr="TR0" row="6" scroll="0" width="79">
+			<tab id="tab1" nbr="TF0-0" nm=" Contact" par="TR0" secnm="CONTACT-TAB" tabprot="0">
+				<fld al="right" col="7" id="label5" nbr="_l37" nm="Last Name:" par="TF0-0" row="0" sz="10" tp="label"/>
+				<fld al="right" col="6" id="label6" nbr="_l38" nm="First Name:" par="TF0-0" row="1" sz="11" tp="label"/>
+				<fld al="right" col="5" id="label7" nbr="_l39" nm="Middle Name:" par="TF0-0" row="2" sz="12" tp="label"/>
+				<fld al="right" col="6" id="label8" nbr="_l40" nm="Name Title:" par="TF0-0" row="3" sz="11" tp="label"/>
+				<fld al="right" col="6" id="label9" nbr="_l41" nm="Home Phone:" par="TF0-0" row="5" sz="11" tp="label"/>
+				<fld al="right" col="6" id="label10" nbr="_l42" nm="Work Phone:" par="TF0-0" row="6" sz="11" tp="label"/>
+				<fld al="right" col="13" id="label11" nbr="_l43" nm="Fax:" par="TF0-0" row="7" sz="4" tp="label"/>
+				<fld al="right" col="10" id="label12" nbr="_l44" nm="E-mail:" par="TF0-0" row="8" sz="7" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld1" nbr="_f12" nm="CONTACT-TAB" par="TF0-0" sz="9" tp="Tab"/>
+				<fld al="left" blankzero="1" col="18" id="text4" label="Last Name:" mxsz="30" nbr="_f13" nm="HCP-LAST-NAME-PRE" par="TF0-0" row="0" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="27" id="text5" keynbr="PLN" nbr="_f14" nm="HCP-LAST-NAME" par="TF0-0" row="0" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="60" deftkn="HR91.3" hdef="1" hrul="1" hsel="1" hselrul="1" id="text6" keynbr="Hq1" nbr="_f15" nknimp="1" nm="HCP-NAME-SUFFIX" par="TF0-0" row="0" sz="4" tp="Text"/>
+				<fld al="left" blankzero="1" col="68" id="out6" keynbr="Hq2" nbr="_f16" nm="SUFFIX-DESC" par="TF0-0" row="0" sz="10" tp="Out"/>
+				<fld al="left" blankzero="1" col="18" id="text7" label="First Name:" nbr="_f17" nm="HCP-FIRST-NAME" par="TF0-0" row="1" sz="15" tp="Text"/>
+				<fld al="left" blankzero="1" col="18" id="text8" label="Middle Name:" nbr="_f18" nm="HCP-MIDDLE-NAME" par="TF0-0" row="2" sz="15" tp="Text"/>
+				<fld al="left" blankzero="1" col="18" deftkn="HR91.2" hdef="1" hrul="1" hsel="1" hselrul="1" id="text9" keynbr="Hq3" label="Name Title:" nbr="_f19" nknimp="1" nm="HCP-NAME-PREFIX" par="TF0-0" row="3" sz="4" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="out7" keynbr="Hq4" nbr="_f20" nm="NAME-PREFIX-DESC" par="TF0-0" row="3" sz="10" tp="Out"/>
+				<fld al="left" blankzero="1" col="18" ed="upper" id="text10" label="Home Phone:" nbr="_f21" nm="HCP-HM-PHONE-CNTRY" par="TF0-0" row="5" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="27" ed="upper" id="text11" nbr="_f22" nm="HCP-HM-PHONE-NBR" par="TF0-0" row="5" sz="15" tp="Text"/>
+				<fld al="left" blankzero="1" col="18" ed="upper" id="text12" label="Work Phone:" nbr="_f23" nm="HCP-WK-PHONE-CNTRY" par="TF0-0" row="6" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="27" ed="upper" id="text13" nbr="_f24" nm="HCP-WK-PHONE-NBR" par="TF0-0" row="6" sz="15" tp="Text"/>
+				<fld al="left" blankzero="1" col="45" ed="upper" id="text14" nbr="_f25" nm="HCP-WK-PHONE-EXT" par="TF0-0" row="6" sz="5" tp="Text"/>
+				<fld al="left" blankzero="1" col="18" ed="upper" id="text15" label="Fax:" nbr="_f26" nm="HCP-FAX-COUNTRY" par="TF0-0" row="7" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="27" ed="upper" id="text16" nbr="_f27" nm="HCP-FAX-NBR" par="TF0-0" row="7" sz="15" tp="Text"/>
+				<fld al="left" blankzero="1" col="45" ed="upper" id="text17" nbr="_f28" nm="HCP-FAX-EXT" par="TF0-0" row="7" sz="5" tp="Text"/>
+				<fld al="left" blankzero="1" col="18" id="text18" label="E-mail:" nbr="_f29" nm="HCP-EMAIL-ADDRESS" par="TF0-0" row="8" sz="60" tp="Text"/>
+			</tab>
+			<tab id="tab2" nbr="TF0-1" nm=" Address" par="TR0" secnm="ADDRESS-TAB" tabprot="0">
+				<fld al="right" col="8" id="label13" nbr="_l45" nm="Employee Address:" par="TF0-1" row="0" sz="17" tp="label"/>
+				<fld al="right" col="15" id="label14" nbr="_l46" nm="Address 1:" par="TF0-1" row="1" sz="10" tp="label"/>
+				<fld al="right" col="15" id="label15" nbr="_l47" nm="Address 2:" par="TF0-1" row="2" sz="10" tp="label"/>
+				<fld al="right" col="15" id="label16" nbr="_l48" nm="Address 3:" par="TF0-1" row="3" sz="10" tp="label"/>
+				<fld al="right" col="15" id="label17" nbr="_l49" nm="Address 4:" par="TF0-1" row="4" sz="10" tp="label"/>
+				<fld al="right" col="7" id="label18" nbr="_l50" nm="City or Address 5:" par="TF0-1" row="5" sz="18" tp="label"/>
+				<fld al="right" col="7" id="label19" nbr="_l51" nm="State or Province:" par="TF0-1" row="6" sz="18" tp="label"/>
+				<fld al="right" col="13" id="label20" nbr="_l52" nm="Postal Code:" par="TF0-1" row="7" sz="12" tp="label"/>
+				<fld al="right" col="12" id="label21" nbr="_l53" nm="Country Code:" par="TF0-1" row="8" sz="13" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld2" nbr="_f30" nm="ADDRESS-TAB" par="TF0-1" sz="9" tp="Tab"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select2" keynbr="H01" label="Employee Address:" nbr="_f31" nm="HCP-EMP-ADDRESS" par="TF0-1" row="0" seltype="" sz="1" tp="Select">
+					<vals Disp="H" Tran="H" id="vals7" nbr="_l54">Home</vals>
+					<vals Disp="S" Tran="S" id="vals8" nbr="_l55">Supplemental</vals>
+					<vals Disp="N" Tran="N" id="vals9" nbr="_l56">Neither</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="31" defval="_f31" id="out8" isxlt="_f31" nbr="_f32" nm="HCP-EMP-ADDRESS" par="TF0-1" row="0" sz="15" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" id="text19" label="Address 1:" nbr="_f33" nm="HCP-ADDR1" par="TF0-1" row="1" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text20" label="Address 2:" nbr="_f34" nm="HCP-ADDR2" par="TF0-1" row="2" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text21" label="Address 3:" nbr="_f35" nm="HCP-ADDR3" par="TF0-1" row="3" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text22" label="Address 4:" nbr="_f36" nm="HCP-ADDR4" par="TF0-1" row="4" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text23" label="City or Address 5:" nbr="_f37" nm="HCP-CITY" par="TF0-1" row="5" sz="18" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" id="text24" keynbr="AZ6" label="State or Province:" nbr="_f38" nm="HCP-STATE" par="TF0-1" row="6" sz="2" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" id="text25" label="Postal Code:" nbr="_f39" nm="HCP-ZIP" par="TF0-1" row="7" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text26" keynbr="VA2" label="Country Code:" nbr="_f40" nm="HCP-COUNTRY-CODE" par="TF0-1" row="8" sz="2" tp="Text"/>
+				<fld al="left" blankzero="1" col="31" id="out9" keynbr="VAD" nbr="_f41" nm="INT-COUNTRY-DESC" par="TF0-1" row="8" sz="30" tp="Out"/>
+			</tab>
+			<tab id="tab3" nbr="TF0-2" nm=" Request" par="TR0" secnm="REQUEST-TAB" tabprot="0">
+				<fld al="right" col="10" id="label22" nbr="_l57" nm="Date Requested:" par="TF0-2" row="1" sz="15" tp="label"/>
+				<fld al="right" col="20" id="label23" nbr="_l58" nm="Type:" par="TF0-2" row="2" sz="5" tp="label"/>
+				<fld al="right" col="10" id="label24" nbr="_l59" nm="Data Requested:" par="TF0-2" row="3" sz="15" tp="label"/>
+				<fld al="right" col="20" id="label25" nbr="_l60" nm="Cost:" par="TF0-2" row="4" sz="5" tp="label"/>
+				<fld al="right" col="10" id="label26" nbr="_l61" nm="Extension Sent:" par="TF0-2" row="5" sz="15" tp="label"/>
+				<fld al="right" col="10" id="label27" nbr="_l62" nm="Extension Date:" par="TF0-2" row="6" sz="15" tp="label"/>
+				<fld al="right" col="8" id="label28" nbr="_l63" nm="Extension Reason:" par="TF0-2" row="7" sz="17" tp="label"/>
+				<fld al="right" col="15" id="label29" nbr="_l64" nm="Date Sent:" par="TF0-2" row="8" sz="10" tp="label"/>
+				<fld al="right" col="4" id="label30" nbr="_l65" nm="Communication Method:" par="TF0-2" row="9" sz="21" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld3" nbr="_f42" nm="REQUEST-TAB" par="TF0-2" sz="9" tp="Tab"/>
+				<fld al="left" blankzero="1" col="26" defval="CTD" ed="date" id="text27" keynbr="TTE" label="Date Requested:" nbr="_f43" nknimp="1" nm="HCP-REQUEST-DATE" par="TF0-2" req="1" row="1" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select3" label="Type:" nbr="_f44" nm="HCP-TYPE" par="TF0-2" req="1" row="2" seltype="" sz="1" tp="Select">
+					<vals Disp="1" Tran="1" id="vals10" nbr="_l66">Data Privacy/Other</vals>
+					<vals Disp="2" Tran="2" id="vals11" nbr="_l67">ERISA</vals>
+					<vals Disp="3" Tran="3" id="vals12" nbr="_l68">Applicant Correspondence</vals>
+					<vals Disp="4" Tran="4" id="vals13" nbr="_l69">Employee Correspondence</vals>
+					<vals Disp="5" Tran="5" id="vals14" nbr="_l70">Cobra Correspondence</vals>
+					<vals Disp="6" Tran="6" id="vals15" nbr="_l71">Dependent Correspondence</vals>
+					<vals Disp="7" Tran="7" id="vals16" nbr="_l72">Instructor Correspondence</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="39" defval="_f44" id="out10" isxlt="_f44" nbr="_f45" nm="HCP-TYPE" par="TF0-2" row="2" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text28" keynbr="hca" label="Data Requested:" nbr="_f46" nm="HCP-DATA-REQUESTED" par="TF0-2" row="3" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="39" id="out11" keynbr="hcg" nbr="_f47" nm="PCO-DESCRIPTION" par="TF0-2" row="3" sz="30" tp="Out"/>
+				<fld al="right" blankzero="1" col="26" decsz="2" ed="signed" id="text29" keynbr="98b" label="Cost:" mxsz="16" nbr="_f48" nknimp="1" nm="HCP-COST" par="TF0-2" row="4" sz="13" tp="Text"/>
+				<fld al="left" blankzero="1" col="43" deftkn="CU01.1" drlnokeys="0" ed="upper" hdef="1" hdet="1" hsel="1" hselrul="1" id="text30" keynbr="98" nbr="_f49" nknimp="1" nm="HCP-CURRENCY-CODE" par="TF0-2" row="4" sz="5" tp="Text"/>
+				<fld al="left" blankzero="1" col="51" id="out12" keynbr="98E" nbr="_f50" nm="CURR-FORMS-EXP" par="TF0-2" row="4" sz="10" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="date" id="text31" label="Extension Sent:" nbr="_f51" nm="HCP-EXTENSION-SENT" par="TF0-2" row="5" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="date" id="text32" label="Extension Date:" nbr="_f52" nm="HCP-EXTENSION-DATE" par="TF0-2" row="6" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text33" keynbr="hce" label="Extension Reason:" nbr="_f53" nm="HCP-EXTENSION-RSN" par="TF0-2" row="7" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="39" id="out13" keynbr="hcj" nbr="_f54" nm="PCO-EXTENSION-DESC" par="TF0-2" row="7" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="date" id="text34" label="Date Sent:" nbr="_f55" nm="HCP-DATE-SENT" par="TF0-2" row="8" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text35" keynbr="hcc" label="Communication Method:" nbr="_f56" nm="HCP-COMM-METHOD" par="TF0-2" row="9" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="39" id="out14" keynbr="hci" nbr="_f57" nm="PCO-COMM-DESC" par="TF0-2" row="9" sz="30" tp="Out"/>
+				<push al="center" blankzero="0" btnnm=" Base Currency " col="30" hdef="1" id="push1" keynbr="HR30.2" nbr="_f58" nm="BASE-CURR" par="TF0-2" row="11" sz="15"/>
+				<fld al="left" blankzero="0" decsz="7" ed="numeric" fldbtn="_f58" hdef="1" id="hidden3" keynbr="98R" nbr="_f59" nknimp="1" nm="SPOT-CURR-RATE" sz="15" tp="Hidden"/>
+				<fld al="left" blankzero="0" decsz="2" ed="signed" fldbtn="_f58" id="hidden4" keynbr="98a" mxsz="18" nbr="_f60" nknimp="1" nm="HCP-BASE-AMOUNT" sz="15" tp="Hidden"/>
+				<fld al="left" blankzero="0" deftkn="CU01.1" drlnokeys="0" ed="upper" fldbtn="_f58" hdef="1" hdet="1" hsel="1" hselrul="1" id="hidden5" keynbr="98A" nbr="_f61" nknimp="1" nm="HCP-BASE-CURRENCY" sz="5" tp="Hidden"/>
+				<fld al="left" blankzero="0" ed="numeric" id="hidden6" keynbr="98C" nbr="_f62" nknimp="1" nm="HCP-BASE-ND" sz="1" tp="Hidden"/>
+				<fld al="left" blankzero="0" ed="numeric" id="hidden7" keynbr="98c" nbr="_f63" nknimp="1" nm="HCP-CURR-ND" sz="1" tp="Hidden"/>
+				<fld al="left" blankzero="0" id="hidden8" keynbr="98e" nbr="_f64" nm="BASE-FORMS-EXP" sz="10" tp="Hidden"/>
+			</tab>
+			<tab id="tab4" nbr="TF0-3" nm=" Change Request" par="TR0" secnm="CHANGE-TAB" tabprot="0">
+				<fld al="right" col="7" id="label31" nbr="_l73" nm="Date Change Requested:" par="TF0-3" row="1" sz="22" tp="label"/>
+				<fld al="right" col="12" id="label32" nbr="_l74" nm="Change Requested:" par="TF0-3" row="2" sz="17" tp="label"/>
+				<fld al="right" col="21" id="label33" nbr="_l75" nm="Changed:" par="TF0-3" row="3" sz="8" tp="label"/>
+				<fld al="right" col="22" id="label34" nbr="_l76" nm="Reason:" par="TF0-3" row="4" sz="7" tp="label"/>
+				<fld al="right" col="16" id="label35" nbr="_l77" nm="Date Changed:" par="TF0-3" row="5" sz="13" tp="label"/>
+				<fld al="right" col="12" id="label36" nbr="_l78" nm="Date Change Sent:" par="TF0-3" row="6" sz="17" tp="label"/>
+				<fld al="right" col="8" id="label37" nbr="_l79" nm="Communication Method:" par="TF0-3" row="7" sz="21" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld4" nbr="_f65" nm="CHANGE-TAB" par="TF0-3" sz="16" tp="Tab"/>
+				<fld al="left" blankzero="1" col="30" ed="date" id="text36" label="Date Change Requested:" nbr="_f66" nm="HCP-CHANGE-RECD" par="TF0-3" row="1" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="30" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text37" keynbr="hcb" label="Change Requested:" nbr="_f67" nm="HCP-CHANGE-REQUEST" par="TF0-3" row="2" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="44" id="out15" keynbr="hch" nbr="_f68" nm="PCO-CHANGE-DESC" par="TF0-3" row="2" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="30" defval="N" ed="upper" hsel="1" id="select4" label="Changed:" nbr="_f69" nm="HCP-CHANGE" par="TF0-3" row="3" seltype="" sz="1" tp="Select">
+					<vals Disp="" Tran="" id="vals17" nbr="_l80">Not Applicable</vals>
+					<vals Disp="Y" Tran="Y" id="vals18" nbr="_l81">Yes</vals>
+					<vals Disp="N" Tran="N" id="vals19" nbr="_l82">No</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" id="out16" nbr="_f70" nm="HCP-CHANGE-DESC" par="TF0-3" row="3" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="30" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text38" keynbr="hcf" label="Reason:" nbr="_f71" nm="HCP-REASON" par="TF0-3" row="4" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="44" id="out17" keynbr="hck" nbr="_f72" nm="PCO-REASON-DESC" par="TF0-3" row="4" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="30" ed="date" id="text39" label="Date Changed:" nbr="_f73" nm="HCP-CHANGED-DATE" par="TF0-3" row="5" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="30" ed="date" id="text40" label="Date Change Sent:" nbr="_f74" nm="HCP-DATE-CHG-SENT" par="TF0-3" row="6" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="30" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text41" keynbr="hcc" label="Communication Method:" nbr="_f75" nm="HCP-COMM-METH-CHG" par="TF0-3" row="7" sz="10" tp="Text"/>
+				<fld al="left" blankzero="1" col="44" id="out18" keynbr="hci" nbr="_f76" nm="PCO-CHG-COMM-DESC" par="TF0-3" row="7" sz="30" tp="Out"/>
+			</tab>
+		</tabregion>
+		<fld al="left" blankzero="0" ed="upper" id="sp1" nbr="_f77" nm="_HK" req="1" sz="19" tp="Sp"/>
+		<msgBar bMsgArea="1" id="msgbar1" nbr="msgBar"/>
+		<XSCRIPT id="script1" nbr="_s1">
+			<![CDATA[
+function FORM_OnAfterDataInit()
+{
+   tranMagic.clearFormData();
+}
+	
+function FORM_OnAfterTransaction(data)
+{
+      
+   // Trap for errors on HR30 screen
+      
+      var errMsgNbr = lawForm.getMessageNbr();
+      var errMsg    = lawForm.getMessage();
+      if (errMsgNbr != "000")
+      { 
+      //   portalWnd.cmnDlg.messageBox(errMsg,"ok","alert",window);
+         return; 
+      }
+      
+   // tfrKEY will contain the values to pass from HR30 to the transfer screen
+      var tfrKEY="";
+
+   // Retrieve function code
+      var fc=data.selectSingleNode("//_f1").text;
+
+   // From trial and error, it appears HCP_DATA_REQUESTED has to be retrieved
+   // from an element value instead of a form value because the field is not 
+   // always displayed on-screen. In testing, when retrieving the form value, the
+   // form transfer only worked when the Request tab was active, displaying
+   // the field. Retrieving the element value appears to work no matter which
+   // tab is active. To be consistent, all of the Lawson fields will be retrieved
+   // as element values.
+
+   // HRCORRESP.HCP_DATA_REQUESTED = element value _f46
+   // HRCORRESP.HCP_REQ_TYPE = element value _f5, form value select1
+   // HRCORRESP.HCP_COMPANY = element value _f3, form value text1
+   // HRCORRESP.HCP_ID_NBR = element value _f8, form value text2
+   // HRCORRESP.HCP_DEPENDENT = element value _f10, form value text3
+
+      if (fc == "A")
+   {
+      //portalWnd.cmnDlg.messageBox("Initiating add","ok","alert",window);
+         
+      var HCP_DATA_REQUESTED=lawForm.getElementValue("_f46");
+      var HCP_COMPANY=lawForm.getElementValue("_f3");
+      var HCP_REQ_TYPE=lawForm.getElementValue("_f5");
+      var HCP_ID_NBR=lawForm.getElementValue("_f8");
+      var HCP_DEPENDENT=lawForm.getElementValue("_f10");
+
+      // if DATA_REQUESTED is populated using the drop-down menu,
+      // it returns with a length of 10 with trailing spaces
+      // JS does not have a function to chomp trailing spaces
+      // This code removes leading and trailing spaces using regular expressions
+  
+      HCP_DATA_REQUESTED = HCP_DATA_REQUESTED.replace(/^\s+|\s+$/g, "");
+
+      // tfrID_NBR is the id-nbr padded with lead zeroes to nine digits
+      // seems to be needed for the PA52 form transfer
+      // ZH11/HR13 don't appear to need the lead zeroes but will
+      // send that way anyway.
+     
+      var tfrID_NBR = "";
+      var z = 0;
+
+      z = 9 - HCP_ID_NBR.length;
+
+      for (i=1; i<=z; i++)
+      {
+        tfrID_NBR += "0";
+      }
+
+      tfrID_NBR += HCP_ID_NBR;
+
+      // tfrDate is a yyyymmdd string
+      // that can be passed in the PA52 form transfer
+
+      // Retrieve 4-digit year
+      var myDate = new Date();
+      var myYear = myDate.getFullYear();
+      
+      // month values in JS are 0 thru 11
+      var myMonth = myDate.getMonth() + 1;
+      var myDay = myDate.getDate();
+   
+      // field concatenation
+      var tfrDate = "";
+      tfrDate += myYear;
+
+       if (myMonth < 10)
+      { 
+         tfrDate += "0";
+      }
+  
+      tfrDate += myMonth;
+
+     if (myDay < 10)
+     { 
+        tfrDate += "0";
+     }
+     
+    tfrDate += myDay;
+
+    // Tests for form transfer conditions
+
+    // For address changes, do not invoke screen transfer for dependents
+    // CPS doesn't do any dependent address changes here
+     
+      if (HCP_DATA_REQUESTED == "ADDRESSCHG")
+      {
+       if (HCP_REQ_TYPE != "4")
+         {
+         tfrKEY = HCP_COMPANY + tfrID_NBR;
+         lawForm.pushFormWindow ("ZH11",strPDL,tfrKEY);
+         }
+      }
+
+      if (HCP_DATA_REQUESTED == "EMAIL")
+      {
+         tfrKEY = HCP_COMPANY + tfrID_NBR;
+         lawForm.pushFormWindow ("ZHEM.1",strPDL,tfrKEY);
+       }
+ 
+      if  (HCP_DATA_REQUESTED == "SSN")
+      {      
+       if (HCP_REQ_TYPE == "1")
+           {
+           tfrKEY = HCP_COMPANY + tfrID_NBR + "PERSDATACH" + tfrDate;
+           lawForm.pushFormWindow ("PA52.1",strPDL,tfrKEY);
+           }
+       if (HCP_REQ_TYPE == "4")
+          {
+           tfrKEY = HCP_COMPANY + tfrID_NBR + HCP_DEPENDENT;
+           lawForm.pushFormWindow ("HR13",strPDL,tfrKEY);
+          }
+      }
+
+      if  (HCP_DATA_REQUESTED == "PHONE")
+      {      
+       if (HCP_REQ_TYPE == "1")
+           {
+           tfrKEY = HCP_COMPANY + tfrID_NBR + "PHONE CHG " + tfrDate;
+           lawForm.pushFormWindow ("PA52.1",strPDL,tfrKEY);
+           }
+       if (HCP_REQ_TYPE == "4")
+          {
+           tfrKEY = HCP_COMPANY + tfrID_NBR + HCP_DEPENDENT;
+           lawForm.pushFormWindow ("HR13",strPDL,tfrKEY);
+          }
+      }
+
+   }
+     // return false would inhibit the HR30 transaction
+     return true;	
+}
+
+]]>
+		</XSCRIPT>
+	</form>
+	<TRANSACTION trantype="ALL"/>
+</UIDEF>

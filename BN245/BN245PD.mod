@@ -1,0 +1,5210 @@
+******* BN245PD 28 <1501776723>
+      ******************************************************************
+      *                              BN245                             *
+      ******************************************************************
+      *                                                                *
+      *  JT#      TAG      DESCRIPTION                                 *
+      *  ------   ------   ------------------------------------------  *
+      *  307540 | J07540 | DOMESTIC PARTNER                            *
+      *  ------   ------   ------------------------------------------  *
+      *  267795 | J67795 | ALLOW 4 DECIMALS FOR BN PENSION PERCENT PLAN*
+      ******************************************************************
+
+000100******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+000500
+000600     MOVE PRM-COMPANY            TO DB-COMPANY.
+000700     INITIALIZE DB-PROCESS-LEVEL.
+000800     PERFORM 840-FIND-PRSSET1.
+000900     IF (PRSYSTEM-NOTFOUND)
+001000******** Company does not exist
+001100         MOVE 100                TO CRT-ERROR-NBR
+001200         MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+001300         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+001400         PERFORM 780-PRINT-ERROR-MSG
+001500         GO TO 050-END
+001600     ELSE
+001700         MOVE PRS-NAME           TO WS-CO-NAME
+001800     END-IF.
+001900
+002000     PERFORM 840-FIND-BNCSET1.
+002100     IF (BNCOMPANY-NOTFOUND)
+002200******** Company is not setup in benefit system
+002300         MOVE 102                TO CRT-ERROR-NBR
+002400         MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+002500         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+002600         PERFORM 780-PRINT-ERROR-MSG
+002700         GO TO 050-END.
+002800
+002900
+003000     IF (PRM-FLEX-PLAN      NOT = SPACES)
+003100     AND (PRM-ELEC-DATE = ZEROES)
+003200         MOVE 104                    TO CRT-ERROR-NBR
+003300         PERFORM 780-PRINT-ERROR-MSG
+003400         GO TO 050-END.
+003500
+003600     IF (PRM-FLEX-PLAN      NOT = SPACES)
+003700         MOVE PRM-FLEX-PLAN              TO DB-FLEX-PLAN
+003800         PERFORM 840-FIND-FLPSET1
+003900         IF (FLEXPLAN-NOTFOUND)
+004000             MOVE 101                    TO CRT-ERROR-NBR
+004100             PERFORM 780-PRINT-ERROR-MSG
+004200             GO TO 050-END
+004300         ELSE
+004400           IF (FLP-SPEND-ONLY = "Y")
+004500             MOVE 123                    TO CRT-ERROR-NBR
+004600             PERFORM 780-PRINT-ERROR-MSG
+004700             GO TO 050-END
+004800           END-IF
+004900         END-IF
+005000     END-IF.
+005100
+005200*
+005300**** SHIFT LEFT & CHECK FOR DUP PLAN TYPES
+005400*
+005500     PERFORM 052-EDIT-PLAN-TYPE
+005600     THRU    052-END.
+005700
+005800     IF  (PRM-ELEC-DATE          = ZEROES)
+005900     AND (PRM-BEN-DATE           = ZEROES)
+006000         MOVE 105                TO CRT-ERROR-NBR
+006100         PERFORM 780-PRINT-ERROR-MSG
+006200         GO TO 050-END.
+006300         
+006400     IF  (PRM-PROC-LEVEL         NOT = SPACES)
+006500     AND (PRM-PROC-GROUP         NOT = SPACES)
+006600******** Cannot enter process level and processing group
+006700         MOVE 103                TO CRT-ERROR-NBR
+006800         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+006900         PERFORM 780-PRINT-ERROR-MSG.
+007000 
+007100     IF  (PRM-PROC-LEVEL         NOT = SPACES)
+007200     AND (PRM-GROUP-NAME         NOT = SPACES)
+007300******** Cannot enter process level and employee group
+007400         MOVE 106                TO CRT-ERROR-NBR
+007500         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+007600         PERFORM 780-PRINT-ERROR-MSG.
+007700
+007800     IF  (PRM-PROC-LEVEL         NOT = SPACES)
+007900     AND ((PRM-EMPLOYEE (1)      NOT = ZEROES)
+008000     OR   (PRM-EMPLOYEE (2)      NOT = ZEROES)
+008100     OR   (PRM-EMPLOYEE (3)      NOT = ZEROES)
+008200     OR   (PRM-EMPLOYEE (4)      NOT = ZEROES)
+008300     OR   (PRM-EMPLOYEE (5)      NOT = ZEROES)
+008400     OR   (PRM-EMPLOYEE (6)      NOT = ZEROES)
+008500     OR   (PRM-EMPLOYEE (7)      NOT = ZEROES)
+008600     OR   (PRM-EMPLOYEE (8)      NOT = ZEROES)
+008700     OR   (PRM-EMPLOYEE (9)      NOT = ZEROES)
+008800     OR   (PRM-EMPLOYEE (10)     NOT = ZEROES))
+008900******** Cannot enter process level and employee 
+009000         MOVE 107                TO CRT-ERROR-NBR
+009100         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+009200         PERFORM 780-PRINT-ERROR-MSG.
+009300 
+009400     IF  (PRM-PROC-GROUP         NOT = SPACES)
+009500     AND (PRM-GROUP-NAME         NOT = SPACES)
+009600******** Cannot enter processing group and employee group
+009700         MOVE 108                TO CRT-ERROR-NBR
+009800         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+009900         PERFORM 780-PRINT-ERROR-MSG.
+010000  
+010100     IF  (PRM-PROC-GROUP         NOT = SPACES)
+010200     AND ((PRM-EMPLOYEE (1)      NOT = ZEROES)
+010300     OR   (PRM-EMPLOYEE (2)      NOT = ZEROES)
+010400     OR   (PRM-EMPLOYEE (3)      NOT = ZEROES)
+010500     OR   (PRM-EMPLOYEE (4)      NOT = ZEROES)
+010600     OR   (PRM-EMPLOYEE (5)      NOT = ZEROES)
+010700     OR   (PRM-EMPLOYEE (6)      NOT = ZEROES)
+010800     OR   (PRM-EMPLOYEE (7)      NOT = ZEROES)
+010900     OR   (PRM-EMPLOYEE (8)      NOT = ZEROES)
+011000     OR   (PRM-EMPLOYEE (9)      NOT = ZEROES)
+011100     OR   (PRM-EMPLOYEE (10)     NOT = ZEROES))
+011200******** Cannot enter processing group and employee
+011300         MOVE 109                TO CRT-ERROR-NBR
+011400         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+011500         PERFORM 780-PRINT-ERROR-MSG.
+011600 
+011700     IF  (PRM-GROUP-NAME         NOT = SPACES)
+011800     AND ((PRM-EMPLOYEE (1)      NOT = ZEROES)
+011900     OR   (PRM-EMPLOYEE (2)      NOT = ZEROES)
+012000     OR   (PRM-EMPLOYEE (3)      NOT = ZEROES)
+012100     OR   (PRM-EMPLOYEE (4)      NOT = ZEROES)
+012200     OR   (PRM-EMPLOYEE (5)      NOT = ZEROES)
+012300     OR   (PRM-EMPLOYEE (6)      NOT = ZEROES)
+012400     OR   (PRM-EMPLOYEE (7)      NOT = ZEROES)
+012500     OR   (PRM-EMPLOYEE (8)      NOT = ZEROES)
+012600     OR   (PRM-EMPLOYEE (9)      NOT = ZEROES)
+012700     OR   (PRM-EMPLOYEE (10)     NOT = ZEROES))
+012800******** Cannot enter employee group and employee
+012900         MOVE 110                TO CRT-ERROR-NBR
+013000         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+013100         PERFORM 780-PRINT-ERROR-MSG.
+013200
+013300     IF (PRM-PROC-LEVEL          NOT = SPACES)
+013400         MOVE PRM-PROC-LEVEL     TO DB-PROCESS-LEVEL
+013500         PERFORM 840-FIND-PRSSET1
+013600         IF (PRSYSTEM-NOTFOUND)
+013700************ Process level \ does not exist
+013800             MOVE 111            TO CRT-ERROR-NBR
+013900             MOVE PRM-PROC-LEVEL TO CRT-ERR-VAR1
+014000             MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+014100             PERFORM 780-PRINT-ERROR-MSG
+               ELSE
+      ************ Process level is inactive
+                   IF (PRS-ACTIVE-FLAG = "I")
+                       MOVE 156            TO CRT-ERROR-NBR
+                       MOVE PRM-PROC-LEVEL TO CRT-ERR-VAR1
+                       MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+                       PERFORM 780-PRINT-ERROR-MSG
+                   END-IF.
+014200
+014300     IF (PRM-PROC-GROUP          NOT = SPACES)
+014400         MOVE PRM-PROC-GROUP     TO DB-PROC-GROUP
+014500         MOVE PRPSET1-PROC-GROUP TO WS-DB-BEG-RNG
+014600         PERFORM 850-FIND-BEGRNG-PRPSET1
+014700         IF (PRPROCGRP-NOTFOUND)
+014800************ Processing group \ does not exist
+014900             MOVE 112            TO CRT-ERROR-NBR
+015000             MOVE PRM-PROC-GROUP TO CRT-ERR-VAR1
+015100             MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+015200             PERFORM 780-PRINT-ERROR-MSG.
+015300
+015400     IF (PRM-GROUP-NAME          NOT = SPACES)
+015500         MOVE PRM-GROUP-NAME     TO DB-GROUP-NAME
+015600         PERFORM 840-FIND-PRGSET1
+015700         IF (PERSGROUP-NOTFOUND)
+015800************ Employee group \ does not exist
+015900             MOVE 113            TO CRT-ERROR-NBR
+016000             MOVE PRM-GROUP-NAME TO CRT-ERR-VAR1
+016100             MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+016200             PERFORM 780-PRINT-ERROR-MSG.
+016300
+016400     PERFORM 054-EDIT-EMPLOYEE
+016500     THRU    054-END.
+016600     IF (ERROR-FOUND)
+016700         GO TO 054-END.
+016800
+016900     MOVE PRM-AGE-DATE                   TO WS-AGE-DATE.
+017000
+017100     GO TO 050-END.
+017200
+017300******************************************************************
+017400 052-EDIT-PLAN-TYPE.
+017500******************************************************************
+017600
+017700*
+017800**** SHIFT LEFT ALL PLAN TYPES
+017900*
+018000     PERFORM
+018100         VARYING I1 FROM 1 BY 1
+018200         UNTIL  (I1 > 11)
+018300         OR     (I2 > 11)
+018400
+018500         PERFORM
+018600             VARYING I1 FROM I1 BY 1
+018700             UNTIL  (I1 > 11)
+018800             OR     (PRM-PLAN-TYPE (I1)  = SPACES)
+018900
+019000             CONTINUE
+019100         END-PERFORM
+019200
+019300         COMPUTE I2                      = I1
+019400                                         + 1
+019500         PERFORM
+019600             VARYING I2 FROM I1 BY 1
+019700             UNTIL  (I2 > 11)
+019800             OR     (PRM-PLAN-TYPE (I2)  NOT = SPACES)
+019900
+020000             CONTINUE
+020100         END-PERFORM
+020200         IF (I2                          <= 11)
+020300             IF (PRM-PLAN-TYPE (I2)      NOT = SPACES)
+020400                 MOVE PRM-PLAN-TYPE (I2) TO PRM-PLAN-TYPE (I1)
+020500                 INITIALIZE PRM-PLAN-TYPE (I2)
+020600             END-IF
+020700         END-IF
+020800     END-PERFORM.
+020900
+021000*
+021100**** CHECK FOR DUPS
+021200*
+021300     PERFORM
+021400         VARYING I1 FROM 1 BY 1
+021500         UNTIL  (I1 > 11)
+021600         OR     (PRM-PLAN-TYPE (I1)      = SPACES)
+021700         OR     (ERROR-FOUND)
+021800
+021900         COMPUTE I2                      = I1
+022000                                         + 1
+022100         PERFORM
+022200             VARYING I2 FROM I2 BY 1
+022300             UNTIL  (I2 > 11)
+022400             OR     (PRM-PLAN-TYPE (I2)  = PRM-PLAN-TYPE (I1))
+022500
+022600             CONTINUE
+022700         END-PERFORM
+022800         IF (I2                          <= 11)
+022900             IF (PRM-PLAN-TYPE (I2)      = PRM-PLAN-TYPE (I1))
+023000**************** Duplicate plan type
+023100                 MOVE 115                TO CRT-ERROR-NBR
+023200                 MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+023300                 PERFORM 780-PRINT-ERROR-MSG
+023400             END-IF
+023500         END-IF
+023600     END-PERFORM.
+023700
+023800     IF (I1                               = 1)
+023900******** Must enter at least one plan type
+024000         MOVE 116                        TO CRT-ERROR-NBR
+024100         MOVE WS-TRUE                    TO WS-PARAMETER-ERROR
+024200         PERFORM 780-PRINT-ERROR-MSG
+024300     ELSE
+024400         COMPUTE WS-LAST-PLAN-TYPE        = I1
+024500                                          - 1.
+024600
+024700 052-END.
+024800
+024900******************************************************************
+025000 054-EDIT-EMPLOYEE.
+025100******************************************************************
+025200
+025300     PERFORM
+025400         VARYING I1 FROM 1 BY 1
+025500         UNTIL  (I1 > 9)
+025600         OR     (ERROR-FOUND)
+025700
+025800         IF (PRM-EMPLOYEE (I1)   NOT = ZEROES)
+025900             COMPUTE I2          = I1
+026000                                 + 1
+026100             PERFORM
+026200                 VARYING I2 FROM I2 BY 1
+026300                 UNTIL  (I2 > 10)
+026400                 OR     (ERROR-FOUND)
+026500
+026600                 IF  (PRM-EMPLOYEE (I2) NOT = ZEROES)
+026700                 AND (PRM-EMPLOYEE (I2) = PRM-EMPLOYEE (I1))
+026800******************** Cannot have duplicate employees
+026900                     MOVE 121                TO CRT-ERROR-NBR
+027000                     MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+027100                     PERFORM 780-PRINT-ERROR-MSG
+027200                 END-IF
+027300             END-PERFORM
+027400         END-IF
+027500     END-PERFORM.
+027600
+027700     IF (ERROR-FOUND)
+027800         GO TO 054-END.
+027900
+028000     SET NOT-PROC-IND-EMP            TO TRUE.
+028100
+028200     PERFORM
+028300         VARYING I1 FROM 1 BY 1
+028400         UNTIL  (I1 > 9)
+028500         OR     (ERROR-FOUND)
+028600
+028700         IF (PRM-EMPLOYEE (I1)       NOT = ZEROES)
+028800             SET PROC-IND-EMP        TO TRUE
+028900
+029000             MOVE PRM-EMPLOYEE (I1)  TO DB-EMPLOYEE
+029100             PERFORM 840-FIND-EMPSET1
+029200             IF (EMPLOYEE-NOTFOUND)
+029300**************** Employee \ does not exist
+029400                 MOVE 114            TO CRT-ERROR-NBR
+029500                 MOVE PRM-EMPLOYEE (I1) TO CRT-ERR-VAR1
+029600                 MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+029700                 PERFORM 780-PRINT-ERROR-MSG
+029800             ELSE
+029900                 MOVE EMP-COMPANY        TO CRT-COMPANY
+030000                 MOVE EMP-PROCESS-LEVEL  TO CRT-PROCESS-LEVEL
+030100                 PERFORM 700-HR-EMP-SECURITY
+030200                 IF (HRWS-EMP-SECURED)
+030300                     MOVE 124            TO CRT-ERROR-NBR
+030400                     MOVE EMP-EMPLOYEE   TO CRT-ERR-VAR1
+030500                     MOVE WS-TRUE        TO WS-PARAMETER-ERROR
+030600                     PERFORM 780-PRINT-ERROR-MSG
+030700                 END-IF
+030800             END-IF
+030900         END-IF
+031000     END-PERFORM.
+031100
+031200 054-END.
+031300
+031400******************************************************************
+031500 050-END.
+031600******************************************************************
+031700
+031800******************************************************************
+031900 100-PROGRAM-CONTROL             SECTION 10.
+032000******************************************************************
+032100 100-START.
+032200
+032300     MOVE 117                    TO CRT-MSG-NBR.
+032400     PERFORM 780-DISPLAY-MSG.
+032500
+033800     MOVE "Y"                    TO WS-ERR-HED. 
+033900
+034000*******CLEAN OUT CSV FILES **************
+034100     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE1.
+034200     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE2.
+034300     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE3.
+034400     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE4.
+034500     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE5.
+034600     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE6.
+034700     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE7.
+034800     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE8.
+034900     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE9.
+035000     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE10.
+035100     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE11.
+035200     PERFORM 800-OPENOUTPUTCSV-EMPLOYEE12.
+035300
+           IF (PRM-REPORT-OPT NOT = "R")
+               PERFORM 9900-HR-PRINT-BLANK
+               MOVE EM1INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM2INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM3INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM4INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM5INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM6INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM7INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM8INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EM9INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE E10INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE E11INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE E12INFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT.
+
+      * Maximum of 15 open CSV files, so these files are closed now,
+      * then opened as needed.
+035400     PERFORM 800-CLOSECSV-EMPLOYEE1.
+035500     PERFORM 800-CLOSECSV-EMPLOYEE2.
+035600     PERFORM 800-CLOSECSV-EMPLOYEE3.
+035700     PERFORM 800-CLOSECSV-EMPLOYEE4.
+035800     PERFORM 800-CLOSECSV-EMPLOYEE5.
+035900     PERFORM 800-CLOSECSV-EMPLOYEE6.
+036000     PERFORM 800-CLOSECSV-EMPLOYEE7.
+036100     PERFORM 800-CLOSECSV-EMPLOYEE8.
+036200     PERFORM 800-CLOSECSV-EMPLOYEE9.
+036300     PERFORM 800-CLOSECSV-EMPLOYEE10.
+036400     PERFORM 800-CLOSECSV-EMPLOYEE11.
+036500     PERFORM 800-CLOSECSV-EMPLOYEE12.
+036600
+036700     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEH.
+036800     PERFORM 800-OPENOUTPUTCSV-EMPLOYEED.
+036900     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEF.
+037000     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEC.
+037100     PERFORM 800-OPENOUTPUTCSV-EMPDEPBEN.
+037200     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEB.
+037300     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEI.
+037400     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEE.
+037500     PERFORM 800-OPENOUTPUTCSV-EMPLOYEEX.
+
+           IF (PRM-REPORT-OPT NOT = "R")
+               MOVE EDBINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMBINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMCINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMDINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMEINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMFINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMHINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMIINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT
+               MOVE EMXINFO-FILENAME       TO HR-PRT-LINE
+               PERFORM 9900-HR-PRINT-CSVOUT.
+037600
+037700     OPEN OUTPUT BN245-ERR-FILE.
+037800
+037900     PERFORM 1000-SEL-EMPLOYEE.
+038000
+038100     PERFORM 800-CLOSECSV-EMPLOYEEH.
+038200     PERFORM 800-CLOSECSV-EMPLOYEED.
+038300     PERFORM 800-CLOSECSV-EMPLOYEEF.
+038400     PERFORM 800-CLOSECSV-EMPLOYEEC.
+038500     PERFORM 800-CLOSECSV-EMPDEPBEN.
+038600     PERFORM 800-CLOSECSV-EMPLOYEEB.
+038700     PERFORM 800-CLOSECSV-EMPLOYEEI.
+038800     PERFORM 800-CLOSECSV-EMPLOYEEE.
+038900     PERFORM 800-CLOSECSV-EMPLOYEEX.
+039000     CLOSE BN245-ERR-FILE.
+039100
+039200 100-END.
+039300
+039400******************************************************************
+039500 1000-SEL-EMPLOYEE              SECTION 50.
+039600******************************************************************
+039700 1000-START.
+039800
+039900     IF (PRM-PROC-LEVEL                  NOT = SPACES)
+040000        MOVE PRM-COMPANY            TO DB-COMPANY
+040100        MOVE PRM-PROC-LEVEL              TO DB-PROCESS-LEVEL
+040200        MOVE EMPSET7-PROCESS-LEVEL       TO WS-DB-BEG-RNG
+040300        PERFORM 850-FIND-BEGRNG-EMPSET7
+040400        PERFORM      
+040500            UNTIL (EMPLOYEE-NOTFOUND)
+040600            PERFORM 1030-DO-EMP-HEADER-RPT
+040700            THRU    1030-END
+040800            IF (PRM-ELEC-DATE            NOT = ZEROES)
+040900                PERFORM 1100-SEL-PLAN
+041000            END-IF
+041100            PERFORM 860-FIND-NXTRNG-EMPSET7
+041200        END-PERFORM
+041300     ELSE
+041400     IF (PRM-PROC-GROUP                  NOT = SPACES)
+041500         MOVE PRM-COMPANY            TO DB-COMPANY
+041600         MOVE PRM-PROC-GROUP             TO DB-PROC-GROUP
+041700         MOVE PRPSET1-PROC-GROUP         TO WS-DB-BEG-RNG
+041800         PERFORM 850-FIND-BEGRNG-PRPSET1
+041900         PERFORM
+042000             UNTIL (PRPROCGRP-NOTFOUND)
+042100
+042200             MOVE PRM-COMPANY            TO DB-COMPANY
+042300             MOVE PRP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+042400             MOVE EMPSET7-PROCESS-LEVEL  TO WS-DB-BEG-RNG
+042500             PERFORM 850-FIND-BEGRNG-EMPSET7
+042600             PERFORM      
+042700                 UNTIL (EMPLOYEE-NOTFOUND)
+042800                 PERFORM 1030-DO-EMP-HEADER-RPT
+042900                 THRU    1030-END
+043000                 IF (PRM-ELEC-DATE       NOT = ZEROES)
+043100                     PERFORM 1100-SEL-PLAN
+043200                 END-IF
+043300                 PERFORM 860-FIND-NXTRNG-EMPSET7
+043400             END-PERFORM
+043500             PERFORM 860-FIND-NXTRNG-PRPSET1
+043600         END-PERFORM
+043700     ELSE
+043800     IF (PRM-GROUP-NAME                  NOT = SPACES)
+043900         MOVE PRM-COMPANY            TO DB-COMPANY
+044000         MOVE PRM-GROUP-NAME             TO DB-GROUP-NAME
+044100         INITIALIZE DB-EMPLOYEE
+044200         PERFORM 850-FIND-NLT-PGESET1
+044300         PERFORM
+044400             UNTIL (PGEMPLOYEE-NOTFOUND)
+044500             OR    (PGE-COMPANY          NOT = PRM-COMPANY)
+044600             OR    (PGE-GROUP-NAME       NOT = PRM-GROUP-NAME)
+044700
+044800             MOVE PRM-COMPANY            TO DB-COMPANY
+044900             MOVE PGE-EMPLOYEE           TO DB-EMPLOYEE
+045000             PERFORM 840-FIND-EMPSET1
+045100             PERFORM 1030-DO-EMP-HEADER-RPT
+045200             THRU    1030-END
+045300             IF (PRM-ELEC-DATE           NOT = ZEROES)
+045400                 PERFORM 1100-SEL-PLAN
+045500             END-IF
+045600             MOVE PRM-COMPANY            TO DB-COMPANY
+045700             MOVE PRM-GROUP-NAME         TO DB-GROUP-NAME
+045800             MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+045900             PERFORM 850-FIND-NLT-PGESET1
+046000             PERFORM 860-FIND-NEXT-PGESET1
+046100         END-PERFORM
+046200     ELSE
+046300     IF (PROC-IND-EMP)
+046400         PERFORM
+046500             VARYING I8 FROM 1 BY 1
+046600             UNTIL  (I8 > 10)
+046700
+046800             IF (PRM-EMPLOYEE (I8)       NOT = ZEROES)
+046900                 MOVE PRM-COMPANY        TO DB-COMPANY
+047000                 MOVE PRM-EMPLOYEE (I8)  TO DB-EMPLOYEE
+047100                 PERFORM 840-FIND-EMPSET1
+047200                 PERFORM 1030-DO-EMP-HEADER-RPT
+047300                 THRU    1030-END
+047400                 IF (PRM-ELEC-DATE       NOT = ZEROES)
+047500                     PERFORM 1100-SEL-PLAN
+047600                 END-IF
+047700             END-IF
+047800         END-PERFORM
+047900     ELSE
+048000         MOVE PRM-COMPANY            TO DB-COMPANY
+048100         MOVE EMPSET1-COMPANY        TO WS-DB-BEG-RNG
+048200         PERFORM 850-FIND-BEGRNG-EMPSET1
+048300         PERFORM
+048400             UNTIL (EMPLOYEE-NOTFOUND)
+048500             PERFORM 1030-DO-EMP-HEADER-RPT
+048600             THRU    1030-END
+048700             IF (PRM-ELEC-DATE       NOT = ZEROES)
+048800                 PERFORM 1100-SEL-PLAN
+048900             END-IF
+049000             PERFORM 860-FIND-NXTRNG-EMPSET1
+049100         END-PERFORM
+049200     END-IF
+049300     END-IF
+049400     END-IF
+049500     END-IF.
+049600
+049700     GO TO 1000-END.
+049800
+049900******************************************************************
+050000 1030-DO-EMP-HEADER-RPT.
+050100******************************************************************
+050200
+050300     MOVE EMP-COMPANY                TO CRT-COMPANY.
+050400     MOVE EMP-PROCESS-LEVEL          TO CRT-PROCESS-LEVEL.
+050500     PERFORM 700-HR-EMP-SECURITY.
+050600     IF (HRWS-EMP-SECURED)
+050700         GO TO 1030-END.
+050800
+050900     INITIALIZE                  G1-EMP-COMPANY
+051000                                 G1-EMP-EMPLOYEE
+051100                                 G1-EMP-FICA-NBR
+051200                                 G1-EMP-DATE-HIRED
+051300                                 G1-EMP-ADJ-HIRE-DATE
+051400                                 G1-EMP-ANNIVERS-DATE
+051500                                 G1-PRM-AGE-DATE
+051600                                 G1-EMP-AGE
+051700                                 G1-EMP-EMP-STATUS
+051800                                 G1-EMP-PAY-FREQUENCY
+051900                                 G1-EMP-PAY-TRANS
+052000                                 G1-EMP-PROCESS-LEVEL
+052100                                 G1-EMP-DEPARTMENT
+052200                                 G1-EMP-USER-LEVEL
+052300                                 G1-EMP-SUPERVISOR
+052400                                 EMH-EMP-COMPANY
+052500                                 EMH-EMP-EMPLOYEE
+052600                                 EMH-EMP-FICA-NBR
+052700                                 EMH-EMP-DATE-HIRED
+052800                                 EMH-EMP-ADJ-HIRE-DATE
+052900                                 EMH-EMP-ANNIVERS-DATE
+053000                                 EMH-PRM-AGE-DATE
+053100                                 EMH-EMP-AGE
+053200                                 EMH-EMP-EMP-STATUS
+053300                                 EMH-EMP-PAY-FREQUENCY
+053400                                 EMH-PAY-TRANS
+053500                                 EMH-EMP-PROCESS-LEVEL
+053600                                 EMH-EMP-DEPARTMENT
+053700                                 EMH-EMP-USER-LEVEL
+053800                                 EMH-EMP-SUPERVISOR
+053900                                 G1-DPT-NAME
+054000                                 EMH-DPT-NAME
+054100                                 G1-EMS-DESCRIPTION
+054200                                 EMH-EMS-DESCRIPTION
+054300                                 G1-PEM-BIRTHDATE
+054400                                 G1-PEM-SENIOR-DATE
+054500                                 G1-PEM-BEN-DATE-1
+054600                                 G1-PEM-BEN-DATE-2
+054700                                 G1-PEM-BEN-DATE-3
+054800                                 G1-PEM-BEN-DATE-4
+054900                                 G1-PEM-BEN-DATE-5
+055000                                 G1-PEM-TRUE-MAR-STAT
+055100                                 G1-PEM-LOCAT-CODE
+055200                                 G1-PEM-MAIL-GROUP
+055300                                 G1-PEM-MB-NBR
+055400                                 G1-PEM-HM-PHONE-CNTRY
+055500                                 G1-PEM-HM-PHONE-NBR
+055600                                 G1-PEM-WK-PHONE-CNTRY
+055700                                 G1-PEM-WK-PHONE-NBR
+055800                                 G1-PEM-WK-PHONE-EXT
+055900                                 G1-PEM-SPOUSE-EMP
+056000                                 G1-PEM-SP-EMP-ADDR1
+056100                                 G1-PEM-SP-EMP-ADDR2
+056200                                 G1-PEM-SP-EMP-ADDR3
+056300                                 G1-PEM-SP-EMP-ADDR4
+056400                                 G1-PEM-SP-EMP-CITY 
+056500                                 G1-PEM-SP-EMP-STATE
+056600                                 G1-PEM-SP-EMP-ZIP
+                                       G1-INT-COUNTRY-DESC
+056700                                 EMH-PEM-BIRTHDATE
+056800                                 EMH-PEM-SENIOR-DATE
+056900                                 EMH-PEM-BEN-DATE-1
+057000                                 EMH-PEM-BEN-DATE-2
+057100                                 EMH-PEM-BEN-DATE-3
+057200                                 EMH-PEM-BEN-DATE-4
+057300                                 EMH-PEM-BEN-DATE-5
+057400                                 EMH-PEM-TRUE-MAR-STAT
+057500                                 EMH-PEM-LOCAT-CODE
+057600                                 EMH-PEM-MAIL-GROUP
+057700                                 EMH-PEM-MB-NBR
+057800                                 EMH-PEM-HM-PHONE-CNTRY
+057900                                 EMH-PEM-HM-PHONE-NBR
+058000                                 EMH-PEM-WK-PHONE-CNTRY
+058100                                 EMH-PEM-WK-PHONE-NBR
+058200                                 EMH-PEM-WK-PHONE-EXT
+058300                                 EMH-PEM-SPOUSE-EMP
+058400                                 EMH-PEM-SP-EMP-ADDR1
+058500                                 EMH-PEM-SP-EMP-ADDR2
+058600                                 EMH-PEM-SP-EMP-ADDR3
+058700                                 EMH-PEM-SP-EMP-ADDR4
+058800                                 EMH-PEM-SP-EMP-CITY 
+058900                                 EMH-PEM-SP-EMP-STATE
+059000                                 EMH-PEM-SP-EMP-ZIP
+                                       EMH-PEM-SP-EMP-COUNTRY
+059100                                 EMH-MAR-STAT-TRANS
+059200                                 G1-CO-NAME
+059300                                 G1-PRS-NAME
+059400                                 EMH-PRS-NAME
+059500                                 G1-HSU-DESCRIPTION
+059600                                 EMH-HSU-DESCRIPTION
+059700                                 G1-PCO-DESCRIPTION
+059800                                 EMH-PCO-DESCRIPTION-USER
+059900                                 G1-PCO-DESCRIPTION-MAIL
+060000                                 EMH-PCO-DESCRIPTION-MAIL
+060100                                 G1-1-PCO-DESCRIPTION
+060200                                 EMH-PCO-DESCRIPTION-LOCAT
+060300                                 G1-EMP-FULL-NAME
+060400                                 EMH-EMP-FULL-NAME
+060500                                 G1-EMP-HM-DIST-CO
+060600                                 EMH-EMP-HM-DIST-CO
+060700                                 G1-EMP-HM-ACCT-UNIT
+060800                                 EMH-EMP-HM-ACCT-UNIT
+060900                                 G1-EMP-HM-ACCOUNT
+061000                                 EMH-EMP-HM-ACCOUNT
+061100                                 G1-EMP-HM-SUB-ACCT
+061200                                 EMH-EMP-HM-SUB-ACCT
+061300                                 G1-EMP-ACTIVITY
+061400                                 EMH-EMP-ACTIVITY
+061500                                 G1-EMP-ACCT-CATEGORY
+061600                                 EMH-EMP-ACCT-CATEGORY
+061700                                 G1-PRM-BEN-DATE
+061800                                 EMH-PRM-BEN-DATE
+061900                                 G1-PRM-ELEC-DATE
+062000                                 EMH-PRM-ELEC-DATE.
+062100
+062200     MOVE ZEROES                 TO RPT-PAGE-COUNT (BN245-R1).
+062300
+062400     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+062500     PERFORM 840-FIND-PEMSET1.
+062600
+062700     IF (PRM-AGE-DATE                NOT = ZEROES)
+062800         PERFORM 1032-COMP-EMP-AGE
+062900         THRU    1032-END.
+063000
+           MOVE ZEROES                 TO CRT-MSG-NBR.
+063100     IF (EMP-PAY-FREQUENCY       = 1)
+              MOVE 135                 TO CRT-MSG-NBR
+063300     ELSE
+063400     IF (EMP-PAY-FREQUENCY       = 2)
+              MOVE 136                 TO CRT-MSG-NBR
+063600     ELSE
+063700     IF (EMP-PAY-FREQUENCY       = 3)
+              MOVE 137                 TO CRT-MSG-NBR
+063900     ELSE
+064000     IF (EMP-PAY-FREQUENCY       = 4)
+              MOVE 138                 TO CRT-MSG-NBR
+064200     END-IF
+064300     END-IF
+064400     END-IF
+064500     END-IF.
+           IF (CRT-MSG-NBR NOT = ZEROES)
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE        TO WS-PAY-TRANS
+           END-IF.
+064600
+064700     MOVE EMP-COMPANY            TO G1-EMP-COMPANY.
+064800     MOVE EMP-EMPLOYEE           TO G1-EMP-EMPLOYEE.
+           IF (PRM-INC-FICA-NBR        NOT = "N")
+064900         MOVE EMP-FICA-NBR       TO G1-EMP-FICA-NBR.
+065000     MOVE EMP-DATE-HIRED         TO G1-EMP-DATE-HIRED.
+065100     MOVE EMP-ADJ-HIRE-DATE      TO G1-EMP-ADJ-HIRE-DATE.
+065200     MOVE EMP-ANNIVERS-DATE      TO G1-EMP-ANNIVERS-DATE.
+065300     MOVE EMP-EMP-STATUS         TO G1-EMP-EMP-STATUS.
+065400     MOVE EMP-PAY-FREQUENCY      TO G1-EMP-PAY-FREQUENCY.
+065500     MOVE WS-PAY-TRANS           TO G1-EMP-PAY-TRANS.
+065600     MOVE EMP-PROCESS-LEVEL      TO G1-EMP-PROCESS-LEVEL.
+065700     MOVE EMP-DEPARTMENT         TO G1-EMP-DEPARTMENT.
+065800     MOVE EMP-USER-LEVEL         TO G1-EMP-USER-LEVEL.
+065900     MOVE EMP-SUPERVISOR         TO G1-EMP-SUPERVISOR.
+066000
+066100     MOVE EMP-COMPANY            TO EMH-EMP-COMPANY.
+066200     MOVE EMP-EMPLOYEE           TO EMH-EMP-EMPLOYEE.
+           IF (PRM-INC-FICA-NBR        NOT = "N")
+066300         MOVE EMP-FICA-NBR       TO EMH-EMP-FICA-NBR.
+066400     MOVE EMP-DATE-HIRED         TO EMH-EMP-DATE-HIRED.
+066900     MOVE EMP-ADJ-HIRE-DATE      TO EMH-EMP-ADJ-HIRE-DATE.
+067400     MOVE EMP-ANNIVERS-DATE      TO EMH-EMP-ANNIVERS-DATE.
+067900     MOVE EMP-EMP-STATUS         TO EMH-EMP-EMP-STATUS.
+068000     MOVE EMP-PAY-FREQUENCY      TO EMH-EMP-PAY-FREQUENCY.
+068100     MOVE WS-PAY-TRANS           TO EMH-PAY-TRANS.
+068200     MOVE EMP-PROCESS-LEVEL      TO EMH-EMP-PROCESS-LEVEL.
+068300     MOVE EMP-DEPARTMENT         TO EMH-EMP-DEPARTMENT.
+068400     MOVE EMP-USER-LEVEL         TO EMH-EMP-USER-LEVEL.
+068500     MOVE EMP-SUPERVISOR         TO EMH-EMP-SUPERVISOR.
+068600
+068700     IF (EMP-DEPARTMENT NOT = SPACES)
+068800         MOVE EMP-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+068900         MOVE EMP-DEPARTMENT     TO DB-DEPARTMENT
+069000         PERFORM 840-FIND-DPTSET1
+069100         MOVE DPT-NAME           TO G1-DPT-NAME
+069200         MOVE DPT-NAME           TO EMH-DPT-NAME
+069300     ELSE
+069400         MOVE SPACES             TO G1-DPT-NAME
+069500         MOVE SPACES             TO EMH-DPT-NAME
+069600         MOVE SPACES             TO DPT-NAME
+069700     END-IF.
+069800
+069900     IF (EMP-EMP-STATUS NOT = SPACES)
+070000         MOVE EMP-EMP-STATUS     TO DB-EMP-STATUS
+070100         PERFORM 840-FIND-EMSSET1
+070200         MOVE EMS-DESCRIPTION    TO G1-EMS-DESCRIPTION
+070300         MOVE EMS-DESCRIPTION    TO EMH-EMS-DESCRIPTION
+070400     ELSE
+070500         MOVE SPACES             TO G1-EMS-DESCRIPTION
+070600         MOVE SPACES             TO EMH-EMS-DESCRIPTION
+070700         MOVE SPACES             TO EMS-DESCRIPTION
+070800     END-IF.
+070900
+071000     IF (PAEMPLOYEE-FOUND)
+071100         MOVE PEM-BIRTHDATE      TO G1-PEM-BIRTHDATE
+071200         MOVE PEM-SENIOR-DATE    TO G1-PEM-SENIOR-DATE
+071300         MOVE PEM-BEN-DATE-1     TO G1-PEM-BEN-DATE-1
+071400         MOVE PEM-BEN-DATE-2     TO G1-PEM-BEN-DATE-2
+071500         MOVE PEM-BEN-DATE-3     TO G1-PEM-BEN-DATE-3
+071600         MOVE PEM-BEN-DATE-4     TO G1-PEM-BEN-DATE-4
+071700         MOVE PEM-BEN-DATE-5     TO G1-PEM-BEN-DATE-5
+071800         MOVE PEM-TRUE-MAR-STAT  TO G1-PEM-TRUE-MAR-STAT
+071900         MOVE PEM-LOCAT-CODE     TO G1-PEM-LOCAT-CODE
+072000         MOVE PEM-MAIL-GROUP     TO G1-PEM-MAIL-GROUP
+072100         MOVE PEM-MB-NBR         TO G1-PEM-MB-NBR
+072200         MOVE PEM-HM-PHONE-CNTRY TO G1-PEM-HM-PHONE-CNTRY
+072300         MOVE PEM-HM-PHONE-NBR   TO G1-PEM-HM-PHONE-NBR
+072400         MOVE PEM-WK-PHONE-CNTRY TO G1-PEM-WK-PHONE-CNTRY
+072500         MOVE PEM-WK-PHONE-NBR   TO G1-PEM-WK-PHONE-NBR
+072600         MOVE PEM-WK-PHONE-EXT   TO G1-PEM-WK-PHONE-EXT
+072700         MOVE PEM-SPOUSE-EMP     TO G1-PEM-SPOUSE-EMP
+072800         MOVE PEM-SP-EMP-ADDR1   TO G1-PEM-SP-EMP-ADDR1
+072900         MOVE PEM-SP-EMP-ADDR2   TO G1-PEM-SP-EMP-ADDR2
+073000         MOVE PEM-SP-EMP-ADDR3   TO G1-PEM-SP-EMP-ADDR3
+073100         MOVE PEM-SP-EMP-ADDR4   TO G1-PEM-SP-EMP-ADDR4
+073200         MOVE PEM-SP-EMP-CITY    TO G1-PEM-SP-EMP-CITY 
+073300         MOVE PEM-SP-EMP-STATE   TO G1-PEM-SP-EMP-STATE
+073400         MOVE PEM-SP-EMP-ZIP     TO G1-PEM-SP-EMP-ZIP
+               INITIALIZE                 G1-INT-COUNTRY-DESC
+               IF (PEM-SP-EMP-COUNTRY NOT = SPACES)
+                   MOVE PEM-SP-EMP-COUNTRY
+                                       TO DB-COUNTRY-CODE
+                   PERFORM 840-FIND-INTSET1
+                   IF (INSTCTRYCD-FOUND)
+                       MOVE INT-COUNTRY-DESC
+                                       TO G1-INT-COUNTRY-DESC
+                   END-IF
+               END-IF
+073500         MOVE PRM-AGE-DATE       TO G1-PRM-AGE-DATE
+073600         MOVE WS-EMP-AGE         TO G1-EMP-AGE
+073700         MOVE EMP-HM-DIST-CO     TO G1-EMP-HM-DIST-CO
+073800         MOVE EMP-HM-ACCT-UNIT   TO G1-EMP-HM-ACCT-UNIT
+073900         MOVE EMP-HM-ACCOUNT     TO G1-EMP-HM-ACCOUNT
+074000         MOVE EMP-HM-SUB-ACCT    TO G1-EMP-HM-SUB-ACCT
+074100         MOVE EMP-ACTIVITY       TO G1-EMP-ACTIVITY
+074200         MOVE EMP-ACCT-CATEGORY  TO G1-EMP-ACCT-CATEGORY
+074300         MOVE PRM-BEN-DATE       TO G1-PRM-BEN-DATE
+074400         MOVE PRM-ELEC-DATE      TO G1-PRM-ELEC-DATE
+074500
+074600         MOVE PEM-BIRTHDATE      TO EMH-PEM-BIRTHDATE
+075100         MOVE PEM-SENIOR-DATE    TO EMH-PEM-SENIOR-DATE
+075600         MOVE PEM-BEN-DATE-1     TO EMH-PEM-BEN-DATE-1
+076100         MOVE PEM-BEN-DATE-2     TO EMH-PEM-BEN-DATE-2
+076600         MOVE PEM-BEN-DATE-3     TO EMH-PEM-BEN-DATE-3
+077100         MOVE PEM-BEN-DATE-4     TO EMH-PEM-BEN-DATE-4
+077600         MOVE PEM-BEN-DATE-5     TO EMH-PEM-BEN-DATE-5
+078100         MOVE PEM-TRUE-MAR-STAT  TO EMH-PEM-TRUE-MAR-STAT
+078200         MOVE PRM-AGE-DATE       TO EMH-PRM-AGE-DATE
+078300         MOVE WS-EMP-AGE         TO EMH-EMP-AGE
+078400         MOVE EMP-HM-DIST-CO     TO EMH-EMP-HM-DIST-CO
+078500         MOVE EMP-HM-ACCT-UNIT   TO EMH-EMP-HM-ACCT-UNIT
+078600         MOVE EMP-HM-ACCOUNT     TO EMH-EMP-HM-ACCOUNT
+078700         MOVE EMP-HM-SUB-ACCT    TO EMH-EMP-HM-SUB-ACCT
+078800         MOVE EMP-ACTIVITY       TO EMH-EMP-ACTIVITY
+078900         MOVE EMP-ACCT-CATEGORY  TO EMH-EMP-ACCT-CATEGORY
+079000         MOVE PRM-BEN-DATE       TO EMH-PRM-BEN-DATE
+079100         MOVE PRM-ELEC-DATE      TO EMH-PRM-ELEC-DATE
+079200
+079300         IF (PEM-TRUE-MAR-STAT       = "D")
+                   MOVE 131            TO CRT-MSG-NBR
+079500         ELSE
+079600         IF (PEM-TRUE-MAR-STAT       = "M")
+                   MOVE 132            TO CRT-MSG-NBR
+079800         ELSE
+079900         IF (PEM-TRUE-MAR-STAT       = "S")
+                   MOVE 133            TO CRT-MSG-NBR
+080100         ELSE
+080200         IF (PEM-TRUE-MAR-STAT       = "W")
+                   MOVE 134            TO CRT-MSG-NBR
+080400         ELSE
+079300         IF (PEM-TRUE-MAR-STAT       = "L")
+                   MOVE 132            TO CRT-MSG-NBR
+079500         ELSE
+079600         IF (PEM-TRUE-MAR-STAT       = "O")
+                   MOVE 153            TO CRT-MSG-NBR
+079800         ELSE
+079900         IF (PEM-TRUE-MAR-STAT       = "P")
+                   MOVE 154            TO CRT-MSG-NBR
+080100         ELSE
+080200         IF (PEM-TRUE-MAR-STAT       = "C")
+                   MOVE 155            TO CRT-MSG-NBR
+080400         ELSE
+080500             MOVE SPACES         TO EMH-MAR-STAT-TRANS
+                   MOVE ZEROES         TO CRT-MSG-NBR
+080600         END-IF 
+080700         END-IF 
+080800         END-IF 
+080900         END-IF 
+080600         END-IF 
+080700         END-IF 
+080800         END-IF 
+080900         END-IF 
+               IF (CRT-MSG-NBR NOT = ZEROES)
+                   PERFORM 790-GET-MSG
+                   MOVE CRT-MESSAGE    TO EMH-MAR-STAT-TRANS
+               END-IF
+081000         MOVE PEM-LOCAT-CODE     TO EMH-PEM-LOCAT-CODE
+081100         MOVE PEM-MAIL-GROUP     TO EMH-PEM-MAIL-GROUP
+081200         MOVE PEM-MB-NBR         TO EMH-PEM-MB-NBR
+081300         MOVE PEM-HM-PHONE-CNTRY TO EMH-PEM-HM-PHONE-CNTRY
+081400         MOVE PEM-HM-PHONE-NBR   TO EMH-PEM-HM-PHONE-NBR
+081500         MOVE PEM-WK-PHONE-CNTRY TO EMH-PEM-WK-PHONE-CNTRY
+081600         MOVE PEM-WK-PHONE-NBR   TO EMH-PEM-WK-PHONE-NBR
+081700         MOVE PEM-WK-PHONE-EXT   TO EMH-PEM-WK-PHONE-EXT
+081800         MOVE PEM-SPOUSE-EMP     TO EMH-PEM-SPOUSE-EMP
+081900         MOVE PEM-SP-EMP-ADDR1   TO EMH-PEM-SP-EMP-ADDR1
+082000         MOVE PEM-SP-EMP-ADDR2   TO EMH-PEM-SP-EMP-ADDR2
+082100         MOVE PEM-SP-EMP-ADDR3   TO EMH-PEM-SP-EMP-ADDR3
+082200         MOVE PEM-SP-EMP-ADDR4   TO EMH-PEM-SP-EMP-ADDR4
+082300         MOVE PEM-SP-EMP-CITY    TO EMH-PEM-SP-EMP-CITY 
+082400         MOVE PEM-SP-EMP-STATE   TO EMH-PEM-SP-EMP-STATE
+082500         MOVE PEM-SP-EMP-ZIP     TO EMH-PEM-SP-EMP-ZIP
+               MOVE PEM-SP-EMP-COUNTRY TO EMH-PEM-SP-EMP-COUNTRY
+082600     ELSE                            
+082700         MOVE ZEROES             TO G1-PEM-BIRTHDATE
+082800         MOVE ZEROES             TO G1-PEM-SENIOR-DATE
+082900         MOVE ZEROES             TO G1-PEM-BEN-DATE-1
+083000         MOVE ZEROES             TO G1-PEM-BEN-DATE-2
+083100         MOVE ZEROES             TO G1-PEM-BEN-DATE-3
+083200         MOVE ZEROES             TO G1-PEM-BEN-DATE-4
+083300         MOVE ZEROES             TO G1-PEM-BEN-DATE-5
+083400         MOVE SPACES             TO G1-PEM-TRUE-MAR-STAT
+083500         MOVE SPACES             TO G1-PEM-LOCAT-CODE
+083600         MOVE SPACES             TO G1-PEM-MAIL-GROUP
+083700         MOVE SPACES             TO G1-PEM-MB-NBR
+083800         MOVE SPACES             TO G1-PEM-HM-PHONE-CNTRY
+083900         MOVE SPACES             TO G1-PEM-HM-PHONE-NBR
+084000         MOVE SPACES             TO G1-PEM-WK-PHONE-CNTRY
+084100         MOVE SPACES             TO G1-PEM-WK-PHONE-NBR
+084200         MOVE SPACES             TO G1-PEM-WK-PHONE-EXT
+084300         MOVE SPACES             TO G1-PEM-SPOUSE-EMP
+084400         MOVE SPACES             TO G1-PEM-SP-EMP-ADDR1
+084500         MOVE SPACES             TO G1-PEM-SP-EMP-ADDR2
+084600         MOVE SPACES             TO G1-PEM-SP-EMP-ADDR3
+084700         MOVE SPACES             TO G1-PEM-SP-EMP-ADDR4
+084800         MOVE SPACES             TO G1-PEM-SP-EMP-CITY 
+084900         MOVE SPACES             TO G1-PEM-SP-EMP-STATE
+085000         MOVE SPACES             TO G1-PEM-SP-EMP-ZIP
+               MOVE SPACES             TO G1-INT-COUNTRY-DESC
+085100         MOVE ZEROES             TO G1-PRM-AGE-DATE
+085200         MOVE ZEROES             TO G1-EMP-AGE
+085300         MOVE ZEROES             TO G1-EMP-HM-DIST-CO
+085400         MOVE SPACES             TO G1-EMP-HM-ACCT-UNIT
+085500         MOVE ZEROES             TO G1-EMP-HM-ACCOUNT
+085600         MOVE ZEROES             TO G1-EMP-HM-SUB-ACCT
+085700         MOVE SPACES             TO G1-EMP-ACTIVITY
+085800         MOVE SPACES             TO G1-EMP-ACCT-CATEGORY
+085900         MOVE ZEROES             TO G1-PRM-BEN-DATE
+086000         MOVE ZEROES             TO G1-PRM-ELEC-DATE
+086100
+086200         MOVE ZEROES             TO EMH-PEM-BIRTHDATE
+086300         MOVE ZEROES             TO EMH-PEM-SENIOR-DATE
+086400         MOVE ZEROES             TO EMH-PEM-BEN-DATE-1
+086500         MOVE ZEROES             TO EMH-PEM-BEN-DATE-2
+086600         MOVE ZEROES             TO EMH-PEM-BEN-DATE-3
+086700         MOVE ZEROES             TO EMH-PEM-BEN-DATE-4
+086800         MOVE ZEROES             TO EMH-PEM-BEN-DATE-5
+086900         MOVE SPACES             TO EMH-PEM-TRUE-MAR-STAT
+087000         MOVE SPACES             TO EMH-PEM-LOCAT-CODE
+087100         MOVE SPACES             TO EMH-PEM-MAIL-GROUP
+087200         MOVE SPACES             TO EMH-PEM-MB-NBR
+087300         MOVE SPACES             TO EMH-PEM-HM-PHONE-CNTRY
+087400         MOVE SPACES             TO EMH-PEM-HM-PHONE-NBR
+087500         MOVE SPACES             TO EMH-PEM-WK-PHONE-CNTRY
+087600         MOVE SPACES             TO EMH-PEM-WK-PHONE-NBR
+087700         MOVE SPACES             TO EMH-PEM-WK-PHONE-EXT
+087800         MOVE SPACES             TO EMH-PEM-SPOUSE-EMP
+087900         MOVE SPACES             TO EMH-PEM-SP-EMP-ADDR1
+088000         MOVE SPACES             TO EMH-PEM-SP-EMP-ADDR2
+088100         MOVE SPACES             TO EMH-PEM-SP-EMP-ADDR3
+088200         MOVE SPACES             TO EMH-PEM-SP-EMP-ADDR4
+088300         MOVE SPACES             TO EMH-PEM-SP-EMP-CITY 
+088400         MOVE SPACES             TO EMH-PEM-SP-EMP-STATE
+088500         MOVE SPACES             TO EMH-PEM-SP-EMP-ZIP
+               MOVE SPACES             TO EMH-PEM-SP-EMP-COUNTRY
+088600         MOVE ZEROES             TO EMH-PRM-AGE-DATE
+088700         MOVE ZEROES             TO EMH-EMP-AGE
+088800         MOVE ZEROES             TO EMH-EMP-HM-DIST-CO
+088900         MOVE SPACES             TO EMH-EMP-HM-ACCT-UNIT
+089000         MOVE ZEROES             TO EMH-EMP-HM-ACCOUNT
+089100         MOVE ZEROES             TO EMH-EMP-HM-SUB-ACCT
+089200         MOVE SPACES             TO EMH-EMP-ACTIVITY
+089300         MOVE SPACES             TO EMH-EMP-ACCT-CATEGORY
+089400         MOVE ZEROES             TO EMH-PRM-BEN-DATE
+089500         MOVE ZEROES             TO EMH-PRM-ELEC-DATE
+089600     END-IF.
+089700                                      
+089800     MOVE EMP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL.
+089900     PERFORM 840-FIND-PRSSET1.
+090000     MOVE WS-CO-NAME             TO G1-CO-NAME.
+090100     MOVE PRS-NAME               TO G1-PRS-NAME.
+090200     MOVE PRS-NAME               TO EMH-PRS-NAME.
+090300    
+090400     IF (EMP-SUPERVISOR NOT = SPACES)
+090500         MOVE EMP-SUPERVISOR     TO DB-CODE
+090600         PERFORM 840-FIND-HSUSET1
+090700         MOVE HSU-DESCRIPTION    TO G1-HSU-DESCRIPTION
+090800         MOVE HSU-DESCRIPTION    TO EMH-HSU-DESCRIPTION
+090900     ELSE
+091000         MOVE SPACES             TO G1-HSU-DESCRIPTION
+091100         MOVE SPACES             TO EMH-HSU-DESCRIPTION
+091200     END-IF.
+091300
+091400     IF (EMP-USER-LEVEL NOT = SPACES)
+091500         MOVE "UL"               TO DB-TYPE
+091600         MOVE EMP-USER-LEVEL     TO DB-CODE
+091700         PERFORM 840-FIND-PCOSET1
+091800         MOVE PCO-DESCRIPTION    TO G1-PCO-DESCRIPTION
+091900         MOVE PCO-DESCRIPTION    TO EMH-PCO-DESCRIPTION-USER
+092000     ELSE
+092100         MOVE SPACES             TO G1-PCO-DESCRIPTION
+092200         MOVE SPACES             TO EMH-PCO-DESCRIPTION-USER
+092300     END-IF.
+092400
+092500     IF (PEM-MAIL-GROUP NOT = SPACES)
+092600         MOVE "MG"               TO DB-TYPE
+092700         MOVE PEM-MAIL-GROUP     TO DB-CODE
+092800         PERFORM 840-FIND-PCOSET1
+092900         MOVE PCO-DESCRIPTION    TO G1-PCO-DESCRIPTION-MAIL
+093000         MOVE PCO-DESCRIPTION    TO EMH-PCO-DESCRIPTION-MAIL
+093100     ELSE
+093200         MOVE SPACES             TO G1-PCO-DESCRIPTION-MAIL
+093300         MOVE SPACES             TO EMH-PCO-DESCRIPTION-MAIL
+093400     END-IF.
+093500
+093600
+093700     IF (PEM-LOCAT-CODE NOT = SPACES)
+093800         MOVE "LO"               TO DB-TYPE
+093900         MOVE PEM-LOCAT-CODE     TO DB-CODE
+094000         PERFORM 840-FIND-PCOSET1
+094100         MOVE PCO-DESCRIPTION    TO G1-1-PCO-DESCRIPTION
+094200         MOVE PCO-DESCRIPTION    TO EMH-PCO-DESCRIPTION-LOCAT
+094300     ELSE                          
+094400         MOVE SPACES             TO G1-1-PCO-DESCRIPTION
+094500         MOVE SPACES             TO EMH-PCO-DESCRIPTION-LOCAT
+094600     END-IF.
+094700
+094800
+094900     MOVE EMP-LAST-NAME          TO HRWS-LAST-NAME.
+095000     MOVE EMP-FIRST-NAME         TO HRWS-FIRST-NAME.
+095100     MOVE EMP-MIDDLE-INIT        TO HRWS-MIDDLE-INIT.
+           MOVE EMP-LAST-NAME-PRE      TO HRWS-LAST-NAME-PRE.
+           MOVE EMP-NAME-SUFFIX        TO HRWS-NAME-SUFFIX.
+095200     PERFORM 750-HR-FORMAT-NAME.
+095300
+095400     MOVE HRWS-FORMAT-NAME       TO G1-EMP-FULL-NAME.
+095500     MOVE HRWS-FORMAT-NAME       TO EMH-EMP-FULL-NAME.
+095600
+095700     IF (PRM-REPORT-OPT          NOT = "R")
+095800         PERFORM 800-WRITECSV-EMPLOYEEH
+095900     END-IF.
+096000
+096100     IF (PRM-REPORT-OPT          NOT = "C")
+096200         MOVE GN1H-EMP-EMPLOYEE      TO RPT-GROUP-REQUEST 
+096300         PERFORM 700-PRINT-RPT-GRP 
+096400         MOVE GN1D-EMP-EMPLOYEE      TO RPT-GROUP-REQUEST 
+096500         PERFORM 700-PRINT-RPT-GRP 
+096600     END-IF.
+096700
+096800     IF (PRM-DEPENDENT = "Y")
+096900        PERFORM 1040-DO-EMP-DEP
+097000        THRU    1040-END
+097100     END-IF.
+097200
+097300     IF  (PRM-FLEX-PLAN           NOT = SPACES)
+097400     AND (PRM-BEN-DATE            NOT = ZEROES)
+097500         PERFORM 1046-DO-CURRENT-FLEX-DLR
+097600         THRU    1046-END
+097700     END-IF.
+097800     
+097900     IF  (PRM-FLEX-PLAN           NOT = SPACES)
+098000     AND (PRM-ELEC-DATE           NOT = ZEROES)
+098100         PERFORM 1050-DO-FLEX-DLR
+098200         THRU    1050-END
+098300     END-IF.
+098400     
+098500     IF  (PRM-BEN-DATE            NOT = ZEROES)
+098600         MOVE "Y"                  TO WS-CUR-HED 
+098700         PERFORM 1060-DO-EMP-BEN
+098800         THRU    1060-END
+098900     END-IF.
+099000
+099100     IF  (PRM-DEPENDENT-BEN       = "Y")
+099200     AND (PRM-BEN-DATE            NOT = ZEROES)
+099300         PERFORM 1070-DO-EMP-DEP-BEN
+099400         THRU    1070-END
+099500     END-IF.
+099600
+099700     IF (PRM-BENEFIC              = "Y")
+099800     AND (PRM-BEN-DATE            NOT = ZEROES)
+099900         PERFORM 1080-DO-BENEFIC
+100000         THRU    1080-END
+100100     END-IF.
+100200
+100300     IF  (PRM-INVEST-ACC = "Y")
+100400     AND (PRM-BEN-DATE            NOT = ZEROES)
+100500         PERFORM 1090-DO-EMP-INVEST
+100600         THRU    1090-END
+100700     END-IF.
+100800  
+100900 1030-END.
+101000
+101100******************************************************************
+101200 1032-COMP-EMP-AGE.
+101300******************************************************************
+101400
+101500     INITIALIZE WS-EMP-AGE.
+101600
+101700     IF (PEM-BIRTHDATE           > PRM-AGE-DATE)
+101800         GO TO 1032-END.
+101900
+102000     MOVE PEM-BIRTHDATE          TO WS-BIRTHDATE.
+102100
+102200     COMPUTE WS-EMP-AGE          = WS-AD-YYYY
+102300                                 - WS-BD-YYYY.
+102400
+102500     IF (WS-AD-MM                < WS-BD-MM)
+102600         SUBTRACT 1              FROM WS-EMP-AGE
+102700     ELSE
+102800     IF  (WS-AD-MM               = WS-BD-MM)
+102900     AND (WS-AD-DD               < WS-BD-DD)
+103000         SUBTRACT 1              FROM WS-EMP-AGE.
+103100
+103200 1032-END.
+103300
+103400******************************************************************
+103500 1040-DO-EMP-DEP.
+103600******************************************************************
+103700
+103800     INITIALIZE                  G2-EMD-BIRTHDATE
+103900                                 G2-EMD-FICA-NBR
+104000                                 G2-EMD-REL-CODE
+104100                                 G2-EMD-STUDENT
+104200                                 G2-EMD-DISABLED
+104300                                 G2-EMD-SEX
+104400                                 EMD-EMP-COMPANY
+104500                                 EMD-EMP-EMPLOYEE
+104600                                 EMD-EMD-BIRTHDATE
+104700                                 EMD-EMD-FICA-NBR
+104800                                 EMD-EMD-REL-CODE
+104900                                 EMD-EMD-STUDENT
+105000                                 EMD-EMD-DISABLED
+105100                                 EMD-EMD-SEX
+105200                                 EMD-EMD-DEP-TYPE
+105300                                 G2-EMD-DEP-TYPE-DESC
+105400                                 EMD-PCO-DESCRIPTION-DEP-TYPE
+105500                                 G2-PCO-DESCRIPTION
+105600                                 EMD-PCO-DESCRIPTION-REL
+105700                                 EMD-FULL-NAME
+105800                                 G2-EMD-FULL-NAME
+105900                                 EMD-EMD-FULL-NAME.
+106000
+106100     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+106200     MOVE EMDSET1-EMPLOYEE       TO WS-DB-BEG-RNG.
+106300     PERFORM 850-FIND-BEGRNG-EMDSET1.
+           PERFORM 860-FIND-NXTRNG-EMDSET1
+               UNTIL (EMDEPEND-NOTFOUND)
+               OR    (EMD-ACTIVE-FLAG   = "A").
+106400
+106500     IF  (EMDEPEND-FOUND)
+106600     AND (PRM-REPORT-OPT          NOT = "C")
+106700         MOVE GN2H-EMD-DEPENDENT  TO RPT-GROUP-REQUEST 
+106800         PERFORM 700-PRINT-RPT-GRP 
+106900     END-IF.
+107000
+107100     PERFORM 1045-DO-EMD-SEQ-NBR
+107200     THRU    1045-END
+107300         UNTIL (EMDEPEND-NOTFOUND)
+107400         OR    (EMD-COMPANY  NOT = EMP-COMPANY)
+107500         OR    (EMD-EMPLOYEE NOT = EMP-EMPLOYEE).
+107600
+107700 1040-END.
+107800
+107900******************************************************************
+108000 1045-DO-EMD-SEQ-NBR.
+108100******************************************************************
+108200
+108300     INITIALIZE                  G2-EMD-BIRTHDATE
+108400                                 G2-EMD-SEQ-NBR
+108500                                 G2-EMD-FICA-NBR
+108600                                 G2-EMD-REL-CODE
+108700                                 G2-EMD-STUDENT
+108800                                 G2-EMD-DISABLED
+108900                                 G2-EMD-SEX
+109000                                 EMD-EMP-COMPANY
+109100                                 EMD-EMP-EMPLOYEE
+109200                                 EMD-EMD-BIRTHDATE
+109300                                 EMD-EMD-FICA-NBR
+109400                                 EMD-EMD-REL-CODE
+109500                                 EMD-EMD-STUDENT
+109600                                 EMD-EMD-DISABLED
+109700                                 EMD-EMD-SEX
+109800                                 EMD-EMD-SEQ-NBR
+109900                                 EMD-EMD-DEP-TYPE
+110000                                 G2-EMD-DEP-TYPE-DESC
+110100                                 EMD-PCO-DESCRIPTION-DEP-TYPE
+110200                                 G2-PCO-DESCRIPTION
+110300                                 EMD-PCO-DESCRIPTION-REL
+110400                                 EMD-FULL-NAME
+110500                                 G2-EMD-FULL-NAME
+110600                                 EMD-EMD-FULL-NAME.
+110700
+110800     MOVE EMD-SEQ-NBR            TO G2-EMD-SEQ-NBR.
+110900     MOVE EMD-BIRTHDATE          TO G2-EMD-BIRTHDATE.
+           IF (PRM-INC-FICA-NBR        NOT = "N")
+111000         MOVE EMD-FICA-NBR       TO G2-EMD-FICA-NBR.
+111100     MOVE EMD-REL-CODE           TO G2-EMD-REL-CODE.
+111200     MOVE EMD-STUDENT            TO G2-EMD-STUDENT.
+111300     MOVE EMD-DISABLED           TO G2-EMD-DISABLED.
+111400     MOVE EMD-SEX                TO G2-EMD-SEX.
+111500
+111600     MOVE EMP-COMPANY            TO EMD-EMP-COMPANY.
+111700     MOVE EMP-EMPLOYEE           TO EMD-EMP-EMPLOYEE.
+111800     MOVE EMD-SEQ-NBR            TO EMD-EMD-SEQ-NBR.
+111900     MOVE EMD-BIRTHDATE          TO EMD-EMD-BIRTHDATE.
+           IF (PRM-INC-FICA-NBR        NOT = "N")
+112400         MOVE EMD-FICA-NBR       TO EMD-EMD-FICA-NBR.
+112500     MOVE EMD-REL-CODE           TO EMD-EMD-REL-CODE.
+112600     MOVE EMD-STUDENT            TO EMD-EMD-STUDENT.
+112700     MOVE EMD-DISABLED           TO EMD-EMD-DISABLED.
+112800     MOVE EMD-SEX                TO EMD-EMD-SEX.
+112900     MOVE EMD-DEP-TYPE           TO EMD-EMD-DEP-TYPE.
+113000
+J07540     IF (EMD-DEP-TYPE            = "S" OR "P")
+               MOVE 150                TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE        TO G2-EMD-DEP-TYPE-DESC
+                                          EMD-PCO-DESCRIPTION-DEP-TYPE
+113400     ELSE
+113500     IF (EMD-DEP-TYPE            = "D")
+               MOVE 151                TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE        TO G2-EMD-DEP-TYPE-DESC
+                                          EMD-PCO-DESCRIPTION-DEP-TYPE
+113800     ELSE
+113900         MOVE SPACES             TO G2-EMD-DEP-TYPE-DESC
+114000         MOVE SPACES             TO EMD-PCO-DESCRIPTION-DEP-TYPE
+114100     END-IF
+114200     END-IF.
+114300
+114400     MOVE "DP"                   TO DB-TYPE.
+114500     MOVE EMD-REL-CODE           TO DB-CODE.
+114600     PERFORM 840-FIND-PCOSET1.
+114700     MOVE PCO-DESCRIPTION        TO G2-PCO-DESCRIPTION.
+114800     MOVE PCO-DESCRIPTION        TO EMD-PCO-DESCRIPTION-REL.
+114900
+115000     MOVE EMD-LAST-NAME          TO HRWS-LAST-NAME.
+115100     MOVE EMD-FIRST-NAME         TO HRWS-FIRST-NAME.
+115200     MOVE EMD-MIDDLE-INIT        TO HRWS-MIDDLE-INIT.
+           INITIALIZE HRWS-LAST-NAME-PRE
+                      HRWS-NAME-SUFFIX.
+115300     PERFORM 750-HR-FORMAT-NAME.
+115400     MOVE HRWS-FORMAT-NAME       TO EMD-FULL-NAME.
+115500
+115600     MOVE EMD-FULL-NAME          TO G2-EMD-FULL-NAME.
+115700     MOVE EMD-FULL-NAME          TO EMD-EMD-FULL-NAME.
+115800
+115900     IF (PRM-REPORT-OPT          NOT = "R")
+116000         PERFORM 800-WRITECSV-EMPLOYEED
+116100     END-IF.
+116200
+116300     IF (PRM-REPORT-OPT          NOT = "C")
+116400         MOVE GN2D-EMD-SEQ-NBR        TO RPT-GROUP-REQUEST 
+116500         PERFORM 700-PRINT-RPT-GRP 
+116600     END-IF.
+116700
+116800 1045-NEXT-EMDEPEND.
+           PERFORM 860-FIND-NXTRNG-EMDSET1.
+116900     PERFORM 860-FIND-NXTRNG-EMDSET1
+               UNTIL (EMDEPEND-NOTFOUND)
+               OR    (EMD-ACTIVE-FLAG   = "A").
+117000
+117100 1045-END.
+117200
+117300******************************************************************
+117400 1046-DO-CURRENT-FLEX-DLR.
+117500******************************************************************
+117600
+117700     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+117800     MOVE PRM-BEN-DATE           TO DB-START-DATE.
+117900     PERFORM 850-FIND-NLT-EFDSET2.     
+118000 
+118100     IF  (EMPFLEXDOL-FOUND)
+118200     AND (EFD-COMPANY            = EMP-COMPANY)
+118300     AND (EFD-EMPLOYEE           = EMP-EMPLOYEE)
+118400         PERFORM 1048-DO-CURRENT-EFD-EMPLOYEE
+118500         THRU    1048-END
+118600             UNTIL (EMPFLEXDOL-NOTFOUND)
+118700             OR    (EFD-COMPANY  NOT = EMP-COMPANY)
+118800             OR    (EFD-EMPLOYEE NOT = EMP-EMPLOYEE).
+118900
+119000 1046-END.
+119100   
+119200******************************************************************
+119300 1048-DO-CURRENT-EFD-EMPLOYEE.
+119400******************************************************************
+119500
+119600     INITIALIZE                        G21-EFD-SALARY
+119700                                       G21-EFD-COMP-FLX-AMT
+119800                                       G21-EFD-TOT-COMP-AMT
+119900                                       G21-EFD-AGE-CREDIT
+120000                                       G21-EFD-SERV-CREDIT
+120100                                       G21-EFD-DEP-CREDIT
+120200                                       G21-EFD-LIFE-CREDIT
+120300                                       G21-EFD-CAL
+120400                                       G21-EFD-EMP-FLEX-AMT
+120500                                       EMX-EMP-COMPANY
+120600                                       EMX-EMP-EMPLOYEE
+120700                                       EMX-EFD-SALARY
+120800                                       EMX-EFD-COMP-FLX-AMT
+120900                                       EMX-EFD-AGE-CREDIT
+121000                                       EMX-EFD-SERV-CREDIT
+121100                                       EMX-EFD-DEP-CREDIT
+121200                                       EMX-EFD-LIFE-CREDIT
+121300                                       WS-CAL
+121400                                       EMX-EFD-CAL
+121500                                       EMX-EFD-TOT-COMP-AMT
+121600                                       EMX-EFD-EMP-FLEX-AMT
+121700                                       G21-FLD-ADD-TO-GRS-PCT
+121800                                       EMX-FLD-ADD-TO-GRS-PCT.
+121900
+122000     IF  (PRM-BEN-DATE < EFD-START-DATE)
+122100         GO TO 1048-NEXT-EMPFLEXDOL 
+122200     END-IF.
+122300
+122400     IF  (PRM-BEN-DATE > EFD-STOP-DATE)
+122500         GO TO 1048-NEXT-EMPFLEXDOL
+122600     END-IF.
+122700
+122800     MOVE EMP-COMPANY                  TO EMX-EMP-COMPANY.
+122900     MOVE EMP-EMPLOYEE                 TO EMX-EMP-EMPLOYEE.
+123000
+123100     COMPUTE WS-CAL ROUNDED    = (EFD-COMP-FLX-AMT
+123200                               + EFD-AGE-CREDIT
+123300                               + EFD-SERV-CREDIT
+123400                               + EFD-DEP-CREDIT
+123500                               + EFD-LIFE-CREDIT)
+123600                               - EFD-TOT-COMP-AMT.
+123700
+123800     IF  (PRM-CONTRIB    = "A")
+123900         MOVE EFD-SALARY             TO G21-EFD-SALARY
+124000         MOVE EFD-COMP-FLX-AMT       TO G21-EFD-COMP-FLX-AMT
+124100         MOVE EFD-TOT-COMP-AMT       TO G21-EFD-TOT-COMP-AMT
+124200         MOVE EFD-AGE-CREDIT         TO G21-EFD-AGE-CREDIT
+124300         MOVE EFD-SERV-CREDIT        TO G21-EFD-SERV-CREDIT
+124400         MOVE EFD-DEP-CREDIT         TO G21-EFD-DEP-CREDIT
+124500         MOVE EFD-LIFE-CREDIT        TO G21-EFD-LIFE-CREDIT
+124600         MOVE WS-CAL                 TO G21-EFD-CAL
+124700         MOVE EFD-EMP-FLEX-AMT       TO G21-EFD-EMP-FLEX-AMT
+124800   
+124900         MOVE EFD-SALARY             TO EMX-EFD-SALARY
+125000         MOVE EFD-COMP-FLX-AMT       TO EMX-EFD-COMP-FLX-AMT
+125100         MOVE EFD-TOT-COMP-AMT       TO EMX-EFD-TOT-COMP-AMT
+125200         MOVE EFD-AGE-CREDIT         TO EMX-EFD-AGE-CREDIT
+125300         MOVE EFD-SERV-CREDIT        TO EMX-EFD-SERV-CREDIT
+125400         MOVE EFD-DEP-CREDIT         TO EMX-EFD-DEP-CREDIT
+125500         MOVE EFD-LIFE-CREDIT        TO EMX-EFD-LIFE-CREDIT
+125600         MOVE WS-CAL                 TO EMX-EFD-CAL
+125700         MOVE EFD-EMP-FLEX-AMT       TO EMX-EFD-EMP-FLEX-AMT
+125800
+125900     ELSE
+126000     IF  (PRM-CONTRIB    = "M")
+126100         COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+126200                                     /  12
+126300         MOVE WS-COST-1              TO G21-EFD-SALARY
+126400         MOVE WS-COST-1              TO EMX-EFD-SALARY
+126500         COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+126600                                     /  12
+126700         MOVE WS-COST-2              TO G21-EFD-COMP-FLX-AMT 
+126800         MOVE WS-COST-2              TO EMX-EFD-COMP-FLX-AMT
+126900         COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+127000                                     /  12
+127100         MOVE WS-COST-3              TO G21-EFD-TOT-COMP-AMT
+127200         MOVE WS-COST-3              TO EMX-EFD-TOT-COMP-AMT
+127300         COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+127400                                     /  12
+127500         MOVE WS-COST-4              TO G21-EFD-AGE-CREDIT
+127600         MOVE WS-COST-4              TO EMX-EFD-AGE-CREDIT
+127700         COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+127800                                     /  12
+127900         MOVE WS-COST-5              TO G21-EFD-SERV-CREDIT
+128000         MOVE WS-COST-5              TO EMX-EFD-SERV-CREDIT
+128100         COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+128200                                     /  12
+128300         MOVE WS-COST-6              TO G21-EFD-DEP-CREDIT
+128400         MOVE WS-COST-6              TO EMX-EFD-DEP-CREDIT
+128500         COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+128600                                     /  12
+128700         MOVE WS-COST-7              TO G21-EFD-LIFE-CREDIT
+128800         MOVE WS-COST-7              TO EMX-EFD-LIFE-CREDIT
+128900         COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+129000                                     /  12
+129100         MOVE WS-COST-8              TO G21-EFD-CAL
+129200         MOVE WS-COST-8              TO EMX-EFD-CAL
+129300         COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+129400                                     /  12
+129500         MOVE WS-COST-9              TO G21-EFD-EMP-FLEX-AMT
+129600         MOVE WS-COST-9              TO EMX-EFD-EMP-FLEX-AMT
+129700     ELSE
+129800     IF  (PRM-CONTRIB    = "P")
+129900         IF  (EMP-PAY-FREQUENCY      = 1)
+130000             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+130100                                         /  52
+130200             MOVE WS-COST-1              TO G21-EFD-SALARY
+130300             MOVE WS-COST-1              TO EMX-EFD-SALARY
+130400             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT      
+130500                                         /  52
+130600             MOVE WS-COST-2              TO G21-EFD-COMP-FLX-AMT 
+130700             MOVE WS-COST-2              TO EMX-EFD-COMP-FLX-AMT
+130800             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT      
+130900                                         /  52
+131000             MOVE WS-COST-3              TO G21-EFD-TOT-COMP-AMT
+131100             MOVE WS-COST-3              TO EMX-EFD-TOT-COMP-AMT
+131200             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+131300                                         /  52
+131400             MOVE WS-COST-4              TO G21-EFD-AGE-CREDIT
+131500             MOVE WS-COST-4              TO EMX-EFD-AGE-CREDIT
+131600             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+131700                                         /  52
+131800             MOVE WS-COST-5              TO G21-EFD-SERV-CREDIT
+131900             MOVE WS-COST-5              TO EMX-EFD-SERV-CREDIT
+132000             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+132100                                         /  52
+132200             MOVE WS-COST-6              TO G21-EFD-DEP-CREDIT
+132300             MOVE WS-COST-6              TO EMX-EFD-DEP-CREDIT
+132400             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+132500                                         /  52
+132600             MOVE WS-COST-7              TO G21-EFD-LIFE-CREDIT
+132700             MOVE WS-COST-7              TO EMX-EFD-LIFE-CREDIT
+132800             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+132900                                         /  52
+133000             MOVE WS-COST-8              TO G21-EFD-CAL
+133100             MOVE WS-COST-8              TO EMX-EFD-CAL
+133200             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+133300                                         /  52
+133400             MOVE WS-COST-9              TO G21-EFD-EMP-FLEX-AMT
+133500             MOVE WS-COST-9              TO EMX-EFD-EMP-FLEX-AMT
+133600         ELSE
+133700         IF  (EMP-PAY-FREQUENCY      = 2)
+133800             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+133900                                         /  26
+134000             MOVE WS-COST-1              TO G21-EFD-SALARY
+134100             MOVE WS-COST-1              TO EMX-EFD-SALARY
+134200             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+134300                                         /  26
+134400             MOVE WS-COST-2              TO G21-EFD-COMP-FLX-AMT 
+134500             MOVE WS-COST-2              TO EMX-EFD-COMP-FLX-AMT
+134600             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+134700                                         /  26
+134800             MOVE WS-COST-3              TO G21-EFD-TOT-COMP-AMT
+134900             MOVE WS-COST-3              TO EMX-EFD-TOT-COMP-AMT
+135000             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+135100                                         /  26
+135200             MOVE WS-COST-4              TO G21-EFD-AGE-CREDIT
+135300             MOVE WS-COST-4              TO EMX-EFD-AGE-CREDIT
+135400             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+135500                                         /  26
+135600             MOVE WS-COST-5              TO G21-EFD-SERV-CREDIT
+135700             MOVE WS-COST-5              TO EMX-EFD-SERV-CREDIT
+135800             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+135900                                         /  26
+136000             MOVE WS-COST-6              TO G21-EFD-DEP-CREDIT
+136100             MOVE WS-COST-6              TO EMX-EFD-DEP-CREDIT
+136200             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+136300                                         /  26
+136400             MOVE WS-COST-7              TO G21-EFD-LIFE-CREDIT
+136500             MOVE WS-COST-7              TO EMX-EFD-LIFE-CREDIT
+136600             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+136700                                         /  26
+136800             MOVE WS-COST-8              TO G21-EFD-CAL
+136900             MOVE WS-COST-8              TO EMX-EFD-CAL
+137000             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+137100                                         /  26
+137200             MOVE WS-COST-9              TO G21-EFD-EMP-FLEX-AMT
+137300             MOVE WS-COST-9              TO EMX-EFD-EMP-FLEX-AMT
+137400         ELSE
+137500         IF  (EMP-PAY-FREQUENCY      = 3)
+137600             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+137700                                         /  24
+137800             MOVE WS-COST-1              TO G21-EFD-SALARY
+137900             MOVE WS-COST-1              TO EMX-EFD-SALARY
+138000             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+138100                                         /  24
+138200             MOVE WS-COST-2              TO G21-EFD-COMP-FLX-AMT 
+138300             MOVE WS-COST-2              TO EMX-EFD-COMP-FLX-AMT
+138400             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+138500                                         /  24
+138600             MOVE WS-COST-3              TO G21-EFD-TOT-COMP-AMT
+138700             MOVE WS-COST-3              TO EMX-EFD-TOT-COMP-AMT
+138800             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+138900                                         /  24
+139000             MOVE WS-COST-4              TO G21-EFD-AGE-CREDIT
+139100             MOVE WS-COST-4              TO EMX-EFD-AGE-CREDIT
+139200             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+139300                                         /  24
+139400             MOVE WS-COST-5              TO G21-EFD-SERV-CREDIT
+139500             MOVE WS-COST-5              TO EMX-EFD-SERV-CREDIT
+139600             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+139700                                         /  24
+139800             MOVE WS-COST-6              TO G21-EFD-DEP-CREDIT
+139900             MOVE WS-COST-6              TO EMX-EFD-DEP-CREDIT
+140000             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+140100                                         /  24
+140200             MOVE WS-COST-7              TO G21-EFD-LIFE-CREDIT
+140300             MOVE WS-COST-7              TO EMX-EFD-LIFE-CREDIT
+140400             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+140500                                         /  24
+140600             MOVE WS-COST-8              TO G21-EFD-CAL
+140700             MOVE WS-COST-8              TO EMX-EFD-CAL
+140800             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+140900                                         /  24
+141000             MOVE WS-COST-9              TO G21-EFD-EMP-FLEX-AMT
+141100             MOVE WS-COST-9              TO EMX-EFD-EMP-FLEX-AMT
+141200         ELSE
+141300         IF  (EMP-PAY-FREQUENCY      = 4)
+141400             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+141500                                         /  12
+141600             MOVE WS-COST-1              TO G21-EFD-SALARY
+141700             MOVE WS-COST-1              TO EMX-EFD-SALARY
+141800             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT
+141900                                         /  12
+142000             MOVE WS-COST-2              TO G21-EFD-COMP-FLX-AMT 
+142100             MOVE WS-COST-2              TO EMX-EFD-COMP-FLX-AMT
+142200             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT
+142300                                         /  12
+142400             MOVE WS-COST-3              TO G21-EFD-TOT-COMP-AMT
+142500             MOVE WS-COST-3              TO EMX-EFD-TOT-COMP-AMT
+142600             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+142700                                         /  12
+142800             MOVE WS-COST-4              TO G21-EFD-AGE-CREDIT
+142900             MOVE WS-COST-4              TO EMX-EFD-AGE-CREDIT
+143000             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+143100                                         /  12
+143200             MOVE WS-COST-5              TO G21-EFD-SERV-CREDIT
+143300             MOVE WS-COST-5              TO EMX-EFD-SERV-CREDIT
+143400             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+143500                                         /  12
+143600             MOVE WS-COST-6              TO G21-EFD-DEP-CREDIT
+143700             MOVE WS-COST-6              TO EMX-EFD-DEP-CREDIT
+143800             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+143900                                         /  12
+144000             MOVE WS-COST-7              TO G21-EFD-LIFE-CREDIT
+144100             MOVE WS-COST-7              TO EMX-EFD-LIFE-CREDIT
+144200             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+144300                                         /  12
+144400             MOVE WS-COST-8              TO G21-EFD-CAL
+144500             MOVE WS-COST-8              TO EMX-EFD-CAL
+144600             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+144700                                         /  12
+144800             MOVE WS-COST-9              TO G21-EFD-EMP-FLEX-AMT
+144900             MOVE WS-COST-9              TO EMX-EFD-EMP-FLEX-AMT
+145000         END-IF 
+145100         END-IF 
+145200         END-IF 
+145300         END-IF 
+145400     END-IF
+145500     END-IF
+145600     END-IF. 
+145700  
+145800     MOVE EFD-FLEX-PLAN                TO DB-FLEX-PLAN.
+145900     MOVE EFD-FLD-START-DATE           TO DB-START-DATE.
+146000     MOVE EFD-FLD-GROUP-NAME           TO DB-GROUP-NAME.
+146100     PERFORM 840-FIND-FLDSET1.
+146200     IF (FLEXDOLLAR-FOUND)
+146300        MOVE FLD-ADD-TO-GRS-PCT        TO G21-FLD-ADD-TO-GRS-PCT
+146400        MOVE FLD-ADD-TO-GRS-PCT        TO EMX-FLD-ADD-TO-GRS-PCT
+146500     ELSE
+146600        MOVE ZEROES                    TO G21-FLD-ADD-TO-GRS-PCT
+146700        MOVE ZEROES                    TO EMX-FLD-ADD-TO-GRS-PCT
+146800     END-IF.
+146900
+147000     IF (PRM-REPORT-OPT          NOT = "R")
+147100         PERFORM 800-WRITECSV-EMPLOYEEX
+147200     END-IF.
+147300
+147400     IF (PRM-REPORT-OPT          NOT = "C")
+147500         MOVE GN21-EFD-EMPLOYEE       TO RPT-GROUP-REQUEST 
+147600         PERFORM 700-PRINT-RPT-GRP 
+147700     END-IF.
+147800
+147900 1048-NEXT-EMPFLEXDOL.
+148000     PERFORM 860-FIND-NEXT-EFDSET2.
+148100   
+148200 1048-END.
+148300  
+148400******************************************************************
+148500 1050-DO-FLEX-DLR.
+148600******************************************************************
+148700
+148800     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+148900     MOVE PRM-ELEC-DATE          TO DB-START-DATE.
+149000     PERFORM 850-FIND-NLT-EFDSET2.
+149100 
+149200     IF  (EMPFLEXDOL-FOUND)
+149300     AND (EFD-COMPANY            = EMP-COMPANY)
+149400     AND (EFD-EMPLOYEE           = EMP-EMPLOYEE)
+149500         PERFORM 1055-DO-EFD-EMPLOYEE
+149600         THRU    1055-END
+149700             UNTIL (EMPFLEXDOL-NOTFOUND)
+149800             OR    (EFD-COMPANY  NOT = EMP-COMPANY)
+149900             OR    (EFD-EMPLOYEE NOT = EMP-EMPLOYEE).
+150000
+150100 1050-END.
+150200   
+150300******************************************************************
+150400 1055-DO-EFD-EMPLOYEE.
+150500******************************************************************
+150600
+150700     INITIALIZE                        G3-EFD-SALARY
+150800                                       G3-EFD-COMP-FLX-AMT
+150900                                       G3-EFD-TOT-COMP-AMT
+151000                                       G3-EFD-AGE-CREDIT
+151100                                       G3-EFD-SERV-CREDIT
+151200                                       G3-EFD-DEP-CREDIT
+151300                                       G3-EFD-LIFE-CREDIT
+151400                                       G3-EFD-CAL
+151500                                       G3-EFD-EMP-FLEX-AMT
+151600                                       EMF-EMP-COMPANY
+151700                                       EMF-EMP-EMPLOYEE
+151800                                       EMF-EFD-SALARY
+151900                                       EMF-EFD-COMP-FLX-AMT
+152000                                       EMF-EFD-AGE-CREDIT
+152100                                       EMF-EFD-SERV-CREDIT
+152200                                       EMF-EFD-DEP-CREDIT
+152300                                       EMF-EFD-LIFE-CREDIT
+152400                                       WS-CAL
+152500                                       EMF-EFD-CAL
+152600                                       EMF-EFD-TOT-COMP-AMT
+152700                                       EMF-EFD-EMP-FLEX-AMT
+152800                                       G3-FLD-ADD-TO-GRS-PCT
+152900                                       EMF-FLD-ADD-TO-GRS-PCT.
+153000
+153100     IF  (PRM-ELEC-DATE < EFD-START-DATE)
+153200         GO TO 1055-NEXT-EMPFLEXDOL 
+153300     END-IF.
+153400
+153500     IF  (PRM-ELEC-DATE > EFD-STOP-DATE)
+153600         GO TO 1055-NEXT-EMPFLEXDOL
+153700     END-IF.
+153800
+153900     MOVE EMP-COMPANY                  TO EMF-EMP-COMPANY.
+154000     MOVE EMP-EMPLOYEE                 TO EMF-EMP-EMPLOYEE.
+154100
+154200     COMPUTE WS-CAL ROUNDED    = (EFD-COMP-FLX-AMT
+154300                               + EFD-AGE-CREDIT
+154400                               + EFD-SERV-CREDIT
+154500                               + EFD-DEP-CREDIT
+154600                               + EFD-LIFE-CREDIT)
+154700                               - EFD-TOT-COMP-AMT.
+154800
+154900     IF  (PRM-CONTRIB    = "A")
+155000         MOVE EFD-SALARY             TO G3-EFD-SALARY
+155100         MOVE EFD-COMP-FLX-AMT       TO G3-EFD-COMP-FLX-AMT
+155200         MOVE EFD-TOT-COMP-AMT       TO G3-EFD-TOT-COMP-AMT
+155300         MOVE EFD-AGE-CREDIT         TO G3-EFD-AGE-CREDIT
+155400         MOVE EFD-SERV-CREDIT        TO G3-EFD-SERV-CREDIT
+155500         MOVE EFD-DEP-CREDIT         TO G3-EFD-DEP-CREDIT
+155600         MOVE EFD-LIFE-CREDIT        TO G3-EFD-LIFE-CREDIT
+155700         MOVE WS-CAL                 TO G3-EFD-CAL
+155800         MOVE EFD-EMP-FLEX-AMT       TO G3-EFD-EMP-FLEX-AMT
+155900   
+156000         MOVE EFD-SALARY             TO EMF-EFD-SALARY
+156100         MOVE EFD-COMP-FLX-AMT       TO EMF-EFD-COMP-FLX-AMT
+156200         MOVE EFD-TOT-COMP-AMT       TO EMF-EFD-TOT-COMP-AMT
+156300         MOVE EFD-AGE-CREDIT         TO EMF-EFD-AGE-CREDIT
+156400         MOVE EFD-SERV-CREDIT        TO EMF-EFD-SERV-CREDIT
+156500         MOVE EFD-DEP-CREDIT         TO EMF-EFD-DEP-CREDIT
+156600         MOVE EFD-LIFE-CREDIT        TO EMF-EFD-LIFE-CREDIT
+156700         MOVE WS-CAL                 TO EMF-EFD-CAL
+156800         MOVE EFD-EMP-FLEX-AMT       TO EMF-EFD-EMP-FLEX-AMT
+156900
+157000     ELSE
+157100     IF  (PRM-CONTRIB    = "M")
+157200         COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+157300                                     /  12
+157400         MOVE WS-COST-1              TO G3-EFD-SALARY
+157500         MOVE WS-COST-1              TO EMF-EFD-SALARY
+157600         COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+157700                                     /  12
+157800         MOVE WS-COST-2              TO G3-EFD-COMP-FLX-AMT 
+157900         MOVE WS-COST-2              TO EMF-EFD-COMP-FLX-AMT
+158000         COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+158100                                     /  12
+158200         MOVE WS-COST-3              TO G3-EFD-TOT-COMP-AMT
+158300         MOVE WS-COST-3              TO EMF-EFD-TOT-COMP-AMT
+158400         COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+158500                                     /  12
+158600         MOVE WS-COST-4              TO G3-EFD-AGE-CREDIT
+158700         MOVE WS-COST-4              TO EMF-EFD-AGE-CREDIT
+158800         COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+158900                                     /  12
+159000         MOVE WS-COST-5              TO G3-EFD-SERV-CREDIT
+159100         MOVE WS-COST-5              TO EMF-EFD-SERV-CREDIT
+159200         COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+159300                                     /  12
+159400         MOVE WS-COST-6              TO G3-EFD-DEP-CREDIT
+159500         MOVE WS-COST-6              TO EMF-EFD-DEP-CREDIT
+159600         COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+159700                                     /  12
+159800         MOVE WS-COST-7              TO G3-EFD-LIFE-CREDIT
+159900         MOVE WS-COST-7              TO EMF-EFD-LIFE-CREDIT
+160000         COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+160100                                     /  12
+160200         MOVE WS-COST-8              TO G3-EFD-CAL
+160300         MOVE WS-COST-8              TO EMF-EFD-CAL
+160400         COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+160500                                     /  12
+160600         MOVE WS-COST-9              TO G3-EFD-EMP-FLEX-AMT
+160700         MOVE WS-COST-9              TO EMF-EFD-EMP-FLEX-AMT
+160800     ELSE
+160900     IF  (PRM-CONTRIB    = "P")
+161000         IF  (EMP-PAY-FREQUENCY      = 1)
+161100             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+161200                                         /  52
+161300             MOVE WS-COST-1              TO G3-EFD-SALARY
+161400             MOVE WS-COST-1              TO EMF-EFD-SALARY
+161500             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+161600                                         /  52
+161700             MOVE WS-COST-2              TO G3-EFD-COMP-FLX-AMT 
+161800             MOVE WS-COST-2              TO EMF-EFD-COMP-FLX-AMT
+161900             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+162000                                         /  52
+162100             MOVE WS-COST-3              TO G3-EFD-TOT-COMP-AMT
+162200             MOVE WS-COST-3              TO EMF-EFD-TOT-COMP-AMT
+162300             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+162400                                         /  52
+162500             MOVE WS-COST-4              TO G3-EFD-AGE-CREDIT
+162600             MOVE WS-COST-4              TO EMF-EFD-AGE-CREDIT
+162700             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+162800                                         /  52
+162900             MOVE WS-COST-5              TO G3-EFD-SERV-CREDIT
+163000             MOVE WS-COST-5              TO EMF-EFD-SERV-CREDIT
+163100             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+163200                                         /  52
+163300             MOVE WS-COST-6              TO G3-EFD-DEP-CREDIT
+163400             MOVE WS-COST-6              TO EMF-EFD-DEP-CREDIT
+163500             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+163600                                         /  52
+163700             MOVE WS-COST-7              TO G3-EFD-LIFE-CREDIT
+163800             MOVE WS-COST-7              TO EMF-EFD-LIFE-CREDIT
+163900             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+164000                                         /  52
+164100             MOVE WS-COST-8              TO G3-EFD-CAL
+164200             MOVE WS-COST-8              TO EMF-EFD-CAL
+164300             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+164400                                         /  52
+164500             MOVE WS-COST-9              TO G3-EFD-EMP-FLEX-AMT
+164600             MOVE WS-COST-9              TO EMF-EFD-EMP-FLEX-AMT
+164700         ELSE
+164800         IF  (EMP-PAY-FREQUENCY      = 2)
+164900             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+165000                                         /  26
+165100             MOVE WS-COST-1              TO G3-EFD-SALARY
+165200             MOVE WS-COST-1              TO EMF-EFD-SALARY
+165300             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+165400                                         /  26
+165500             MOVE WS-COST-2              TO G3-EFD-COMP-FLX-AMT 
+165600             MOVE WS-COST-2              TO EMF-EFD-COMP-FLX-AMT
+165700             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+165800                                         /  26
+165900             MOVE WS-COST-3              TO G3-EFD-TOT-COMP-AMT
+166000             MOVE WS-COST-3              TO EMF-EFD-TOT-COMP-AMT
+166100             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+166200                                         /  26
+166300             MOVE WS-COST-4              TO G3-EFD-AGE-CREDIT
+166400             MOVE WS-COST-4              TO EMF-EFD-AGE-CREDIT
+166500             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+166600                                         /  26
+166700             MOVE WS-COST-5              TO G3-EFD-SERV-CREDIT
+166800             MOVE WS-COST-5              TO EMF-EFD-SERV-CREDIT
+166900             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+167000                                         /  26
+167100             MOVE WS-COST-6              TO G3-EFD-DEP-CREDIT
+167200             MOVE WS-COST-6              TO EMF-EFD-DEP-CREDIT
+167300             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+167400                                         /  26
+167500             MOVE WS-COST-7              TO G3-EFD-LIFE-CREDIT
+167600             MOVE WS-COST-7              TO EMF-EFD-LIFE-CREDIT
+167700             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+167800                                         /  26
+167900             MOVE WS-COST-8              TO G3-EFD-CAL
+168000             MOVE WS-COST-8              TO EMF-EFD-CAL
+168100             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+168200                                         /  26
+168300             MOVE WS-COST-9              TO G3-EFD-EMP-FLEX-AMT
+168400             MOVE WS-COST-9              TO EMF-EFD-EMP-FLEX-AMT
+168500         ELSE
+168600         IF  (EMP-PAY-FREQUENCY      = 3)
+168700             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+168800                                         /  24
+168900             MOVE WS-COST-1              TO G3-EFD-SALARY
+169000             MOVE WS-COST-1              TO EMF-EFD-SALARY
+169100             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT       
+169200                                         /  24
+169300             MOVE WS-COST-2              TO G3-EFD-COMP-FLX-AMT 
+169400             MOVE WS-COST-2              TO EMF-EFD-COMP-FLX-AMT
+169500             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT       
+169600                                         /  24
+169700             MOVE WS-COST-3              TO G3-EFD-TOT-COMP-AMT
+169800             MOVE WS-COST-3              TO EMF-EFD-TOT-COMP-AMT
+169900             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+170000                                         /  24
+170100             MOVE WS-COST-4              TO G3-EFD-AGE-CREDIT
+170200             MOVE WS-COST-4              TO EMF-EFD-AGE-CREDIT
+170300             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+170400                                         /  24
+170500             MOVE WS-COST-5              TO G3-EFD-SERV-CREDIT
+170600             MOVE WS-COST-5              TO EMF-EFD-SERV-CREDIT
+170700             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+170800                                         /  24
+170900             MOVE WS-COST-6              TO G3-EFD-DEP-CREDIT
+171000             MOVE WS-COST-6              TO EMF-EFD-DEP-CREDIT
+171100             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+171200                                         /  24
+171300             MOVE WS-COST-7              TO G3-EFD-LIFE-CREDIT
+171400             MOVE WS-COST-7              TO EMF-EFD-LIFE-CREDIT
+171500             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+171600                                         /  24
+171700             MOVE WS-COST-8              TO G3-EFD-CAL
+171800             MOVE WS-COST-8              TO EMF-EFD-CAL
+171900             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+172000                                         /  24
+172100             MOVE WS-COST-9              TO G3-EFD-EMP-FLEX-AMT
+172200             MOVE WS-COST-9              TO EMF-EFD-EMP-FLEX-AMT
+172300         ELSE
+172400         IF  (EMP-PAY-FREQUENCY      = 4)
+172500             COMPUTE WS-COST-1 ROUNDED   =  EFD-SALARY
+172600                                         /  12
+172700             MOVE WS-COST-1              TO G3-EFD-SALARY
+172800             MOVE WS-COST-1              TO EMF-EFD-SALARY
+172900             COMPUTE WS-COST-2 ROUNDED   =  EFD-COMP-FLX-AMT
+173000                                         /  12
+173100             MOVE WS-COST-2              TO G3-EFD-COMP-FLX-AMT 
+173200             MOVE WS-COST-2              TO EMF-EFD-COMP-FLX-AMT
+173300             COMPUTE WS-COST-3 ROUNDED   =  EFD-TOT-COMP-AMT
+173400                                         /  12
+173500             MOVE WS-COST-3              TO G3-EFD-TOT-COMP-AMT
+173600             MOVE WS-COST-3              TO EMF-EFD-TOT-COMP-AMT
+173700             COMPUTE WS-COST-4 ROUNDED   =  EFD-AGE-CREDIT
+173800                                         /  12
+173900             MOVE WS-COST-4              TO G3-EFD-AGE-CREDIT
+174000             MOVE WS-COST-4              TO EMF-EFD-AGE-CREDIT
+174100             COMPUTE WS-COST-5 ROUNDED   =  EFD-SERV-CREDIT
+174200                                         /  12
+174300             MOVE WS-COST-5              TO G3-EFD-SERV-CREDIT
+174400             MOVE WS-COST-5              TO EMF-EFD-SERV-CREDIT
+174500             COMPUTE WS-COST-6 ROUNDED   =  EFD-DEP-CREDIT
+174600                                         /  12
+174700             MOVE WS-COST-6              TO G3-EFD-DEP-CREDIT
+174800             MOVE WS-COST-6              TO EMF-EFD-DEP-CREDIT
+174900             COMPUTE WS-COST-7 ROUNDED   =  EFD-LIFE-CREDIT
+175000                                         /  12
+175100             MOVE WS-COST-7              TO G3-EFD-LIFE-CREDIT
+175200             MOVE WS-COST-7              TO EMF-EFD-LIFE-CREDIT
+175300             COMPUTE WS-COST-8 ROUNDED   =  WS-CAL
+175400                                         /  12
+175500             MOVE WS-COST-8              TO G3-EFD-CAL
+175600             MOVE WS-COST-8              TO EMF-EFD-CAL
+175700             COMPUTE WS-COST-9 ROUNDED   =  EFD-EMP-FLEX-AMT
+175800                                         /  12
+175900             MOVE WS-COST-9              TO G3-EFD-EMP-FLEX-AMT
+176000             MOVE WS-COST-9              TO EMF-EFD-EMP-FLEX-AMT
+176100         END-IF 
+176200         END-IF 
+176300         END-IF 
+176400         END-IF 
+176500     END-IF
+176600     END-IF
+176700     END-IF. 
+176800  
+176900     MOVE EFD-FLEX-PLAN                TO DB-FLEX-PLAN.
+177000     MOVE EFD-FLD-START-DATE           TO DB-START-DATE.
+177100     MOVE EFD-FLD-GROUP-NAME           TO DB-GROUP-NAME.
+177200     PERFORM 840-FIND-FLDSET1.
+177300     IF (FLEXDOLLAR-FOUND)
+177400        MOVE FLD-ADD-TO-GRS-PCT        TO G3-FLD-ADD-TO-GRS-PCT
+177500        MOVE FLD-ADD-TO-GRS-PCT        TO EMF-FLD-ADD-TO-GRS-PCT
+177600     ELSE
+177700        MOVE ZEROES                    TO G3-FLD-ADD-TO-GRS-PCT
+177800        MOVE ZEROES                    TO EMF-FLD-ADD-TO-GRS-PCT
+177900     END-IF.
+178000
+178100     IF (PRM-REPORT-OPT          NOT = "R")
+178200         PERFORM 800-WRITECSV-EMPLOYEEF
+178300     END-IF.
+178400
+178500     IF (PRM-REPORT-OPT          NOT = "C")
+178600         MOVE GN3-EFD-EMPLOYEE       TO RPT-GROUP-REQUEST 
+178700         PERFORM 700-PRINT-RPT-GRP 
+178800     END-IF.
+178900
+179000 1055-NEXT-EMPFLEXDOL.
+179100     PERFORM 860-FIND-NEXT-EFDSET2.
+179200   
+179300 1055-END.
+179400  
+179500******************************************************************
+179600 1060-DO-EMP-BEN.
+179700******************************************************************
+179800
+179900     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+180000
+180100     IF  (PRM-REPORT-OPT          NOT = "C")
+180200     AND (WS-CUR-HED                  = "Y")
+180300         MOVE PRM-BEN-DATE            TO G4-PRM-BEN-DATE
+180400         MOVE GN4H-CURRENT-BENEFIT    TO RPT-GROUP-REQUEST 
+180500         PERFORM 700-PRINT-RPT-GRP 
+180600         MOVE "N"                    TO WS-CUR-HED 
+180700     END-IF.
+180800
+180900     PERFORM 
+181000         VARYING I9              FROM 1 BY 1
+181100         UNTIL  (I9              > 11)
+181200         OR     (PRM-PLAN-TYPE    (I9) = SPACES)
+181300
+181400         MOVE PRM-PLAN-TYPE    (I9)  TO DB-PLAN-TYPE
+181500         MOVE SPACES                 TO DB-PLAN-CODE
+181600         MOVE ZEROES                 TO DB-START-DATE
+181700         PERFORM 850-FIND-NLT-BENSET3
+181800  
+181900         PERFORM 1062-DO-BEN-COMPANY
+182000         THRU    1062-END
+182100            UNTIL (BENEFIT-NOTFOUND)
+182200            OR    (BEN-COMPANY       NOT = EMP-COMPANY)
+182300            OR    (BEN-EMPLOYEE      NOT = EMP-EMPLOYEE) 
+182400            OR    (BEN-PLAN-TYPE     NOT = PRM-PLAN-TYPE    (I9))
+182500     END-PERFORM.
+182600 
+182700 1060-END.
+182800
+182900******************************************************************
+183000 1062-DO-BEN-COMPANY.
+183100******************************************************************
+183200
+183300     MOVE BEN-PLAN-CODE          TO WS-BEN-PLAN-CODE.
+183400
+183500     PERFORM 1064-DO-BEN-START-DATE
+183600     THRU    1064-END
+183700         UNTIL (BENEFIT-NOTFOUND)
+183800         OR    (BEN-COMPANY    NOT = EMP-COMPANY)
+183900         OR    (BEN-EMPLOYEE   NOT = EMP-EMPLOYEE)
+184000         OR    (BEN-PLAN-TYPE  NOT = PRM-PLAN-TYPE   (I9))
+184100         OR    (BEN-PLAN-CODE  NOT = WS-BEN-PLAN-CODE).
+184200
+184300 1062-END.
+184400
+184500******************************************************************
+184600 1064-DO-BEN-START-DATE.
+184700******************************************************************
+184800
+184900     INITIALIZE                  G4-BEN-PLAN-TYPE
+185000                                 G4-BEN-PLAN-CODE
+185100                                 G4-BEN-START-DATE
+185200                                 G4-BEN-STOP-DATE
+185300                                 G4-BEN-CREATION-DATE
+185400                                 G4-BEN-UPD-DATE
+185500                                 G4-BEN-COV-OPTION
+185600                                 G4-BEN-COVER-AMT
+185700                                 G4-BEN-DEP-COVER-AMT
+185800                                 G4-BEN-MULTIPLE
+185900                                 G4-BEN-SMOKER
+186000                                 G4-BEN-NBR-HOURS
+186100                                 G4-BEN-BOND-DED-AMT
+186200                                 G4-BEN-ANNUAL-AMT
+186300                                 G4-BEN-PCT-AMT-FLAG
+186400                                 G4-BEN-PRE-AFT-FLAG
+186500                                 EMC-EMP-COMPANY
+186600                                 EMC-EMP-EMPLOYEE
+186700                                 EMC-BEN-PLAN-TYPE
+186800                                 EMC-BEN-PLAN-CODE
+186900                                 EMC-BEN-START-DATE
+187000                                 EMC-BEN-STOP-DATE
+187100                                 EMC-BEN-CREATION-DATE
+187200                                 EMC-BEN-UPD-DATE
+187300                                 EMC-BEN-COV-OPTION
+187400                                 EMC-BEN-COVER-AMT
+187500                                 EMC-BEN-DEP-COVER-AMT
+187600                                 EMC-BEN-MULTIPLE
+187700                                 EMC-BEN-SMOKER
+187800                                 EMC-BEN-NBR-HOURS
+187900                                 EMC-BEN-BOND-DED-AMT
+188000                                 EMC-BEN-ANNUAL-AMT
+188100                                 EMC-BEN-PCT-AMT-FLAG
+188200                                 EMC-BEN-PRE-AFT-FLAG
+188300                                 G4-BEN-CMP-FLX-CONT
+188400                                 EMC-BEN-CMP-FLX-CONT
+188500                                 G4-BEN-EMP-PRE-CONT
+188600                                 EMC-BEN-EMP-PRE-CONT
+188700                                 G4-BEN-EMP-AFT-CONT
+188800                                 EMC-BEN-EMP-AFT-CONT
+188900                                 G4-BEN-COMP-CONT
+189000                                 EMC-BEN-COMP-CONT
+189100                                 G4-COP-COV-DESC
+189200                                 EMC-COV-DESC                     
+189300                                 G4-PLN-DISPLAY-DESC
+189400                                 G4-PLN-DESC
+189500                                 EMC-PLN-DISPLAY-DESC
+189600                                 EMC-PLN-DESC
+189700                                 WS-PLN-PLAN-TYPE-DESC
+189800                                 G4-BEN-PLN-TYPE-DESC
+189900                                 EMC-BEN-PLN-TYPE-DESC.
+190000 
+190100     IF  (PRM-BEN-DATE   < BEN-START-DATE)
+190200     OR  ((PRM-BEN-DATE  > BEN-STOP-DATE)
+190300     AND (BEN-STOP-DATE  NOT = ZEROES))
+190400         GO TO 1064-NEXT-BENEFIT
+190500     END-IF.
+190600
+190700     MOVE BEN-PLAN-TYPE          TO DB-PLAN-TYPE.
+190800     MOVE BEN-PLAN-CODE          TO DB-PLAN-CODE.
+190900     PERFORM 840-FIND-PLNSET1.
+191000
+191100     MOVE BEN-PLAN-TYPE          TO G4-BEN-PLAN-TYPE.
+191200     MOVE BEN-PLAN-CODE          TO G4-BEN-PLAN-CODE.
+191300     MOVE BEN-START-DATE         TO G4-BEN-START-DATE.
+191400     MOVE BEN-STOP-DATE          TO G4-BEN-STOP-DATE.
+191500     MOVE BEN-CREATION-DATE      TO G4-BEN-CREATION-DATE.
+191600     MOVE BEN-UPD-DATE           TO G4-BEN-UPD-DATE.
+191700     MOVE BEN-COV-OPTION         TO G4-BEN-COV-OPTION.
+191800     MOVE BEN-COVER-AMT          TO G4-BEN-COVER-AMT.
+191900     MOVE BEN-DEP-COVER-AMT      TO G4-BEN-DEP-COVER-AMT.
+192000     MOVE BEN-MULTIPLE           TO G4-BEN-MULTIPLE.
+192100     MOVE BEN-SMOKER             TO G4-BEN-SMOKER.
+192200     MOVE BEN-NBR-HOURS          TO G4-BEN-NBR-HOURS.
+192300     MOVE BEN-BOND-DED-AMT       TO G4-BEN-BOND-DED-AMT.
+J67795*    MOVE BEN-ANNUAL-AMT         TO G4-BEN-ANNUAL-AMT.
+J67795     COMPUTE G4-BEN-ANNUAL-AMT ROUNDED =
+J67795          BEN-ANNUAL-AMT * 1.
+192500     MOVE BEN-PCT-AMT-FLAG       TO G4-BEN-PCT-AMT-FLAG.
+192600     MOVE BEN-PRE-AFT-FLAG       TO G4-BEN-PRE-AFT-FLAG.
+P83208     MOVE BEN-PEND-EVIDENCE      TO G4-BEN-PEND-EVIDENCE.
+192700 
+192800     MOVE EMP-COMPANY            TO EMC-EMP-COMPANY.
+192900     MOVE EMP-EMPLOYEE           TO EMC-EMP-EMPLOYEE.
+193000     MOVE BEN-PLAN-TYPE          TO EMC-BEN-PLAN-TYPE.
+193100     MOVE BEN-PLAN-CODE          TO EMC-BEN-PLAN-CODE.
+193200     MOVE BEN-START-DATE         TO EMC-BEN-START-DATE.
+193700     MOVE BEN-STOP-DATE          TO EMC-BEN-STOP-DATE.
+194200     MOVE BEN-CREATION-DATE      TO EMC-BEN-CREATION-DATE.
+194700     MOVE BEN-UPD-DATE           TO EMC-BEN-UPD-DATE.
+195200     MOVE BEN-COV-OPTION         TO EMC-BEN-COV-OPTION.
+195300     MOVE BEN-COVER-AMT          TO EMC-BEN-COVER-AMT.
+195400     MOVE BEN-DEP-COVER-AMT      TO EMC-BEN-DEP-COVER-AMT.
+195500     MOVE BEN-MULTIPLE           TO EMC-BEN-MULTIPLE.
+195600     MOVE BEN-SMOKER             TO EMC-BEN-SMOKER.
+195700     MOVE BEN-NBR-HOURS          TO EMC-BEN-NBR-HOURS.
+195800     MOVE BEN-BOND-DED-AMT       TO EMC-BEN-BOND-DED-AMT.
+J67795*    MOVE BEN-ANNUAL-AMT         TO EMC-BEN-ANNUAL-AMT.
+J67795     COMPUTE EMC-BEN-ANNUAL-AMT ROUNDED =
+J67795          BEN-ANNUAL-AMT * 1.
+196000     MOVE BEN-PCT-AMT-FLAG       TO EMC-BEN-PCT-AMT-FLAG.
+196100     MOVE BEN-PRE-AFT-FLAG       TO EMC-BEN-PRE-AFT-FLAG.
+P83208     MOVE BEN-PEND-EVIDENCE      TO EMC-BEN-PEND-EVIDENCE.
+196200
+196300     IF  (PRM-CONTRIB      = "A")        
+P82869     OR  (BEN-PCT-AMT-FLAG = "P")
+J67795*        MOVE BEN-CMP-FLX-CONT   TO G4-BEN-CMP-FLX-CONT
+J67795         COMPUTE G4-BEN-CMP-FLX-CONT ROUNDED =
+J67795              BEN-CMP-FLX-CONT * 1
+J67795*        MOVE BEN-CMP-FLX-CONT   TO EMC-BEN-CMP-FLX-CONT
+J67795         COMPUTE EMC-BEN-CMP-FLX-CONT ROUNDED =
+J67795              BEN-CMP-FLX-CONT * 1
+J67795*        MOVE BEN-EMP-PRE-CONT   TO G4-BEN-EMP-PRE-CONT
+J67795         COMPUTE G4-BEN-EMP-PRE-CONT ROUNDED =
+J67795              BEN-EMP-PRE-CONT * 1
+J67795*        MOVE BEN-EMP-PRE-CONT   TO EMC-BEN-EMP-PRE-CONT
+J67795         COMPUTE EMC-BEN-EMP-PRE-CONT ROUNDED =
+J67795              BEN-EMP-PRE-CONT * 1
+J67795*        MOVE BEN-EMP-AFT-CONT   TO G4-BEN-EMP-AFT-CONT
+J67795         COMPUTE G4-BEN-EMP-AFT-CONT ROUNDED =
+J67795              BEN-EMP-AFT-CONT * 1
+J67795*        MOVE BEN-EMP-AFT-CONT   TO EMC-BEN-EMP-AFT-CONT
+J67795         COMPUTE EMC-BEN-EMP-AFT-CONT ROUNDED =
+J67795              BEN-EMP-AFT-CONT * 1
+J67795*        MOVE BEN-COMP-CONT      TO G4-BEN-COMP-CONT
+J67795         COMPUTE G4-BEN-COMP-CONT ROUNDED =
+J67795              BEN-COMP-CONT * 1
+J67795*        MOVE BEN-COMP-CONT      TO EMC-BEN-COMP-CONT
+J67795         COMPUTE EMC-BEN-COMP-CONT ROUNDED =
+J67795              BEN-COMP-CONT * 1
+197200     ELSE
+197300     IF  (PRM-CONTRIB    = "M")
+197400         COMPUTE WS-COST-P ROUNDED   =  BEN-EMP-PRE-CONT
+197500                                     /  12
+197600         MOVE WS-COST-P              TO G4-BEN-EMP-PRE-CONT
+197700         MOVE WS-COST-P              TO EMC-BEN-EMP-PRE-CONT
+197800         COMPUTE WS-COST-F ROUNDED   =  BEN-CMP-FLX-CONT
+197900                                     /  12
+198000         MOVE WS-COST-F              TO G4-BEN-CMP-FLX-CONT
+198100         MOVE WS-COST-F              TO EMC-BEN-CMP-FLX-CONT
+198200         COMPUTE WS-COST-A ROUNDED   =  BEN-EMP-AFT-CONT
+198300                                     /  12
+198400         MOVE WS-COST-A              TO G4-BEN-EMP-AFT-CONT
+198500         MOVE WS-COST-A              TO EMC-BEN-EMP-AFT-CONT
+198600         COMPUTE WS-COST-C ROUNDED   =  BEN-COMP-CONT
+198700                                     /  12
+198800         MOVE WS-COST-C              TO G4-BEN-COMP-CONT
+198900         MOVE WS-COST-C              TO EMC-BEN-COMP-CONT
+199000     ELSE
+P74282     IF (PRM-CONTRIB    = "P")
+199200         IF  (EMP-PAY-FREQUENCY      = 1)
+199300             COMPUTE WS-COST-P ROUNDED   =  BEN-EMP-PRE-CONT
+199400                                         /  52
+199500             MOVE WS-COST-P              TO G4-BEN-EMP-PRE-CONT
+199600             MOVE WS-COST-P              TO EMC-BEN-EMP-PRE-CONT
+199700             COMPUTE WS-COST-F ROUNDED   =  BEN-CMP-FLX-CONT
+199800                                         /  52
+199900             MOVE WS-COST-F              TO G4-BEN-CMP-FLX-CONT
+200000             MOVE WS-COST-F              TO EMC-BEN-CMP-FLX-CONT
+200100             COMPUTE WS-COST-A ROUNDED   =  BEN-EMP-AFT-CONT
+200200                                         /  52
+200300             MOVE WS-COST-A              TO G4-BEN-EMP-AFT-CONT
+200400             MOVE WS-COST-A              TO EMC-BEN-EMP-AFT-CONT
+200500             COMPUTE WS-COST-C ROUNDED   =  BEN-COMP-CONT
+200600                                         /  52
+200700             MOVE WS-COST-C              TO G4-BEN-COMP-CONT
+200800             MOVE WS-COST-C              TO EMC-BEN-COMP-CONT
+200900         ELSE
+201000         IF  (EMP-PAY-FREQUENCY      = 2)
+201100             COMPUTE WS-COST-P ROUNDED   =  BEN-EMP-PRE-CONT
+201200                                         /  26
+201300             MOVE WS-COST-P              TO G4-BEN-EMP-PRE-CONT
+201400             MOVE WS-COST-P              TO EMC-BEN-EMP-PRE-CONT
+201500             COMPUTE WS-COST-F ROUNDED   =  BEN-CMP-FLX-CONT
+201600                                         /  26
+201700             MOVE WS-COST-F              TO G4-BEN-CMP-FLX-CONT
+201800             MOVE WS-COST-F              TO EMC-BEN-CMP-FLX-CONT
+201900             COMPUTE WS-COST-A ROUNDED   =  BEN-EMP-AFT-CONT
+202000                                         /  26
+202100             MOVE WS-COST-A              TO G4-BEN-EMP-AFT-CONT
+202200             MOVE WS-COST-A              TO EMC-BEN-EMP-AFT-CONT
+202300             COMPUTE WS-COST-C ROUNDED   =  BEN-COMP-CONT
+202400                                         /  26
+202500             MOVE WS-COST-C              TO G4-BEN-COMP-CONT
+202600             MOVE WS-COST-C              TO EMC-BEN-COMP-CONT
+202700         ELSE
+202800         IF  (EMP-PAY-FREQUENCY      = 3)
+202900             COMPUTE WS-COST-P ROUNDED   =  BEN-EMP-PRE-CONT
+203000                                         /  24
+203100             MOVE WS-COST-P              TO G4-BEN-EMP-PRE-CONT
+203200             MOVE WS-COST-P              TO EMC-BEN-EMP-PRE-CONT
+203300             COMPUTE WS-COST-F ROUNDED   =  BEN-CMP-FLX-CONT
+203400                                         /  24
+203500             MOVE WS-COST-F              TO G4-BEN-CMP-FLX-CONT
+203600             MOVE WS-COST-F              TO EMC-BEN-CMP-FLX-CONT
+203700             COMPUTE WS-COST-A ROUNDED   =  BEN-EMP-AFT-CONT
+203800                                         /  24
+203900             MOVE WS-COST-A              TO G4-BEN-EMP-AFT-CONT
+204000             MOVE WS-COST-A              TO EMC-BEN-EMP-AFT-CONT
+204100             COMPUTE WS-COST-C ROUNDED   =  BEN-COMP-CONT
+204200                                         /  24
+204300             MOVE WS-COST-C              TO G4-BEN-COMP-CONT
+204400             MOVE WS-COST-C              TO EMC-BEN-COMP-CONT
+204500         ELSE
+204600         IF  (EMP-PAY-FREQUENCY      = 4)
+204700             COMPUTE WS-COST-P ROUNDED   =  BEN-EMP-PRE-CONT
+204800                                         /  12
+204900             MOVE WS-COST-P              TO G4-BEN-EMP-PRE-CONT
+205000             MOVE WS-COST-P              TO EMC-BEN-EMP-PRE-CONT
+205100             COMPUTE WS-COST-F ROUNDED   =  BEN-CMP-FLX-CONT
+205200                                         /  12
+205300             MOVE WS-COST-F              TO G4-BEN-CMP-FLX-CONT
+205400             MOVE WS-COST-F              TO EMC-BEN-CMP-FLX-CONT
+205500             COMPUTE WS-COST-A ROUNDED   =  BEN-EMP-AFT-CONT
+205600                                         /  12
+205700             MOVE WS-COST-A              TO G4-BEN-EMP-AFT-CONT
+205800             MOVE WS-COST-A              TO EMC-BEN-EMP-AFT-CONT
+205900             COMPUTE WS-COST-C ROUNDED   =  BEN-COMP-CONT
+206000                                         /  12
+206100             MOVE WS-COST-C              TO G4-BEN-COMP-CONT
+206200             MOVE WS-COST-C              TO EMC-BEN-COMP-CONT
+206300         END-IF 
+206400         END-IF 
+206500         END-IF 
+206600         END-IF 
+206700     END-IF
+206800     END-IF
+206900     END-IF. 
+207000 
+207100     IF  (PLN-COVERAGE-TYPE      = "1")
+207200         MOVE BEN-COV-OPTION         TO DB-COVERAGE-OPT
+207300         PERFORM 840-FIND-COPSET1
+207400         MOVE COP-COV-DESC           TO G4-COP-COV-DESC
+207500         MOVE COP-COV-DESC           TO EMC-COV-DESC
+207600     ELSE
+207700         MOVE SPACES                 TO G4-COP-COV-DESC
+207800         MOVE SPACES                 TO EMC-COV-DESC
+207900     END-IF.
+208000
+208100     MOVE PLN-DISPLAY-DESC       TO G4-PLN-DISPLAY-DESC.
+208200     MOVE PLN-DESC               TO G4-PLN-DESC.
+208300     MOVE PLN-DISPLAY-DESC       TO EMC-PLN-DISPLAY-DESC.
+208400     MOVE PLN-DESC               TO EMC-PLN-DESC.
+208500
+           MOVE ZEROES                     TO CRT-MSG-NBR.
+           MOVE SPACES                     TO WS-PLN-PLAN-TYPE-DESC.
+208600     IF (PLN-PLAN-TYPE               = "DB")
+              MOVE 139                     TO CRT-MSG-NBR
+208800     ELSE
+208900     IF (PLN-PLAN-TYPE               = "DC")
+              MOVE 140                     TO CRT-MSG-NBR
+209100     ELSE
+209200     IF (PLN-PLAN-TYPE               = "DI")
+              MOVE 141                     TO CRT-MSG-NBR
+209400     ELSE
+209500     IF (PLN-PLAN-TYPE               = "DL")
+              MOVE 142                     TO CRT-MSG-NBR
+209700     ELSE
+209800     IF (PLN-PLAN-TYPE               = "DN")
+              MOVE 143                     TO CRT-MSG-NBR
+210000     ELSE
+210100     IF (PLN-PLAN-TYPE               = "EL")
+              MOVE 144                     TO CRT-MSG-NBR
+210300     ELSE
+210400     IF (PLN-PLAN-TYPE               = "HL")
+              MOVE 145                     TO CRT-MSG-NBR
+210600     ELSE
+210700     IF (PLN-PLAN-TYPE               = "RS")
+              MOVE 146                     TO CRT-MSG-NBR
+210900     ELSE
+211000     IF (PLN-PLAN-TYPE               = "SB")
+              MOVE 147                     TO CRT-MSG-NBR
+211200     ELSE
+211300     IF (PLN-PLAN-TYPE               = "SP")
+              MOVE 148                     TO CRT-MSG-NBR
+211500     ELSE
+211600     IF (PLN-PLAN-TYPE               = "VA")
+              MOVE 149                     TO CRT-MSG-NBR.
+
+           IF (CRT-MSG-NBR NOT = ZEROES)
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO WS-PLN-PLAN-TYPE-DESC
+           END-IF.
+211800
+211900     MOVE WS-PLN-PLAN-TYPE-DESC      TO G4-BEN-PLN-TYPE-DESC.
+212000     MOVE WS-PLN-PLAN-TYPE-DESC      TO EMC-BEN-PLN-TYPE-DESC.
+212100
+212200     IF (PRM-REPORT-OPT          NOT = "R")
+212300         PERFORM 800-WRITECSV-EMPLOYEEC
+212400     END-IF.
+212500
+212600     IF (PRM-REPORT-OPT          NOT = "C")
+212700         MOVE GN4D-BEN-PLAN-CODE      TO RPT-GROUP-REQUEST 
+212800         PERFORM 700-PRINT-RPT-GRP 
+212900     END-IF.
+213000
+213100 1064-NEXT-BENEFIT.
+213200     PERFORM 860-FIND-NEXT-BENSET3.
+213300                                          
+213400 1064-END.      
+213500
+213600******************************************************************
+213700 1070-DO-EMP-DEP-BEN.
+213800******************************************************************
+213900
+214000     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+214100
+214200     IF (PRM-REPORT-OPT          NOT = "C")
+214300         MOVE GN5H-DEP-BENEFIT        TO RPT-GROUP-REQUEST 
+214400         PERFORM 700-PRINT-RPT-GRP 
+214500     END-IF.
+214600
+214700     PERFORM 
+214800         VARYING I9              FROM 1 BY 1
+214900         UNTIL  (I9              > 11)
+215000         OR     (PRM-PLAN-TYPE    (I9) = SPACES)
+215100
+215200         MOVE PRM-PLAN-TYPE    (I9)  TO DB-PLAN-TYPE
+215300         MOVE SPACES                 TO DB-PLAN-CODE
+215400         MOVE ZEROES                 TO DB-EMP-START
+215500         MOVE ZEROES                 TO DB-DEPENDENT
+215600         MOVE ZEROES                 TO DB-START-DATE
+215700         PERFORM 850-FIND-NLT-HDBSET3
+215800  
+215900         PERFORM 1072-DO-HDB-PLAN-CODE
+216000         THRU    1072-END
+216100            UNTIL (HRDEPBEN-NOTFOUND)
+216200            OR    (HDB-COMPANY       NOT = EMP-COMPANY)
+216300            OR    (HDB-EMPLOYEE      NOT = EMP-EMPLOYEE) 
+216400            OR    (HDB-PLAN-TYPE     NOT = PRM-PLAN-TYPE    (I9))
+216500     END-PERFORM.
+216600 
+216700 1070-END.
+216800
+216900******************************************************************
+217000 1072-DO-HDB-PLAN-CODE.
+217100******************************************************************
+217200
+217300     MOVE HDB-PLAN-CODE          TO WS-HDB-PLAN-CODE.
+217400
+217500     PERFORM 1074-DO-HDB-START-DATE
+217600     THRU    1074-END
+217700         UNTIL (HRDEPBEN-NOTFOUND)
+217800         OR    (HDB-COMPANY    NOT = EMP-COMPANY)
+217900         OR    (HDB-EMPLOYEE   NOT = EMP-EMPLOYEE)
+218000         OR    (HDB-PLAN-TYPE  NOT = PRM-PLAN-TYPE    (I9))
+218100         OR    (HDB-PLAN-CODE  NOT = WS-HDB-PLAN-CODE).
+218200
+218300 1072-END.
+218400
+218500******************************************************************
+218600 1074-DO-HDB-START-DATE.
+218700******************************************************************
+218800
+218900     INITIALIZE                  G5-HDB-DEPENDENT
+219000                                 G5-HDB-PLAN-TYPE
+219100                                 G5-HDB-PLAN-CODE
+219200                                 G5-HDB-START-DATE
+219300                                 G5-HDB-STOP-DATE
+219400                                 EDB-EMP-COMPANY
+219500                                 EDB-EMP-EMPLOYEE
+219600                                 EDB-HDB-DEPENDENT
+219700                                 EDB-HDB-PLAN-TYPE
+219800                                 EDB-HDB-PLAN-CODE
+219900                                 EDB-HDB-START-DATE
+220000                                 EDB-HDB-STOP-DATE.
+220100
+220200     IF  (PRM-BEN-DATE   < HDB-START-DATE)
+220300     OR  ((PRM-BEN-DATE  > HDB-STOP-DATE)
+220400     AND (HDB-STOP-DATE  NOT = ZEROES))
+J10377     OR  (HDB-PARTICIPNT NOT = ZEROS)
+220500         GO TO 1074-NEXT-DEP-BENEFIT.
+220600                                                
+220700     MOVE HDB-DEPENDENT          TO G5-HDB-DEPENDENT.
+220800     MOVE HDB-PLAN-TYPE          TO G5-HDB-PLAN-TYPE.
+220900     MOVE HDB-PLAN-CODE          TO G5-HDB-PLAN-CODE.
+221000     MOVE HDB-START-DATE         TO G5-HDB-START-DATE.
+221100     MOVE HDB-STOP-DATE          TO G5-HDB-STOP-DATE.
+221200                                      
+221300     MOVE EMP-COMPANY            TO EDB-EMP-COMPANY.
+221400     MOVE EMP-EMPLOYEE           TO EDB-EMP-EMPLOYEE.
+221500     MOVE HDB-DEPENDENT          TO EDB-HDB-DEPENDENT.
+221600     MOVE HDB-PLAN-TYPE          TO EDB-HDB-PLAN-TYPE.
+221700     MOVE HDB-PLAN-CODE          TO EDB-HDB-PLAN-CODE.
+           MOVE HDB-START-DATE         TO EDB-HDB-START-DATE.
+           MOVE HDB-STOP-DATE          TO EDB-HDB-STOP-DATE.
+222800
+222900     IF (PRM-REPORT-OPT          NOT = "R")
+223000         PERFORM 800-WRITECSV-EMPDEPBEN
+223100     END-IF.
+223200
+223300     IF (PRM-REPORT-OPT          NOT = "C")
+223400         MOVE GN5D-DEP-BEN-PLAN-CODE  TO RPT-GROUP-REQUEST 
+223500         PERFORM 700-PRINT-RPT-GRP 
+223600     END-IF.
+223700
+223800 1074-NEXT-DEP-BENEFIT.
+223900     PERFORM 860-FIND-NEXT-HDBSET3.
+224000
+224100 1074-END.      
+224200
+224300******************************************************************
+224400 1080-DO-BENEFIC.
+224500******************************************************************
+224600
+224700     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+224800
+224900     MOVE "Y"                    TO WS-FIRST-TIME-BNF.
+225000
+225100     PERFORM 
+225200         VARYING I9              FROM 1 BY 1
+225300         UNTIL  (I9              > 11)
+225400         OR     (PRM-PLAN-TYPE    (I9) = SPACES)
+225500
+225600         MOVE PRM-PLAN-TYPE    (I9)  TO DB-PLAN-TYPE
+225700         MOVE SPACES                 TO DB-PLAN-CODE
+225800         MOVE ZEROES                 TO DB-SEQ-NBR
+225900         PERFORM 850-FIND-NLT-BNFSET1
+226000  
+226100         PERFORM 1082-DO-PLAN-CODE
+226200         THRU    1082-END
+226300            UNTIL (BENEFICRY-NOTFOUND)
+226400            OR    (BNF-COMPANY       NOT = EMP-COMPANY)
+226500            OR    (BNF-EMPLOYEE      NOT = EMP-EMPLOYEE) 
+226600            OR    (BNF-PLAN-TYPE     NOT = PRM-PLAN-TYPE    (I9))
+226700     END-PERFORM.
+226800
+226900 1080-END.
+227000
+227100******************************************************************
+227200 1082-DO-PLAN-CODE.
+227300******************************************************************
+227400
+227500     MOVE BNF-PLAN-CODE          TO WS-BNF-PLAN-CODE.
+227600  
+227700     PERFORM 1084-DO-SEQ-NBR
+227800     THRU    1084-END
+227900         UNTIL (BENEFICRY-NOTFOUND)
+228000         OR    (BNF-COMPANY    NOT = EMP-COMPANY)
+228100         OR    (BNF-EMPLOYEE   NOT = EMP-EMPLOYEE)
+228200         OR    (BNF-PLAN-TYPE  NOT = PRM-PLAN-TYPE    (I9))
+228300         OR    (BNF-PLAN-CODE  NOT = WS-BNF-PLAN-CODE).
+228400
+228500 1082-END.
+228600 
+228700******************************************************************
+228800 1084-DO-SEQ-NBR.
+228900******************************************************************
+229000
+229100     INITIALIZE                  G6-BNF-PLAN-TYPE
+229200                                 G6-BNF-PLAN-CODE
+229300                                 G6-BNF-LAST-NAME
+229600                                 G6-BNF-PCT-AMT-FLAG
+229700                                 G6-BNF-PRIM-CNTGNT
+229800                                 G6-BNF-PMT-AMT
+                                       G6-BNF-REL-CODE
+                                       G6-RELATION-TITLE
+                                       G6-FICA-TITLE
+                                       G6-BNF-FICA-NBR
+                                       G6-BNF-CMT-TEXT
+                                       G6-BNF-ADDR1
+                                       GE-BNF-ADDR2
+                                       GE-BNF-ADDR3
+                                       GE-BNF-ADDR4
+                                       GE-BNF-CITY 
+                                       GE-BNF-STATE
+                                       GE-BNF-ZIP
+                                       GE-BNF-COUNTRY-CODE
+229900                                 EMB-EMP-COMPANY
+230000                                 EMB-EMP-EMPLOYEE
+230100                                 EMB-BNF-PLAN-TYPE
+230200                                 EMB-BNF-PLAN-CODE
+230300                                 EMB-BNF-LAST-NAME
+230400                                 EMB-BNF-FIRST-NAME
+230500                                 EMB-BNF-MIDDLE-INIT
+230600                                 EMB-BNF-PCT-AMT-FLAG
+230700                                 EMB-BNF-PRIM-CNTGNT
+230800                                 EMB-BNF-PMT-AMT
+                                       EMB-BNF-LAST-NAME-PRE
+                                       EMB-BNF-TRUST
+                                       EMB-BNF-BENEF-TYPE
+                                       EMB-BNF-NAME-SUFFIX
+                                       EMB-BNF-REL-CODE
+                                       EMB-BNF-FICA-NBR
+                                       EMB-BNF-EMP-ADDRESS
+                                       EMB-BNF-ADDR1
+                                       EMB-BNF-ADDR2
+                                       EMB-BNF-ADDR3
+                                       EMB-BNF-ADDR4
+                                       EMB-BNF-CITY 
+                                       EMB-BNF-STATE
+                                       EMB-BNF-ZIP
+                                       EMB-BNF-COUNTRY-CODE
+                                       EMB-BNF-CMT-TEXT.
+230900                                                
+           IF (BNF-BENEF-TYPE = 0)
+094900         MOVE BNF-LAST-NAME          TO HRWS-LAST-NAME
+                                              EMB-BNF-LAST-NAME
+095000         MOVE BNF-FIRST-NAME         TO HRWS-FIRST-NAME
+                                              EMB-BNF-FIRST-NAME
+095100         MOVE BNF-MIDDLE-INIT        TO HRWS-MIDDLE-INIT
+                                              EMB-BNF-MIDDLE-INIT
+               MOVE BNF-LAST-NAME-PRE      TO HRWS-LAST-NAME-PRE
+                                              EMB-BNF-LAST-NAME-PRE
+               MOVE BNF-NAME-SUFFIX        TO HRWS-NAME-SUFFIX
+                                              EMB-BNF-NAME-SUFFIX
+095200         PERFORM 750-HR-FORMAT-NAME
+095400         MOVE HRWS-FORMAT-NAME       TO G6-BNF-LAST-NAME    
+               MOVE BNF-REL-CODE           TO G6-BNF-REL-CODE
+                                              EMB-BNF-REL-CODE
+               MOVE BNF-FICA-NBR           TO G6-BNF-FICA-NBR
+                                              EMB-BNF-FICA-NBR
+               MOVE 125                    TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO G6-RELATION-TITLE
+               MOVE 126                    TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO G6-FICA-TITLE
+           ELSE
+               MOVE BNF-TRUST              TO G6-BNF-LAST-NAME
+                                              EMB-BNF-TRUST.
+           MOVE BNF-BENEF-TYPE             TO EMB-BNF-BENEF-TYPE.
+           MOVE BNF-ADDR1                  TO G6-BNF-ADDR1.
+           IF  (BNF-EMP-ADDRESS = "H")
+               MOVE 127                    TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO G6-BNF-ADDR1
+           ELSE
+           IF  (BNF-EMP-ADDRESS = "S")
+               MOVE 128                    TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO G6-BNF-ADDR1
+           ELSE
+           IF  (BNF-EMP-ADDRESS = SPACES)
+           AND (BNF-ADDR1 NOT = SPACES)
+               MOVE BNF-ADDR2          TO GE-BNF-ADDR2
+                                          EMB-BNF-ADDR2
+               MOVE BNF-ADDR3          TO GE-BNF-ADDR3
+                                          EMB-BNF-ADDR3
+               MOVE BNF-ADDR4          TO GE-BNF-ADDR4
+                                          EMB-BNF-ADDR4
+               MOVE BNF-CITY           TO GE-BNF-CITY
+                                          EMB-BNF-CITY
+               MOVE BNF-STATE          TO GE-BNF-STATE
+                                          EMB-BNF-STATE
+               MOVE BNF-ZIP            TO GE-BNF-ZIP
+                                          EMB-BNF-ZIP
+               MOVE BNF-COUNTRY-CODE   TO GE-BNF-COUNTRY-CODE
+                                          EMB-BNF-COUNTRY-CODE.
+231000     MOVE BNF-PLAN-TYPE          TO G6-BNF-PLAN-TYPE.
+231100     MOVE BNF-PLAN-CODE          TO G6-BNF-PLAN-CODE.
+231500     MOVE BNF-PCT-AMT-FLAG       TO G6-BNF-PCT-AMT-FLAG.
+231600     MOVE BNF-PRIM-CNTGNT        TO G6-BNF-PRIM-CNTGNT.
+231700     MOVE BNF-PMT-AMT            TO G6-BNF-PMT-AMT.
+           MOVE BNF-CMT-TEXT           TO G6-BNF-CMT-TEXT
+                                          EMB-BNF-CMT-TEXT.
+           MOVE BNF-BENEF-TYPE         TO EMB-BNF-BENEF-TYPE.
+231800
+231900     MOVE EMP-COMPANY            TO EMB-EMP-COMPANY.
+232000     MOVE EMP-EMPLOYEE           TO EMB-EMP-EMPLOYEE.
+232100     MOVE BNF-PLAN-TYPE          TO EMB-BNF-PLAN-TYPE.
+232200     MOVE BNF-PLAN-CODE          TO EMB-BNF-PLAN-CODE.
+232300     MOVE BNF-LAST-NAME          TO EMB-BNF-LAST-NAME.
+232400     MOVE BNF-FIRST-NAME         TO EMB-BNF-FIRST-NAME.
+232500     MOVE BNF-MIDDLE-INIT        TO EMB-BNF-MIDDLE-INIT.
+232600     MOVE BNF-PCT-AMT-FLAG       TO EMB-BNF-PCT-AMT-FLAG.
+232700     MOVE BNF-PRIM-CNTGNT        TO EMB-BNF-PRIM-CNTGNT.
+232800     MOVE BNF-PMT-AMT            TO EMB-BNF-PMT-AMT.
+           MOVE BNF-EMP-ADDRESS        TO EMB-BNF-EMP-ADDRESS.
+232900
+233000     IF (PRM-REPORT-OPT          NOT = "R")
+233100         PERFORM 800-WRITECSV-EMPLOYEEB
+233200     END-IF.
+233300
+233400     IF (PRM-REPORT-OPT          NOT = "C")
+233500         IF  (WS-FIRST-TIME-BNF  = "Y")
+233600             MOVE GN6H-BENEFIC            TO RPT-GROUP-REQUEST 
+233700             PERFORM 700-PRINT-RPT-GRP 
+233800             MOVE "N"            TO WS-FIRST-TIME-BNF
+233900         END-IF
+234000         MOVE GN6D-EMP-BENEFIC   TO RPT-GROUP-REQUEST 
+234100         PERFORM 700-PRINT-RPT-GRP 
+               IF  (BNF-EMP-ADDRESS = SPACES)
+               AND (BNF-ADDR1 NOT = SPACES)
+234000             MOVE GN6E-EMP-BENEFIC   TO RPT-GROUP-REQUEST 
+234100             PERFORM 700-PRINT-RPT-GRP 
+               END-IF
+234200     END-IF.
+234300
+234400 1084-NEXT-BENEFIC.
+234500     PERFORM 860-FIND-NEXT-BNFSET1.
+234600 
+234700 1084-END.      
+234800 
+234900******************************************************************
+235000 1090-DO-EMP-INVEST.
+235100******************************************************************
+235200
+235300     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+235400     MOVE PLN-PLAN-CODE          TO DB-PLAN-CODE.
+235500     MOVE EMISET2-PLAN-CODE      TO WS-DB-BEG-RNG.
+235600     PERFORM 850-FIND-BEGRNG-EMISET2.
+235700     IF  (EMPINVEST-FOUND)
+235800     AND (PRM-REPORT-OPT          NOT = "C")
+235900         MOVE GN7H-EMP-INVEST    TO RPT-GROUP-REQUEST 
+236000         PERFORM 700-PRINT-RPT-GRP 
+236100     END-IF.
+236200
+236300     PERFORM 1092-DO-PLAN-CODE
+236400     THRU    1092-END
+236500          UNTIL (EMPINVEST-NOTFOUND).
+236600 
+236700 1090-END.
+236800
+236900******************************************************************
+237000 1092-DO-PLAN-CODE.
+237100******************************************************************
+237200
+237300     INITIALIZE                  G7-EMI-PLAN-CODE
+237400                                 G7-EMI-SEQ-NBR
+237500                                 G7-EMI-DESC
+237600                                 G7-EMI-DIST-ST-DATE
+237700                                 G7-EMI-STOP-DATE
+237800                                 G7-EMI-DIST-PCT
+237900                                 EMI-EMP-COMPANY
+238000                                 EMI-EMP-EMPLOYEE
+238100                                 EMI-EMI-PLAN-CODE
+238200                                 EMI-EMI-SEQ-NBR
+238300                                 EMI-EMI-DESC
+238400                                 EMI-EMI-DIST-ST-DATE
+238500                                 EMI-EMI-STOP-DATE
+238600                                 EMI-EMI-DIST-PCT.
+238700
+238800     IF  (PRM-BEN-DATE   < EMI-START-DATE)
+238900     OR  ((PRM-BEN-DATE  > EMI-STOP-DATE)
+239000     AND (EMI-STOP-DATE  NOT = ZEROES))
+239100         GO TO 1092-NEXT-INVEST-ACC.
+239200                                                
+239300     MOVE EMI-PLAN-CODE          TO G7-EMI-PLAN-CODE.
+239400     MOVE EMI-SEQ-NBR            TO G7-EMI-SEQ-NBR.
+239500     MOVE EMI-DIST-ST-DATE       TO G7-EMI-DIST-ST-DATE.
+239600     MOVE EMI-STOP-DATE          TO G7-EMI-STOP-DATE.
+239700     MOVE EMI-DIST-PCT           TO G7-EMI-DIST-PCT.
+239800
+239900     MOVE EMP-COMPANY            TO EMI-EMP-COMPANY.
+240000     MOVE EMP-EMPLOYEE           TO EMI-EMP-EMPLOYEE.
+240100     MOVE EMI-PLAN-CODE          TO EMI-EMI-PLAN-CODE.
+240200     MOVE EMI-SEQ-NBR            TO EMI-EMI-SEQ-NBR.
+240300     MOVE EMI-DIST-ST-DATE       TO EMI-EMI-DIST-ST-DATE.
+240800     MOVE EMI-STOP-DATE          TO EMI-EMI-STOP-DATE.
+241300     MOVE EMI-DIST-PCT           TO EMI-EMI-DIST-PCT.
+241400                                      
+241500     MOVE EMI-PLAN-CODE          TO DB-PLAN-CODE.
+241600     MOVE EMI-SEQ-NBR            TO DB-SEQ-NBR.
+241700
+241800     PERFORM 840-FIND-BIVSET1.
+241900     IF  (BNINVEST-FOUND)
+242000         MOVE BIV-DESC            TO G7-EMI-DESC    
+242100         MOVE BIV-DESC            TO EMI-EMI-DESC    
+242200     END-IF.
+242300
+242400     IF (PRM-REPORT-OPT          NOT = "R")
+242500         PERFORM 800-WRITECSV-EMPLOYEEI
+242600     END-IF.
+242700
+242800     IF (PRM-REPORT-OPT          NOT = "C")
+242900         MOVE GN7D-EMP-INVEST    TO RPT-GROUP-REQUEST 
+243000         PERFORM 700-PRINT-RPT-GRP 
+243100     END-IF.
+243200
+243300 1092-NEXT-INVEST-ACC.
+243400     PERFORM 860-FIND-NXTRNG-EMISET2.
+243500 
+243600 1092-END.      
+243700 
+243800******************************************************************
+243900 1000-END.
+244000******************************************************************
+244100
+244200******************************************************************
+244300 1100-SEL-PLAN                   SECTION 51.  
+244400******************************************************************
+244500 1100-START.
+244600
+244700     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+244800     MOVE "Y"                    TO WS-NEW-HED.
+244900
+245000     PERFORM 
+245100         VARYING I9              FROM 1 BY 1
+245200         UNTIL  (I9              > 11)
+245300         OR     (PRM-PLAN-TYPE    (I9) = SPACES)
+245400
+245500         MOVE PRM-PLAN-TYPE    (I9)  TO DB-PLAN-TYPE
+245600         INITIALIZE DB-PLAN-CODE
+245700         PERFORM 850-FIND-NLT-PLNSET1
+245800         PERFORM
+245900             UNTIL (PLAN-NOTFOUND)
+                   OR    (PLN-COMPANY      NOT = DB-COMPANY)
+                   OR    (PLN-PLAN-TYPE    NOT = PRM-PLAN-TYPE (I9))
+
+                   MOVE PLN-PLAN-CODE      TO WS-SV-PLAN-CODE
+246000
+246100             IF (PLN-FLEX-PLAN  = SPACES) 
+246200                PERFORM 1200-SEL-PLAN-CODES
+246300                THRU    1200-END
+246400             ELSE
+246500                IF  (PLN-FLEX-PLAN  NOT = SPACES) 
+246600                AND (PLN-FLEX-PLAN  = PRM-FLEX-PLAN) 
+246700                   PERFORM 1200-SEL-PLAN-CODES
+246800                   THRU    1200-END
+246900                ELSE
+247000                   IF (PLN-FLEX-PLAN  NOT = SPACES) 
+247100                      MOVE PRM-COMPANY        TO DB-COMPANY
+247200                      MOVE PLN-FLEX-PLAN      TO DB-FLEX-PLAN
+247300                      PERFORM 840-FIND-FLPSET1
+247400                      IF  (FLEXPLAN-FOUND)
+247500                      AND (FLP-SPEND-ONLY  = "Y")
+247600                          PERFORM 1200-SEL-PLAN-CODES
+247700                          THRU    1200-END
+247800                      END-IF
+247900                   END-IF
+248000                END-IF
+248100             END-IF
+
+                   MOVE PRM-PLAN-TYPE (I9) TO DB-PLAN-TYPE
+                   MOVE WS-SV-PLAN-CODE    TO DB-PLAN-CODE
+                   PERFORM 850-FIND-NLT-PLNSET1
+
+248200             PERFORM 860-FIND-NEXT-PLNSET1
+248300         END-PERFORM
+248400     END-PERFORM.
+248500 
+248600     GO TO 1100-END.
+248700
+248800******************************************************************
+248900 1200-SEL-PLAN-CODES.
+249000******************************************************************
+249100
+249200     INITIALIZE CRT-ERROR-NBR
+249300                CRT-ERROR-CAT
+249400                CRT-ERR-VAR1
+249500                CRT-ERR-VAR2
+249600                CRT-ERR-VAR3.
+249700
+           MOVE ZEROES                     TO CRT-MSG-NBR.
+           MOVE SPACES                     TO WS-PLN-PLAN-TYPE-DESC.
+249800     IF (PLN-PLAN-TYPE               = "DB")
+              MOVE 139                     TO CRT-MSG-NBR
+250000     ELSE
+250100     IF (PLN-PLAN-TYPE               = "DC")
+              MOVE 140                     TO CRT-MSG-NBR
+250300     ELSE
+250400     IF (PLN-PLAN-TYPE               = "DI")
+              MOVE 141                     TO CRT-MSG-NBR
+250600     ELSE
+250700     IF (PLN-PLAN-TYPE               = "DL")
+              MOVE 142                     TO CRT-MSG-NBR
+250900     ELSE
+251000     IF (PLN-PLAN-TYPE               = "DN")
+              MOVE 143                     TO CRT-MSG-NBR
+251200     ELSE
+251300     IF (PLN-PLAN-TYPE               = "EL")
+              MOVE 144                     TO CRT-MSG-NBR
+251500     ELSE
+251600     IF (PLN-PLAN-TYPE               = "HL")
+              MOVE 145                     TO CRT-MSG-NBR
+251800     ELSE
+251900     IF (PLN-PLAN-TYPE               = "RS")
+              MOVE 146                     TO CRT-MSG-NBR
+252100     ELSE
+252200     IF (PLN-PLAN-TYPE               = "SB")
+              MOVE 147                     TO CRT-MSG-NBR
+252400     ELSE
+252500     IF (PLN-PLAN-TYPE               = "SP")
+              MOVE 148                     TO CRT-MSG-NBR
+252700     ELSE
+252800     IF (PLN-PLAN-TYPE               = "VA")
+              MOVE 149                     TO CRT-MSG-NBR.
+253000
+           IF (CRT-MSG-NBR NOT = ZEROES)
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO WS-PLN-PLAN-TYPE-DESC
+           END-IF.
+
+253100     MOVE PRM-COMPANY                TO BNPEWS-COMPANY.
+253200     MOVE PLN-PLAN-TYPE              TO BNPEWS-PLAN-TYPE.
+253300     MOVE PLN-PLAN-CODE              TO BNPEWS-PLAN-CODE.
+253400     MOVE EMP-EMPLOYEE               TO BNPEWS-EMPLOYEE.
+253500     MOVE "E"                        TO BNPEWS-COVER-TYPE.
+253600     PERFORM 5000-EDIT-GROUP-N-ZIP-70.
+253700     IF (ERROR-FOUND)
+253800         GO TO 1200-END.
+253900
+254000***  CALL PLAN ELIGIBILITY SECTION WHICH VALIDATES START DATE
+254100
+254200     MOVE PRM-ELEC-DATE              TO BNPEWS-START-DATE.
+254300     PERFORM 5000-EDIT-PLAN-START-DATE-70.
+254400     IF  (ERROR-FOUND)
+254500         GO TO 1200-END.
+254600
+254700     MOVE PRM-COMPANY                TO BNEDWS-COMPANY.
+254800     MOVE PLN-PLAN-TYPE              TO BNEDWS-PLAN-TYPE.
+254900     MOVE PLN-PLAN-CODE              TO BNEDWS-PLAN-CODE.
+255000     MOVE EMP-EMPLOYEE               TO BNEDWS-EMPLOYEE.
+255100     MOVE PRM-ELEC-DATE              TO BNEDWS-AS-OF-DATE.
+255200     PERFORM 5000-ELIGIBILITY-DATE-CALC-70.
+255300     IF (ERROR-FOUND)
+P45941         GO TO 1200-ERROR.
+255500
+255600     MOVE BNEDWS-ELIGIBILITY-DATE    TO WS-ELIG-DATE.
+255700
+255800     IF  (PRM-REPORT-OPT          NOT = "C")
+255900     AND (WS-NEW-HED                  = "Y")
+256000         MOVE PRM-ELEC-DATE          TO G8-PRM-ELEC-DATE
+256100         MOVE GN8-NEW-BENEFIT        TO RPT-GROUP-REQUEST 
+256200         PERFORM 700-PRINT-RPT-GRP 
+256300         MOVE "N"                    TO WS-NEW-HED 
+256400     END-IF.
+256500
+256600     IF (PRM-REPORT-OPT          NOT = "C")
+256700         PERFORM 1210-PRINT-HEADER
+256800         THRU    1210-END
+256900     END-IF.
+257000
+257100     IF  (PRM-REPORT-OPT          NOT = "R")
+257200     AND (PLN-COVERAGE-TYPE           = "0")
+257300     AND (PLN-CONTRIB-TYPE            = "0")
+257800         PERFORM 800-OPENAPPENDCSV-EMPLOYEE12
+258000         PERFORM 1220-DO-CSV-HEADER
+258100         THRU    1220-END
+258200         PERFORM 800-CLOSECSV-EMPLOYEE12
+258300         GO TO 1200-END
+258400     END-IF.
+258500
+258600     IF (PLN-COVERAGE-TYPE            = "1")
+258700         PERFORM 1300-CVR-1
+258800         THRU    1300-END
+258900     ELSE
+259000      IF (PLN-COVERAGE-TYPE            = "2")
+259100          PERFORM 1400-CVR-2
+259200          THRU    1400-END
+259300      ELSE
+259400       IF  (PLN-CONTRIB-TYPE            = "5")
+259500       AND (PLN-PLAN-TYPE               NOT = "VA")
+259600          PERFORM 1500-CON-5-NVA
+259700          THRU    1500-END
+259800       ELSE
+259900        IF  (PLN-CONTRIB-TYPE            = "5")
+260000        AND (PLN-PLAN-TYPE               = "VA")
+260100          PERFORM 1600-CON-5-VA
+260200          THRU    1600-END
+260300        ELSE
+260400         IF (PLN-CONTRIB-TYPE             = "6")
+260500           PERFORM 1700-CON-6
+260600           THRU    1700-END
+260700         ELSE
+260800          IF (PLN-CONTRIB-TYPE             = "7")
+260900             PERFORM 1800-CON-7
+261000             THRU    1800-END
+261100          ELSE
+261200           IF  (PLN-COVERAGE-TYPE           = "0")
+261300           AND (PLN-CONTRIB-TYPE            = "3")
+261400              PERFORM 1900-CVR-0-CON-3
+261500              THRU    1900-END
+261600           END-IF
+261700          END-IF
+261800         END-IF
+261900        END-IF
+262000       END-IF
+262100      END-IF
+262200     END-IF.
+262300
+262400     IF  (PLN-PLAN-TYPE               = "DC")
+262500         PERFORM 2000-INVEST
+262600         THRU    2000-END
+262700     END-IF.
+262800
+P45941 1200-ERROR.
+262900     IF (ERROR-FOUND)
+263000         INITIALIZE              G20-COMPANY 
+263100                                 G20-PRS-NAME
+263200                                 G20-EMPLOYEE
+263300                                 G20-PLAN-TYPE
+263400                                 G20-PLAN-CODE
+263500                                 EME-COMPANY
+263600                                 EME-EMPLOYEE
+263700                                 G20-FULL-NAME
+263800                                 EME-FULL-NAME
+263900                                 EME-PLAN-TYPE
+264000                                 EME-PLAN-CODE
+264100                                 CRT-MSG-NBR
+264200                                 G20-ERROR-MSG
+264300                                 EME-ERROR-MSG
+264400         MOVE PRM-COMPANY        TO G20-COMPANY 
+264500         MOVE WS-CO-NAME         TO G20-PRS-NAME
+264600         MOVE EMP-EMPLOYEE       TO G20-EMPLOYEE
+264700         MOVE PLN-PLAN-TYPE      TO G20-PLAN-TYPE
+264800         MOVE PLN-PLAN-CODE      TO G20-PLAN-CODE
+264900         MOVE PRM-COMPANY        TO EME-COMPANY
+265000         MOVE EMP-EMPLOYEE       TO EME-EMPLOYEE
+265100         MOVE EMP-LAST-NAME      TO HRWS-LAST-NAME
+265200         MOVE EMP-FIRST-NAME     TO HRWS-FIRST-NAME
+265300         MOVE EMP-MIDDLE-INIT    TO HRWS-MIDDLE-INIT
+               MOVE EMP-LAST-NAME-PRE  TO HRWS-LAST-NAME-PRE
+               MOVE EMP-NAME-SUFFIX    TO HRWS-NAME-SUFFIX
+265400         PERFORM 750-HR-FORMAT-NAME
+265500         MOVE HRWS-FORMAT-NAME   TO G20-FULL-NAME
+265600         MOVE HRWS-FORMAT-NAME   TO EME-FULL-NAME
+265700         MOVE PLN-PLAN-TYPE      TO EME-PLAN-TYPE
+265800         MOVE PLN-PLAN-CODE      TO EME-PLAN-CODE
+265900         MOVE CRT-ERROR-NBR      TO CRT-MSG-NBR
+266000         PERFORM 790-GET-MSG
+266100         MOVE CRT-MESSAGE        TO G20-ERROR-MSG
+266200         MOVE CRT-MESSAGE        TO EME-ERROR-MSG
+266300         IF  (PRM-REPORT-OPT          NOT = "C")
+266400         AND (WS-ERR-HED               = "Y")
+266500             MOVE GN20H-EMP-ERROR-HEADER TO RPT-GROUP-REQUEST 
+266600             PERFORM 700-PRINT-RPT-GRP 
+266700             MOVE "N"                    TO WS-ERR-HED
+266800             MOVE GN20H-EMP-ERROR      TO RPT-GROUP-REQUEST 
+266900             PERFORM 700-PRINT-RPT-GRP 
+267000             MOVE GN20D-EMP-ERROR      TO RPT-GROUP-REQUEST 
+267100             PERFORM 700-PRINT-RPT-GRP 
+267200             MOVE EMP-EMPLOYEE      TO WS-EMPLOYEE  
+267300         ELSE
+267400             IF (EMP-EMPLOYEE      NOT = WS-EMPLOYEE)
+267500                MOVE GN20H-EMP-ERROR   TO RPT-GROUP-REQUEST 
+267600                PERFORM 700-PRINT-RPT-GRP 
+267700                MOVE GN20D-EMP-ERROR   TO RPT-GROUP-REQUEST 
+267800                PERFORM 700-PRINT-RPT-GRP
+267900                MOVE EMP-EMPLOYEE      TO WS-EMPLOYEE  
+268000             ELSE
+268100                MOVE GN20D-EMP-ERROR      TO RPT-GROUP-REQUEST 
+268200                PERFORM 700-PRINT-RPT-GRP 
+268300             END-IF
+268400         END-IF
+268500         IF  (PRM-REPORT-OPT          NOT = "R")
+268600             PERFORM 800-WRITECSV-EMPLOYEEE
+268700         END-IF
+268800     END-IF.
+268900
+269000 1200-END.
+269100
+269200******************************************************************
+269300 1210-PRINT-HEADER.
+269400******************************************************************
+269500
+269600     INITIALIZE                      G8-PLN-PLAN-TYPE
+269700                                     G8-PLN-PLAN-CODE
+269800                                     G8-PLN-DESC
+269900                                     G8-ELIG-DATE
+270000                                     WS-PLN-PLAN-TYPE-DESC
+270100                                     G8-PLN-TYPE-DESC.
+270200
+270300     MOVE PLN-PLAN-TYPE              TO G8-PLN-PLAN-TYPE.
+270400     MOVE PLN-PLAN-CODE              TO G8-PLN-PLAN-CODE.
+270500     MOVE PLN-DESC                   TO G8-PLN-DESC.
+270600     MOVE WS-ELIG-DATE               TO G8-ELIG-DATE.
+270700
+270800     MOVE WS-PLN-PLAN-TYPE-DESC      TO G8-PLN-TYPE-DESC.
+270900
+271000     MOVE GN8-PLAN-CODE              TO RPT-GROUP-REQUEST.
+271100     PERFORM 700-PRINT-RPT-GRP.
+271200
+271300 1210-END.
+271400
+271500******************************************************************
+271600 1220-DO-CSV-HEADER.
+271700******************************************************************
+271800
+271900
+272000     INITIALIZE                      E12-EMP-COMPANY
+272100                                     E12-EMP-EMPLOYEE
+272200                                     E12-PLN-PLAN-TYPE
+272300                                     E12-PLN-PLAN-CODE
+272400                                     E12-PLN-DISPLAY-DESC
+272500                                     E12-PLN-DESC
+272600                                     E12-ELIG-DATE
+272700                                     WS-PLN-PLAN-TYPE-DESC
+272800                                     E12-PLN-TYPE-DESC.
+272900
+273000     MOVE PRM-COMPANY                TO E12-EMP-COMPANY.
+273100     MOVE EMP-EMPLOYEE               TO E12-EMP-EMPLOYEE.
+273200     MOVE PLN-PLAN-TYPE              TO E12-PLN-PLAN-TYPE.
+273300     MOVE PLN-PLAN-CODE              TO E12-PLN-PLAN-CODE.
+273400     MOVE PLN-DISPLAY-DESC           TO E12-PLN-DISPLAY-DESC.
+273500     MOVE PLN-DESC                   TO E12-PLN-DESC.
+273600     MOVE WS-ELIG-DATE               TO E12-ELIG-DATE.
+274100
+274200     MOVE WS-PLN-PLAN-TYPE-DESC      TO E12-PLN-TYPE-DESC.
+274300
+274400     PERFORM 800-WRITECSV-EMPLOYEE12.
+274500
+274600 1220-END.
+274700
+274800******************************************************************
+274900 1300-CVR-1.
+275000******************************************************************
+275100
+275200     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+275300     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+275400     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+275500     MOVE "E"                    TO BNREWS-COVER-TYPE.
+275600     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+275700     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+275800     MOVE "BCD"                  TO BNREWS-FILE-PREFIX.
+275900     MOVE "Y"                    TO BNREWS-FIND-ST-GN.
+276000     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+276100     IF (ERROR-FOUND)
+276200         GO TO 1300-END.
+276300
+276400     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+276500     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+276600     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+276700     MOVE "E"                    TO BNREWS-COVER-TYPE.
+276800     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+276900     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+277000     MOVE "PRE"                  TO BNREWS-FILE-PREFIX.
+277100     INITIALIZE                     BNREWS-FIND-ST-GN.
+277200     IF (PLN-CONTRIB-TYPE        NOT = "0")
+277300         PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+277400     IF (ERROR-FOUND)
+277500         GO TO 1300-END.
+277600
+277700     MOVE PLN-PLAN-TYPE          TO DB-PLAN-TYPE.
+277800     MOVE PLN-PLAN-CODE          TO DB-PLAN-CODE.
+277900     MOVE "E"                    TO DB-COVER-TYPE.
+278000     MOVE BCD-START-DATE         TO DB-START-DATE.
+278100     MOVE BCD-GROUP-NAME         TO DB-GROUP-NAME.
+278200     MOVE BCDSET1-GROUP-NAME     TO WS-DB-BEG-RNG.
+278300     PERFORM 850-FIND-BEGRNG-BCDSET1.
+278400     IF  (BNCOVDFT-FOUND)
+278500     AND (PRM-REPORT-OPT          NOT = "C")
+278600         MOVE GN9H-BCD-COVERAGE-OPT   TO RPT-GROUP-REQUEST 
+278700         PERFORM 700-PRINT-RPT-GRP 
+278800     END-IF.
+278900
+279000     PERFORM
+279100         UNTIL (BNCOVDFT-NOTFOUND)
+279200         IF (BCD-ACTIVE-FLAG     = "A")
+279300             PERFORM 1310-BCD-TYPE   
+279400             THRU    1310-END
+279500         END-IF
+279600         PERFORM 860-FIND-NXTRNG-BCDSET1
+279700     END-PERFORM.
+279800
+279900 1300-END.
+280000
+280100******************************************************************
+280200 1310-BCD-TYPE.
+280300******************************************************************
+280400
+280500     INITIALIZE                      EM1-EMP-COMPANY
+280600                                     EM1-EMP-EMPLOYEE
+280700                                     EM1-PLN-PLAN-TYPE
+280800                                     EM1-PLN-PLAN-CODE
+280900                                     EM1-PLN-DISPLAY-DESC
+281000                                     EM1-PLN-DESC
+281100                                     EM1-ELIG-DATE
+281200                                     EM1-PLN-TYPE-DESC
+281300                                     G9-BCD-COVERAGE-OPT
+281400                                     EM1-BCD-COVERAGE-OPT
+281500                                     G9-COP-COV-DESC
+281600                                     EM1-COP-COV-DESC
+281700                                     G9-EMP-COST
+281800                                     EM1-EMP-COST
+281900                                     G9-FLEX-COST
+282000                                     EM1-FLEX-COST
+282100                                     G9-TOT-EMP-COST
+282200                                     EM1-TOT-EMP-COST
+282300                                     G9-COMPANY-COST
+282400                                     EM1-COMPANY-COST.
+282500 
+282600     MOVE PRM-COMPANY                TO EM1-EMP-COMPANY.
+282700     MOVE EMP-EMPLOYEE               TO EM1-EMP-EMPLOYEE.
+282800     MOVE PLN-PLAN-TYPE              TO EM1-PLN-PLAN-TYPE.
+282900     MOVE PLN-PLAN-CODE              TO EM1-PLN-PLAN-CODE.
+283000     MOVE PLN-DISPLAY-DESC           TO EM1-PLN-DISPLAY-DESC.
+283100     MOVE PLN-DESC                   TO EM1-PLN-DESC.
+283200     MOVE WS-ELIG-DATE               TO EM1-ELIG-DATE.
+283700
+283800     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM1-PLN-TYPE-DESC.
+283900
+284000     MOVE BCD-COVERAGE-OPT           TO G9-BCD-COVERAGE-OPT.
+284100     MOVE BCD-COVERAGE-OPT           TO EM1-BCD-COVERAGE-OPT.
+284200
+284300     MOVE BCD-COVERAGE-OPT           TO DB-COVERAGE-OPT.
+284400     PERFORM 840-FIND-COPSET1.
+284500     IF (BNCOVOPT-FOUND)
+284600        MOVE COP-COV-DESC               TO G9-COP-COV-DESC
+284700        MOVE COP-COV-DESC               TO EM1-COP-COV-DESC
+284800     ELSE
+284900        MOVE SPACES                     TO G9-COP-COV-DESC
+285000        MOVE SPACES                     TO EM1-COP-COV-DESC
+285100     END-IF.
+285200
+285300     IF (PLN-CONTRIB-TYPE            = "1")
+285400        MOVE PRE-START-DATE             TO DB-START-DATE  
+285500        MOVE PRE-GROUP-NAME             TO DB-GROUP-NAME  
+285600        MOVE BCD-COVERAGE-OPT           TO DB-COVERAGE-OPT
+285700        PERFORM 840-FIND-PCVSET1
+285800        IF (BNPRMOPT-FOUND)
+285900           IF  (PRM-CONTRIB    = "A")
+286000               MOVE PCV-EMP-CONT       TO G9-EMP-COST
+286100               MOVE PCV-EMP-CONT       TO EM1-EMP-COST
+286200               MOVE PCV-EMP-CONT       TO WS-EMP-COST
+286300               MOVE PCV-FLEX-CONT      TO G9-FLEX-COST
+286400               MOVE PCV-FLEX-CONT      TO EM1-FLEX-COST
+286500               MOVE PCV-FLEX-CONT      TO WS-FLEX-COST
+286700               COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+286800                                           -  WS-FLEX-COST
+287200               MOVE WS-TOT-COST        TO G9-TOT-EMP-COST
+287300               MOVE WS-TOT-COST        TO EM1-TOT-EMP-COST
+287400               MOVE PCV-COMP-CONT      TO G9-COMPANY-COST
+287500               MOVE PCV-COMP-CONT      TO EM1-COMPANY-COST
+287600           ELSE
+287700           IF  (PRM-CONTRIB    = "M")
+287800               COMPUTE WS-COST-P ROUNDED   =  PCV-EMP-CONT
+287900                                           /  12
+288000               MOVE WS-COST-P              TO G9-EMP-COST
+288100               MOVE WS-COST-P              TO EM1-EMP-COST
+288200               MOVE WS-COST-P              TO WS-EMP-COST
+288300               COMPUTE WS-COST-F ROUNDED   =  PCV-FLEX-CONT
+288400                                           /  12
+288500               MOVE WS-COST-F              TO G9-FLEX-COST
+288600               MOVE WS-COST-F              TO EM1-FLEX-COST
+288700               MOVE WS-COST-F              TO WS-FLEX-COST
+288900               COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+289000                                           -  WS-FLEX-COST
+289400               MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+289500               MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+289600               COMPUTE WS-COST-C ROUNDED   =  PCV-COMP-CONT
+289700                                           /  12
+289800               MOVE WS-COST-C              TO G9-COMPANY-COST
+289900               MOVE WS-COST-C              TO EM1-COMPANY-COST
+290000           ELSE
+290100           IF  (PRM-CONTRIB    = "P")
+290200               IF  (EMP-PAY-FREQUENCY      = 1)
+290300                   COMPUTE WS-COST-P ROUNDED   =  PCV-EMP-CONT
+290400                                               /  52
+290500                   MOVE WS-COST-P              TO G9-EMP-COST
+290600                   MOVE WS-COST-P              TO EM1-EMP-COST
+290700                   MOVE WS-COST-P              TO WS-EMP-COST
+290800                   COMPUTE WS-COST-F ROUNDED   =  PCV-FLEX-CONT
+290900                                               /  52
+291000                   MOVE WS-COST-F              TO G9-FLEX-COST
+291100                   MOVE WS-COST-F              TO EM1-FLEX-COST
+291200                   MOVE WS-COST-F              TO WS-FLEX-COST
+291400                   COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+291500                                               -  WS-FLEX-COST
+291900                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+292000                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+292100                   COMPUTE WS-COST-C ROUNDED   =  PCV-COMP-CONT
+292200                                               /  52
+292300                   MOVE WS-COST-C              TO G9-COMPANY-COST
+292400                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+292500               ELSE
+292600               IF  (EMP-PAY-FREQUENCY      = 2)
+292700                   COMPUTE WS-COST-P ROUNDED   =  PCV-EMP-CONT
+292800                                               /  26
+292900                   MOVE WS-COST-P              TO G9-EMP-COST
+293000                   MOVE WS-COST-P              TO EM1-EMP-COST
+293100                   MOVE WS-COST-P              TO WS-EMP-COST
+293200                   COMPUTE WS-COST-F ROUNDED   =  PCV-FLEX-CONT
+293300                                               /  26
+293400                   MOVE WS-COST-F              TO G9-FLEX-COST
+293500                   MOVE WS-COST-F              TO EM1-FLEX-COST
+293600                   MOVE WS-COST-F              TO WS-FLEX-COST
+293800                   COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+293900                                               -  WS-FLEX-COST
+294300                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+294400                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+294500                   COMPUTE WS-COST-C ROUNDED   =  PCV-COMP-CONT
+294600                                               /  26
+294700                   MOVE WS-COST-C              TO G9-COMPANY-COST
+294800                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+294900               ELSE
+295000               IF  (EMP-PAY-FREQUENCY      = 3)
+295100                   COMPUTE WS-COST-P ROUNDED   =  PCV-EMP-CONT
+295200                                               /  24
+295300                   MOVE WS-COST-P              TO G9-EMP-COST
+295400                   MOVE WS-COST-P              TO EM1-EMP-COST
+295500                   MOVE WS-COST-P              TO WS-EMP-COST
+295600                   COMPUTE WS-COST-F ROUNDED   =  PCV-FLEX-CONT
+295700                                               /  24
+295800                   MOVE WS-COST-F              TO G9-FLEX-COST
+295900                   MOVE WS-COST-F              TO EM1-FLEX-COST
+296000                   MOVE WS-COST-F              TO WS-FLEX-COST
+296200                   COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+296300                                               -  WS-FLEX-COST
+296700                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+296800                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+296900                   COMPUTE WS-COST-C ROUNDED   =  PCV-COMP-CONT
+297000                                               /  24
+297100                   MOVE WS-COST-C              TO G9-COMPANY-COST
+297200                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+297300               ELSE
+297400               IF  (EMP-PAY-FREQUENCY      = 4)
+297500                   COMPUTE WS-COST-P ROUNDED   =  PCV-EMP-CONT
+297600                                               /  12
+297700                   MOVE WS-COST-P              TO G9-EMP-COST
+297800                   MOVE WS-COST-P              TO EM1-EMP-COST
+297900                   MOVE WS-COST-P              TO WS-EMP-COST
+298000                   COMPUTE WS-COST-F ROUNDED   =  PCV-FLEX-CONT
+298100                                               /  12
+298200                   MOVE WS-COST-F              TO G9-FLEX-COST
+298300                   MOVE WS-COST-F              TO EM1-FLEX-COST
+298400                   MOVE WS-COST-F              TO WS-FLEX-COST
+298600                   COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+298700                                               -  WS-FLEX-COST
+299100                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+299200                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+299300                   COMPUTE WS-COST-C ROUNDED   =  PCV-COMP-CONT
+299400                                               /  12
+299500                   MOVE WS-COST-C              TO G9-COMPANY-COST
+299600                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+299700               END-IF 
+299800               END-IF 
+299900               END-IF 
+300000               END-IF 
+300100           END-IF  
+300200           END-IF  
+300300           END-IF  
+300400        ELSE
+300500           MOVE ZEROES                         TO G9-EMP-COST
+300600           MOVE ZEROES                         TO EM1-EMP-COST
+300700           MOVE ZEROES                         TO G9-FLEX-COST
+300800           MOVE ZEROES                         TO EM1-FLEX-COST
+300900           MOVE ZEROES                         TO G9-TOT-EMP-COST
+301000           MOVE ZEROES                         TO EM1-TOT-EMP-COST
+301100           MOVE ZEROES                         TO G9-COMPANY-COST
+301200           MOVE ZEROES                         TO EM1-COMPANY-COST
+301300        END-IF  
+301400     ELSE
+301500     IF (PLN-CONTRIB-TYPE            = "2")
+301600        MOVE PRE-START-DATE             TO DB-START-DATE  
+301700        MOVE PRE-GROUP-NAME             TO DB-GROUP-NAME  
+301800        MOVE BCD-COVERAGE-OPT           TO DB-COVERAGE-OPT
+301900        PERFORM 840-FIND-PCVSET1
+302000        IF (BNPRMOPT-FOUND)
+302100           PERFORM 1320-EDIT-RATE-TABLE   
+302200           THRU    1320-END
+302300           IF  (PRM-CONTRIB    = "A")
+302400               MOVE WS-EMP-COST        TO G9-EMP-COST
+302500               MOVE WS-EMP-COST        TO EM1-EMP-COST
+302600               MOVE WS-FLEX-COST       TO G9-FLEX-COST
+302700               MOVE WS-FLEX-COST       TO EM1-FLEX-COST
+302900               COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+303000                                           -  WS-FLEX-COST
+303400               MOVE WS-TOT-COST        TO G9-TOT-EMP-COST
+303500               MOVE WS-TOT-COST        TO EM1-TOT-EMP-COST
+303600               MOVE WS-COMP-COST       TO G9-COMPANY-COST
+303700               MOVE WS-COMP-COST       TO EM1-COMPANY-COST
+303800           ELSE
+303900           IF  (PRM-CONTRIB    = "M")
+304000               COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+304100                                           /  12
+304200               MOVE WS-COST-P              TO G9-EMP-COST
+304300               MOVE WS-COST-P              TO EM1-EMP-COST
+304400               COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+304500                                           /  12
+304600               MOVE WS-COST-F              TO G9-FLEX-COST
+304700               MOVE WS-COST-F              TO EM1-FLEX-COST
+304900               COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+305000                                           -  WS-COST-F
+305400               MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+305500               MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+305600               COMPUTE WS-COST-C ROUNDED   =  WS-COMP-COST
+305700                                           /  12
+305800               MOVE WS-COST-C              TO G9-COMPANY-COST
+305900               MOVE WS-COST-C              TO EM1-COMPANY-COST
+306000           ELSE
+306100           IF  (PRM-CONTRIB    = "P")
+306200               IF  (EMP-PAY-FREQUENCY      = 1)
+306300                   COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+306400                                               /  52
+306500                   MOVE WS-COST-P              TO G9-EMP-COST
+306600                   MOVE WS-COST-P              TO EM1-EMP-COST
+306700                   COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+306800                                               /  52
+306900                   MOVE WS-COST-F              TO G9-FLEX-COST
+307000                   MOVE WS-COST-F              TO EM1-FLEX-COST
+307200                   COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+307300                                               -  WS-COST-F
+307700                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+307800                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+307900                   COMPUTE WS-COST-C ROUNDED   =  WS-COMP-COST
+308000                                               /  52
+308100                   MOVE WS-COST-C              TO G9-COMPANY-COST
+308200                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+308300               ELSE
+308400               IF  (EMP-PAY-FREQUENCY      = 2)
+308500                   COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+308600                                               /  26
+308700                   MOVE WS-COST-P              TO G9-EMP-COST
+308800                   MOVE WS-COST-P              TO EM1-EMP-COST
+308900                   COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+309000                                               /  26
+309100                   MOVE WS-COST-F              TO G9-FLEX-COST
+309200                   MOVE WS-COST-F              TO EM1-FLEX-COST
+309400                   COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+309500                                               -  WS-COST-F
+309900                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+310000                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+310100                   COMPUTE WS-COST-C ROUNDED   =  WS-COMP-COST
+310200                                               /  26
+310300                   MOVE WS-COST-C              TO G9-COMPANY-COST
+310400                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+310500               ELSE
+310600               IF  (EMP-PAY-FREQUENCY      = 3)
+310700                   COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+310800                                               /  24
+310900                   MOVE WS-COST-P              TO G9-EMP-COST
+311000                   MOVE WS-COST-P              TO EM1-EMP-COST
+311100                   COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+311200                                               /  24
+311300                   MOVE WS-COST-F              TO G9-FLEX-COST
+311400                   MOVE WS-COST-F              TO EM1-FLEX-COST
+311600                   COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+311700                                               -  WS-COST-F
+312100                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+312200                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+312300                   COMPUTE WS-COST-C ROUNDED   =  WS-COMP-COST
+312400                                               /  24
+312500                   MOVE WS-COST-C              TO G9-COMPANY-COST
+312600                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+312700               ELSE
+312800               IF  (EMP-PAY-FREQUENCY      = 4)
+312900                   COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+313000                                               /  12
+313100                   MOVE WS-COST-P              TO G9-EMP-COST
+313200                   MOVE WS-COST-P              TO EM1-EMP-COST
+313300                   COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+313400                                               /  12
+313500                   MOVE WS-COST-F              TO G9-FLEX-COST
+313700                   IF (WS-COST-F               NOT = ZEROES)
+313800                   COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+313900                                               -  WS-COST-F
+314300                   MOVE WS-TOT-COST            TO G9-TOT-EMP-COST
+314400                   MOVE WS-TOT-COST            TO EM1-TOT-EMP-COST
+314500                   COMPUTE WS-COST-C ROUNDED   =  WS-COMP-COST
+314600                                               /  12
+314700                   MOVE WS-COST-C              TO G9-COMPANY-COST
+314800                   MOVE WS-COST-C              TO EM1-COMPANY-COST
+314900               END-IF 
+315000               END-IF 
+315100               END-IF 
+315200               END-IF 
+315300           END-IF  
+315400           END-IF  
+315500           END-IF  
+315600        ELSE
+315700           MOVE ZEROES                         TO G9-EMP-COST
+315800           MOVE ZEROES                         TO EM1-EMP-COST
+315900           MOVE ZEROES                         TO G9-FLEX-COST
+316000           MOVE ZEROES                         TO EM1-FLEX-COST
+316100           MOVE ZEROES                         TO G9-TOT-EMP-COST
+316200           MOVE ZEROES                         TO EM1-TOT-EMP-COST
+316300           MOVE ZEROES                         TO G9-COMPANY-COST
+316400           MOVE ZEROES                         TO EM1-COMPANY-COST
+316500        END-IF  
+316600     END-IF
+316700     END-IF.
+316800
+316900     IF (PRM-REPORT-OPT          NOT = "R")
+317100         PERFORM 800-OPENAPPENDCSV-EMPLOYEE1
+317300         PERFORM 800-WRITECSV-EMPLOYEE1
+317500         PERFORM 800-CLOSECSV-EMPLOYEE1
+317600     END-IF.
+317700
+317800     IF (PRM-REPORT-OPT          NOT = "C")
+317900         MOVE GN9D-BCD-COVERAGE-OPT   TO RPT-GROUP-REQUEST 
+318000         PERFORM 700-PRINT-RPT-GRP 
+318100     END-IF.
+318200
+318300 1310-END.
+318400
+318500******************************************************************
+318600 1320-EDIT-RATE-TABLE.
+318700******************************************************************
+318800
+318900     PERFORM 1330-FIND-RATETBLHDR
+319000     THRU    1330-END.
+           IF (ERROR-FOUND)
+               GO TO 1320-END.
+319100
+319200*
+319300**** SET BEGINNING VALUE (WS-BEG-AGE-YR-SAL) AGE/ ANN SALARY/
+319400**** YEARS OF SERVICE AND USE IT TO FIND RATETBLDTL RECORD
+319500*
+319600     PERFORM 1340-CALC-AGE-YR-SAL
+319700     THRU    1340-END.
+319800     IF (ERROR-FOUND)
+319900         GO TO 1320-END.
+320000
+320100     PERFORM 1350-FIND-RATETBLDTL
+320200     THRU    1350-END.
+320300     IF (ERROR-FOUND)
+320400         GO TO 1320-END.
+320500
+320600 1320-END.
+320700 
+320800******************************************************************
+320900 1330-FIND-RATETBLHDR.
+321000******************************************************************
+321100
+321200
+321300     IF (PRE-CONTRIB-TYPE        = "2 ")       
+321400         MOVE PCV-RATE-TABLE     TO DB-TABLE-CODE 
+321500     ELSE
+321600     IF (PRE-RATE-TABLE          NOT = SPACES)
+321700         MOVE PRE-RATE-TABLE     TO DB-TABLE-CODE.
+321800
+321900     MOVE PRE-START-DATE         TO DB-START-DATE.
+322000     PERFORM 840-FIND-RTHSET1.
+           IF (RATETBLHDR-NOTFOUND)
+               IF (PRE-CONTRIB-TYPE    = "2 ")
+                   MOVE PCV-RATE-TABLE TO CRT-ERR-VAR1
+                   MOVE PCV-PLAN-TYPE  TO CRT-ERR-VAR2
+                   MOVE PCV-PLAN-CODE  TO CRT-ERR-VAR3
+               ELSE
+                   MOVE PRE-RATE-TABLE TO CRT-ERR-VAR1
+                   MOVE PRE-PLAN-TYPE  TO CRT-ERR-VAR2
+                   MOVE PRE-PLAN-CODE  TO CRT-ERR-VAR3
+               END-IF
+               MOVE 130                TO CRT-ERROR-NBR
+           END-IF.
+322100
+322200 1330-END.
+322300
+322400******************************************************************
+322500 1340-CALC-AGE-YR-SAL.
+322600******************************************************************
+322700
+322800     IF (RTH-TABLE-TYPE              = "1")
+322900*
+323000******** IF TABLE-TYPE IS "1" (AGE) CALCULATE EMPLOYEE/SPOUSE/PARTNER AGE
+323100******** AND CHECK SMOKER STATUS
+323200*
+323300         PERFORM 1360-DO-AGE-CALCULATION
+323400         THRU    1360-END
+323500         IF (ERROR-FOUND)
+323600             GO TO 1340-END
+323700         END-IF
+323800
+323900         MOVE BNACWS-AGE             TO WS-BEG-AGE-YR-SAL
+324000     ELSE
+324100     IF (RTH-TABLE-TYPE              = "2")
+324200*
+324300******** IF TABLE-TYPE IS "2" (SALARY) CALCULATE EMPLOYEE ANNUAL SALARY
+324400******** AND CHECK SMOKER STATUS
+324500*
+324600         PERFORM 1370-DO-ANNUAL-SALARY
+324700         THRU    1370-END
+324800         IF (ERROR-FOUND)
+324900             GO TO 1340-END
+325000         END-IF
+325100
+325200         MOVE BNASWS-ANNUAL-SALARY   TO WS-BEG-AGE-YR-SAL
+325300     ELSE
+325400     IF (RTH-TABLE-TYPE              = "3")
+325500*
+325600******** IF TABLE-TYPE IS "3" (YEARS OF SERVICE) CALCULATE EMPLOYEE'S
+325700******** YEARS OF SERVICE AND CHECK SMOKER STATUS
+325800*
+325900         PERFORM 1380-DO-YEARS-OF-SERVICE
+326000         THRU    1380-END
+326100         IF (ERROR-FOUND)
+326200             GO TO 1340-END
+326300         END-IF
+326400
+326500         MOVE BNYSWS-YOS             TO WS-BEG-AGE-YR-SAL.
+326600
+326700 1340-END.
+326800
+326900******************************************************************
+327000 1350-FIND-RATETBLDTL.
+327100******************************************************************
+327200
+327300     MOVE RTH-TABLE-CODE         TO DB-TABLE-CODE.
+327400     MOVE RTH-START-DATE         TO DB-START-DATE.
+327500     MOVE WS-SMOKER-SW           TO DB-SMOKER.
+327600     MOVE RTDSET2-SMOKER         TO WS-DB-BEG-RNG.
+327700     PERFORM 850-FIND-BEGRNG-RTDSET2.
+327800     PERFORM
+327900         UNTIL (RATETBLDTL-NOTFOUND)
+328000         OR    (RTD-BEG-AGE-YR-SAL  <= WS-BEG-AGE-YR-SAL)
+328100
+328200         PERFORM 860-FIND-NXTRNG-RTDSET2
+328300     END-PERFORM.
+328400
+328500     IF (RATETBLDTL-NOTFOUND)
+328600         IF (WS-SMOKER-SW        = "Y" OR "N")
+328700             INITIALIZE             DB-SMOKER 
+328800             MOVE RTDSET2-SMOKER TO WS-DB-BEG-RNG
+328900             PERFORM 850-FIND-BEGRNG-RTDSET2
+329000             PERFORM
+329100                 UNTIL (RATETBLDTL-NOTFOUND)
+329200                 OR    (RTD-BEG-AGE-YR-SAL 
+329300                                 <= WS-BEG-AGE-YR-SAL)
+329400
+329500                 PERFORM 860-FIND-NXTRNG-RTDSET2
+329600             END-PERFORM
+329700         ELSE
+329800             MOVE "N"            TO DB-SMOKER 
+329900             MOVE RTDSET2-SMOKER TO WS-DB-BEG-RNG
+330000             PERFORM 850-FIND-BEGRNG-RTDSET2
+330100             PERFORM
+330200                 UNTIL (RATETBLDTL-NOTFOUND)
+330300                 OR    (RTD-BEG-AGE-YR-SAL 
+330400                                 <= WS-BEG-AGE-YR-SAL)
+330500
+330600                 PERFORM 860-FIND-NXTRNG-RTDSET2
+330700             END-PERFORM.
+330800
+330900     IF (RATETBLDTL-NOTFOUND)
+331000         MOVE EMP-EMPLOYEE    TO CRT-ERR-VAR1
+331100         MOVE WS-SMOKER-SW    TO CRT-ERR-VAR3
+331200         IF (RTH-TABLE-TYPE      = "1")
+331300************ Rate table not set for employee/ age
+331400             MOVE 118            TO CRT-ERROR-NBR
+331500             MOVE BNACWS-AGE     TO CRT-ERR-VAR2
+331600         ELSE
+331700         IF (RTH-TABLE-TYPE      = "2")
+331800************ Rate table not set for employee/ ann salary
+331900             MOVE 119            TO CRT-ERROR-NBR
+332000             MOVE BNASWS-ANNUAL-SALARY
+332100                                 TO WS-AMOUNT
+332200             MOVE WS-AMOUNT-RED  TO CRT-ERR-VAR2
+332300         ELSE
+332400         IF (RTH-TABLE-TYPE      = "3")
+332500************ Rate table not set for employee/ YOS
+332600             MOVE 120            TO CRT-ERROR-NBR
+332700             MOVE BNYSWS-YOS     TO CRT-ERR-VAR2
+332800         END-IF
+332900         END-IF
+333000         END-IF
+333100         GO TO 1350-END.
+333200
+333300     MOVE RTD-COMP-RATE          TO WS-COMP-COST.      
+333400     MOVE RTD-EMP-RATE           TO WS-EMP-COST.      
+333500     MOVE RTD-FLEX-RATE          TO WS-FLEX-COST.     
+333600
+333700 1350-END.
+333800
+333900******************************************************************
+334000 1360-DO-AGE-CALCULATION.
+334100******************************************************************
+334200
+334300*
+334400**** PERFORM AGE CALCULATION ROUTINE TO DETERMINE EMPLOYEE/SPOUSE/PARTNER
+334500**** AGE, THIS AND SMOKING STATUS WILL BE USED TO FIND (AGE) RATE
+334600**** TABLE RECORD
+334700*
+334800     MOVE PRM-COMPANY            TO BNACWS-COMPANY.
+334900     MOVE PRE-EMP-SPS-AGE        TO BNACWS-EMP-DEPEND-SW.
+335000     MOVE PRE-AGE-FIRST-MO       TO BNACWS-DATE-TYPE.
+335100     MOVE WS-START-DATE          TO BNACWS-START-DATE.
+335200     MOVE ZEROES                 TO BNACWS-STOP-DATE.
+335300     MOVE PRE-AGE-DATE           TO BNACWS-AS-OF-MMDD.
+335400     MOVE PRE-AGE-YEAR           TO BNACWS-AS-OF-YYYY.
+335500     PERFORM 5000-DO-AGE-CALCULATION-70.
+335600     IF (ERROR-FOUND)
+335700         GO TO 1360-END.
+335800
+335900     MOVE BNACWS-AGE-DATE        TO WS-AGE-CALC-DATE.
+336000
+336100*
+336200**** DETERMINE SMOKING STATUS OF EMPLOYEE/SPOUSE/PARTNER
+336300*
+336400     MOVE PRE-EMP-SPS-AGE        TO BNSSWS-EMP-SPOUSE-SW.
+336500     MOVE PRE-COVER-TYPE         TO BNSSWS-COVER-TYPE.
+336600     PERFORM 5000-DO-SMOKING-STATUS-70.
+336700     IF (ERROR-FOUND)
+336800         GO TO 1360-END
+336900     ELSE
+337000         MOVE BNSSWS-SMOKER-SW   TO WS-SMOKER-SW.
+337100
+337200 1360-END.
+337300  
+337400******************************************************************
+337500 1370-DO-ANNUAL-SALARY.
+337600******************************************************************
+337700*
+337800**** CALCULATE ANNUAL SALARY ON AS OF DATE
+337900*
+338000     MOVE PRM-COMPANY            TO BNASWS-COMPANY.
+338100     MOVE EMP-EMPLOYEE           TO BNASWS-EMPLOYEE.
+338200     MOVE PRE-SALARY-TYPE        TO BNASWS-SALARY-TYPE.
+338300     MOVE PRE-SAL-FIRST-MO       TO BNASWS-DATE-TYPE.
+338400     MOVE WS-START-DATE          TO BNASWS-START-DATE.
+338500     MOVE ZEROES                 TO BNASWS-STOP-DATE.
+338600     MOVE PRE-SALARY-DATE        TO BNASWS-AS-OF-MMDD.
+338700     MOVE PRE-SALARY-YEAR        TO BNASWS-AS-OF-YYYY.
+338800     PERFORM 5000-DO-ANNUAL-SALARY-71.
+338900     IF (ERROR-FOUND)
+339000         GO TO 1370-END.
+339100
+339200*
+339300**** DETERMINE SMOKING STATUS OF EMPLOYEE/SPOUSE/PARTNER
+339400*
+339500     MOVE "E"                    TO BNSSWS-EMP-SPOUSE-SW.
+339600     MOVE PRE-COVER-TYPE         TO BNSSWS-COVER-TYPE.
+339700     PERFORM 5000-DO-SMOKING-STATUS-70.
+339800     IF (ERROR-FOUND)
+339900         GO TO 1370-END
+340000     ELSE
+340100         MOVE BNSSWS-SMOKER-SW   TO WS-SMOKER-SW.
+340200
+340300 1370-END.
+340400 
+340500******************************************************************
+340600 1380-DO-YEARS-OF-SERVICE.
+340700******************************************************************
+340800
+340900*
+341000**** CALCULATE YEARS OF SERVICE FOR THE EMPLOYEE
+341100*
+341200     MOVE PRE-FROM-DATE          TO BNYSWS-FROM-DATE.
+341300     MOVE PRE-SERV-FIRST-MO      TO BNYSWS-DATE-TYPE.
+341400     MOVE PRM-ELEC-DATE          TO BNYSWS-START-DATE.
+341500     MOVE ZEROES                 TO BNYSWS-STOP-DATE.
+341600     MOVE PRE-SERV-DATE          TO BNYSWS-AS-OF-MMDD.
+341700     MOVE PRE-SERV-YEAR          TO BNYSWS-AS-OF-YYYY.
+341800     PERFORM 5000-DO-YEARS-OF-SERVICE-70.
+341900     IF (ERROR-FOUND)
+342000         GO TO 1380-END.
+342100
+342200*
+342300**** DETERMINE SMOKING STATUS OF EMPLOYEE/SPOUSE/PARTNER
+342400*
+342500         MOVE "E"                TO BNSSWS-EMP-SPOUSE-SW.
+342600         MOVE PRE-COVER-TYPE     TO BNSSWS-COVER-TYPE.
+342700         PERFORM 5000-DO-SMOKING-STATUS-70.
+342800         IF (ERROR-FOUND)
+342900             GO TO 1380-END
+343000         ELSE
+343100             MOVE BNSSWS-SMOKER-SW   TO WS-SMOKER-SW.
+343200
+343300 1380-END.
+343400
+343500******************************************************************
+343600 1400-CVR-2.
+343700******************************************************************
+343800
+343900     INITIALIZE BNASWS-ANNUAL-SALARY.
+344000
+344100     MOVE PRM-COMPANY            TO BNCVWS-COMPANY.
+344200     MOVE PLN-PLAN-TYPE          TO BNCVWS-PLAN-TYPE.
+344300     MOVE PLN-PLAN-CODE          TO BNCVWS-PLAN-CODE.
+344400     MOVE "E"                    TO BNCVWS-COVER-TYPE.
+344500     MOVE EMP-EMPLOYEE           TO BNCVWS-EMPLOYEE.
+344600     MOVE PRM-ELEC-DATE          TO BNCVWS-AS-OF-DATE.
+344700     MOVE PRM-ELEC-DATE          TO BNCVWS-START-DATE.
+           MOVE "Y"                    TO BNCVWS-CALL-FROM-BN245.
+344800     INITIALIZE                  BNCVWS-STOP-DATE
+344900                                 BNCVWS-FC
+345000                                 BNCVWS-IN-COVER-OPT
+345100                                 BNCVWS-MULT-OF-SALARY
+345200                                 BNCVWS-IN-COVER-AMT
+345300                                 BNCVWS-IN-ANNUAL-SALARY.
+345400     PERFORM 5000-DO-COVERAGE-70.
+345500     IF (ERROR-FOUND)
+345600         IF (CRT-ERROR-CAT       NOT =  "BNCV")
+345700         OR ((CRT-ERROR-CAT      = "BNCV")
+345800         AND  (CRT-ERROR-NBR     = 107))
+345900             GO TO  1400-END.
+346000
+346100     INITIALIZE CRT-ERROR-NBR.
+346200
+346300     MOVE PRM-COMPANY            TO BNCTWS-COMPANY.
+346400     MOVE PLN-PLAN-TYPE          TO BNCTWS-PLAN-TYPE.
+346500     MOVE PLN-PLAN-CODE          TO BNCTWS-PLAN-CODE.
+346600     MOVE "E"                    TO BNCTWS-COVER-TYPE.
+346700     MOVE EMP-EMPLOYEE           TO BNCTWS-EMPLOYEE.
+346800     MOVE PRM-ELEC-DATE          TO BNCTWS-AS-OF-DATE.
+346900     MOVE PRM-ELEC-DATE          TO BNCTWS-START-DATE.
+347000     MOVE BNCVWS-COVER-AMT       TO BNCTWS-COVER-AMT.
+347100     INITIALIZE                  BNCTWS-STOP-DATE
+347200                                 BNCTWS-FC
+347300                                 BNCTWS-IN-EMP-PT-CONT
+347400                                 BNCTWS-IN-EMP-AT-CONT
+347500                                 BNCTWS-CONTRIB-OPT
+347600                                 BNCTWS-ANNUAL-SALARY
+347700                                 BNCTWS-CYC-REMAIN
+347800                                 BNCTWS-IN-PAY-PER-AMT
+347900                                 BNCTWS-IN-ANNUAL-AMT
+348000                                 BNCTWS-YTD-CONT
+348100                                 BNCTWS-IN-PCT-AMT-FLAG
+348200                                 BNCTWS-IN-PRE-AFT-FLAG
+348300                                 BNCTWS-NBR-OF-HOURS
+348400                                 BNCTWS-IN-SMOKER-SW.
+348500     IF (PLN-CONTRIB-TYPE        NOT = "0")
+P46826         PERFORM 5000-DO-CONTRIBUTION-70
+P46826     ELSE
+P46826         INITIALIZE BNCTWS-EMP-CONT
+P46826                    BNCTWS-COMP-CONT
+P46826     END-IF.
+P46826
+348700     IF (ERROR-FOUND)
+348800         IF (CRT-ERROR-CAT       NOT =  "BNCT")
+348900         OR ((CRT-ERROR-CAT      = "BNCT")
+349000         AND ((CRT-ERROR-NBR     = 104)
+349100         OR   (CRT-ERROR-NBR     = 105)
+349200         OR   (CRT-ERROR-NBR     = 106)
+349300         OR   (CRT-ERROR-NBR     = 107)))
+349400             GO TO  1400-END.
+349500
+349600     INITIALIZE CRT-ERROR-NBR.
+349700
+349800     MOVE BNASWS-ANNUAL-SALARY   TO WS-ANN-SAL.
+349900
+350000     IF  (CVR-CALC-TYPE          = "F")
+350100         PERFORM 1410-CVR-FLAT
+350200         THRU    1410-END
+350300     ELSE
+P60050     IF  (CVR-CALC-TYPE          = "M" OR "N")
+350500         PERFORM 1420-CVR-MULT
+350600         THRU    1420-END
+350700     ELSE
+350800     IF  (CVR-CALC-TYPE          = "S")
+350900         PERFORM 1430-CVR-SUPP
+351000         THRU    1430-END
+351100     ELSE
+351200     IF  (CVR-CALC-TYPE          = "P")
+351300         PERFORM 1440-CVR-PERC
+351400         THRU    1440-END
+351500     END-IF
+351600     END-IF
+351700     END-IF
+351800     END-IF.
+351900
+352000 1400-END.
+352100
+352200******************************************************************
+352300 1410-CVR-FLAT.
+352400******************************************************************
+352500 
+352600     INITIALIZE                      EM2-EMP-COMPANY
+352700                                     EM2-EMP-EMPLOYEE
+352800                                     EM2-PLN-PLAN-TYPE
+352900                                     EM2-PLN-PLAN-CODE
+353000                                     EM2-PLN-DISPLAY-DESC
+353100                                     EM2-PLN-DESC
+353200                                     EM2-ELIG-DATE
+353300                                     EM2-PLN-TYPE-DESC
+353400                                     G10-CVR-FLAT-AMT-1
+353500                                     G10-CVR-FLAT-AMT-2
+353600                                     EM2-CVR-FLAT-AMT-1
+353700                                     EM2-CVR-FLAT-AMT-2 
+353800                                     G10-EMP-COST
+353900                                     EM2-EMP-COST
+354000                                     G10-FLEX-COST
+354100                                     EM2-FLEX-COST
+354200                                     G10-TOT-EMP-COST
+354300                                     EM2-TOT-EMP-COST
+354400                                     G10-COMPANY-COST
+354500                                     EM2-COMPANY-COST.
+354600
+354700     MOVE PRM-COMPANY                TO EM2-EMP-COMPANY.
+354800     MOVE EMP-EMPLOYEE               TO EM2-EMP-EMPLOYEE.
+354900     MOVE PLN-PLAN-TYPE              TO EM2-PLN-PLAN-TYPE.
+355000     MOVE PLN-PLAN-CODE              TO EM2-PLN-PLAN-CODE.
+355100     MOVE PLN-DISPLAY-DESC           TO EM2-PLN-DISPLAY-DESC.
+355200     MOVE PLN-DESC                   TO EM2-PLN-DESC.
+355300     MOVE WS-ELIG-DATE               TO EM2-ELIG-DATE.
+355800
+355900     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM2-PLN-TYPE-DESC.
+356000
+356100
+356200     MOVE CVR-FLAT-AMT-1         TO G10-CVR-FLAT-AMT-1.
+356300     MOVE CVR-FLAT-AMT-2         TO G10-CVR-FLAT-AMT-2.
+356400
+356500     MOVE CVR-FLAT-AMT-1         TO EM2-CVR-FLAT-AMT-1.
+356600     MOVE CVR-FLAT-AMT-2         TO EM2-CVR-FLAT-AMT-2.
+356700
+356800     MOVE BNCTWS-EMP-CONT        TO WS-EMP-COST.
+356900*    COMPUTE WS-EMP-COST ROUNDED =  BNCTWS-EMP-PT-CONT
+357000*                                +  BNCTWS-EMP-AT-CONT.
+357100
+357200     IF  (PLN-CONTRIB-TYPE       = "3")
+J67795*        MOVE PRE-FLEX-CONT          TO WS-FLEX-COST
+J67795         COMPUTE WS-FLEX-COST ROUNDED =
+J67795              PRE-FLEX-CONT * 1
+J67795*        MOVE PRE-EMP-CONT           TO WS-EMP-COST
+J67795         COMPUTE WS-EMP-COST ROUNDED = 
+J67795              PRE-EMP-CONT * 1
+357400     ELSE
+357500     IF  (PLN-CONTRIB-TYPE       = "4")
+               IF  (RTD-EMP-RATE           =  ZEROES)
+                   COMPUTE WS-FLEX-COST    =  BNCTWS-EMP-CONT
+                                           * NEGATIVE-ONE
+                   MOVE ZERO               TO WS-EMP-COST
+               ELSE
+                   MOVE ZERO               TO WS-FLEX-COST
+               END-IF
+357700     END-IF
+357800     END-IF.
+357900
+358000     IF  (PRM-CONTRIB    = "A")
+358100          MOVE WS-EMP-COST            TO G10-EMP-COST
+358200          MOVE WS-EMP-COST            TO EM2-EMP-COST
+358300          MOVE WS-FLEX-COST           TO G10-FLEX-COST
+358400          MOVE WS-FLEX-COST           TO EM2-FLEX-COST
+358600          COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+358700                                      -  WS-FLEX-COST
+359100          MOVE WS-TOT-COST            TO G10-TOT-EMP-COST
+359200          MOVE WS-TOT-COST            TO EM2-TOT-EMP-COST
+359300          MOVE BNCTWS-COMP-CONT       TO G10-COMPANY-COST
+359400          MOVE BNCTWS-COMP-CONT       TO EM2-COMPANY-COST
+359500     ELSE
+359600     IF  (PRM-CONTRIB    = "M")
+359700          COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+359800                                      /  12
+359900          MOVE WS-COST-P              TO G10-EMP-COST
+360000          MOVE WS-COST-P              TO EM2-EMP-COST
+360100          COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+360200                                      /  12
+360300          MOVE WS-COST-F              TO G10-FLEX-COST
+360400          MOVE WS-COST-F              TO EM2-FLEX-COST
+360600          COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+360700                                      -  WS-COST-F
+361100          MOVE WS-TOT-COST            TO G10-TOT-EMP-COST
+361200          MOVE WS-TOT-COST            TO EM2-TOT-EMP-COST
+361300          COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+361400                                      /  12
+361500          MOVE WS-COST-C              TO G10-COMPANY-COST
+361600          MOVE WS-COST-C              TO EM2-COMPANY-COST
+361700     ELSE
+361800     IF  (PRM-CONTRIB    = "P")
+361900          IF  (EMP-PAY-FREQUENCY      = 1)
+362000              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+362100                                          /  52
+362200              MOVE WS-COST-P              TO G10-EMP-COST
+362300              MOVE WS-COST-P              TO EM2-EMP-COST
+362400              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+362500                                          /  52
+362600              MOVE WS-COST-F              TO G10-FLEX-COST
+362700              MOVE WS-COST-F              TO EM2-FLEX-COST
+362900              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+363000                                          -  WS-COST-F
+363400              MOVE WS-TOT-COST            TO G10-TOT-EMP-COST
+363500              MOVE WS-TOT-COST            TO EM2-TOT-EMP-COST
+363600              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+363700                                          /  52
+363800              MOVE WS-COST-C              TO G10-COMPANY-COST
+363900              MOVE WS-COST-C              TO EM2-COMPANY-COST
+364000          ELSE
+364100          IF  (EMP-PAY-FREQUENCY      = 2)
+364200              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+364300                                          /  26
+364400              MOVE WS-COST-P              TO G10-EMP-COST
+364500              MOVE WS-COST-P              TO EM2-EMP-COST
+364600              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+364700                                          /  26 
+364800              MOVE WS-COST-F              TO G10-FLEX-COST
+364900              MOVE WS-COST-F              TO EM2-FLEX-COST
+365100              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+365200                                          -  WS-COST-F
+365600              MOVE WS-TOT-COST            TO G10-TOT-EMP-COST
+365700              MOVE WS-TOT-COST            TO EM2-TOT-EMP-COST
+365800              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+365900                                          /  26
+366000              MOVE WS-COST-C              TO G10-COMPANY-COST
+366100              MOVE WS-COST-C              TO EM2-COMPANY-COST
+366200          ELSE
+366300          IF  (EMP-PAY-FREQUENCY      = 3)
+366400              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+366500                                          /  24
+366600              MOVE WS-COST-P              TO G10-EMP-COST
+366700              MOVE WS-COST-P              TO EM2-EMP-COST
+366800              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+366900                                          /  24 
+367000              MOVE WS-COST-F              TO G10-FLEX-COST
+367100              MOVE WS-COST-F              TO EM2-FLEX-COST
+367300              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+367400                                          -  WS-COST-F
+367800              MOVE WS-TOT-COST            TO G10-TOT-EMP-COST
+367900              MOVE WS-TOT-COST            TO EM2-TOT-EMP-COST
+368000              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+368100                                          /  24
+368200              MOVE WS-COST-C              TO G10-COMPANY-COST
+368300              MOVE WS-COST-C              TO EM2-COMPANY-COST
+368400          ELSE
+368500          IF  (EMP-PAY-FREQUENCY      = 4)
+368600              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+368700                                          /  12
+368800              MOVE WS-COST-P              TO G10-EMP-COST
+368900              MOVE WS-COST-P              TO EM2-EMP-COST
+369000              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+369100                                          /  12 
+369200              MOVE WS-COST-F              TO G10-FLEX-COST
+369300              MOVE WS-COST-F              TO EM2-FLEX-COST
+369500              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+369600                                          -  WS-COST-F
+370000              MOVE WS-TOT-COST            TO G10-TOT-EMP-COST
+370100              MOVE WS-TOT-COST            TO EM2-TOT-EMP-COST
+370200              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+370300                                          /  12
+370400              MOVE WS-COST-C              TO G10-COMPANY-COST
+370500              MOVE WS-COST-C              TO EM2-COMPANY-COST
+370600          END-IF 
+370700          END-IF 
+370800          END-IF 
+370900          END-IF 
+371000     END-IF
+371100     END-IF
+371200     END-IF.
+371300
+371400     IF (PRM-REPORT-OPT          NOT = "R")
+371600         PERFORM 800-OPENAPPENDCSV-EMPLOYEE2
+371800         PERFORM 800-WRITECSV-EMPLOYEE2
+372000         PERFORM 800-CLOSECSV-EMPLOYEE2
+372100     END-IF.
+372200
+372300     IF (PRM-REPORT-OPT          NOT = "C")
+372400         MOVE GN10-CVR-GROUP-NAME     TO RPT-GROUP-REQUEST 
+372500         PERFORM 700-PRINT-RPT-GRP 
+372600     END-IF.
+372700
+372800 1410-END.
+372900
+373000******************************************************************
+373100 1420-CVR-MULT.
+373200******************************************************************
+373300
+373400     INITIALIZE                      EM3-EMP-COMPANY
+373500                                     EM3-EMP-EMPLOYEE
+373600                                     EM3-PLN-PLAN-TYPE
+373700                                     EM3-PLN-PLAN-CODE
+373800                                     EM3-PLN-DISPLAY-DESC
+373900                                     EM3-PLN-DESC
+374000                                     EM3-ELIG-DATE
+374100                                     EM3-PLN-TYPE-DESC
+374200                                     G11-SALARY
+374300                                     G11-CVR-MULT-SALARY
+374400                                     G11-CVR-MIN-MULTIPLE
+374500                                     G11-CVR-MAX-MULTIPLE
+374600                                     G11-CVR-MIN-COVER
+374700                                     G11-CVR-MAX-COVER
+374800                                     G11-CVR-BENEFIT-PCT
+374900                                     G11-CVR-PLAN-TYPE
+375000                                     G11-CVR-PLAN-CODE
+375100                                     EM3-SALARY
+375200                                     EM3-CVR-MULT-SALARY
+375300                                     EM3-CVR-MIN-MULTIPLE
+375400                                     EM3-CVR-MAX-MULTIPLE
+375500                                     EM3-CVR-MIN-COVER
+375600                                     EM3-CVR-MAX-COVER
+375700                                     EM3-CVR-BENEFIT-PCT
+375800                                     EM3-CVR-BN-PLAN-TYPE
+375900                                     EM3-CVR-BN-PLAN-CODE
+376000                                     G11-EMP-COST
+376100                                     EM3-EMP-COST
+376200                                     G11-FLEX-COST
+376300                                     EM3-FLEX-COST
+376400                                     G11-TOT-EMP-COST
+376500                                     EM3-TOT-EMP-COST
+376600                                     G11-COMPANY-COST
+376700                                     EM3-COMPANY-COST
+376800                                     G11-PLN-DISPLAY-DESC
+376900                                     EM3-CVR-PLN-DISPLAY-DESC
+377000                                     G11-PLN-DESC
+377100                                     EM3-CVR-PLN-DESC.
+377200
+377300     MOVE PRM-COMPANY                TO EM3-EMP-COMPANY.
+377400     MOVE EMP-EMPLOYEE               TO EM3-EMP-EMPLOYEE.
+377500     MOVE PLN-PLAN-TYPE              TO EM3-PLN-PLAN-TYPE.
+377600     MOVE PLN-PLAN-CODE              TO EM3-PLN-PLAN-CODE.
+377700     MOVE PLN-DISPLAY-DESC           TO EM3-PLN-DISPLAY-DESC.
+377800     MOVE PLN-DESC                   TO EM3-PLN-DESC.
+377900     MOVE WS-ELIG-DATE               TO EM3-ELIG-DATE.
+378400
+378500     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM3-PLN-TYPE-DESC.
+378600
+378700     MOVE PLN-PLAN-TYPE          TO WS-PLAN-TYPE.
+378800     MOVE PLN-PLAN-CODE          TO WS-PLAN-CODE.
+378900
+379000     MOVE BNASWS-ANNUAL-SALARY   TO G11-SALARY.
+379100
+379200     MOVE CVR-MULT-SALARY        TO G11-CVR-MULT-SALARY.
+379300     MOVE CVR-MIN-MULTIPLE       TO G11-CVR-MIN-MULTIPLE.
+379400     MOVE CVR-MAX-MULTIPLE       TO G11-CVR-MAX-MULTIPLE.
+379500     MOVE CVR-MIN-COVER          TO G11-CVR-MIN-COVER.
+379600     MOVE CVR-MAX-COVER          TO G11-CVR-MAX-COVER.
+379700     MOVE CVR-BENEFIT-PCT        TO G11-CVR-BENEFIT-PCT.
+379800     MOVE CVR-BN-PLAN-TYPE       TO G11-CVR-PLAN-TYPE.
+379900     MOVE CVR-BN-PLAN-CODE       TO G11-CVR-PLAN-CODE.
+380000
+380100     MOVE BNASWS-ANNUAL-SALARY   TO EM3-SALARY.
+380200     MOVE CVR-MULT-SALARY        TO EM3-CVR-MULT-SALARY.
+380300     MOVE CVR-MIN-MULTIPLE       TO EM3-CVR-MIN-MULTIPLE.
+380400     MOVE CVR-MAX-MULTIPLE       TO EM3-CVR-MAX-MULTIPLE.
+380500     MOVE CVR-MIN-COVER          TO EM3-CVR-MIN-COVER.
+380600     MOVE CVR-MAX-COVER          TO EM3-CVR-MAX-COVER.
+380700     MOVE CVR-BENEFIT-PCT        TO EM3-CVR-BENEFIT-PCT.
+380800     MOVE CVR-BN-PLAN-TYPE       TO EM3-CVR-BN-PLAN-TYPE.
+380900     MOVE CVR-BN-PLAN-CODE       TO EM3-CVR-BN-PLAN-CODE.
+381000
+           MOVE BNCTWS-COVER-AMT       TO G11-COVER-AMT.
+
+381100     MOVE BNCTWS-EMP-CONT        TO WS-EMP-COST.
+381200*    COMPUTE WS-EMP-COST ROUNDED =  BNCTWS-EMP-PT-CONT
+381300*                                +  BNCTWS-EMP-AT-CONT.
+381400
+381500     IF  (PLN-CONTRIB-TYPE       = "3")
+J67795*        MOVE PRE-FLEX-CONT          TO WS-FLEX-COST
+J67795         COMPUTE WS-FLEX-COST ROUNDED =
+J67795              PRE-FLEX-CONT * 1
+J67795*        MOVE PRE-EMP-CONT           TO WS-EMP-COST
+J67795         COMPUTE WS-EMP-COST ROUNDED =
+J67795              PRE-EMP-CONT * 1
+381700     ELSE
+381800     IF  (PLN-CONTRIB-TYPE       = "4")
+               IF  (RTD-EMP-RATE           =  ZEROES)
+                   COMPUTE WS-FLEX-COST    =  BNCTWS-EMP-CONT
+                                           * NEGATIVE-ONE
+                   MOVE ZERO               TO WS-EMP-COST
+               ELSE
+                   MOVE ZERO               TO WS-FLEX-COST
+               END-IF
+382000     END-IF
+382100     END-IF.
+382200
+382300     IF  (PRM-CONTRIB    = "A")
+382400          MOVE WS-EMP-COST            TO G11-EMP-COST
+382500          MOVE WS-EMP-COST            TO EM3-EMP-COST
+382600          MOVE WS-FLEX-COST           TO G11-FLEX-COST
+382700          MOVE WS-FLEX-COST           TO EM3-FLEX-COST
+382900          COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+383000                                      -  WS-FLEX-COST
+383400          MOVE WS-TOT-COST            TO G11-TOT-EMP-COST
+383500          MOVE WS-TOT-COST            TO EM3-TOT-EMP-COST
+383600          MOVE BNCTWS-COMP-CONT       TO G11-COMPANY-COST
+383700          MOVE BNCTWS-COMP-CONT       TO EM3-COMPANY-COST
+383800     ELSE
+383900     IF  (PRM-CONTRIB    = "M")
+384000          COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+384100                                      /  12
+384200          MOVE WS-COST-P              TO G11-EMP-COST
+384300          MOVE WS-COST-P              TO EM3-EMP-COST
+384400          COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+384500                                      /  12
+384600          MOVE WS-COST-F              TO G11-FLEX-COST
+384700          MOVE WS-COST-F              TO EM3-FLEX-COST
+384900          COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+385000                                      -  WS-COST-F
+385400          MOVE WS-TOT-COST            TO G11-TOT-EMP-COST
+385500          MOVE WS-TOT-COST            TO EM3-TOT-EMP-COST
+385600          COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+385700                                      /  12
+385800          MOVE WS-COST-C              TO G11-COMPANY-COST
+385900          MOVE WS-COST-C              TO EM3-COMPANY-COST
+386000     ELSE
+386100     IF  (PRM-CONTRIB    = "P")
+386200          IF  (EMP-PAY-FREQUENCY      = 1)
+386300              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+386400                                          /  52
+386500              MOVE WS-COST-P              TO G11-EMP-COST
+386600              MOVE WS-COST-P              TO EM3-EMP-COST
+386700              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+386800                                          /  52
+386900              MOVE WS-COST-F              TO G11-FLEX-COST
+387000              MOVE WS-COST-F              TO EM3-FLEX-COST
+387200              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+387300                                          -  WS-COST-F
+387700              MOVE WS-TOT-COST            TO G11-TOT-EMP-COST
+387800              MOVE WS-TOT-COST            TO EM3-TOT-EMP-COST
+387900              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+388000                                          /  52
+388100              MOVE WS-COST-C              TO G11-COMPANY-COST
+388200              MOVE WS-COST-C              TO EM3-COMPANY-COST
+388300          ELSE
+388400          IF  (EMP-PAY-FREQUENCY      = 2)
+388500              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+388600                                          /  26
+388700              MOVE WS-COST-P              TO G11-EMP-COST
+388800              MOVE WS-COST-P              TO EM3-EMP-COST
+388900              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+389000                                          /  26 
+389100              MOVE WS-COST-F              TO G11-FLEX-COST
+389200              MOVE WS-COST-F              TO EM3-FLEX-COST
+389400              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+389500                                          -  WS-COST-F
+389900              MOVE WS-TOT-COST            TO G11-TOT-EMP-COST
+390000              MOVE WS-TOT-COST            TO EM3-TOT-EMP-COST
+390100              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+390200                                          /  26
+390300              MOVE WS-COST-C              TO G11-COMPANY-COST
+390400              MOVE WS-COST-C              TO EM3-COMPANY-COST
+390500          ELSE
+390600          IF  (EMP-PAY-FREQUENCY      = 3)
+390700              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+390800                                          /  24
+390900              MOVE WS-COST-P              TO G11-EMP-COST
+391000              MOVE WS-COST-P              TO EM3-EMP-COST
+391100              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+391200                                          /  24 
+391300              MOVE WS-COST-F              TO G11-FLEX-COST
+391400              MOVE WS-COST-F              TO EM3-FLEX-COST
+391600              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+391700                                          -  WS-COST-F
+392100              MOVE WS-TOT-COST            TO G11-TOT-EMP-COST
+392200              MOVE WS-TOT-COST            TO EM3-TOT-EMP-COST
+392300              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+392400                                          /  24
+392500              MOVE WS-COST-C              TO G11-COMPANY-COST
+392600              MOVE WS-COST-C              TO EM3-COMPANY-COST
+392700          ELSE
+392800          IF  (EMP-PAY-FREQUENCY      = 4)
+392900              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+393000                                          /  12
+393100              MOVE WS-COST-P              TO G11-EMP-COST
+393200              MOVE WS-COST-P              TO EM3-EMP-COST
+393300              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+393400                                          /  12 
+393500              MOVE WS-COST-F              TO G11-FLEX-COST
+393600              MOVE WS-COST-F              TO EM3-FLEX-COST
+393800              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+393900                                          -  WS-COST-F
+394300              MOVE WS-TOT-COST            TO G11-TOT-EMP-COST
+394400              MOVE WS-TOT-COST            TO EM3-TOT-EMP-COST
+394500              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+394600                                          /  12
+394700              MOVE WS-COST-C              TO G11-COMPANY-COST
+394800              MOVE WS-COST-C              TO EM3-COMPANY-COST
+394900          END-IF 
+395000          END-IF 
+395100          END-IF 
+395200          END-IF 
+395300     END-IF
+395400     END-IF
+395500     END-IF.
+395600
+395700     MOVE CVR-BN-PLAN-TYPE       TO DB-PLAN-TYPE.
+395800     MOVE CVR-BN-PLAN-CODE       TO DB-PLAN-CODE.
+395900     PERFORM 840-FIND-PLNSET1.
+396000     IF  (PLAN-FOUND)
+396100         MOVE PLN-DISPLAY-DESC   TO G11-PLN-DISPLAY-DESC
+396200         MOVE PLN-DISPLAY-DESC   TO EM3-CVR-PLN-DISPLAY-DESC
+396300         MOVE PLN-DESC           TO G11-PLN-DESC
+396400         MOVE PLN-DESC           TO EM3-CVR-PLN-DESC
+396500     ELSE
+396600         MOVE SPACES             TO G11-PLN-DISPLAY-DESC
+396700         MOVE SPACES             TO EM3-CVR-PLN-DISPLAY-DESC
+396800         MOVE SPACES             TO G11-PLN-DESC
+396900         MOVE SPACES             TO EM3-CVR-PLN-DESC
+397000     END-IF.
+397100     
+397200     MOVE WS-PLAN-TYPE           TO DB-PLAN-TYPE.
+397300     MOVE WS-PLAN-CODE           TO DB-PLAN-CODE.
+397400     PERFORM 840-FIND-PLNSET1.
+397500
+397600     IF (PRM-REPORT-OPT          NOT = "R")
+397800         PERFORM 800-OPENAPPENDCSV-EMPLOYEE3
+398000         PERFORM 800-WRITECSV-EMPLOYEE3
+398200         PERFORM 800-CLOSECSV-EMPLOYEE3
+398300     END-IF.
+398400
+398500     IF (PRM-REPORT-OPT          NOT = "C")
+398600         MOVE GN11-CVR-GROUP-NAME     TO RPT-GROUP-REQUEST 
+398700         PERFORM 700-PRINT-RPT-GRP 
+398800     END-IF.
+398900
+399000 1420-END.
+399100
+399200******************************************************************
+399300 1430-CVR-SUPP.
+399400******************************************************************
+399500 
+399600     INITIALIZE                      EM4-EMP-COMPANY
+399700                                     EM4-EMP-EMPLOYEE
+399800                                     EM4-PLN-PLAN-TYPE
+399900                                     EM4-PLN-PLAN-CODE
+400000                                     EM4-PLN-DISPLAY-DESC
+400100                                     EM4-PLN-DESC
+400200                                     EM4-ELIG-DATE
+400300                                     EM4-PLN-TYPE-DESC
+400400                                     G12-SALARY
+400500                                     G12-CVR-INCREMENTS
+400600                                     G12-CVR-MIN-MULTIPLE
+400700                                     G12-CVR-MAX-MULTIPLE
+400800                                     G12-CVR-MIN-COVER
+400900                                     G12-CVR-MAX-COVER
+401000                                     G12-CVR-BENEFIT-PCT
+401100                                     G12-CVR-PLAN-TYPE
+401200                                     G12-CVR-PLAN-CODE
+401300                                     EM4-SALARY
+401400                                     EM4-CVR-INCREMENTS
+401500                                     EM4-CVR-MIN-MULTIPLE
+401600                                     EM4-CVR-MAX-MULTIPLE
+401700                                     EM4-CVR-MIN-COVER
+401800                                     EM4-CVR-MAX-COVER
+401900                                     EM4-CVR-BENEFIT-PCT
+402000                                     EM4-CVR-BN-PLAN-TYPE
+402100                                     EM4-CVR-BN-PLAN-CODE
+402200                                     G12-EMP-COST
+402300                                     EM4-EMP-COST
+402400                                     G12-FLEX-COST
+402500                                     EM4-FLEX-COST
+402600                                     G12-TOT-EMP-COST
+402700                                     EM4-TOT-EMP-COST
+402800                                     G12-COMPANY-COST
+402900                                     EM4-COMPANY-COST
+403000                                     G12-PLN-DISPLAY-DESC
+403100                                     EM4-CVR-PLN-DISPLAY-DESC
+403200                                     G12-PLN-DESC
+403300                                     EM4-CVR-PLN-DESC.
+403400     
+403500     MOVE PRM-COMPANY                TO EM4-EMP-COMPANY.
+403600     MOVE EMP-EMPLOYEE               TO EM4-EMP-EMPLOYEE.
+403700     MOVE PLN-PLAN-TYPE              TO EM4-PLN-PLAN-TYPE.
+403800     MOVE PLN-PLAN-CODE              TO EM4-PLN-PLAN-CODE.
+403900     MOVE PLN-DISPLAY-DESC           TO EM4-PLN-DISPLAY-DESC.
+404000     MOVE PLN-DESC                   TO EM4-PLN-DESC.
+404100     MOVE WS-ELIG-DATE               TO EM4-ELIG-DATE.
+404600
+404700     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM4-PLN-TYPE-DESC.
+404800
+           IF (PLN-CONTRIB-TYPE            NOT = "0")
+404900         MOVE PRM-COMPANY            TO BNASWS-COMPANY
+405000         MOVE EMP-EMPLOYEE           TO BNASWS-EMPLOYEE
+405100         MOVE PRE-SALARY-TYPE        TO BNASWS-SALARY-TYPE
+405200         MOVE PRE-SAL-FIRST-MO       TO BNASWS-DATE-TYPE
+405300         MOVE PRM-ELEC-DATE          TO BNASWS-START-DATE
+405400         MOVE ZEROES                 TO BNASWS-STOP-DATE
+405500         MOVE PRE-SALARY-DATE        TO BNASWS-AS-OF-MMDD
+405600         MOVE PRE-SALARY-YEAR        TO BNASWS-AS-OF-YYYY
+405700         IF  (PRE-SALARY-TYPE NOT = SPACES)
+405800             PERFORM 5000-DO-ANNUAL-SALARY-71
+405900             IF (ERROR-FOUND)
+406000                 GO TO 1430-END
+406100             END-IF
+406200         ELSE
+406300             INITIALIZE BNASWS-ANNUAL-SALARY
+               END-IF
+           ELSE
+406300         INITIALIZE BNASWS-ANNUAL-SALARY.
+406400
+406500     MOVE BNASWS-ANNUAL-SALARY TO WS-ANN-SAL.
+406600
+406700     MOVE WS-ANN-SAL             TO G12-SALARY.
+406800     MOVE CVR-INCREMENTS         TO G12-CVR-INCREMENTS.
+406900     MOVE CVR-MIN-MULTIPLE       TO G12-CVR-MIN-MULTIPLE.
+407000     MOVE CVR-MAX-MULTIPLE       TO G12-CVR-MAX-MULTIPLE.
+407100     MOVE CVR-MIN-COVER          TO G12-CVR-MIN-COVER.
+407200     MOVE CVR-MAX-COVER          TO G12-CVR-MAX-COVER.
+407300     MOVE CVR-BENEFIT-PCT        TO G12-CVR-BENEFIT-PCT.
+407400     MOVE CVR-BN-PLAN-TYPE       TO G12-CVR-PLAN-TYPE.
+407500     MOVE CVR-BN-PLAN-CODE       TO G12-CVR-PLAN-CODE.
+407600
+407700     MOVE PLN-PLAN-TYPE          TO WS-PLAN-TYPE.
+407800     MOVE PLN-PLAN-CODE          TO WS-PLAN-CODE.
+407900
+408000     MOVE WS-ANN-SAL             TO EM4-SALARY.
+408100     MOVE CVR-INCREMENTS         TO EM4-CVR-INCREMENTS.
+408200     MOVE CVR-MIN-MULTIPLE       TO EM4-CVR-MIN-MULTIPLE.
+408300     MOVE CVR-MAX-MULTIPLE       TO EM4-CVR-MAX-MULTIPLE.
+408400     MOVE CVR-MIN-COVER          TO EM4-CVR-MIN-COVER.
+408500     MOVE CVR-MAX-COVER          TO EM4-CVR-MAX-COVER.
+408600     MOVE CVR-BENEFIT-PCT        TO EM4-CVR-BENEFIT-PCT.
+408700     MOVE CVR-BN-PLAN-TYPE       TO EM4-CVR-BN-PLAN-TYPE.
+408800     MOVE CVR-BN-PLAN-CODE       TO EM4-CVR-BN-PLAN-CODE.
+408900
+409000     MOVE BNCTWS-EMP-CONT        TO WS-EMP-COST.
+409100*    COMPUTE WS-EMP-COST ROUNDED =  BNCTWS-EMP-PT-CONT
+409200*                                +  BNCTWS-EMP-AT-CONT.
+409300
+409400     IF  (PLN-CONTRIB-TYPE       = "3")
+J67795*        MOVE PRE-FLEX-CONT          TO WS-FLEX-COST
+J67795         COMPUTE WS-FLEX-COST ROUNDED =
+J67795              PRE-FLEX-CONT * 1
+J67795*        MOVE PRE-EMP-CONT           TO WS-EMP-COST
+J67795         COMPUTE WS-EMP-COST ROUNDED =
+J67795              PRE-EMP-CONT * 1
+409600     ELSE
+409700     IF  (PLN-CONTRIB-TYPE       = "4")
+               IF  (RTD-EMP-RATE           =  ZEROES)
+                   COMPUTE WS-FLEX-COST    =  BNCTWS-EMP-CONT
+                                           * NEGATIVE-ONE
+                   MOVE ZERO               TO WS-EMP-COST
+               ELSE
+                   MOVE ZERO               TO WS-FLEX-COST
+               END-IF
+409900     END-IF
+410000     END-IF.
+410100
+410200     IF  (PRM-CONTRIB    = "A")
+410300          MOVE WS-EMP-COST            TO G12-EMP-COST
+410400          MOVE WS-EMP-COST            TO EM4-EMP-COST
+410500          MOVE WS-FLEX-COST           TO G12-FLEX-COST
+410600          MOVE WS-FLEX-COST           TO EM4-FLEX-COST
+410800          COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+410900                                      -  WS-FLEX-COST
+411300          MOVE WS-TOT-COST            TO G12-TOT-EMP-COST
+411400          MOVE WS-TOT-COST            TO EM4-TOT-EMP-COST
+411500          MOVE BNCTWS-COMP-CONT       TO G12-COMPANY-COST
+411600          MOVE BNCTWS-COMP-CONT       TO EM4-COMPANY-COST
+411700     ELSE
+411800     IF  (PRM-CONTRIB    = "M")
+411900          COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+412000                                      /  12
+412100          MOVE WS-COST-P              TO G12-EMP-COST
+412200          MOVE WS-COST-P              TO EM4-EMP-COST
+412300          COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+412400                                      /  12
+412500          MOVE WS-COST-F              TO G12-FLEX-COST
+412600          MOVE WS-COST-F              TO EM4-FLEX-COST
+412800          COMPUTE WS-TOT-COST ROUNDED =  WS-COST-F   
+412900                                      -  WS-COST-P   
+413300          MOVE WS-TOT-COST            TO G12-TOT-EMP-COST
+413400          MOVE WS-TOT-COST            TO EM4-TOT-EMP-COST
+413500          COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+413600                                      /  12
+413700          MOVE WS-COST-C              TO G12-COMPANY-COST
+413800          MOVE WS-COST-C              TO EM4-COMPANY-COST
+413900     ELSE
+414000     IF  (PRM-CONTRIB    = "P")
+414100          IF  (EMP-PAY-FREQUENCY      = 1)
+414200              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+414300                                          /  52
+414400              MOVE WS-COST-P              TO G12-EMP-COST
+414500              MOVE WS-COST-P              TO EM4-EMP-COST
+414600              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+414700                                          /  52
+414800              MOVE WS-COST-F              TO G12-FLEX-COST
+414900              MOVE WS-COST-F              TO EM4-FLEX-COST
+415100              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+415200                                          -  WS-COST-F
+415600              MOVE WS-TOT-COST            TO G12-TOT-EMP-COST
+415700              MOVE WS-TOT-COST            TO EM4-TOT-EMP-COST
+415800              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+415900                                          /  52
+416000              MOVE WS-COST-C              TO G12-COMPANY-COST
+416100              MOVE WS-COST-C              TO EM4-COMPANY-COST
+416200          ELSE
+416300          IF  (EMP-PAY-FREQUENCY      = 2)
+416400              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+416500                                          /  26
+416600              MOVE WS-COST-P              TO G12-EMP-COST
+416700              MOVE WS-COST-P              TO EM4-EMP-COST
+416800              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+416900                                          /  26 
+417000              MOVE WS-COST-F              TO G12-FLEX-COST
+417100              MOVE WS-COST-F              TO EM4-FLEX-COST
+417300              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+417400                                          -  WS-COST-F
+417800              MOVE WS-TOT-COST            TO G12-TOT-EMP-COST
+417900              MOVE WS-TOT-COST            TO EM4-TOT-EMP-COST
+418000              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+418100                                          /  26
+418200              MOVE WS-COST-C              TO G12-COMPANY-COST
+418300              MOVE WS-COST-C              TO EM4-COMPANY-COST
+418400          ELSE
+418500          IF  (EMP-PAY-FREQUENCY      = 3)
+418600              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+418700                                          /  24
+418800              MOVE WS-COST-P              TO G12-EMP-COST
+418900              MOVE WS-COST-P              TO EM4-EMP-COST
+419000              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+419100                                          /  24 
+419200              MOVE WS-COST-F              TO G12-FLEX-COST
+419300              MOVE WS-COST-F              TO EM4-FLEX-COST
+419500              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+419600                                          -  WS-COST-F
+420000              MOVE WS-TOT-COST            TO G12-TOT-EMP-COST
+420100              MOVE WS-TOT-COST            TO EM4-TOT-EMP-COST
+420200              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+420300                                          /  24
+420400              MOVE WS-COST-C              TO G12-COMPANY-COST
+420500              MOVE WS-COST-C              TO EM4-COMPANY-COST
+420600          ELSE
+420700          IF  (EMP-PAY-FREQUENCY      = 4)
+420800              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+420900                                          /  12
+421000              MOVE WS-COST-P              TO G12-EMP-COST
+421100              MOVE WS-COST-P              TO EM4-EMP-COST
+421200              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+421300                                          /  12 
+421400              MOVE WS-COST-F              TO G12-FLEX-COST
+421500              MOVE WS-COST-F              TO EM4-FLEX-COST
+421700              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+421800                                          -  WS-COST-F
+422200              MOVE WS-TOT-COST            TO G12-TOT-EMP-COST
+422300              MOVE WS-TOT-COST            TO EM4-TOT-EMP-COST
+422400              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+422500                                          /  12
+422600              MOVE WS-COST-C              TO G12-COMPANY-COST
+422700              MOVE WS-COST-C              TO EM4-COMPANY-COST
+422800          END-IF 
+422900          END-IF 
+423000          END-IF 
+423100          END-IF 
+423200     END-IF
+423300     END-IF
+423400     END-IF.
+423500     
+423600     MOVE CVR-BN-PLAN-TYPE       TO DB-PLAN-TYPE.
+423700     MOVE CVR-BN-PLAN-CODE       TO DB-PLAN-CODE.
+423800     PERFORM 840-FIND-PLNSET1.
+423900     IF  (PLAN-FOUND)
+424000         MOVE PLN-DISPLAY-DESC   TO G12-PLN-DISPLAY-DESC
+424100         MOVE PLN-DISPLAY-DESC   TO EM4-CVR-PLN-DISPLAY-DESC
+424200         MOVE PLN-DESC           TO G12-PLN-DESC
+424300         MOVE PLN-DESC           TO EM4-CVR-PLN-DESC
+424400     ELSE
+424500         MOVE SPACES             TO G12-PLN-DISPLAY-DESC
+424600         MOVE SPACES             TO EM4-CVR-PLN-DISPLAY-DESC
+424700         MOVE SPACES             TO G12-PLN-DESC
+424800         MOVE SPACES             TO EM4-CVR-PLN-DESC
+424900     END-IF.
+425000     
+425100     MOVE WS-PLAN-TYPE           TO DB-PLAN-TYPE.
+425200     MOVE WS-PLAN-CODE           TO DB-PLAN-CODE.
+425300     PERFORM 840-FIND-PLNSET1.
+425400
+425500     IF (PRM-REPORT-OPT          NOT = "R")
+425700         PERFORM 800-OPENAPPENDCSV-EMPLOYEE4
+425900         PERFORM 800-WRITECSV-EMPLOYEE4
+426100         PERFORM 800-CLOSECSV-EMPLOYEE4
+426200     END-IF.
+426300
+426400     IF (PRM-REPORT-OPT          NOT = "C")
+426500         MOVE GN12-CVR-GROUP-NAME     TO RPT-GROUP-REQUEST 
+426600         PERFORM 700-PRINT-RPT-GRP 
+426700     END-IF.
+426800
+426900 1430-END.
+427000
+427100******************************************************************
+427200 1440-CVR-PERC.
+427300******************************************************************
+427400 
+427500     INITIALIZE                      EM5-EMP-COMPANY
+427600                                     EM5-EMP-EMPLOYEE
+427700                                     EM5-PLN-PLAN-TYPE
+427800                                     EM5-PLN-PLAN-CODE
+427900                                     EM5-PLN-DISPLAY-DESC
+428000                                     EM5-PLN-DESC
+428100                                     EM5-ELIG-DATE
+428200                                     EM5-PLN-TYPE-DESC
+428300                                     G13-CVR-SALARY-PCT
+428400                                     G13-CAL-COVERAGE
+428500                                     G13-CAL-SALARY
+428600                                     EM5-CVR-SALARY-PCT
+428700                                     EM5-CAL-COVERAGE
+428800                                     EM5-CAL-SALARY
+428900                                     G13-EMP-COST
+429000                                     EM5-EMP-COST
+429100                                     G13-FLEX-COST
+429200                                     EM5-FLEX-COST
+429300                                     G13-TOT-EMP-COST
+429400                                     EM5-TOT-EMP-COST
+429500                                     G13-COMPANY-COST
+429600                                     EM5-COMPANY-COST.
+429700
+429800     MOVE PRM-COMPANY                TO EM5-EMP-COMPANY.
+429900     MOVE EMP-EMPLOYEE               TO EM5-EMP-EMPLOYEE.
+430000     MOVE PLN-PLAN-TYPE              TO EM5-PLN-PLAN-TYPE.
+430100     MOVE PLN-PLAN-CODE              TO EM5-PLN-PLAN-CODE.
+430200     MOVE PLN-DISPLAY-DESC           TO EM5-PLN-DISPLAY-DESC.
+430300     MOVE PLN-DESC                   TO EM5-PLN-DESC.
+430400     MOVE WS-ELIG-DATE               TO EM5-ELIG-DATE.
+430900
+431000     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM5-PLN-TYPE-DESC.
+431100
+431200     MOVE CVR-SALARY-PCT         TO G13-CVR-SALARY-PCT.
+431300     MOVE BNCVWS-COVER-AMT       TO G13-CAL-COVERAGE.
+431400     MOVE WS-ANN-SAL             TO G13-CAL-SALARY.
+431500
+431600     MOVE CVR-SALARY-PCT         TO EM5-CVR-SALARY-PCT.
+431700     MOVE BNCVWS-COVER-AMT       TO EM5-CAL-COVERAGE.
+431800     MOVE WS-ANN-SAL             TO EM5-CAL-SALARY.
+431900
+432000     MOVE BNCTWS-EMP-CONT        TO WS-EMP-COST.
+432100*    COMPUTE WS-EMP-COST ROUNDED =  BNCTWS-EMP-PT-CONT
+432200*                                +  BNCTWS-EMP-AT-CONT.
+432300
+432400     IF  (PLN-CONTRIB-TYPE       = "3")
+J67795*        MOVE PRE-FLEX-CONT          TO WS-FLEX-COST
+J67795         COMPUTE WS-FLEX-COST ROUNDED =
+J67795              PRE-FLEX-CONT * 1
+J67795*        MOVE PRE-EMP-CONT           TO WS-EMP-COST
+J67795         COMPUTE WS-EMP-COST ROUNDED =
+J67795              PRE-EMP-CONT * 1
+432600     ELSE
+432700     IF  (PLN-CONTRIB-TYPE       = "4")
+               IF  (RTD-EMP-RATE           =  ZEROES)
+                   COMPUTE WS-FLEX-COST    =  BNCTWS-EMP-CONT
+                                           * NEGATIVE-ONE
+                   MOVE ZERO               TO WS-EMP-COST
+               ELSE
+                   MOVE ZERO               TO WS-FLEX-COST
+               END-IF
+432900     END-IF
+433000     END-IF.
+433100
+433200     IF  (PRM-CONTRIB    = "A")
+433300          MOVE WS-EMP-COST            TO G13-EMP-COST
+433400          MOVE WS-EMP-COST            TO EM5-EMP-COST
+433500          MOVE WS-FLEX-COST           TO G13-FLEX-COST
+433600          MOVE WS-FLEX-COST           TO EM5-FLEX-COST
+433800          COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+433900                                      -  WS-FLEX-COST
+434300          MOVE WS-TOT-COST            TO G13-TOT-EMP-COST
+434400          MOVE WS-TOT-COST            TO EM5-TOT-EMP-COST
+434500          MOVE BNCTWS-COMP-CONT       TO G13-COMPANY-COST
+434600          MOVE BNCTWS-COMP-CONT       TO EM5-COMPANY-COST
+434700     ELSE
+434800     IF  (PRM-CONTRIB    = "M")
+434900          COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+435000                                      /  12
+435100          MOVE WS-COST-P              TO G13-EMP-COST
+435200          MOVE WS-COST-P              TO EM5-EMP-COST
+435300          COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+435400                                      /  12
+435500          MOVE WS-COST-F              TO G13-FLEX-COST
+435600          MOVE WS-COST-F              TO EM5-FLEX-COST
+435800          COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+435900                                      -  WS-COST-F
+436300          MOVE WS-TOT-COST            TO G13-TOT-EMP-COST
+436400          MOVE WS-TOT-COST            TO EM5-TOT-EMP-COST
+436500          COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+436600                                      /  12
+436700          MOVE WS-COST-C              TO G13-COMPANY-COST
+436800          MOVE WS-COST-C              TO EM5-COMPANY-COST
+436900     ELSE
+437000     IF  (PRM-CONTRIB    = "P")
+437100          IF  (EMP-PAY-FREQUENCY      = 1)
+437200              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+437300                                          /  52
+437400              MOVE WS-COST-P              TO G13-EMP-COST
+437500              MOVE WS-COST-P              TO EM5-EMP-COST
+437600              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+437700                                          /  52
+437800              MOVE WS-COST-F              TO G13-FLEX-COST
+437900              MOVE WS-COST-F              TO EM5-FLEX-COST
+438100              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+438200                                          -  WS-COST-F
+438600              MOVE WS-TOT-COST            TO G13-TOT-EMP-COST
+438700              MOVE WS-TOT-COST            TO EM5-TOT-EMP-COST
+438800              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+438900                                          /  52
+439000              MOVE WS-COST-C              TO G13-COMPANY-COST
+439100              MOVE WS-COST-C              TO EM5-COMPANY-COST
+439200          ELSE
+439300          IF  (EMP-PAY-FREQUENCY      = 2)
+439400              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+439500                                          /  26
+439600              MOVE WS-COST-P              TO G13-EMP-COST
+439700              MOVE WS-COST-P              TO EM5-EMP-COST
+439800              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+439900                                          /  26 
+440000              MOVE WS-COST-F              TO G13-FLEX-COST
+440100              MOVE WS-COST-F              TO EM5-FLEX-COST
+440300              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+440400                                          -  WS-COST-F
+440800              MOVE WS-TOT-COST            TO G13-TOT-EMP-COST
+440900              MOVE WS-TOT-COST            TO EM5-TOT-EMP-COST
+441000              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+441100                                          /  26
+441200              MOVE WS-COST-C              TO G13-COMPANY-COST
+441300              MOVE WS-COST-C              TO EM5-COMPANY-COST
+441400          ELSE
+441500          IF  (EMP-PAY-FREQUENCY      = 3)
+441600              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+441700                                          /  24
+441800              MOVE WS-COST-P              TO G13-EMP-COST
+441900              MOVE WS-COST-P              TO EM5-EMP-COST
+442000              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+442100                                          /  24 
+442200              MOVE WS-COST-F              TO G13-FLEX-COST
+442300              MOVE WS-COST-F              TO EM5-FLEX-COST
+442500              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+442600                                          -  WS-COST-F
+443000              MOVE WS-TOT-COST            TO G13-TOT-EMP-COST
+443100              MOVE WS-TOT-COST            TO EM5-TOT-EMP-COST
+443200              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+443300                                          /  24
+443400              MOVE WS-COST-C              TO G13-COMPANY-COST
+443500              MOVE WS-COST-C              TO EM5-COMPANY-COST
+443600          ELSE
+443700          IF  (EMP-PAY-FREQUENCY      = 4)
+443800              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+443900                                          /  12
+444000              MOVE WS-COST-P              TO G13-EMP-COST
+444100              MOVE WS-COST-P              TO EM5-EMP-COST
+444200              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+444300                                          /  12 
+444400              MOVE WS-COST-F              TO G13-FLEX-COST
+444500              MOVE WS-COST-F              TO EM5-FLEX-COST
+444700              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+444800                                          -  WS-COST-F
+445200              MOVE WS-TOT-COST            TO G13-TOT-EMP-COST
+445300              MOVE WS-TOT-COST            TO EM5-TOT-EMP-COST
+445400              COMPUTE WS-COST-C ROUNDED   =  BNCTWS-COMP-CONT
+445500                                          /  12
+445600              MOVE WS-COST-C              TO G13-COMPANY-COST
+445700              MOVE WS-COST-C              TO EM5-COMPANY-COST
+445800          END-IF 
+445900          END-IF 
+446000          END-IF 
+446100          END-IF 
+446200     END-IF
+446300     END-IF
+446400     END-IF.
+446500
+446600     IF (PRM-REPORT-OPT          NOT = "R")
+446800         PERFORM 800-OPENAPPENDCSV-EMPLOYEE5
+447000         PERFORM 800-WRITECSV-EMPLOYEE5
+447200         PERFORM 800-CLOSECSV-EMPLOYEE5
+447300     END-IF.
+447400
+447500     IF (PRM-REPORT-OPT          NOT = "C")
+447600         MOVE GN13-CVR-GROUP-NAME     TO RPT-GROUP-REQUEST 
+447700         PERFORM 700-PRINT-RPT-GRP 
+447800     END-IF.
+447900
+448000 1440-END.
+448100
+448200******************************************************************
+448300 1500-CON-5-NVA.
+448400******************************************************************
+448500 
+448600     INITIALIZE                      EM6-EMP-COMPANY
+448700                                     EM6-EMP-EMPLOYEE
+448800                                     EM6-PLN-PLAN-TYPE
+448900                                     EM6-PLN-PLAN-CODE
+449000                                     EM6-PLN-DISPLAY-DESC
+449100                                     EM6-PLN-DESC
+449200                                     EM6-ELIG-DATE
+449300                                     EM6-PLN-TYPE-DESC
+449400                                     G14-PRE-PAY-PER-MIN
+449500                                     G14-PRE-PAY-PER-MAX
+449600                                     G14-PRE-ANN-AMT-MIN
+449700                                     G14-PRE-ANN-AMT-MAX
+449800                                     G14-PRE-PCT-MINIMUM
+449900                                     G14-PRE-PCT-MAXIMUM
+450000                                     EM6-PRE-PAY-PER-MIN
+450100                                     EM6-PRE-PAY-PER-MAX
+450200                                     EM6-PRE-ANN-AMT-MIN
+450300                                     EM6-PRE-ANN-AMT-MAX
+450400                                     EM6-PRE-PCT-MINIMUM
+450500                                     EM6-PRE-PCT-MAXIMUM
+450600                                     G14-CAL-SALARY
+450700                                     EM6-CAL-SALARY.
+450800
+450900     MOVE PRM-COMPANY                TO EM6-EMP-COMPANY.
+451000     MOVE EMP-EMPLOYEE               TO EM6-EMP-EMPLOYEE.
+451100     MOVE PLN-PLAN-TYPE              TO EM6-PLN-PLAN-TYPE.
+451200     MOVE PLN-PLAN-CODE              TO EM6-PLN-PLAN-CODE.
+451300     MOVE PLN-DISPLAY-DESC           TO EM6-PLN-DISPLAY-DESC.
+451400     MOVE PLN-DESC                   TO EM6-PLN-DESC.
+451500     MOVE WS-ELIG-DATE               TO EM6-ELIG-DATE.
+452000
+452100     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM6-PLN-TYPE-DESC.
+452200
+452300     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+452400     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+452500     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+452600     MOVE "E"                    TO BNREWS-COVER-TYPE.
+452700     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+452800     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+452900     MOVE "PRE"                  TO BNREWS-FILE-PREFIX.
+453000     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+453100     IF (ERROR-FOUND)
+453200         GO TO 1500-END.
+453300
+453400     MOVE PRM-COMPANY            TO BNASWS-COMPANY.
+453500     MOVE EMP-EMPLOYEE           TO BNASWS-EMPLOYEE.
+453600     MOVE PRE-SALARY-TYPE        TO BNASWS-SALARY-TYPE.
+453700     MOVE PRE-SAL-FIRST-MO       TO BNASWS-DATE-TYPE.
+453800     MOVE PRM-ELEC-DATE          TO BNASWS-START-DATE.
+453900     MOVE ZEROES                 TO BNASWS-STOP-DATE.
+454000     MOVE PRE-SALARY-DATE        TO BNASWS-AS-OF-MMDD.
+454100     MOVE PRE-SALARY-YEAR        TO BNASWS-AS-OF-YYYY.
+454200     IF  (PRE-SALARY-TYPE NOT = SPACES)
+454300         PERFORM 5000-DO-ANNUAL-SALARY-71
+454400         IF (ERROR-FOUND)
+454500             GO TO 1500-END
+454600         END-IF
+454700     ELSE
+454800         INITIALIZE BNASWS-ANNUAL-SALARY.
+454900
+455000     MOVE BNASWS-ANNUAL-SALARY TO WS-ANN-SAL.
+455100
+455200     MOVE PRE-PAY-PER-MIN        TO G14-PRE-PAY-PER-MIN.
+455300     MOVE PRE-PAY-PER-MAX        TO G14-PRE-PAY-PER-MAX.
+455400     MOVE PRE-ANN-AMT-MIN        TO G14-PRE-ANN-AMT-MIN.
+455500     MOVE PRE-ANN-AMT-MAX        TO G14-PRE-ANN-AMT-MAX.
+J67795*    MOVE PRE-PCT-MINIMUM        TO G14-PRE-PCT-MINIMUM.
+J67795     COMPUTE G14-PRE-PCT-MINIMUM ROUNDED =
+J67795          PRE-PCT-MINIMUM * 1.
+J67795*    MOVE PRE-PCT-MAXIMUM        TO G14-PRE-PCT-MAXIMUM.
+J67795     COMPUTE G14-PRE-PCT-MAXIMUM ROUNDED =
+J67795          PRE-PCT-MAXIMUM * 1.
+455800
+455900     MOVE PRE-PAY-PER-MIN        TO EM6-PRE-PAY-PER-MIN.
+456000     MOVE PRE-PAY-PER-MAX        TO EM6-PRE-PAY-PER-MAX.
+456100     MOVE PRE-ANN-AMT-MIN        TO EM6-PRE-ANN-AMT-MIN.
+456200     MOVE PRE-ANN-AMT-MAX        TO EM6-PRE-ANN-AMT-MAX.
+J67795*    MOVE PRE-PCT-MINIMUM        TO EM6-PRE-PCT-MINIMUM.
+J67795     COMPUTE EM6-PRE-PCT-MINIMUM ROUNDED =
+J67795          PRE-PCT-MINIMUM * 1.
+J67795*    MOVE PRE-PCT-MAXIMUM        TO EM6-PRE-PCT-MAXIMUM.
+J67795     COMPUTE EM6-PRE-PCT-MAXIMUM ROUNDED =
+J67795          PRE-PCT-MAXIMUM * 1.
+456500
+456600     MOVE WS-ANN-SAL             TO G14-CAL-SALARY.
+456700     MOVE WS-ANN-SAL             TO EM6-CAL-SALARY.
+456800
+456900     IF (PRM-REPORT-OPT          NOT = "R")
+457100         PERFORM 800-OPENAPPENDCSV-EMPLOYEE6
+457300         PERFORM 800-WRITECSV-EMPLOYEE6
+457500         PERFORM 800-CLOSECSV-EMPLOYEE6
+457600     END-IF.
+457700
+457800     IF (PRM-REPORT-OPT          NOT = "C")
+457900         MOVE GN14-PRE-GROUP-NAME     TO RPT-GROUP-REQUEST 
+458000         PERFORM 700-PRINT-RPT-GRP 
+458100     END-IF.
+458200
+458300 1500-END.
+458400
+458500******************************************************************
+458600 1600-CON-5-VA.
+458700******************************************************************
+458800 
+458900     INITIALIZE                      EM7-EMP-COMPANY
+459000                                     EM7-EMP-EMPLOYEE
+459100                                     EM7-PLN-PLAN-TYPE
+459200                                     EM7-PLN-PLAN-CODE
+459300                                     EM7-PLN-DISPLAY-DESC
+459400                                     EM7-PLN-DESC
+459500                                     EM7-ELIG-DATE
+459600                                     EM7-PLN-TYPE-DESC
+459700                                     G15-PRE-VAC-MAX-HOURS
+459800                                     G15-PRE-VAC-COST
+459900                                     EM7-PRE-VAC-MAX-HOURS
+460000                                     EM7-PRE-VAC-COST
+460100                                     G15-PRE-RATE
+460200                                     EM7-PRE-RATE.
+460300
+460400     MOVE PRM-COMPANY                TO EM7-EMP-COMPANY.
+460500     MOVE EMP-EMPLOYEE               TO EM7-EMP-EMPLOYEE.
+460600     MOVE PLN-PLAN-TYPE              TO EM7-PLN-PLAN-TYPE.
+460700     MOVE PLN-PLAN-CODE              TO EM7-PLN-PLAN-CODE.
+460800     MOVE PLN-DISPLAY-DESC           TO EM7-PLN-DISPLAY-DESC.
+460900     MOVE PLN-DESC                   TO EM7-PLN-DESC.
+461000     MOVE WS-ELIG-DATE               TO EM7-ELIG-DATE.
+461500
+461600     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM7-PLN-TYPE-DESC.
+461700
+461800     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+461900     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+462000     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+462100     MOVE "E"                    TO BNREWS-COVER-TYPE.
+462200     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+462300     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+462400     MOVE "PRE"                  TO BNREWS-FILE-PREFIX.
+462500     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+462600     IF (ERROR-FOUND)
+462700         GO TO 1600-END.
+462800
+462900     MOVE PRE-VAC-MAX-HOURS      TO G15-PRE-VAC-MAX-HOURS.
+463000     MOVE PRE-VAC-COST           TO G15-PRE-VAC-COST.
+463100
+463200     MOVE PRE-VAC-MAX-HOURS      TO EM7-PRE-VAC-MAX-HOURS.
+463300     MOVE PRE-VAC-COST           TO EM7-PRE-VAC-COST.
+463400
+463500     MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+463600     MOVE PRM-ELEC-DATE          TO DB-START-DATE.
+463700     PERFORM 850-FIND-NLT-EFDSET2.
+463800     IF  (EFD-COMPANY            = PRM-COMPANY)
+463900     OR  (EFD-EMPLOYEE           = EMP-EMPLOYEE)
+464000        IF  (PRM-ELEC-DATE  >= EFD-START-DATE)
+464100        AND ((PRM-ELEC-DATE < EFD-STOP-DATE)
+464200        OR  (EFD-STOP-DATE  = ZEROES))
+464300            IF (EFD-ANNUAL-HOURS            NOT = ZEROES)
+464400                MOVE EFD-ANNUAL-HOURS       TO WS-ANNUAL-HOURS
+464500            ELSE
+464600                MOVE 2080                   TO WS-ANNUAL-HOURS
+464700            END-IF
+464800            IF (EFD-NBR-FTE             = 0)
+464900               MOVE 1                   TO WS-NBR-FTE
+465000            ELSE
+465100               MOVE EFD-NBR-FTE         TO WS-NBR-FTE
+465200            END-IF
+465300            COMPUTE WS-HOURLY-RATE ROUNDED
+465400                                        = EFD-SALARY
+465500                                        / (WS-NBR-FTE
+465600                                        * WS-ANNUAL-HOURS)
+                  IF (PRE-VAC-COST NOT = ZEROES)
+                      COMPUTE WS-HOURLY-RATE ROUNDED
+                              = WS-HOURLY-RATE * (PRE-VAC-COST / 100)
+                  END-IF
+465700            MOVE WS-HOURLY-RATE         TO G15-PRE-RATE
+465800            MOVE WS-HOURLY-RATE         TO EM7-PRE-RATE
+465900        ELSE   
+466000            MOVE ZEROES                 TO G15-PRE-RATE
+466100            MOVE ZEROES                 TO EM7-PRE-RATE
+466200        END-IF
+466300     END-IF.
+466400
+466500     IF (PRM-REPORT-OPT          NOT = "R")
+466700         PERFORM 800-OPENAPPENDCSV-EMPLOYEE7
+466900         PERFORM 800-WRITECSV-EMPLOYEE7
+467100         PERFORM 800-CLOSECSV-EMPLOYEE7
+467200     END-IF.
+467300
+467400     IF (PRM-REPORT-OPT          NOT = "C")
+467500         MOVE GN15-PRE-GROUP-NAME     TO RPT-GROUP-REQUEST 
+467600         PERFORM 700-PRINT-RPT-GRP 
+467700     END-IF.
+467800
+467900 1600-END.
+468000
+468100******************************************************************
+468200 1700-CON-6.
+468300******************************************************************
+468400 
+468500     INITIALIZE                      EM8-EMP-COMPANY
+468600                                     EM8-EMP-EMPLOYEE
+468700                                     EM8-PLN-PLAN-TYPE
+468800                                     EM8-PLN-PLAN-CODE
+468900                                     EM8-PLN-DISPLAY-DESC
+469000                                     EM8-PLN-DESC
+469100                                     EM8-ELIG-DATE
+469200                                     EM8-PLN-TYPE-DESC
+469300                                     G16-CAL-YEARS
+469400                                     G16-CND-EMP-PRE-PCT
+469500                                     G16-CND-EMP-POST-PCT
+469600                                     G16-CND-EMP-TOT-PCT
+469700                                     G16-CND-MATCH-PCT
+469800                                     G16-CND-PCT-MATCHED
+469900                                     G16-CND-MAX-MATCH
+470000                                     G16-CAL-SALARY
+470100                                     EM8-CAL-YEARS
+470200                                     EM8-CND-EMP-PRE-PCT
+470300                                     EM8-CND-EMP-POST-PCT
+470400                                     EM8-CND-EMP-TOT-PCT
+470500                                     EM8-CND-MATCH-PCT
+470600                                     EM8-CND-PCT-MATCHED
+470700                                     EM8-CND-MAX-MATCH
+470800                                     EM8-CAL-SALARY.
+470900
+471000     MOVE PRM-COMPANY                TO EM8-EMP-COMPANY.
+471100     MOVE EMP-EMPLOYEE               TO EM8-EMP-EMPLOYEE.
+471200     MOVE PLN-PLAN-TYPE              TO EM8-PLN-PLAN-TYPE.
+471300     MOVE PLN-PLAN-CODE              TO EM8-PLN-PLAN-CODE.
+471400     MOVE PLN-DISPLAY-DESC           TO EM8-PLN-DISPLAY-DESC.
+471500     MOVE PLN-DESC                   TO EM8-PLN-DESC.
+471600     MOVE WS-ELIG-DATE               TO EM8-ELIG-DATE.
+472100
+472200     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM8-PLN-TYPE-DESC.
+472300
+472400     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+472500     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+472600     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+472700     MOVE "E"                    TO BNREWS-COVER-TYPE.
+472800     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+472900     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+473000     MOVE "PRE"                  TO BNREWS-FILE-PREFIX.
+473100     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+473200     IF (ERROR-FOUND)
+473300         GO TO 1700-END.
+473400
+473500     MOVE PRM-COMPANY            TO BNASWS-COMPANY.
+473600     MOVE EMP-EMPLOYEE           TO BNASWS-EMPLOYEE.
+473700     MOVE PRE-SALARY-TYPE        TO BNASWS-SALARY-TYPE.
+473800     MOVE PRE-SAL-FIRST-MO       TO BNASWS-DATE-TYPE.
+473900     MOVE PRM-ELEC-DATE          TO BNASWS-START-DATE.
+474000     MOVE ZEROES                 TO BNASWS-STOP-DATE.
+474100     MOVE PRE-SALARY-DATE        TO BNASWS-AS-OF-MMDD.
+474200     MOVE PRE-SALARY-YEAR        TO BNASWS-AS-OF-YYYY.
+           IF  (PRE-SALARY-TYPE NOT = SPACES)
+               PERFORM 5000-DO-ANNUAL-SALARY-71
+               IF (ERROR-FOUND)
+                   GO TO 1700-END
+               END-IF
+           ELSE
+               INITIALIZE BNASWS-ANNUAL-SALARY.
+474600
+474700     MOVE BNASWS-ANNUAL-SALARY TO WS-ANN-SAL.
+474800
+474900     MOVE PRE-FROM-DATE          TO BNYSWS-FROM-DATE.
+475000     MOVE PRE-SERV-FIRST-MO      TO BNYSWS-DATE-TYPE.
+475100     MOVE PRM-ELEC-DATE          TO BNYSWS-START-DATE.
+475200     MOVE ZEROES                 TO BNYSWS-STOP-DATE.
+475300     MOVE PRE-SERV-DATE          TO BNYSWS-AS-OF-MMDD.
+475400     MOVE PRE-SERV-YEAR          TO BNYSWS-AS-OF-YYYY.
+475500     PERFORM 5000-DO-YEARS-OF-SERVICE-70.
+475600     IF (ERROR-FOUND)
+475700         GO TO 1700-END.
+475800     
+475900     MOVE PRE-START-DATE         TO DB-START-DATE.
+476000     MOVE PRE-GROUP-NAME         TO DB-GROUP-NAME.
+476100     MOVE BNYSWS-YOS             TO DB-BEGIN-YEAR-PCT.
+476200     PERFORM 850-FIND-NLT-CNDSET2.
+476300     IF  (CONTRDETL-NOTFOUND)
+476400     OR  (CND-COMPANY        NOT = PRM-COMPANY)
+476500     OR  (CND-PLAN-TYPE      NOT = PLN-PLAN-TYPE)
+476600     OR  (CND-PLAN-CODE      NOT = PLN-PLAN-CODE)
+476700        GO TO 1700-END.
+476800           
+476900     MOVE BNYSWS-YOS              TO G16-CAL-YEARS.
+477000     MOVE CND-EMP-PRE-PCT         TO G16-CND-EMP-PRE-PCT.
+477100     MOVE CND-EMP-POST-PCT        TO G16-CND-EMP-POST-PCT.
+477200     MOVE CND-EMP-TOT-PCT         TO G16-CND-EMP-TOT-PCT.
+477300     MOVE CND-MATCH-PCT           TO G16-CND-MATCH-PCT.
+477400     MOVE CND-PCT-MATCHED         TO G16-CND-PCT-MATCHED.
+477500     MOVE CND-MAX-MATCH           TO G16-CND-MAX-MATCH.
+477600     MOVE WS-ANN-SAL              TO G16-CAL-SALARY.
+477700     
+477800     MOVE BNYSWS-YOS              TO EM8-CAL-YEARS.
+477900     MOVE CND-EMP-PRE-PCT         TO EM8-CND-EMP-PRE-PCT.
+478000     MOVE CND-EMP-POST-PCT        TO EM8-CND-EMP-POST-PCT.
+478100     MOVE CND-EMP-TOT-PCT         TO EM8-CND-EMP-TOT-PCT.
+478200     MOVE CND-MATCH-PCT           TO EM8-CND-MATCH-PCT.
+478300     MOVE CND-PCT-MATCHED         TO EM8-CND-PCT-MATCHED.
+478400     MOVE CND-MAX-MATCH           TO EM8-CND-MAX-MATCH.
+478500     MOVE WS-ANN-SAL              TO EM8-CAL-SALARY.
+478600
+478700     IF (PRM-REPORT-OPT          NOT = "R")
+478900         PERFORM 800-OPENAPPENDCSV-EMPLOYEE8
+479100         PERFORM 800-WRITECSV-EMPLOYEE8
+479300         PERFORM 800-CLOSECSV-EMPLOYEE8
+479400     END-IF.
+479500
+479600     IF (PRM-REPORT-OPT          NOT = "C")
+479700         MOVE GN16-CND-BEGIN-YEAR-PCT TO RPT-GROUP-REQUEST 
+479800         PERFORM 700-PRINT-RPT-GRP 
+479900     END-IF.
+480000
+480100 1700-END.
+480200
+480300******************************************************************
+480400 1800-CON-7.
+480500******************************************************************
+480600 
+480700     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+480800     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+480900     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+481000     MOVE "E"                    TO BNREWS-COVER-TYPE.
+481100     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+481200     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+481300     MOVE "PRE"                  TO BNREWS-FILE-PREFIX.
+481400     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+481500     IF (ERROR-FOUND)
+481600         GO TO 1800-END.
+481700
+481800     MOVE "Y"                    TO WS-FIRST-TIME-HEAD-EM9.
+481900
+482000     MOVE PRE-START-DATE         TO DB-START-DATE.
+482100     MOVE PRE-GROUP-NAME         TO DB-GROUP-NAME.
+482200     MOVE CNDSET2-GROUP-NAME     TO WS-DB-BEG-RNG.
+482300     PERFORM 850-FIND-BEGRNG-CNDSET2.
+482400     PERFORM
+482500         UNTIL (CONTRDETL-NOTFOUND)
+482600         OR    (ERROR-FOUND)
+482700         PERFORM 1810-CND-LOOP   
+482800         THRU    1810-END
+482900         PERFORM 860-FIND-NXTRNG-CNDSET2
+483000     END-PERFORM.
+483100
+483200 1800-END.
+483300
+483400******************************************************************
+483500 1810-CND-LOOP.
+483600******************************************************************
+483700
+483800     INITIALIZE                      EM9-EMP-COMPANY
+483900                                     EM9-EMP-EMPLOYEE
+484000                                     EM9-PLN-PLAN-TYPE
+484100                                     EM9-PLN-PLAN-CODE
+484200                                     EM9-PLN-DISPLAY-DESC
+484300                                     EM9-PLN-DESC
+484400                                     EM9-ELIG-DATE
+484500                                     EM9-PLN-TYPE-DESC
+484600                                     G17-PRE-END-PCT
+484700                                     G17-CND-BEG-YEAR-PCT
+484800                                     G17-CND-MATCH-PCT
+484900                                     G17-CND-MAX-MATCH
+485000                                     G17-CAL-SALARY
+485100                                     EM9-PRE-END-PCT
+485200                                     EM9-CND-BEG-YEAR-PCT
+485300                                     EM9-CND-MATCH-PCT
+485400                                     EM9-CND-MAX-MATCH
+485500                                     EM9-CAL-SALARY.
+485600     
+485700     MOVE PRM-COMPANY                TO EM9-EMP-COMPANY.
+485800     MOVE EMP-EMPLOYEE               TO EM9-EMP-EMPLOYEE.
+485900     MOVE PLN-PLAN-TYPE              TO EM9-PLN-PLAN-TYPE.
+486000     MOVE PLN-PLAN-CODE              TO EM9-PLN-PLAN-CODE.
+486100     MOVE PLN-DISPLAY-DESC           TO EM9-PLN-DISPLAY-DESC.
+486200     MOVE PLN-DESC                   TO EM9-PLN-DESC.
+486300     MOVE WS-ELIG-DATE               TO EM9-ELIG-DATE.
+486800
+486900     MOVE WS-PLN-PLAN-TYPE-DESC      TO EM9-PLN-TYPE-DESC.
+487000
+487100     MOVE PRM-COMPANY            TO BNASWS-COMPANY.
+487200     MOVE EMP-EMPLOYEE           TO BNASWS-EMPLOYEE.
+487300     MOVE PRE-SALARY-TYPE        TO BNASWS-SALARY-TYPE.
+487400     MOVE PRE-SAL-FIRST-MO       TO BNASWS-DATE-TYPE.
+487500     MOVE PRM-ELEC-DATE          TO BNASWS-START-DATE.
+487600     MOVE ZEROES                 TO BNASWS-STOP-DATE.
+487700     MOVE PRE-SALARY-DATE        TO BNASWS-AS-OF-MMDD.
+487800     MOVE PRE-SALARY-YEAR        TO BNASWS-AS-OF-YYYY.
+           IF  (PRE-SALARY-TYPE NOT = SPACES)
+               PERFORM 5000-DO-ANNUAL-SALARY-71
+               IF (ERROR-FOUND)
+                   GO TO 1810-END
+               END-IF
+           ELSE
+               INITIALIZE BNASWS-ANNUAL-SALARY.
+488200
+488300     MOVE BNASWS-ANNUAL-SALARY TO WS-ANN-SAL.
+488400
+488500     MOVE PRE-END-PCT                TO G17-PRE-END-PCT.
+488600     MOVE CND-BEGIN-YEAR-PCT         TO G17-CND-BEG-YEAR-PCT.
+488700     MOVE CND-MATCH-PCT              TO G17-CND-MATCH-PCT.
+488800     MOVE CND-MAX-MATCH              TO G17-CND-MAX-MATCH.
+488900
+489000     IF (WS-FIRST-TIME-HEAD-EM9  NOT = "N")
+489100         MOVE PRE-END-PCT                TO G17-PRE-END-PCT
+489200         MOVE WS-ANN-SAL                 TO G17-CAL-SALARY
+489300     ELSE
+489400         MOVE ZEROES                     TO G17-PRE-END-PCT
+489500         MOVE ZEROES                     TO G17-CAL-SALARY
+489600     END-IF.
+489700
+489800     MOVE PRE-END-PCT                TO EM9-PRE-END-PCT.
+489900     MOVE CND-BEGIN-YEAR-PCT         TO EM9-CND-BEG-YEAR-PCT.
+490000     MOVE CND-MATCH-PCT              TO EM9-CND-MATCH-PCT.
+490100     MOVE CND-MAX-MATCH              TO EM9-CND-MAX-MATCH.
+490200     MOVE WS-ANN-SAL                 TO EM9-CAL-SALARY.
+490300
+490400     IF (PRM-REPORT-OPT          NOT = "R")
+490600         PERFORM 800-OPENAPPENDCSV-EMPLOYEE9
+490800         PERFORM 800-WRITECSV-EMPLOYEE9
+491000         PERFORM 800-CLOSECSV-EMPLOYEE9
+491100     END-IF.
+491200
+491300     IF (PRM-REPORT-OPT          NOT = "C")
+491400         IF (WS-FIRST-TIME-HEAD-EM9  NOT = "N")
+491500             MOVE GN17H-CND-BEGIN-YEAR-PCT TO RPT-GROUP-REQUEST 
+491600             PERFORM 700-PRINT-RPT-GRP 
+491700             MOVE "N"         TO WS-FIRST-TIME-HEAD-EM9    
+491800         END-IF
+491900         MOVE GN17D-CND-BEGIN-YEAR-PCT TO RPT-GROUP-REQUEST 
+492000         PERFORM 700-PRINT-RPT-GRP 
+492100     END-IF.
+492200
+492300 1810-END.
+492400
+492500******************************************************************
+492600 1900-CVR-0-CON-3.
+492700******************************************************************
+492800 
+492900     INITIALIZE                      E10-EMP-COMPANY
+493000                                     E10-EMP-EMPLOYEE
+493100                                     E10-PLN-PLAN-TYPE
+493200                                     E10-PLN-PLAN-CODE
+493300                                     E10-PLN-DISPLAY-DESC
+493400                                     E10-PLN-DESC
+493500                                     E10-ELIG-DATE
+493600                                     E10-PLN-TYPE-DESC
+493700                                     G18-EMP-COST
+493800                                     E10-EMP-COST
+493900                                     G18-FLEX-COST
+494000                                     E10-FLEX-COST
+494100                                     G18-TOT-EMP-COST
+494200                                     E10-TOT-EMP-COST
+494300                                     G18-COMPANY-COST
+494400                                     E10-COMPANY-COST.
+494500
+494600     MOVE PRM-COMPANY                TO E10-EMP-COMPANY.
+494700     MOVE EMP-EMPLOYEE               TO E10-EMP-EMPLOYEE.
+494800     MOVE PLN-PLAN-TYPE              TO E10-PLN-PLAN-TYPE.
+494900     MOVE PLN-PLAN-CODE              TO E10-PLN-PLAN-CODE.
+495000     MOVE PLN-DISPLAY-DESC           TO E10-PLN-DISPLAY-DESC.
+495100     MOVE PLN-DESC                   TO E10-PLN-DESC.
+495200     MOVE WS-ELIG-DATE               TO E10-ELIG-DATE.
+495700
+495800     MOVE WS-PLN-PLAN-TYPE-DESC      TO E10-PLN-TYPE-DESC.
+495900
+496000     MOVE PRM-COMPANY            TO BNREWS-COMPANY.
+496100     MOVE PLN-PLAN-TYPE          TO BNREWS-PLAN-TYPE.
+496200     MOVE PLN-PLAN-CODE          TO BNREWS-PLAN-CODE.
+496300     MOVE "E"                    TO BNREWS-COVER-TYPE.
+496400     MOVE EMP-EMPLOYEE           TO BNREWS-EMPLOYEE.
+496500     MOVE PRM-ELEC-DATE          TO BNREWS-AS-OF-DATE.
+496600     MOVE "PRE"                  TO BNREWS-FILE-PREFIX.
+496700     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+496800     IF (ERROR-FOUND)
+496900         GO TO 1900-END.
+497000
+J67795*    MOVE PRE-EMP-CONT                TO WS-EMP-COST.
+J67795     COMPUTE WS-EMP-COST ROUNDED =
+J67795          PRE-EMP-CONT * 1.
+J67795*    MOVE PRE-FLEX-CONT               TO WS-FLEX-COST.
+J67795     COMPUTE WS-FLEX-COST ROUNDED = 
+J67795          PRE-FLEX-CONT * 1.
+497300
+497400     IF  (PRM-CONTRIB    = "A")
+497500          MOVE WS-EMP-COST            TO G18-EMP-COST
+497600          MOVE WS-EMP-COST            TO E10-EMP-COST
+497700          MOVE WS-FLEX-COST           TO G18-FLEX-COST
+497800          MOVE WS-FLEX-COST           TO E10-FLEX-COST
+498000          COMPUTE WS-TOT-COST ROUNDED =  WS-EMP-COST
+498100                                      -  WS-FLEX-COST
+498500          MOVE WS-TOT-COST            TO G18-TOT-EMP-COST
+498600          MOVE WS-TOT-COST            TO E10-TOT-EMP-COST
+J67795*         MOVE PRE-COMP-CONT          TO G18-COMPANY-COST
+J67795          COMPUTE G18-COMPANY-COST ROUNDED =
+J67795               PRE-COMP-CONT * 1
+J67795*         MOVE PRE-COMP-CONT          TO E10-COMPANY-COST
+J67795          COMPUTE E10-COMPANY-COST ROUNDED =
+J67795               PRE-COMP-CONT * 1
+498900     ELSE
+499000     IF  (PRM-CONTRIB    = "M")
+499100          COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+499200                                      /  12
+499300          MOVE WS-COST-P              TO G18-EMP-COST
+499400          MOVE WS-COST-P              TO E10-EMP-COST
+499500          COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+499600                                      /  12
+499700          MOVE WS-COST-F              TO G18-FLEX-COST
+499800          MOVE WS-COST-F              TO E10-FLEX-COST
+500000          COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+500100                                      -  WS-COST-F
+500500          MOVE WS-TOT-COST            TO G18-TOT-EMP-COST
+500600          MOVE WS-TOT-COST            TO E10-TOT-EMP-COST
+500700          COMPUTE WS-COST-C ROUNDED   =  PRE-COMP-CONT
+500800                                      /  12
+500900          MOVE WS-COST-C              TO G18-COMPANY-COST
+501000          MOVE WS-COST-C              TO E10-COMPANY-COST
+501100     ELSE
+501200     IF  (PRM-CONTRIB    = "P")
+501300          IF  (EMP-PAY-FREQUENCY      = 1)
+501400              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+501500                                          /  52
+501600              MOVE WS-COST-P              TO G18-EMP-COST
+501700              MOVE WS-COST-P              TO E10-EMP-COST
+501800              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+501900                                          /  52
+502000              MOVE WS-COST-F              TO G18-FLEX-COST
+502100              MOVE WS-COST-F              TO E10-FLEX-COST
+502300              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+502400                                          -  WS-COST-F
+502800              MOVE WS-TOT-COST            TO G18-TOT-EMP-COST
+502900              MOVE WS-TOT-COST            TO E10-TOT-EMP-COST
+503000              COMPUTE WS-COST-C ROUNDED   =  PRE-COMP-CONT
+503100                                          /  52
+503200              MOVE WS-COST-C              TO G18-COMPANY-COST
+503300              MOVE WS-COST-C              TO E10-COMPANY-COST
+503400          ELSE
+503500          IF  (EMP-PAY-FREQUENCY      = 2)
+503600              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+503700                                          /  26
+503800              MOVE WS-COST-P              TO G18-EMP-COST
+503900              MOVE WS-COST-P              TO E10-EMP-COST
+504000              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+504100                                          /  26 
+504200              MOVE WS-COST-F              TO G18-FLEX-COST
+504300              MOVE WS-COST-F              TO E10-FLEX-COST
+504500              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+504600                                          -  WS-COST-F
+505000              MOVE WS-TOT-COST            TO G18-TOT-EMP-COST
+505100              MOVE WS-TOT-COST            TO E10-TOT-EMP-COST
+505200              COMPUTE WS-COST-C ROUNDED   =  PRE-COMP-CONT
+505300                                          /  26
+505400              MOVE WS-COST-C              TO G18-COMPANY-COST
+505500              MOVE WS-COST-C              TO E10-COMPANY-COST
+505600          ELSE
+505700          IF  (EMP-PAY-FREQUENCY      = 3)
+505800              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+505900                                          /  24
+506000              MOVE WS-COST-P              TO G18-EMP-COST
+506100              MOVE WS-COST-P              TO E10-EMP-COST
+506200              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+506300                                          /  24 
+506400              MOVE WS-COST-F              TO G18-FLEX-COST
+506500              MOVE WS-COST-F              TO E10-FLEX-COST
+506700              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+506800                                          -  WS-COST-F
+507200              MOVE WS-TOT-COST            TO G18-TOT-EMP-COST
+507300              MOVE WS-TOT-COST            TO E10-TOT-EMP-COST
+507400              COMPUTE WS-COST-C ROUNDED   =  PRE-COMP-CONT
+507500                                          /  24
+507600              MOVE WS-COST-C              TO G18-COMPANY-COST
+507700              MOVE WS-COST-C              TO E10-COMPANY-COST
+507800          ELSE
+507900          IF  (EMP-PAY-FREQUENCY      = 4)
+508000              COMPUTE WS-COST-P ROUNDED   =  WS-EMP-COST
+508100                                          /  12
+508200              MOVE WS-COST-P              TO G18-EMP-COST
+508300              MOVE WS-COST-P              TO E10-EMP-COST
+508400              COMPUTE WS-COST-F ROUNDED   =  WS-FLEX-COST
+508500                                          /  12 
+508600              MOVE WS-COST-F              TO G18-FLEX-COST
+508700              MOVE WS-COST-F              TO E10-FLEX-COST
+508900              COMPUTE WS-TOT-COST ROUNDED =  WS-COST-P
+509000                                          -  WS-COST-F
+509400              MOVE WS-TOT-COST            TO G18-TOT-EMP-COST
+509500              MOVE WS-TOT-COST            TO E10-TOT-EMP-COST
+509600              COMPUTE WS-COST-C ROUNDED   =  PRE-COMP-CONT
+509700                                          /  12
+509800              MOVE WS-COST-C              TO G18-COMPANY-COST
+509900              MOVE WS-COST-C              TO E10-COMPANY-COST
+510000          END-IF 
+510100          END-IF 
+510200          END-IF 
+510300          END-IF 
+510400     END-IF
+510500     END-IF
+510600     END-IF.
+510700
+510800     IF (PRM-REPORT-OPT          NOT = "R")
+511000         PERFORM 800-OPENAPPENDCSV-EMPLOYEE10
+511200         PERFORM 800-WRITECSV-EMPLOYEE10
+511400         PERFORM 800-CLOSECSV-EMPLOYEE10
+511500     END-IF.
+511600
+511700     IF (PRM-REPORT-OPT          NOT = "C")
+511800         MOVE GN18-CVR-0-CON-3        TO RPT-GROUP-REQUEST 
+511900         PERFORM 700-PRINT-RPT-GRP 
+512000     END-IF.
+512100
+512200 1900-END.
+512300
+512400******************************************************************
+512500 2000-INVEST.
+512600******************************************************************
+512700
+512800     INITIALIZE                      E11-EMP-COMPANY
+512900                                     E11-EMP-EMPLOYEE
+513000                                     E11-PLN-PLAN-TYPE
+513100                                     E11-PLN-PLAN-CODE
+513200                                     E11-PLN-DISPLAY-DESC
+513300                                     E11-PLN-DESC
+513400                                     E11-ELIG-DATE
+513500                                     E11-PLN-TYPE-DESC
+513600                                     G19-BIV-DESC    
+513700                                     E11-BIV-DESC    
+513800                                     E11-BIV-DEFAULT. 
+513900
+514000     MOVE PRM-COMPANY                TO E11-EMP-COMPANY.
+514100     MOVE EMP-EMPLOYEE               TO E11-EMP-EMPLOYEE.
+514200     MOVE PLN-PLAN-TYPE              TO E11-PLN-PLAN-TYPE.
+514300     MOVE PLN-PLAN-CODE              TO E11-PLN-PLAN-CODE.
+514400     MOVE PLN-DISPLAY-DESC           TO E11-PLN-DISPLAY-DESC.
+514500     MOVE PLN-DESC                   TO E11-PLN-DESC.
+514600     MOVE WS-ELIG-DATE               TO E11-ELIG-DATE.
+515100
+515200     MOVE WS-PLN-PLAN-TYPE-DESC      TO E11-PLN-TYPE-DESC.
+515300
+515400     MOVE PLN-PLAN-CODE          TO DB-PLAN-CODE.
+515500     MOVE BIVSET1-PLAN-CODE      TO WS-DB-BEG-RNG.
+515600     PERFORM 850-FIND-BEGRNG-BIVSET1.
+515700     IF  (BNINVEST-FOUND)
+515800     AND (PRM-REPORT-OPT          NOT = "C")
+515900          MOVE GN19H-BIV-INVEST     TO RPT-GROUP-REQUEST 
+516000          PERFORM 700-PRINT-RPT-GRP 
+516100     END-IF.
+516200     PERFORM
+516300         UNTIL (BNINVEST-NOTFOUND)
+516400         IF (BIV-ACTIVE-FLAG     = "A")
+516500            MOVE BIV-DESC            TO G19-BIV-DESC    
+516600            MOVE BIV-DESC            TO E11-BIV-DESC    
+516700            MOVE BIV-DEFAULT         TO E11-BIV-DEFAULT 
+516800
+516900            IF (PRM-REPORT-OPT          NOT = "R")
+517100                PERFORM 800-OPENAPPENDCSV-EMPLOYEE11
+517300                PERFORM 800-WRITECSV-EMPLOYEE11
+517500                PERFORM 800-CLOSECSV-EMPLOYEE11
+517600            END-IF
+517700            IF (PRM-REPORT-OPT          NOT = "C")
+517800                MOVE GN19D-BIV-INVEST     TO RPT-GROUP-REQUEST 
+517900                PERFORM 700-PRINT-RPT-GRP 
+518000            END-IF
+518100         PERFORM 860-FIND-NXTRNG-BIVSET1
+518200     END-PERFORM.
+518300
+518400 2000-END.
+518500
+518600******************************************************************
+518700 1100-END.
+518800******************************************************************
+518900

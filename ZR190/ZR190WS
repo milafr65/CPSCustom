@@ -1,0 +1,545 @@
+******* ZR190WS 37 <4064851112>
+      ******************************************************************
+      *                            ZR190WS                             *
+      ******************************************************************
+       01  ZR190WS.
+           02 ZR190WS-CREDIT-CB.
+              03  ZR190WS-CREDIT-PRFX       PIC X(2) VALUE SPACES.
+              03  ZR190WS-FILLERA           PIC X(1) VALUE "-".
+              03  ZR190WS-CREDIT-NBR        PIC X(7) VALUE SPACES.
+              03  ZR190WS-FILLERB           PIC X(12) VALUE SPACES.
+           02 ZR190WS-CREDIT-AMT            LIKE INTL-AMT VALUE ZEROES.
+           02 ZR190WS-EARNED-DISC           PIC 9(1) VALUE ZEROS.
+           02 ZR190WS-CURR-GAIN-LOSS        PIC X(30) VALUE SPACES.
+           02 ZR190WS-RVSL-GAIN-LOSS        PIC X(30) VALUE SPACES.
+           02 ZR190WS-PMT-GAIN-LOSS-FL      PIC 9(01) VALUE ZEROS.
+           02 ZR190WS-PMT-GAIN-LOSS-AMT     PIC S9(15)V9(2) VALUE ZEROS.
+           02 ZR190WS-CREDIT-FL             PIC 9(1) VALUE ZEROS.
+           02 ZR190WS-SV-TAX-FL             PIC X(01) VALUE SPACES.
+           02 ZR190WS-SV-TRANS-DATE         PIC 9(8) VALUE ZEROS.
+           02 ZR190WS-SV-DIST-SEQ           PIC 9(4) VALUE ZEROS.
+           02 ZR190WS-ALT-TYPE              PIC X(1) VALUE SPACES.   
+           02 ZR190WS-ARO-ORIG-APP-AMT      PIC S9(15)V9(2) VALUE ZEROS.
+           02 ZR190WS-ARO-ORIG-ADJ-AMT      PIC S9(15)V9(2) VALUE ZEROS.
+           02 ZR190WS-ZONE-IGNORE           PIC X(1) VALUE SPACES.   
+           02 ZR190WS-AMD-GL-COMPANY        PIC 9(4) VALUE ZEROS.
+           02 ZR190WS-AMD-ACCT-UNIT         PIC X(15) VALUE SPACES.
+           02 ZR190WS-AMD-ACCOUNT           PIC 9(6) VALUE ZEROS.
+           02 ZR190WS-AMD-SUB-ACCT          PIC 9(4) VALUE ZEROS.
+           02 ZR190WS-AMD-GL-DATE           PIC 9(8) VALUE ZEROS.
+           02 ZR190WS-AMD-CREATE-DATE       PIC 9(8) VALUE ZEROS.
+           02 ZR190WS-AMD-CREATE-TIME       PIC 9(6) VALUE ZEROS.
+           02 ZR190WS-AMD-PROG-SEQ-NBR      PIC 9(7) VALUE ZEROS.
+           02 ZR190WS-AMD-COMPANY           PIC 9(4) VALUE ZEROS.
+           02 ZR190WS-AMD-BATCH-NBR         PIC 9(6) VALUE ZEROS.
+           02 ZR190WS-AMD-CUSTOMER          PIC X(9) VALUE SPACES.
+           02 ZR190WS-AMD-PROCESS-LEVEL     PIC X(5) VALUE SPACES.
+           02 ZR190WS-AMD-TRANS-TYPE        PIC X(1) VALUE SPACES.
+           02 ZR190WS-AMD-INVOICE           PIC X(22) VALUE SPACES.
+           02 ZR190WS-AMD-PAYMENT-SEQ       PIC 9(6) VALUE ZEROS.
+           02 ZR190WS-AMD-TRAN-DATE         PIC 9(8) VALUE ZEROS.
+           02 ZR190WS-AMD-DIST-SEQ          PIC 9(4) VALUE ZEROS.
+           02 ZR190WS-AMD-DST-TYPE          PIC X(2) VALUE SPACES.
+           02 ZR190WS-AMD-ACCUM-TYPE        PIC X(1) VALUE SPACES.
+           02 ZR190WS-AMD-TRAN-AMT          LIKE INTL-AMT VALUE ZEROS.
+           02 ZR190WS-AMD-TO-COMP-AMT       LIKE INTL-AMT VALUE ZEROS.
+           02 ZR190WS-AMD-UNITS             PIC S9(11)V9(2) VALUE ZEROS.
+           02 ZR190WS-AMD-DESC              PIC X(30) VALUE SPACES.
+           02 ZR190WS-AMD-ACTIVITY          PIC X(15) VALUE SPACES.
+           02 ZR190WS-AMD-ACCT-CATEGORY     PIC X(5) VALUE SPACES.
+           02 ZR190WS-AMD-STATUS            PIC 9(1) VALUE ZEROS.
+           02 ZR190WS-AMD-ORIG-CURRENCY     PIC X(5) VALUE SPACES.
+           02 ZR190WS-AMD-ORIG-RATE         PIC S9(7)V9(7) VALUE ZEROS.
+           02 ZR190WS-AMD-ORIG-AMT          LIKE INTL-AMT VALUE ZEROS.
+           02 ZR190WS-AMD-CAT-TYPE          PIC X(1) VALUE SPACES.
+           02 ZR190WS-AMD-AR-CATEGORY       PIC X(5) VALUE SPACES.
+           02 ZR190WS-AMD-TAX-CODE          PIC X(10) VALUE SPACES.
+           02 ZR190WS-AMD-ORIG-TAXABLE      LIKE INTL-AMT VALUE ZEROS.
+           02 ZR190WS-AMD-TRAN-TAXABLE      LIKE INTL-AMT VALUE ZEROS.
+           02 ZR190WS-AMD-UPDATE-SUM        PIC X(2) VALUE SPACES.
+           02 ZR190WS-AMD-ORIG-ND           PIC 9(1) VALUE ZEROS.
+           02 ZR190WS-AMD-AUTO-REV          PIC X(1) VALUE SPACES.
+           02 ZR190WS-AMD-ORIG-COMPANY      PIC 9(4) VALUE ZEROS.
+           02 ZR190WS-AMD-DOCUMENT-NBR      PIC X(27) VALUE SPACES.
+           02 ZR190WS-AMD-DST-SOURCE        PIC X(1) VALUE SPACES.
+           02 ZR190WS-AMD-BASE-ACCTUNIT     PIC X(15) VALUE SPACES.
+           02 ZR190WS-AMD-MX-VALUE          OCCURS 3 TIMES
+                                            PIC X(32) VALUE SPACES.
+           02  ZR190WS-AMD-DRAFT-SOURCE PIC X(01) VALUE SPACES.
+           02  ZR190WS-AMD-JRNL-BOOK-NBR PIC X(12) VALUE SPACES.
+           02  ZR190WS-AMD-JBK-SEQ-NBR  PIC 9(10) VALUE ZEROS.
+           02  ZR190WS-TAX-FL           PIC X(01) VALUE SPACES.
+           02  ZR190WS-REVERSE-PCT      PIC 9(03)V9(4) VALUE ZEROS.
+           02  ZR190WS-ARH-ORIG-AMT     LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-ARH-TRAN-AMT     LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-ORIG-REVERSE-AMT LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-TRAN-REVERSE-AMT LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-ADJ-ORIG-REV     PIC S9(15)V99 VALUE ZEROS.
+           02  ZR190WS-ADJ-TRAN-REV     PIC S9(15)V99 VALUE ZEROS.
+           02  ZR190WS-DOCUMENT-NBR      PIC X(27) VALUE SPACES. 
+           02  ZR190WS-DOCUMENT-NBR-RED  REDEFINES ZR190WS-DOCUMENT-NBR.
+               03  ZR190WS-DOC-PRE       PIC X(02).
+               03  ZR190WS-DOC-NBR       PIC X(05).
+               03  ZR190WS-DOC-FIL       PIC X(17).
+               03  ZR190WS-DOC-SUF       PIC X(03).
+           02  ZR190WS-WF1-REC-KEY.
+               03  ZR190WS-WF1-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF1-CR-COMPANY      PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF1-OFFSET-CODE     PIC X(4) VALUE SPACES.
+               03  ZR190WS-WF1-GL-DATE         PIC 9(8) VALUE ZEROS.
+               03  ZR190WS-WF1-APP-CURR-CD     PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF1-TRANS-TYPE      PIC X(01) VALUE SPACES.
+               03  ZR190WS-WF1-INVOICE         PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF1-PAYMENT-SEQ     PIC 9(3) VALUE ZEROS.
+               03  ZR190WS-WF1-APP-SEQ         PIC 9(5) VALUE ZEROS.
+           02  ZR190WS-WF2-REC-KEY.
+               03  ZR190WS-WF2-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF2-PROCESS-LEVEL   PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF2-AR-CODE         PIC X(4) VALUE SPACES.
+               03  ZR190WS-WF2-GL-DATE         PIC 9(8) VALUE ZEROS.
+               03  ZR190WS-WF2-APP-CURR-CD     PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF2-TRANS-TYPE      PIC X(01) VALUE SPACES.
+               03  ZR190WS-WF2-INVOICE         PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF2-PAYMENT-SEQ     PIC 9(3) VALUE ZEROS.
+               03  ZR190WS-WF2-APP-SEQ         PIC 9(5) VALUE ZEROS.
+           02  ZR190WS-WF3-REC-KEY.
+               03  ZR190WS-WF3-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF3-CR-COMPANY      PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF3-OFFSET-CODE     PIC X(4) VALUE SPACES.
+               03  ZR190WS-WF3-GL-DATE         PIC 9(8) VALUE ZEROS.
+               03  ZR190WS-WF3-APP-CURR-CD     PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF3-TRANS-TYPE      PIC X(01) VALUE SPACES.
+               03  ZR190WS-WF3-INVOICE         PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF3-PAYMENT-SEQ     PIC 9(3) VALUE ZEROS.
+               03  ZR190WS-WF3-APP-SEQ         PIC 9(5) VALUE ZEROS.
+           02  ZR190WS-WF4-REC-KEY.
+               03  ZR190WS-WF4-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF4-PROCESS-LEVEL   PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF4-AR-CODE         PIC X(4) VALUE SPACES.
+               03  ZR190WS-WF4-GL-DATE         PIC 9(8) VALUE ZEROS.
+               03  ZR190WS-WF4-APP-CURR-CD     PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF4-TRANS-TYPE      PIC X(01) VALUE SPACES.
+               03  ZR190WS-WF4-INVOICE         PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF4-PAYMENT-SEQ     PIC 9(3) VALUE ZEROS.
+               03  ZR190WS-WF4-APP-SEQ         PIC 9(5) VALUE ZEROS.
+           02  ZR190WS-WF5-REC-KEY.
+               03  ZR190WS-WF5-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF5-CR-COMPANY      PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF5-CR-BATCH        PIC 9(6) VALUE ZEROS.
+               03  ZR190WS-WF5-CR-TYPE         PIC X(1) VALUE SPACES.
+               03  ZR190WS-WF5-CR-NBR          PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF5-CR-CUSTOMER     PIC X(9) VALUE SPACES.
+               03  ZR190WS-WF5-GL-DATE         PIC 9(8) VALUE ZEROS.
+           02  ZR190WS-WF6-REC-KEY.
+               03  ZR190WS-WF6-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF6-TRANS-TYPE      PIC X(1) VALUE SPACES.
+               03  ZR190WS-WF6-INVOICE         PIC X(22) VALUE SPACES.
+           02  ZR190WS-WF7-REC-KEY.
+               03  ZR190WS-WF7-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF7-CR-COMPANY      PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF7-CR-BATCH        PIC 9(6) VALUE ZEROS.
+               03  ZR190WS-WF7-CR-TYPE         PIC X(1) VALUE SPACES.
+               03  ZR190WS-WF7-CR-NBR          PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF7-CR-CUSTOMER     PIC X(9) VALUE SPACES.
+               03  ZR190WS-WF7-GL-DATE         PIC 9(8) VALUE ZEROS.
+               03  ZR190WS-WF7-SEQ-NBR         PIC 9(4) VALUE ZEROS.
+           02  ZR190WS-WF8-REC-KEY.
+               03  ZR190WS-WF8-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF8-CR-COMPANY      PIC 9(4) VALUE ZEROS.
+               03  ZR190WS-WF8-OFFSET-CODE     PIC X(4) VALUE SPACES.
+               03  ZR190WS-WF8-GL-DATE         PIC 9(8) VALUE ZEROS.
+               03  ZR190WS-WF8-APP-CURR-CD     PIC X(5) VALUE SPACES.
+               03  ZR190WS-WF8-TRANS-TYPE      PIC X(01) VALUE SPACES.
+               03  ZR190WS-WF8-INVOICE         PIC X(22) VALUE SPACES.
+               03  ZR190WS-WF8-PAYMENT-SEQ     PIC 9(3) VALUE ZEROS.
+               03  ZR190WS-WF8-APP-SEQ         PIC 9(5) VALUE ZEROS.
+           02  ZR190WS-UPD-COUNT        PIC 9(10) VALUE ZEROS.
+           02  ZR190WS-REC-COUNT        PIC 9(10) VALUE ZEROS.
+           02  ZR190WS-SEQ-NBR          PIC 9(10) VALUE ZEROS.
+           02  ZR190WS-DIST-SEQ         PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-PROGRAM-INFO.
+               03  ZR190WS-KEY-COMPANY   PIC 9(04) VALUE ZEROS.
+               03  ZR190WS-KEY-ACCT-UNIT PIC X(15) VALUE SPACES.
+               03  ZR190WS-KEY-ACCOUNT   PIC 9(06) VALUE ZEROS.
+               03  ZR190WS-KEY-SUB-ACCT  PIC 9(04) VALUE ZEROS.
+               03  ZR190WS-KEY-GL-DATE   PIC 9(08) VALUE ZEROS.
+               03  ZR190WS-KEY-CR-DATE   PIC 9(08) VALUE ZEROS.
+               03  ZR190WS-KEY-CR-TIME   PIC 9(06) VALUE ZEROS.
+               03  ZR190WS-KEY-PROG-SEQ  PIC 9(07) VALUE ZEROS.
+           02  ZR190WS-CB-NBR.
+               03  ZR190WS-PREFIX       PIC X(03) VALUE SPACES.
+               03  ZR190WS-NBR          PIC 9(07) VALUE ZEROS.
+           02  ZR190WS-ARO-DESC.
+               03  ZR190WS-FILLERD      PIC X(10) VALUE "CB DETAIL".
+               03  ZR190WS-ARO-XTYPE    PIC X(02) VALUE SPACES.
+               03  ZR190WS-ARO-XNBR     PIC X(10) VALUE SPACES.
+               03  ZR190WS-FILLERD1     PIC X(08) VALUE SPACES.
+           02  ZR190WS-D-COMPANY        PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-D-CUSTOMER       PIC X(09) VALUE SPACES.
+           02  ZR190WS-D-TYPE           PIC X(01) VALUE SPACES.
+           02  ZR190WS-D-NBR            PIC X(22) VALUE SPACES.
+           02  ZR190WS-D-PAYMENT-SEQ    PIC 9(03) VALUE ZEROS.
+           02  ZR190WS-D-DISPUTE-CD     PIC X(02) VALUE SPACES.
+           02  ZR190WS-D-TRAN-AMT       LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-D-ORIG-AMT       LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-D-ORIG-DISP      LIKE INTL-AMT VALUE ZEROS.
+           02  ZR190WS-D-CURR           PIC X(05) VALUE SPACES.
+           02  ZR190WS-D-DISPUTE-DATE   PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-REC-FOUND        PIC 9(01) VALUE ZEROS.
+           02  ZR190WS-PROG-SEQ-NBR     PIC 9(07) VALUE ZEROS.
+           02  ZR190WS-PER-END-DATE     PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-REPORT-FL        PIC 9(01) VALUE ZEROS.
+           02  ZR190WS-CURR-FL          PIC X(01) VALUE SPACES.
+           02  ZR190WS-REV-FL           PIC X(01) VALUE SPACES.
+           02  ZR190WS-PRT              PIC X(01) VALUE SPACES.
+           02  ZR190WS-BASE-ACCTUNIT    PIC X(15) VALUE SPACES.
+           02  ZR190WS-SAVE-COMPANY     PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-ACCT-UNIT        PIC X(15) VALUE SPACES.
+           02  ZR190WS-ACCOUNT          PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-SUB-ACCT         PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-SAVE-ACCT-UNIT   PIC X(15) VALUE SPACES.
+           02  ZR190WS-SAVE-ACCOUNT     PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-SAVE-SUB-ACCT    PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-AMD-TRANS-DATE   PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-SAVE-CURRENCY    PIC X(05) VALUE SPACES.
+           02  ZR190WS-ALL-CURRENCY     PIC X(05) VALUE SPACES.
+           02  ZR190WS-ACO-CURR         PIC X(05) VALUE SPACES.
+           02  ZR190WS-CREDIT           PIC 9(01) VALUE ZEROS.
+           02  ZR190WS-COMPANY          PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-GL-COMPANY       PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-CUSTOMER         PIC X(09) VALUE SPACES.
+           02  ZR190WS-TRANS-TYPE       PIC X(01) VALUE SPACES.
+           02  ZR190WS-MIXED-TYPE       PIC X(01) VALUE SPACES.
+           02  ZR190WS-INVOICE          PIC X(22) VALUE SPACES.
+           02  ZR190WS-PAYMENT-SEQ      PIC 9(03) VALUE ZEROS.
+           02  ZR190WS-TOTALS          LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-APPLD-AMT       LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-ARO-ADJ-AMT      LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-ADJ-AMT         LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-ADJUST-AMT      LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-TRAN-AMT        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-ORIG-AMT        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-RND-AMT         LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  ZR190WS-CR-COMP-CURR    PIC X(5) VALUE SPACES.
+           02  ZR190WS-ORIG-ND         PIC 9(01) COMP-3 VALUE ZEROS.
+           02  ZR190WS-APM-ORIG-ND      PIC 9(1)  VALUE ZEROS.
+           02  ZR190WS-TRANS-DATE       PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-DUE-DATE         PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-CURR-MUDV        PIC X(01) VALUE SPACES.
+           02  ZR190WS-ORIG-CURRENCY    PIC X(05) VALUE SPACES.
+           02  ZR190WS-ORIG-RATE       PIC S9(07)V9(7) COMP-3 VALUE
+                                       ZEROES.
+           02  ZR190WS-GROUP-RATE      PIC S9(07)V9(7) COMP-3 VALUE
+                                       ZEROES.
+           02  ZR190WS-GROUP-MUDV       PIC X(01) VALUE SPACES.
+           02  ZR190WS-BATCH-NBR        PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-LAST-FC-DATE     PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-APP-SEQ          PIC 9(05) VALUE ZEROS.
+           02  ZR190WS-DISPUTE-SEQ      PIC 9(03) VALUE ZEROS.
+           02  ZR190WS-PROCESS-LEVEL    PIC X(05) VALUE SPACES.
+           02  ZR190WS-SALESMAN         PIC 9(04) VALUE ZEROES.
+           02  ZR190WS-XREF-TYPE        PIC X(01) VALUE SPACES.
+           02  ZR190WS-TRANS-USER1      PIC X(10) VALUE SPACES.
+           02  ZR190WS-TRANS-USER2      PIC X(15) VALUE SPACES.
+           02  ZR190WS-TRANS-USER3      PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-TRANS-USER4      PIC 9(09) VALUE ZEROS.
+           02  ZR190WS-TRANS-USER5      PIC S9(11)V99 VALUE ZEROS.
+           02  ZR190WS-BANK-INST-CODE   PIC X(03) VALUE SPACES.
+           02  ZR190WS-ADJ-ARR-TYPE     PIC X(02) VALUE SPACES.
+           02  ZR190WS-SUM-CB-CURRENCY  PIC X(5) VALUE SPACES.
+           02  ZR190WS-MEM-CB-CURRENCY  PIC X(5) VALUE SPACES.
+           02  ZR190WS-DET-CB-CURRENCY  PIC X(5) VALUE SPACES.
+           02  ZR190WS-CB-CURRENCY      PIC X(5) VALUE SPACES.
+           02  ZR190WS-SORT-1           PIC X(32) VALUE SPACES.
+           02  ZR190WS-SORT-2           PIC X(32) VALUE SPACES.
+           02  ZR190WS-SORT-3           PIC X(32) VALUE SPACES.
+           02  ZR190WS-SORT-4           PIC X(32) VALUE SPACES.
+           02  ZR190WS-SUM-ORIG-AMT     LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MEM-ORIG-AMT     LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-DET-ORIG-AMT     LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-SUM-ND           PIC 9(01) VALUE ZERO.
+           02  ZR190WS-MEM-ND           PIC 9(01) VALUE ZERO.
+           02  ZR190WS-DET-ND           PIC 9(01) VALUE ZERO.
+           02  ZR190WS-CB-ND            PIC 9(01) VALUE ZERO.
+           02  ZR190WS-XREF-NBR         PIC X(22) VALUE SPACES.
+           02  ZR190WS-CUST-PO-NBR      PIC X(22) VALUE SPACES.
+           02  ZR190WS-DEPOSIT-JULIAN   PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-DAY              PIC S9(06) VALUE ZEROS.
+           02  ZR190WS-GSEQ             PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-GACCT-UNIT       PIC X(15) VALUE SPACES.
+           02  ZR190WS-GACCOUNT         PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-GSUB-ACCT        PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-GCOMPANY         PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-GDATE            PIC 9(08) VALUE ZEROS.
+           02  ZR190WS-GPGM             PIC 9(05) VALUE ZEROS.
+           02  ZR190WS-RUN-TIME         PIC 9(06) VALUE ZEROS.
+           02  ZR190WS-DOC-COUNTER      PIC 9(05) VALUE ZEROS.
+           02  ZR190WS-CBS-COUNTER      PIC 9(05) VALUE ZEROS.
+           02  ZR190WS-UPDATE-SUM       PIC X(02) VALUE SPACES.
+           02  ZR190WS-T0DTL            LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-T0MEMO           LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-T0SUM            LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-T2-AMOUNT        LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-T2-ORIG-AMOUNT   LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-CREDIT-AMOUNT    LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-ORIG-CREDIT-AMOUNT LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-DEBIT-AMOUNT     LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-ORIG-DEBIT-AMOUNT  LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MISC-AMT         LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MISC-OAMT        LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MISC-TRAM        LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MISC-IAMT        LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MISC-APAM        LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-MISC-AJAM        LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-APP3             LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-APP2             LIKE INTL-AMT VALUE
+                                        ZEROES.
+           02  ZR190WS-CHK-AMT-SIGN        LIKE INTL-AMT VALUE
+                                           ZEROES.
+           02  ARWS-WZR190A-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190A-FOUND                    VALUE 0.
+               88  WZR190A-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190A-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190A-CREATED                  VALUE 1.
+           02  ARWS-WZR190B-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190B-FOUND                    VALUE 0.
+               88  WZR190B-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190B-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190B-CREATED                  VALUE 1.
+           02  ARWS-WZR190C-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190C-FOUND                    VALUE 0.
+               88  WZR190C-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190C-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190C-CREATED                  VALUE 1.
+           02  ARWS-WZR190D-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190D-FOUND                    VALUE 0.
+               88  WZR190D-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190D-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190D-CREATED                  VALUE 1.
+           02  ARWS-WZR190E-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190E-FOUND                    VALUE 0.
+               88  WZR190E-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190E-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190E-CREATED                  VALUE 1.
+           02  ARWS-WZR190F-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190F-FOUND                    VALUE 0.
+               88  WZR190F-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190F-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190F-CREATED                  VALUE 1.
+           02  ARWS-WZR190G-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190G-FOUND                    VALUE 0.
+               88  WZR190G-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190G-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190G-CREATED                  VALUE 1.
+           02  ARWS-WZR190H-SW         PIC 9(01) VALUE ZEROS.
+               88  WZR190H-FOUND                    VALUE 0.
+               88  WZR190H-NOTFOUND                 VALUE 1.
+           02  ARWS-WZR190H-CREATED-SW PIC 9(01) VALUE ZEROS.
+               88  WZR190H-CREATED                  VALUE 1.
+           02  ZR190WS-MSG-DATE.
+               03  ZR190WS-MSG1         PIC X(20) VALUE SPACES.
+               03  ZR190WS-DT1          PIC 9(06) VALUE ZEROS.
+               03  ZR190WS-FILL1        PIC X(04) VALUE SPACES.
+           02  ZR190WS-MSG-NBR.
+               03  ZR190WS-MSG2         PIC X(19) VALUE SPACES.
+               03  ZR190WS-NBR2         PIC X(10) VALUE SPACES.
+           02  ZR190WS-MSG-COMP.
+               03  ZR190WS-MSG3         PIC X(12) VALUE SPACES.
+               03  ZR190WS-COMP3        PIC 9(04) VALUE ZEROS.
+               03  ZR190WS-FILL3        PIC X(01) VALUE SPACES.
+               03  ZR190WS-TYPE3        PIC X(01) VALUE SPACES.
+               03  ZR190WS-FILL         PIC X(01) VALUE SPACES.
+               03  ZR190WS-NBR3         PIC X(10) VALUE SPACES.
+           02  ZR190WS-TYPE.
+               03  ZR190WS-MSG4         PIC X(17) VALUE SPACES.
+               03  ZR190WS-TYPE4        PIC X(01) VALUE SPACES.
+               03  ZR190WS-FILL4        PIC X(01) VALUE SPACES.
+               03  ZR190WS-NBR4         PIC X(10) VALUE SPACES.
+           02  ZR190WS-MSG-6            PIC X(18) 
+                                        VALUE "Sum Chrgback From ".
+           02  ZR190WS-MSG-7            PIC X(12) 
+                                        VALUE "Sum CB From ".
+           02  ZR190WS-MSG-8            PIC X(16) 
+                                        VALUE "Partial Appl Of ".
+           02  ZR190WS-MEMO-DASH        PIC X(17) 
+                                        VALUE "-----------------".
+           02  ZR190WS-DESC.
+               03  ZR190WS-DESC-1       PIC X(05) VALUE SPACES.
+               03  ZR190WS-DESC-CUST    PIC X(09) VALUE SPACES.
+               03  ZR190WS-DESC-2       PIC X(06) VALUE SPACES.
+               03  ZR190WS-DESC-NBR     PIC X(10) VALUE SPACES.
+           02  ZR190WS-BATCH-DESC.
+               03  ZR190WS-BAT-1       PIC X(05) VALUE SPACES.
+               03  ZR190WS-BAT-CUST    PIC X(09) VALUE SPACES.
+               03  ZR190WS-BAT-FILL    PIC X(02) VALUE SPACES.
+               03  ZR190WS-BAT-2       PIC X(06) VALUE SPACES.
+               03  ZR190WS-BAT-NBR     PIC 9(06) VALUE ZEROS.
+               03  ZR190WS-BAT-FILL1   PIC X(02) VALUE SPACES.
+           02  WS-RESTART-INFO.                                
+               03  WS-RESTART-COMPANY   PIC 9(04) VALUE ZEROS. 
+               03  WS-RESTART-PHASE     PIC 9(01) VALUE ZEROS. 
+               03  WS-RESTART-CKP-ID    PIC 9(12) VALUE ZEROS.
+               03  WS-RESTART-PATH-NAME PIC X(100) 
+                                                  VALUE SPACES.
+               03  WS-RESTART-FILENAMEA PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMEB PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMEC PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMED PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMEE PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMEF PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMEG PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAMEH PIC X(20) VALUE SPACES.
+               03  WS-RESTART-FILENAME  PIC X(100) 
+                                                  VALUE SPACES.
+               03  WS-RESTART-COUNT     PIC 9(10) VALUE ZEROS.
+               03  WS-RESTART-COMP      PIC 9(04) VALUE ZEROS. 
+               03  WS-RESTART-CR-COMP   PIC 9(04) VALUE ZEROS. 
+               03  WS-RESTART-GL-CO     PIC 9(04) VALUE ZEROS. 
+               03  WS-RESTART-CR-CUST   PIC X(09) VALUE SPACES.
+               03  WS-RESTART-TYPE      PIC X(01) VALUE SPACES.
+               03  WS-RESTART-NBR       PIC X(22) VALUE SPACES.
+               03  WS-RESTART-PAY-SEQ   PIC 9(03) VALUE ZEROS.
+               03  WS-RESTART-APP-SEQ   PIC 9(05) VALUE ZEROS.
+               03  WS-RESTART-ADJ-SEQ   PIC 9(03) VALUE ZEROS.
+               03  WS-RESTART-ACCT-UNIT PIC X(15) VALUE SPACES.
+               03  WS-RESTART-ACCOUNT   PIC 9(06) VALUE ZEROS. 
+               03  WS-RESTART-SUB-ACCT  PIC 9(04) VALUE ZEROS. 
+               03  WS-RESTART-GL-DATE   PIC 9(08) VALUE ZEROS. 
+               03  WS-RESTART-DATE      PIC 9(08) VALUE ZEROS. 
+               03  WS-RESTART-TIME      PIC 9(06) VALUE ZEROS. 
+               03  WS-RESTART-PGM       PIC 9(07) VALUE ZEROS. 
+               03  WS-RESTART-OFFSET    PIC X(04) VALUE SPACES.
+               03  WS-RESTART-CURRENCY  PIC X(05) VALUE SPACES.
+               03  WS-RESTART-PRL       PIC X(05) VALUE SPACES.
+               03  WS-RESTART-AR-CODE   PIC X(04) VALUE SPACES.
+               03  WS-RESTART-BATCH     PIC 9(06) VALUE ZEROS. 
+               03  WS-RESTART-APPL-FL   PIC 9(01) VALUE ZEROS. 
+           02  ZR190WS-ARS-AMT          LIKE INTL-AMT VALUE ZEROS.
+           02  WS-WZR190A-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190B-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190C-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190D-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190E-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190F-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190G-NAME          PIC X(100) VALUE SPACES.
+           02  WS-WZR190H-NAME          PIC X(100) VALUE SPACES.
+           02  ZR190WS-ACTIVITY         PIC X(15) VALUE SPACES.
+           02  ZR190WS-ACCT-CATEGORY    PIC X(05) VALUE SPACES.
+           02  ZR190WS-ACTIVITY-GRP     PIC X(15) VALUE SPACES.
+           02  ZR190WS-CONTRACT         PIC X(15) VALUE SPACES.
+           02  ZR190WS-CUSTOMER-TXT     PIC X(08) VALUE "CUSTOMER".
+           02  ZR190WS-BATCH-TXT        PIC X(09) VALUE "BATCH-NBR".
+           02  ZR190WS-PROCESS-LVL-TXT  PIC X(13) VALUE "PROCESS-LEVEL".
+           02  ZR190WS-OPR-CODE-TXT     PIC X(08) VALUE "OPR-CODE".
+           02  ZR190WS-BANK-INST-TXT    PIC X(14)
+                                                 VALUE "BANK-INST-CODE".
+           02  ZR190WS-DEP-INST-TXT     PIC X(13) VALUE "CASH-CODE".
+
+           02  WS-LAST-ARASET4.
+               03  WS-LAST-COMPANY      PIC 9(04) VALUE ZEROS. 
+               03  WS-LAST-TRANS-TYPE   PIC X(01) VALUE SPACES.
+               03  WS-LAST-TRANS-NBR    PIC X(10) VALUE SPACES.
+               03  WS-LAST-PAYMENT-SEQ  PIC 9(06) VALUE ZEROS.
+               03  WS-LAST-BATCH-NBR    PIC 9(06) VALUE ZEROS.
+               03  WS-LAST-APP-SEQ      PIC 9(05) VALUE ZEROS.
+               03  WS-SAME-LAST-CR-TRANS-NBR PIC X(01) VALUE "N".
+
+           02  ZR190WS-DISCOUNT-PERCENT    PIC 9(01)V9(10)  VALUE ZEROS.
+           02  ZR190WS-TAX-RECOVERY-AMOUNT LIKE INTL-AMT  VALUE ZEROS.
+           02  WS-TRAN-AMT                 LIKE INTL-AMT  VALUE ZEROS.
+           02  ZR190WS-HOLD-TAXABLE-AMT    LIKE INTL-AMT  VALUE ZEROS.
+           02  ZR190WS-HOLD-AMD-DIST-SEQ   PIC 9(4)         VALUE ZEROS.
+           02  ZR190WS-ARA-ORIG-APP-AMT    LIKE INTL-AMT VALUE
+                                           ZEROES.
+           02  ZR190WS-ARA-APPLD-AMT       LIKE INTL-AMT VALUE
+                                           ZEROES.
+
+           02  ZR190WS-APP-AMT-SAVE        LIKE INTL-AMT COMP-3 VALUE
+                                           ZEROES.
+           02  ZR190WS-APPLD-AMT-SAVE      LIKE INTL-AMT COMP-3 VALUE
+                                           ZEROES.
+
+           02  ZR190WS-CB-MEMO-CURR     PIC 9(01) VALUE ZEROS.
+               88  ZR190WS-MEMO-CURR-SAME         VALUE 1.
+               88  ZR190WS-MEMO-CURR-NOT          VALUE 0.
+           02  ZR190WS-CB-DETL-CURR     PIC 9(01) VALUE ZEROS.
+               88  ZR190WS-DETL-CURR-SAME         VALUE 1.
+               88  ZR190WS-DETL-CURR-NOT          VALUE 0.
+           02  ZR190WS-CB-SUMM-CURR     PIC 9(01) VALUE ZEROS.
+               88  ZR190WS-SUMM-CURR-SAME         VALUE 1.
+               88  ZR190WS-SUMM-CURR-NOT          VALUE 0.
+           02  ZR190WS-CB-CURR          PIC 9(01) VALUE ZEROS.
+               88  ZR190WS-CB-CURR-SAME           VALUE 1.
+               88  ZR190WS-CB-CURR-NOT            VALUE 0.
+           02  ZR190WS-TAX-COMPANY      PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-TAX-CUSTOMER     PIC X(09) VALUE SPACES.
+           02  ZR190WS-TAX-TRANS-TYPE   PIC X(01) VALUE SPACES.
+           02  ZR190WS-TAX-TRANS-NBR    PIC X(10) VALUE SPACES.
+           02  ZR190WS-TAX-DIST-SEQ     PIC 9(04) VALUE ZEROS.
+           02  ZR190WS-TAX-TAX-FL       PIC X(01) VALUE SPACES.
+           02  ZR190WS-I9               PIC 9(03) VALUE ZEROES.
+           02  ZR190WS-TEMP-FILE-NAME   PIC X(100)
+                                                  VALUE SPACES.
+           02  ZR190WS-TEMPFILE-REDEF   REDEFINES
+                                        ZR190WS-TEMP-FILE-NAME.
+               03  ZR190WS-FILE-CHAR    PIC X(01) OCCURS 100.
+           02  ZR190WS-PATH-NAME        PIC X(100)
+                                                  VALUE SPACES.
+           02  ZR190WS-FILE-NAME        PIC X(20) VALUE SPACES.
+           02  ZR190WS-DEP-INST-CODE    PIC X(03) VALUE SPACES.
+           02  ZR190WS-ARA-OPR-CODE     PIC X(10) VALUE SPACES.
+           02  WS-ROUNDING-SW          PIC 9(01) VALUE ZEROES.
+               88  ROUNDING-REQUIRED   VALUE 1.
+           02  WS-SAVE-COMPANY         PIC 9(04) VALUE ZEROES.
+           02  WS-SAVE-TRANS-TYPE      PIC X(01) VALUE SPACES.
+           02  WS-SAVE-INVOICE         PIC X(22) VALUE SPACES.
+           02  WS-SAVE-PAYMENT-SEQ     PIC 9(06) VALUE ZEROES.
+           02  WS-SAVE-BATCH-NBR       PIC 9(06) VALUE ZEROES.
+           02  WS-SAVE-APP-SEQ         PIC 9(05) VALUE ZEROES.
+           02  WS-SAVE-ADJ-SEQ         PIC 9(03) VALUE ZEROES.
+           02  WS-SAVE-APPLD-AMT       LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  WS-SAVE-TRAN-AMT        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  WS-TOT-APPLD-AMT        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  WS-SV-TAX-CODE          PIC X(10) VALUE SPACES.
+      * Fields to be modified in ARAPPLIED
+           02  WS-RESULT-FL            PIC X(01) VALUE SPACES.
+           02  ZR190WS-BROADCAST-WS.
+               03  ZR190WS-PRINT-FILE-1      PIC X(250) VALUE SPACES.
+               03  ZR190WS-ELEMENT-TYPE      PIC 9(03)  VALUE ZEROES.
+               03  ZR190WS-ELEMENT-VALUE     PIC X(60)  VALUE SPACES.
+               03  ZR190WS-SV-ELEMENT-VALUE  PIC X(60)  VALUE SPACES.
+               03  ZR190WS-DO-RPT1-BROADCAST PIC X(01)  VALUE SPACES.
+
+           02  ZR190WS-CHECK-LENGTH.
+               03  ZR190WS-TEN         PIC X(10) VALUE SPACES.
+               03  ZR190WS-11-22       PIC X(12) VALUE SPACES.

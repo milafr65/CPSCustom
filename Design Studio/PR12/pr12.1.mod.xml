@@ -1,0 +1,456 @@
+<UIDEF default="true" id="PR12.1_CUSTOM" token="PR12.1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="PR" TITLE="Direct Deposit Distribution" TOKEN="PR12.1" TYPE="ONLINE" XMLGenBy="xscrgen 10.0.8.0.1357 2017-01-13 10:48:21" XMLGenDT="20190313 1017" add="A" chg="C" custom="1" datareq="AC" defaultFC="I" defaultui="true" del="D" evttype="" formid="PR12.1_CUSTOM" gHeight="24" gWidth="13" height="24" hiddenFC="0" id="form1" inq="I" iosleadingzeroes="DEFAULT" keycheck="C" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="" rtntype="ALL" staticsize="1" targetid="junk" typ="o" width="80" workflow="0">
+		<transfers id="transfers1" nbr="_l1">
+			<frm_trans PROD="LSAPPS" TITLE="Direct Deposit Account Listing" TOKEN="PR212" id="frm_trans1" nbr="_l2"/>
+			<frm_trans PROD="LSAPPS" TITLE="Employee Bank Maintenance" TOKEN="PR12.4" id="frm_trans2" nbr="_l3"/>
+		</transfers>
+		<fld al="right" col="17" id="label1" nbr="_l4" nm="Company:" row="2" sz="8" tp="label"/>
+		<fld al="right" col="16" id="label2" nbr="_l5" nm="Employee:" row="3" sz="9" tp="label"/>
+		<fld al="right" col="6" id="label3" nbr="_l6" nm="Distribution Order:" row="4" sz="19" tp="label"/>
+		<fld al="right" col="38" id="label4" nbr="_l7" nm="Country:" row="4" sz="8" tp="label"/>
+		<fld al="right" col="53" id="label5" nbr="_l8" nm="IAT:" row="4" sz="4" tp="label"/>
+		<fld al="right" col="7" id="label6" nbr="_l9" nm="Automatic Deposit:" row="5" sz="18" tp="label"/>
+		<fld al="left" blankzero="1" col="1" defval="PR12.1" hsel="1" id="hidden1" nbr="_f0" nm="TC" row="0" sz="6" tp="Hidden"/>
+		<toolbar al="left" blankzero="1" col="9" defval="I" ed="upper" hsel="1" id="toolbar1" nbr="_f1" nm="FC" req="1" row="0" sz="1">
+			<button Disp="A" id="button1" nbr="_l10" nm="Add" value="A" visible="1"/>
+			<button Disp="C" id="button2" nbr="_l11" nm="Change" value="C" visible="1"/>
+			<button Disp="D" id="button3" nbr="_l12" nm="Delete" value="D" visible="1"/>
+			<button Disp="I" id="button4" nbr="_l13" nm="Inquire" value="I" visible="1"/>
+			<button Disp="N" id="button5" nbr="_l14" nm="Next" value="N" visible="1"/>
+			<button Disp="P" id="button6" nbr="_l15" nm="Previous" value="P" visible="1"/>
+			<button Disp="T" id="button7" nbr="_l16" nm="Totals" value="T" visible="0"/>
+		</toolbar>
+		<fld al="left" blankzero="0" ed="numeric" id="hidden2" nbr="_f2" nm="EAD-PERCENT-XMIT-NBR" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="numeric" id="hidden3" nbr="_f3" nm="PT-XMIT-NBR1" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="upper" id="hidden4" nbr="_f4" nm="WEB-UPDATE" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="0" id="hidden5" nbr="_f5" nm="EAD-USER-ID" sz="10" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="numeric" id="hidden6" nbr="_f6" nm="XMIT-DELETE" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="numeric" id="hidden7" nbr="_f7" nm="XMIT-CHANGE" sz="1" tp="Hidden"/>
+		<fld al="right" blankzero="1" col="26" deftkn="HR00.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text1" key="1" keynbr="01" label="Company:" nbr="_f8" nextreq="1" nm="EAD-COMPANY" req="1" row="2" sz="4" tp="Text"/>
+		<fld al="left" blankzero="1" col="38" id="out1" keynbr="CN" nbr="_f9" nm="PRS-NAME" row="2" sz="30" tp="Out"/>
+		<fld al="right" blankzero="1" btnnm="HCU" col="26" deftkn="HR11.1" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hrul="1" hsel="1" hselrul="1" id="text2" key="1" keynbr="H07" label="Employee:" nbr="_f10" nm="EAD-EMPLOYEE" req="1" row="3" sz="9" tp="Text"/>
+		<fld al="left" blankzero="1" col="38" drlnokeys="0" hdet="1" hrul="1" id="out2" keynbr="HEN" nbr="_f11" nm="EMP-FULL-NAME" row="3" sz="40" tp="Out"/>
+		<fld al="left" blankzero="1" col="26" defval="1" ed="numeric" hsel="1" hselrul="1" id="text3" keynbr="PRA" label="Distribution Order:" nbr="_f12" nm="EAD-ACH-DIST-ORDER" row="4" sz="2" tp="Text"/>
+		<fld al="left" blankzero="1" col="47" ed="upper" hdef="1" hsel="1" hselrul="1" id="text4" keynbr="VA2" label="Country:" nbr="_f13" nm="EAD-COUNTRY-CODE" row="4" sz="2" tp="Text"/>
+		<fld al="left" blankzero="1" col="58" defval="N" ed="upper" hsel="1" id="select1" label="IAT:" nbr="_f14" nm="EAD-IAT" row="4" seltype="" sz="1" tp="Select">
+			<vals Disp="N" Tran="N" id="vals1" nbr="_l17">Use Standard ACH Format</vals>
+			<vals Disp="Y" Tran="Y" id="vals2" nbr="_l18">Use International ACH Format</vals>
+		</fld>
+		<push al="center" blankzero="0" btnnm=" View All" col="64" hdef="1" id="push1" keynbr="PR12.3" nbr="_f15" nm="EAD-VIEW-ALL" row="4" sz="10"/>
+		<fld al="left" blankzero="0" hsel="1" id="hidden8" nbr="_f16" nm="ACH-AUTO-DEPOSIT" sz="1" tp="Hidden">
+			<vals Disp="N" Tran="N" id="vals3" nbr="_l19">No</vals>
+			<vals Disp="P" Tran="P" id="vals4" nbr="_l20">Partial</vals>
+			<vals Disp="Y" Tran="Y" id="vals5" nbr="_l21">Yes</vals>
+		</fld>
+		<fld al="left" blankzero="1" col="26" defval="_f16" id="out3" isxlt="_f16" label="Automatic Deposit:" nbr="_f17" nm="ACH-AUTO-DEPOSIT" row="5" sz="10" tp="Out"/>
+		<push al="center" blankzero="0" btnnm=" Update ACH" col="63" hdef="1" id="push2" keynbr="FC= H " nbr="_f18" nm="EAD-UPDATE-ACH" row="5" sz="12"/>
+		<tabregion col="1" det="0" folders="1" grp="tab1" height="14" id="tabregion1" nbr="TR0" row="6" scroll="0" width="79">
+			<tab id="tab1" nbr="TF0-0" nm=" Main" par="TR0" secnm="MAIN-TAB" tabprot="0">
+				<fld col="3" height="3" id="rect1" nbr="_l22" nm=" Occurrences " par="TF0-0" row="12" tp="rect" width="76"/>
+				<fld al="right" col="11" id="label7" nbr="_l23" nm="Receiving DFI:" par="TF0-0" row="0" sz="14" tp="label"/>
+				<fld al="right" col="20" id="label8" nbr="_l24" nm="Bank:" par="TF0-0" row="1" sz="5" tp="label"/>
+				<fld al="right" col="17" id="label9" nbr="_l25" nm="Account:" par="TF0-0" row="2" sz="8" tp="label"/>
+				<fld al="right" col="48" id="label10" nbr="_l26" nm="Entry Type:" par="TF0-0" row="2" sz="11" tp="label"/>
+				<fld al="right" col="12" id="label11" nbr="_l27" nm="Account Type:" par="TF0-0" row="3" sz="13" tp="label"/>
+				<fld al="right" col="13" id="label12" nbr="_l28" nm="Roll Number:" par="TF0-0" row="4" sz="12" tp="label"/>
+				<fld al="right" col="8" id="label13" nbr="_l29" nm="Prenotify Status:" par="TF0-0" row="5" sz="17" tp="label"/>
+				<fld al="right" col="5" id="label14" nbr="_l30" nm="Payment Description:" par="TF0-0" row="6" sz="20" tp="label"/>
+				<fld al="right" col="14" id="label15" nbr="_l31" nm="Payable To:" par="TF0-0" row="7" sz="11" tp="label"/>
+				<fld al="right" col="13" id="label16" nbr="_l32" nm="Flat Amount:" par="TF0-0" row="8" sz="12" tp="label"/>
+				<fld al="right" col="44" id="label17" nbr="_l33" nm="Percent of Net:" par="TF0-0" row="8" sz="15" tp="label"/>
+				<fld al="right" col="17" id="label18" nbr="_l34" nm="Default:" par="TF0-0" row="9" sz="8" tp="label"/>
+				<fld al="right" col="45" id="label19" nbr="_l35" nm="Print Receipt:" par="TF0-0" row="9" sz="14" tp="label"/>
+				<fld al="right" col="10" id="label20" nbr="_l36" nm="Effective Date:" par="TF0-0" row="10" sz="15" tp="label"/>
+				<fld al="right" col="34" id="label21" nbr="_l37" nm="-" par="TF0-0" row="10" sz="2" tp="label"/>
+				<fld al="right" col="18" id="label22" nbr="_l38" nm="Cycles:" par="TF0-0" row="11" sz="7" tp="label"/>
+				<fld al="right" col="16" id="label23" nbr="_l39" nm="Original:" par="TF0-0" row="13" sz="9" tp="label"/>
+				<fld al="right" col="46" id="label24" nbr="_l40" nm="Remaining:" par="TF0-0" row="13" sz="10" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld1" nbr="_f19" nm="MAIN-TAB" par="TF0-0" sz="6" tp="Tab"/>
+				<fld al="left" blankzero="1" drlnokeys="0" ed="numeric" hdet="1" hsel="1" hselrul="1" id="hidden9" key="1" keynbr="HQ3" nbr="_f20" nm="EAD-ACH-DIST-NBR" sz="2" tp="Hidden"/>
+				<fld al="left" blankzero="1" ed="numeric" id="hidden10" keynbr="GOi" nbr="_f21" nm="EAD-OBJ-ID" sz="12" tp="Hidden"/>
+				<fld al="right" blankzero="1" btnnm="DFI" col="26" deftkn="PR12.4" ed="numeric" hdef="1" hrul="1" hsel="1" hselrul="1" id="text5" keynbr="DFI" label="Receiving DFI:" nbr="_f22" nm="EAD-EBANK-ID" par="TF0-0" row="0" sz="9" tp="Text"/>
+				<fld al="left" blankzero="1" col="38" id="out4" nbr="_f23" nm="UK-SORT-CODE" par="TF0-0" row="0" sz="19" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" id="text6" keynbr="07D" label="Bank:" nbr="_f24" nm="EAD-DESCRIPTION" par="TF0-0" row="1" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" id="text7" label="Account:" mxsz="40" nbr="_f25" nm="EAD-EBNK-ACCT-NBR" par="TF0-0" row="2" sz="17" tp="Text"/>
+				<fld al="left" blankzero="1" col="60" defval="0" ed="numeric" hsel="1" id="select2" label="Entry Type:" nbr="_f26" nm="EAD-NON-STD-ENTRY" par="TF0-0" row="2" seltype="" sz="1" tp="Select">
+					<vals Disp="0" Tran="0" id="vals6" nbr="_l41">Standard</vals>
+					<vals Disp="1" Tran="1" id="vals7" nbr="_l42">Split</vals>
+					<vals Disp="2" Tran="2" id="vals8" nbr="_l43">NatWest</vals>
+					<vals Disp="3" Tran="3" id="vals9" nbr="_l44">Co-Op</vals>
+				</fld>
+				<push al="center" blankzero="0" col="64" hdef="1" id="push3" keynbr="PR12.5" nbr="_f27" nm="CMD-ORIGINAL" par="TF0-0" row="2" sz="10"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select3" label="Account Type:" nbr="_f28" nm="EAD-ACCOUNT-TYPE" par="TF0-0" row="3" seltype="" sz="1" tp="Select">
+					<vals Disp="C" Tran="C" id="vals10" nbr="_l45">Checking</vals>
+					<vals Disp="S" Tran="S" id="vals11" nbr="_l46">Savings</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="_f28" id="out5" isxlt="_f28" nbr="_f29" nm="EAD-ACCOUNT-TYPE" par="TF0-0" row="3" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" id="text8" label="Roll Number:" nbr="_f30" nm="EAD-BANK-ROLL-NO" par="TF0-0" row="4" sz="20" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select4" label="Prenotify Status:" nbr="_f31" nm="EAD-ACH-PRENOTIFY" par="TF0-0" row="5" seltype="" sz="1" tp="Select">
+					<vals Disp="N" Tran="N" id="vals12" nbr="_l47">Not Prenotified</vals>
+					<vals Disp="A" Tran="A" id="vals13" nbr="_l48">Accepted</vals>
+					<vals Disp="P" Tran="P" id="vals14" nbr="_l49">Prenotified</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="_f31" id="out6" isxlt="_f31" nbr="_f32" nm="EAD-ACH-PRENOTIFY" par="TF0-0" row="5" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" id="text9" label="Payment Description:" nbr="_f33" nm="EAD-CHECK-DESC" par="TF0-0" row="6" sz="8" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text10" label="Payable To:" nbr="_f34" nm="EAD-PAYABLE-TO" par="TF0-0" row="7" sz="18" tp="Text"/>
+				<fld al="right" blankzero="1" col="26" decsz="2" ed="numeric" id="text11" label="Flat Amount:" nbr="_f35" nm="EAD-DEPOSIT-AMT" par="TF0-0" row="8" sz="12" tp="Text"/>
+				<fld al="right" blankzero="1" col="60" decsz="3" defval="100.00" ed="numeric" id="text12" label="Percent of Net:" nbr="_f36" nm="EAD-NET-PERCENT" par="TF0-0" row="8" sz="8" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" defval="Y" ed="upper" hsel="1" id="select5" label="Default:" nbr="_f37" nm="EAD-DEFAULT-FLAG" par="TF0-0" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="" Tran="" id="vals15" nbr="_l50">Not Applicable</vals>
+					<vals Disp="N" Tran="N" id="vals16" nbr="_l51">No</vals>
+					<vals Disp="Y" Tran="Y" id="vals17" nbr="_l52">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="29" defval="_f37" id="out7" isxlt="_f37" nbr="_f38" nm="EAD-DEFAULT-FLAG" par="TF0-0" row="9" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="60" ed="upper" hsel="1" id="select6" label="Print Receipt:" nbr="_f39" nm="EAD-PRINT-RCPT" par="TF0-0" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="1" Tran="1" id="vals18" nbr="_l53">No</vals>
+					<vals Disp="2" Tran="2" id="vals19" nbr="_l54">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="63" defval="_f39" id="out8" isxlt="_f39" nbr="_f40" nm="EAD-PRINT-RCPT" par="TF0-0" row="9" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="date" id="text13" label="Effective Date:" nbr="_f41" nm="EAD-BEG-DATE" par="TF0-0" row="10" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="37" ed="date" id="text14" label="-" nbr="_f42" nm="EAD-END-DATE" par="TF0-0" row="10" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" defval="X" ed="upper" hsel="1" id="select7" label="Cycles:" nbr="_f43" nm="EAD-DED-CYCLE1" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals20" nbr="_l55">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="29" ed="upper" hsel="1" id="select8" nbr="_f44" nm="EAD-DED-CYCLE2" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals21" nbr="_l56">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="32" defval="X" ed="upper" hsel="1" id="select9" nbr="_f45" nm="EAD-DED-CYCLE3" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals22" nbr="_l57">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="35" defval="X" ed="upper" hsel="1" id="select10" nbr="_f46" nm="EAD-DED-CYCLE4" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals23" nbr="_l58">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="X" ed="upper" hsel="1" id="select11" nbr="_f47" nm="EAD-DED-CYCLE5" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals24" nbr="_l59">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="41" ed="upper" hsel="1" id="select12" nbr="_f48" nm="EAD-DED-CYCLE6" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals25" nbr="_l60">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" defval="X" ed="upper" hsel="1" id="select13" nbr="_f49" nm="EAD-DED-CYCLE7" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals26" nbr="_l61">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="47" defval="X" ed="upper" hsel="1" id="select14" nbr="_f50" nm="EAD-DED-CYCLE8" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals27" nbr="_l62">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="50" defval="X" ed="upper" hsel="1" id="select15" nbr="_f51" nm="EAD-DED-CYCLE9" par="TF0-0" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals28" nbr="_l63">X</vals>
+				</fld>
+				<fld al="right" blankzero="1" col="26" ed="numeric" id="text15" label="Original:" nbr="_f52" nm="EAD-OCCURANCES" par="TF0-0" row="13" sz="3" tp="Text"/>
+				<fld al="right" blankzero="1" col="57" ed="numeric" id="text16" label="Remaining:" nbr="_f53" nm="EAD-REMAIN-OCCUR" par="TF0-0" row="13" sz="3" tp="Text"/>
+			</tab>
+			<tab id="tab2" nbr="TF0-1" nm=" Canada" par="TR0" secnm="CANADA-TAB" tabprot="0">
+				<fld col="3" height="3" id="rect2" nbr="_l64" nm=" Occurrences " par="TF0-1" row="11" tp="rect" width="76"/>
+				<fld al="right" col="6" id="label25" nbr="_l65" nm="Institution Number:" par="TF0-1" row="0" sz="19" tp="label"/>
+				<fld al="right" col="10" id="label26" nbr="_l66" nm="Transit Number:" par="TF0-1" row="1" sz="15" tp="label"/>
+				<fld al="right" col="20" id="label27" nbr="_l67" nm="Bank:" par="TF0-1" row="2" sz="5" tp="label"/>
+				<fld al="right" col="17" id="label28" nbr="_l68" nm="Account:" par="TF0-1" row="3" sz="8" tp="label"/>
+				<fld al="right" col="5" id="label29" nbr="_l69" nm="Payment Description:" par="TF0-1" row="4" sz="20" tp="label"/>
+				<fld al="right" col="13" id="label30" nbr="_l70" nm="Flat Amount:" par="TF0-1" row="5" sz="12" tp="label"/>
+				<fld al="right" col="10" id="label31" nbr="_l71" nm="Percent of Net:" par="TF0-1" row="6" sz="15" tp="label"/>
+				<fld al="right" col="17" id="label32" nbr="_l72" nm="Default:" par="TF0-1" row="7" sz="8" tp="label"/>
+				<fld al="right" col="46" id="label33" nbr="_l73" nm="Print Receipt:" par="TF0-1" row="7" sz="14" tp="label"/>
+				<fld al="right" col="10" id="label34" nbr="_l74" nm="Effective Date:" par="TF0-1" row="8" sz="15" tp="label"/>
+				<fld al="right" col="34" id="label35" nbr="_l75" nm="-" par="TF0-1" row="8" sz="2" tp="label"/>
+				<fld al="right" col="18" id="label36" nbr="_l76" nm="Cycles:" par="TF0-1" row="9" sz="7" tp="label"/>
+				<fld al="right" col="16" id="label37" nbr="_l77" nm="Original:" par="TF0-1" row="12" sz="9" tp="label"/>
+				<fld al="right" col="46" id="label38" nbr="_l78" nm="Remaining:" par="TF0-1" row="12" sz="10" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld2" nbr="_f54" nm="CANADA-TAB" par="TF0-1" sz="8" tp="Tab"/>
+				<fld al="right" blankzero="1" col="26" ed="numeric" hrul="1" hsel="1" hselrul="1" id="text17" keynbr="DFJ" label="Institution Number:" nbr="_f55" nm="CA-EAD-INST-NBR" par="TF0-1" row="0" sz="4" tp="Text"/>
+				<fld al="right" blankzero="1" col="26" ed="numeric" hrul="1" hsel="1" hselrul="1" id="text18" keynbr="DFK" label="Transit Number:" nbr="_f56" nm="CA-EAD-TRANSIT-NBR" par="TF0-1" row="1" sz="5" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text19" keynbr="07D" label="Bank:" nbr="_f57" nm="CA-EAD-DESCRIPTION" par="TF0-1" row="2" sz="30" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" id="text20" label="Account:" mxsz="40" nbr="_f58" nm="CA-EAD-EBNK-ACCT-NBR" par="TF0-1" row="3" sz="17" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text21" label="Payment Description:" nbr="_f59" nm="CA-EAD-CHECK-DESC" par="TF0-1" row="4" sz="8" tp="Text"/>
+				<fld al="right" blankzero="1" col="26" decsz="2" ed="numeric" id="text22" label="Flat Amount:" nbr="_f60" nm="CA-EAD-DEPOSIT-AMT" par="TF0-1" row="5" sz="12" tp="Text"/>
+				<fld al="right" blankzero="1" col="26" decsz="3" ed="numeric" id="text23" label="Percent of Net:" nbr="_f61" nm="CA-EAD-NET-PERCENT" par="TF0-1" row="6" sz="8" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select16" label="Default:" nbr="_f62" nm="CA-EAD-DEFAULT-FLAG" par="TF0-1" row="7" seltype="" sz="1" tp="Select">
+					<vals Disp="" Tran="" id="vals29" nbr="_l79">Not Applicable</vals>
+					<vals Disp="N" Tran="N" id="vals30" nbr="_l80">No</vals>
+					<vals Disp="Y" Tran="Y" id="vals31" nbr="_l81">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="29" defval="_f62" id="out9" isxlt="_f62" nbr="_f63" nm="CA-EAD-DEFAULT-FLAG" par="TF0-1" row="7" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="61" ed="upper" hsel="1" id="select17" label="Print Receipt:" nbr="_f64" nm="CA-EAD-PRINT-RCPT" par="TF0-1" row="7" seltype="" sz="1" tp="Select">
+					<vals Disp="1" Tran="1" id="vals32" nbr="_l82">No</vals>
+					<vals Disp="2" Tran="2" id="vals33" nbr="_l83">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="64" defval="_f64" id="out10" isxlt="_f64" nbr="_f65" nm="CA-EAD-PRINT-RCPT" par="TF0-1" row="7" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="date" id="text24" label="Effective Date:" nbr="_f66" nm="CA-EAD-BEG-DATE" par="TF0-1" row="8" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="37" ed="date" id="text25" label="-" nbr="_f67" nm="CA-EAD-END-DATE" par="TF0-1" row="8" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select18" label="Cycles:" nbr="_f68" nm="CA-EAD-DED-CYCLE1" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals34" nbr="_l84">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="29" ed="upper" hsel="1" id="select19" nbr="_f69" nm="CA-EAD-DED-CYCLE2" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals35" nbr="_l85">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="32" ed="upper" hsel="1" id="select20" nbr="_f70" nm="CA-EAD-DED-CYCLE3" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals36" nbr="_l86">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="35" ed="upper" hsel="1" id="select21" nbr="_f71" nm="CA-EAD-DED-CYCLE4" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals37" nbr="_l87">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" ed="upper" hsel="1" id="select22" nbr="_f72" nm="CA-EAD-DED-CYCLE5" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals38" nbr="_l88">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="41" ed="upper" hsel="1" id="select23" nbr="_f73" nm="CA-EAD-DED-CYCLE6" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals39" nbr="_l89">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" ed="upper" hsel="1" id="select24" nbr="_f74" nm="CA-EAD-DED-CYCLE7" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals40" nbr="_l90">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="47" ed="upper" hsel="1" id="select25" nbr="_f75" nm="CA-EAD-DED-CYCLE8" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals41" nbr="_l91">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="50" ed="upper" hsel="1" id="select26" nbr="_f76" nm="CA-EAD-DED-CYCLE9" par="TF0-1" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals42" nbr="_l92">X</vals>
+				</fld>
+				<fld al="right" blankzero="1" col="26" ed="numeric" id="text26" label="Original:" nbr="_f77" nm="CA-EAD-OCCURANCES" par="TF0-1" row="12" sz="3" tp="Text"/>
+				<fld al="right" blankzero="1" col="57" ed="numeric" id="text27" label="Remaining:" nbr="_f78" nm="CA-EAD-REMAIN-OCCUR" par="TF0-1" row="12" sz="3" tp="Text"/>
+			</tab>
+			<tab id="tab3" nbr="TF0-2" nm=" Global" par="TR0" secnm="GLOBAL-TAB" tabprot="0">
+				<fld col="3" height="3" id="rect3" nbr="_l93" nm=" Occurrences " par="TF0-2" row="12" tp="rect" width="76"/>
+				<fld al="right" col="10" id="label39" nbr="_l94" nm="Routing Number:" par="TF0-2" row="0" sz="15" tp="label"/>
+				<fld al="right" col="20" id="label40" nbr="_l95" nm="Bank:" par="TF0-2" row="1" sz="5" tp="label"/>
+				<fld al="right" col="14" id="label41" nbr="_l96" nm="Swift Code:" par="TF0-2" row="2" sz="11" tp="label"/>
+				<fld al="right" col="17" id="label42" nbr="_l97" nm="Account:" par="TF0-2" row="3" sz="8" tp="label"/>
+				<fld al="right" col="12" id="label43" nbr="_l98" nm="Account Type:" par="TF0-2" row="4" sz="13" tp="label"/>
+				<fld al="right" col="8" id="label44" nbr="_l99" nm="Prenotify Status:" par="TF0-2" row="5" sz="17" tp="label"/>
+				<fld al="right" col="5" id="label45" nbr="_l100" nm="Payment Description:" par="TF0-2" row="6" sz="20" tp="label"/>
+				<fld al="right" col="14" id="label46" nbr="_l101" nm="Payable To:" par="TF0-2" row="7" sz="11" tp="label"/>
+				<fld al="right" col="13" id="label47" nbr="_l102" nm="Flat Amount:" par="TF0-2" row="8" sz="12" tp="label"/>
+				<fld al="right" col="44" id="label48" nbr="_l103" nm="Percent of Net:" par="TF0-2" row="8" sz="15" tp="label"/>
+				<fld al="right" col="17" id="label49" nbr="_l104" nm="Default:" par="TF0-2" row="9" sz="8" tp="label"/>
+				<fld al="right" col="45" id="label50" nbr="_l105" nm="Print Receipt:" par="TF0-2" row="9" sz="14" tp="label"/>
+				<fld al="right" col="10" id="label51" nbr="_l106" nm="Effective Date:" par="TF0-2" row="10" sz="15" tp="label"/>
+				<fld al="right" col="34" id="label52" nbr="_l107" nm="-" par="TF0-2" row="10" sz="2" tp="label"/>
+				<fld al="right" col="18" id="label53" nbr="_l108" nm="Cycles:" par="TF0-2" row="11" sz="7" tp="label"/>
+				<fld al="right" col="16" id="label54" nbr="_l109" nm="Original:" par="TF0-2" row="13" sz="9" tp="label"/>
+				<fld al="right" col="46" id="label55" nbr="_l110" nm="Remaining:" par="TF0-2" row="13" sz="10" tp="label"/>
+				<fld al="left" blankzero="1" ed="upper" id="tabfld3" nbr="_f79" nm="GLOBAL-TAB" par="TF0-2" sz="8" tp="Tab"/>
+				<fld al="right" blankzero="1" col="26" drlnokeys="0" ed="numeric" hdef="1" hdet="1" hsel="1" hselrul="1" id="text28" keynbr="HVI" label="Routing Number:" nbr="_f80" nm="GL-PBM-ROUTING-NBR" par="TF0-2" row="0" sz="9" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="out11" keynbr="07D" label="Bank:" nbr="_f81" nm="GL-PBM-BANK-NAME" par="TF0-2" row="1" sz="10" tp="Out"/>
+				<fld al="left" blankzero="1" col="40" id="out12" keynbr="09X" nbr="_f82" nm="GL-PBM-BANK-LONG-NAME" par="TF0-2" row="1" sz="38" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" drlnokeys="0" ed="upper" hdet="1" hsel="1" hselrul="1" id="text29" keynbr="HVL" label="Swift Code:" nbr="_f83" nm="GL-PBM-SWIFT-CODE" par="TF0-2" row="2" sz="11" tp="Text"/>
+				<fld al="left" blankzero="1" col="40" id="out13" keynbr="01p" mxsz="50" nbr="_f84" nm="GL-PBM-BANK-BRANCH" par="TF0-2" row="2" sz="38" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" id="text30" label="Account:" nbr="_f85" nm="GL-EAD-BANK-ACCT-NBR" par="TF0-2" row="3" sz="40" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select27" label="Account Type:" nbr="_f86" nm="GL-EAD-ACCOUNT-TYPE" par="TF0-2" row="4" seltype="" sz="1" tp="Select">
+					<vals Disp="C" Tran="C" id="vals43" nbr="_l111">Checking</vals>
+					<vals Disp="S" Tran="S" id="vals44" nbr="_l112">Savings</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="_f86" id="out14" isxlt="_f86" nbr="_f87" nm="GL-EAD-ACCOUNT-TYPE" par="TF0-2" row="4" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select28" label="Prenotify Status:" nbr="_f88" nm="GL-EAD-ACH-PRENOTIFY" par="TF0-2" row="5" seltype="" sz="1" tp="Select">
+					<vals Disp="N" Tran="N" id="vals45" nbr="_l113">Not Prenotified</vals>
+					<vals Disp="A" Tran="A" id="vals46" nbr="_l114">Accepted</vals>
+					<vals Disp="P" Tran="P" id="vals47" nbr="_l115">Prenotified</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" defval="_f88" id="out15" isxlt="_f88" nbr="_f89" nm="GL-EAD-ACH-PRENOTIFY" par="TF0-2" row="5" sz="30" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" id="text31" label="Payment Description:" nbr="_f90" nm="GL-EAD-CHECK-DESC" par="TF0-2" row="6" sz="8" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" id="text32" label="Payable To:" nbr="_f91" nm="GL-EAD-PAYABLE-TO" par="TF0-2" row="7" sz="18" tp="Text"/>
+				<fld al="right" blankzero="1" col="26" decsz="2" ed="numeric" id="text33" label="Flat Amount:" nbr="_f92" nm="GL-EAD-DEPOSIT-AMT" par="TF0-2" row="8" sz="12" tp="Text"/>
+				<fld al="right" blankzero="1" col="60" decsz="3" ed="numeric" id="text34" label="Percent of Net:" nbr="_f93" nm="GL-EAD-NET-PERCENT" par="TF0-2" row="8" sz="8" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select29" label="Default:" nbr="_f94" nm="GL-EAD-DEFAULT-FLAG" par="TF0-2" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="" Tran="" id="vals48" nbr="_l116">Not Applicable</vals>
+					<vals Disp="N" Tran="N" id="vals49" nbr="_l117">No</vals>
+					<vals Disp="Y" Tran="Y" id="vals50" nbr="_l118">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="29" defval="_f94" id="out16" isxlt="_f94" nbr="_f95" nm="GL-EAD-DEFAULT-FLAG" par="TF0-2" row="9" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="60" ed="upper" hsel="1" id="select30" label="Print Receipt:" nbr="_f96" nm="GL-EAD-PRINT-RCPT" par="TF0-2" row="9" seltype="" sz="1" tp="Select">
+					<vals Disp="1" Tran="1" id="vals51" nbr="_l119">No</vals>
+					<vals Disp="2" Tran="2" id="vals52" nbr="_l120">Yes</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="63" defval="_f96" id="out17" isxlt="_f96" nbr="_f97" nm="GL-EAD-PRINT-RCPT" par="TF0-2" row="9" sz="14" tp="Out"/>
+				<fld al="left" blankzero="1" col="26" ed="date" id="text35" label="Effective Date:" nbr="_f98" nm="GL-EAD-BEG-DATE" par="TF0-2" row="10" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="37" ed="date" id="text36" label="-" nbr="_f99" nm="GL-EAD-END-DATE" par="TF0-2" row="10" sz="6" tp="Text"/>
+				<fld al="left" blankzero="1" col="26" ed="upper" hsel="1" id="select31" label="Cycles:" nbr="_f100" nm="GL-EAD-DED-CYCLE1" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals53" nbr="_l121">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="29" ed="upper" hsel="1" id="select32" nbr="_f101" nm="GL-EAD-DED-CYCLE2" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals54" nbr="_l122">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="32" ed="upper" hsel="1" id="select33" nbr="_f102" nm="GL-EAD-DED-CYCLE3" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals55" nbr="_l123">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="35" ed="upper" hsel="1" id="select34" nbr="_f103" nm="GL-EAD-DED-CYCLE4" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals56" nbr="_l124">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="38" ed="upper" hsel="1" id="select35" nbr="_f104" nm="GL-EAD-DED-CYCLE5" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals57" nbr="_l125">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="41" ed="upper" hsel="1" id="select36" nbr="_f105" nm="GL-EAD-DED-CYCLE6" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals58" nbr="_l126">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="44" ed="upper" hsel="1" id="select37" nbr="_f106" nm="GL-EAD-DED-CYCLE7" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals59" nbr="_l127">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="47" ed="upper" hsel="1" id="select38" nbr="_f107" nm="GL-EAD-DED-CYCLE8" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals60" nbr="_l128">X</vals>
+				</fld>
+				<fld al="left" blankzero="1" col="50" ed="upper" hsel="1" id="select39" nbr="_f108" nm="GL-EAD-DED-CYCLE9" par="TF0-2" row="11" seltype="" sz="1" tp="Select">
+					<vals Disp="X" Tran="X" id="vals61" nbr="_l129">X</vals>
+				</fld>
+				<fld al="right" blankzero="1" col="26" ed="numeric" id="text37" label="Original:" nbr="_f109" nm="GL-EAD-OCCURANCES" par="TF0-2" row="13" sz="3" tp="Text"/>
+				<fld al="right" blankzero="1" col="57" ed="numeric" id="text38" label="Remaining:" nbr="_f110" nm="GL-EAD-REMAIN-OCCUR" par="TF0-2" row="13" sz="3" tp="Text"/>
+			</tab>
+		</tabregion>
+		<fld al="left" blankzero="0" ed="upper" id="hidden11" nbr="_f111" nm="INTERFACE-FLAG" sz="1" tp="Hidden"/>
+		<fld al="left" blankzero="0" ed="upper" id="sp1" nbr="_f112" nm="_HK" req="1" sz="15" tp="Sp"/>
+		<ibcm>
+			<entity actions="A" name="InforEmployee" type="business">
+				<dme fields="COMPANY;EMPLOYEE;ACH-DIST-ORDER" index="EADSET1" keys="EAD-COMPANY;EAD-EMPLOYEE;EAD-ACH-DIST-NBR" table="EMACHDEPST"/>
+				<message>
+					<![CDATA[Direct deposit for employee [EMPLOYEE] was created.]]>
+				</message>
+				<properties>
+					<property fields="COMPANY" id="id1">
+						<![CDATA[[COMPANY]]]>
+					</property>
+					<property fields="EMPLOYEE" id="id2">
+						<![CDATA[[EMPLOYEE]]]>
+					</property>
+					<property fields="ACH-DIST-ORDER" id="id3">
+						<![CDATA[[ACH-DIST-ORDER]]]>
+					</property>
+				</properties>
+			</entity>
+			<entity actions="C" name="InforEmployee" type="business">
+				<dme fields="COMPANY;EMPLOYEE;ACH-DIST-ORDER" index="EADSET1" keys="EAD-COMPANY;EAD-EMPLOYEE;EAD-ACH-DIST-NBR" table="EMACHDEPST"/>
+				<message>
+					<![CDATA[Direct deposit for employee [EMPLOYEE] was changed.]]>
+				</message>
+				<properties>
+					<property fields="COMPANY" id="id1">
+						<![CDATA[[COMPANY]]]>
+					</property>
+					<property fields="EMPLOYEE" id="id2">
+						<![CDATA[[EMPLOYEE]]]>
+					</property>
+					<property fields="ACH-DIST-ORDER" id="id3">
+						<![CDATA[[ACH-DIST-ORDER]]]>
+					</property>
+				</properties>
+			</entity>
+			<entity actions="INP" name="InforEmployee" type="business">
+				<dme fields="COMPANY;EMPLOYEE;ACH-DIST-ORDER" index="EADSET1" keys="EAD-COMPANY;EAD-EMPLOYEE;EAD-ACH-DIST-NBR" table="EMACHDEPST"/>
+				<message>
+					<![CDATA[Inquiry of employee [EMPLOYEE] for Company [COMPANY] was successful.]]>
+				</message>
+				<properties>
+					<property fields="COMPANY" id="id1">
+						<![CDATA[[COMPANY]]]>
+					</property>
+					<property fields="EMPLOYEE" id="id2">
+						<![CDATA[[EMPLOYEE]]]>
+					</property>
+					<property fields="ACH-DIST-ORDER" id="id3">
+						<![CDATA[[ACH-DIST-ORDER]]]>
+					</property>
+				</properties>
+			</entity>
+		</ibcm>
+		<PATH id="path1" nbr="_l152"/>
+		<msgBar bMsgArea="1" id="msgbar1" nbr="msgBar"/>
+		<XSCRIPT id="script1" nbr="_s1">
+			<![CDATA[
+function VALUES_OnBlur(id, row)
+{
+	if (id=="select3")
+	{
+	//alert ("Test trigger blur event");
+	var EAD_ACCOUNT_TYPE=lawForm.getElementValue("_f28");
+
+	if (EAD_ACCOUNT_TYPE == "C")
+		{
+		lawForm.setElementValue("_f33","CHECKING",row);
+		}
+	else if (EAD_ACCOUNT_TYPE == "S")
+		{
+		lawForm.setElementValue("_f33","SAVINGS",row);
+		}
+	else
+		{
+		lawForm.setElementValue("_f33","",row);
+		}
+
+	//alert(EAD_ACCOUNT_TYPE);
+	}
+	return true;
+}
+
+function VALUES_OnFocus(id, row)
+{
+	if (id=="select3")
+	{
+	//alert ("Test trigger focus event");
+	var EAD_ACCOUNT_TYPE=lawForm.getElementValue("_f28");
+
+	if (EAD_ACCOUNT_TYPE == "C")
+		{
+		lawForm.setElementValue("_f33","CHECKING",row);
+		}
+	else if (EAD_ACCOUNT_TYPE == "S")
+		{
+		lawForm.setElementValue("_f33","SAVINGS",row);
+		}
+	else
+		{
+		lawForm.setElementValue("_f33","",row);
+		}
+
+	}	
+	return true;
+}
+
+function TEXT_OnFocus(id, row)
+{
+	if (id=="text9")
+	{
+	//alert ("Test trigger focus event");
+	var EAD_ACCOUNT_TYPE=lawForm.getElementValue("_f28");
+
+	if (EAD_ACCOUNT_TYPE == "C")
+		{
+		lawForm.setElementValue("_f33","CHECKING",row);
+		}
+	else if (EAD_ACCOUNT_TYPE == "S")
+		{
+		lawForm.setElementValue("_f33","SAVINGS",row);
+		}
+	else
+		{
+		lawForm.setElementValue("_f33","",row);
+		}
+
+	}	
+
+	return true;
+
+}
+
+function TEXT_OnBlur(id, row)
+{
+	if (id=="text9")
+	{
+	//alert ("Test trigger focus event");
+	var EAD_ACCOUNT_TYPE=lawForm.getElementValue("_f28");
+
+	if (EAD_ACCOUNT_TYPE == "C")
+		{
+		lawForm.setElementValue("_f33","CHECKING",row);
+		}
+	else if (EAD_ACCOUNT_TYPE == "S")
+		{
+		lawForm.setElementValue("_f33","SAVINGS",row);
+		}
+	else
+		{
+		lawForm.setElementValue("_f33","",row);
+		}
+
+	}	
+
+	return true;
+}
+
+]]>
+		</XSCRIPT>
+	</form>
+	<TRANSACTION trantype="ALL"/>
+</UIDEF>

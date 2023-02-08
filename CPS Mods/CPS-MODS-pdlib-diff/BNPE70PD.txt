@@ -1,0 +1,99 @@
+< IS PROD\PDLIB\BNPE70PD
+> IS VNLA\PDLIB\BNPE70PD
+2,16d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+<       *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+<       *                    END DATE FIELDS IN DETERMINATION OF THE     *
+<       *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+<       *  HERWECK 03/11/05  FIX BNPOSTCODE LOOKUP PROBLEM.              *
+<       *  HERWECK 04/02/03  ANOTHER BNPOSTCODE LOOKUP FIX.              *
+<       *  GWILSON 9/2006 CHANGED ERR MSG IN 5200-EDIT-POST-CODE-TBL     *
+<       *        CAUSING PROBLEMS IN ZN103/BN531                         *
+<       ******************************************************************
+< 
+125,126c110,111
+< 
+< 010300*** GW 1/2007 REWRITE THIS BECAUSE HAVING TROUBLE WITH >1 OPEN
+---
+> 010300
+> 010400     MOVE PLN-POST-CODE-TBL      TO DB-POST-CODE-TBL.
+127,152d111
+<       ****     SPAN ON BNPOSTCODE DUE TO HMO'S
+< 
+< 010400**** MOVE PLN-POST-CODE-TBL      TO DB-POST-CODE-TBL.
+< RAY   *--- 2003/11/05 --------------------------------------------------
+< RAY   *--- AIC ALSO CHGED BNP INDEXES - ADDED INS-CARRIER & START-DATE
+< RAY   *--- TO BNPSET1 AND A NEW BNPSET2 USING SAME FLDS IN DIFFERENT
+< RAY   *--- ORDER. THEY FORGOT TO POPULATE INS-CARIER ON LOOKUP 
+< RAY   ***  MOVE PLN-INS-CARRIER        TO DB-INS-CARRIER.
+< RAY   *------------------------------------------------------ 2003/11/05
+< 010500**** MOVE BNPEWS-EMP-POST-CODE   TO DB-POSTAL-CODE.
+< AI0010**** MOVE BNPEWS-START-DATE      TO DB-START-DATE.
+< AI0010***  PERFORM 850-KFIND-NLT-BPCSET1.
+< RAY   *--- 2004/02/03 --------------------------------------------------
+< RAY   *--- THE "KFIND" IS SUPPOSED TO JUST RETURN THE FOUND OR 
+< RAY   *--- OR NOTFOUND FLAG. TO CHECK RECORD DATA, USE "FIND".
+< GORDON***  CHANGED ERROR-NBR 104 BELOW TO GIVE MORE INFO TO DEBUG
+< GORDON***  ALSO ADDED ERROR MSG 501 TO GIVE MORE INFO TO DEBUG
+< GORDON***  ALSO ADDED ERROR MSG 500 WHICH AIC FORGOT
+< GORDON***  ALSO CHANGED SOME "BPC-KFOUND"S TO "FOUND"S
+< RAY   *    PERFORM 850-KFIND-NLT-BPCSET2.
+< RAY   **** PERFORM 850-FIND-NLT-BPCSET2.
+< RAY   *------------------------------------------------------ 2004/02/03
+< 
+< 
+<            MOVE "N"                    TO WS-BPC-FOUND.
+< 
+154,156c113,115
+< AI0010     MOVE BNPEWS-START-DATE      TO DB-START-DATE.
+<            INITIALIZE                     DB-INS-CARRIER.
+< 010400     INITIALIZE                     DB-POST-CODE-TBL.
+---
+> 010600     PERFORM 850-KFIND-NLT-BPCSET1.
+> 010700     IF  (BNPOSTCODE-KFOUND)
+> 010800     AND (BPC-POST-CODE-TBL      = PLN-POST-CODE-TBL)
+157,185d115
+< 
+< RAY        PERFORM 850-FIND-NLT-BPCSET2.
+< 
+<            PERFORM
+<            UNTIL (BNPOSTCODE-NOTFOUND)
+<               OR (BPC-POSTAL-CODE NOT = BNPEWS-EMP-POST-CODE)
+<               OR (WS-BPC-FOUND = "Y")
+<                  IF  (BPC-START-DATE <= BNPEWS-START-DATE)
+< 
+<                  AND ((BPC-STOP-DATE >  BNPEWS-START-DATE)
+<                   OR  (BPC-STOP-DATE = ZERO))
+< 
+<                  AND (BPC-INS-CARRIER = PLN-INS-CARRIER)
+<                  AND (BPC-POST-CODE-TBL = PLN-POST-CODE-TBL)
+<                     MOVE   "Y"          TO WS-BPC-FOUND
+<                  ELSE
+<                     PERFORM 860-FIND-NEXT-BPCSET2
+<                  END-IF
+<            END-PERFORM.
+< 
+< 011000
+< GW         IF (WS-BPC-FOUND = "N")
+< GW             MOVE 104                TO BNPEWS-ERROR-NBR
+< GW             MOVE PEM-WORK-ZIP       TO BNPEWS-ERR-VAR1
+< GW             MOVE BNPEWS-START-DATE  TO BNPEWS-ERR-VAR2
+< GW             MOVE PLN-INS-CARRIER    TO BNPEWS-ERR-VAR3
+< GW             MOVE PLN-POST-CODE-TBL  TO BNPEWS-ERR-VAR4
+< GW             GO TO 5200-END
+< GW         ELSE
+186a117,125
+> 011000
+> 011100     IF (BNPOSTCODE-KNOTFOUND)
+> 011200     OR (BPC-POST-CODE-TBL       NOT = PLN-POST-CODE-TBL)
+> 011300     OR (BNPEWS-BPC-POST-CODE    NOT = BNPEWS-EMP-POST-CODE)
+> 011400******** Emp post code does not exist in table
+> 011500         MOVE 104                TO BNPEWS-ERROR-NBR
+> 011600         MOVE PEM-WORK-ZIP       TO BNPEWS-ERR-VAR1
+> 011700         MOVE PLN-POST-CODE-TBL  TO BNPEWS-ERR-VAR2
+> 011800         GO TO 5200-END.

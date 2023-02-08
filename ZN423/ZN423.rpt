@@ -1,0 +1,108 @@
+******* ZN423.rpt 1 <1631770049>
+******************************************************************
+$PROGRAM   ZN423
+******************************************************************
+
+****************************************************
+$REPORT    ZN423-R1
+****************************************************
+
+**************************************
+$GROUP     GN1-EMP-COMPANY
+**************************************
+$PREFIX    G1-
+$PGBRK
+$LEVEL     A
+$FORMAT
+ZN423  Date 99/99/99                               Company   ZZZ9  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                       Page ZZZZ
+       |  ; A1                                     |       ; B1    C1                                                   |  ; D1
+       Time 99.99                                  Additional Data File    
+       |  ; E1                                     |                     ;
+%
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD
+ B1    COMPANY
+ C1    NAME
+ D1    PAGE                                   PN
+ E1    TIME                                   CT
+
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2-TOTALS        
+**************************************
+$PREFIX    G2-
+$LEVEL     B
+$FORMAT
+          Total Records Written:  ZZZ,ZZZ,ZZ9
+          |                    ;  A
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     RECORD-COUNT
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN3H-WEN-PLAN-CODE
+**************************************
+$PREFIX    G3-
+$LEVEL     A
+$DELAY
+$FORMAT
+ZN420  Date 99/99/99                               Company   ZZZ9  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                       Page ZZZZ
+       |  ; A1                                     |       ; B1    C1                                                   |  ; D1
+       Time 99.99                                  ADDITIONAL File Overrides
+       |  ; E1                                     |                     ;
+ Employee  First Name      Last Name       SSN        Status Proc Lvl
+ |       ; |               ; |               ; |            ; |   ;  |     ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD
+ B1    COMPANY
+ C1    NAME
+ D1    PAGE                                   PN
+ E1    TIME                                   CT
+
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN3D-WEN-PLAN-CODE
+**************************************
+$PREFIX    G3-
+$LEVEL     B
+$FORMAT
+ ZZZZZZZZ9 XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX XXXXXXXXXXXX XXX XXXXX
+ A         B               C               D            E   F  
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     EMPLOYEE
+ B     FIRST-NAME
+ C     LAST-NAME
+ D     FICA-NBR
+ E     EMP-STATUS
+ F     PROCESS-LEVEL
+$ENDFLDS
+
+$ENDGRP
+
+
+$ENDRPT
+
+$ENDPGM

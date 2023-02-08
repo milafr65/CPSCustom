@@ -1,0 +1,79 @@
+******************************************************************
+$PROGRAM   ZN555
+******************************************************************
+
+****************************************************
+$REPORT    ZN555-R1
+****************************************************
+
+**************************************
+$GROUP     GN1H-COMPANY-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     A
+$FORMAT
+ZN555 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                  TERMSTATUS Personal Action Report
+      |  ; E1                                     |                                  ;   
+      Update Mode = X
+      |           ; F1
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+ F1    UPD-MODE
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1S-EMPLOYEE-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+  Employee     Last Name       First Name       Age     Months    New Status    Error Message
+  |      ;     |       ;       |        ;       | ;     |    ;    |        ;    |           ;
+  ----------   --------------- ---------------  ----    ------    ----------    --------------------------------------------------
+  |        ;   |             ; |             ;  |   ;   |    ;      |   ;       |                                                ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1D-EMPLOYEE-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     C
+$FORMAT                    1
+  XXXXXXXXXX   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX  XXX     XXXX        XX          XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  A            B               C                D       E           F           G
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-EMPLOYEE
+ B     DTL-LAST-NAME
+ C     DTL-FIRST-NAME
+ D     DTL-AGE
+ E     DTL-MONTHS
+ F     DTL-STATUS
+ G     DTL-ERROR-MSG
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+$ENDPGM

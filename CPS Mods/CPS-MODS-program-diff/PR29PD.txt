@@ -1,0 +1,249 @@
+< prod/prsrc/PR29PD
+> vnla/prsrc/PR29PD
+2d1
+< *******  GW 2/2006 ADDED DISPLAY OF PNP-PENS-SEQ-NBR ON PAY-TAB WO #3505
+110,141d108
+< 
+<            IF (PR29F1-FC = "A" OR "C")
+<               IF (PR29F1-WPN-BEN-START-DATE NOT > ZEROS)
+< 000880            MOVE 500                          TO CRT-ERROR-NBR
+< 000890            MOVE PR29F1-WPN-BEN-START-DATE-FN TO CRT-FIELD-NBR
+< 000900            GO TO 210-END
+< *******       ELSE
+< *******       IF (PR29F1-WPN-REVIEW-DATE    NOT > ZEROS)
+< 000880*           MOVE 500                       TO CRT-ERROR-NBR
+< 000890*           MOVE PR29F1-WPN-REVIEW-DATE-FN TO CRT-FIELD-NBR
+< 000900*           GO TO 210-END
+< 000900        ELSE
+<               IF (PR29F1-WPN-REVIEW-REASON > SPACES)
+<                  MOVE "BENREVRSN "              TO DB-CODE-NAME
+<                  MOVE PR29F1-WPN-REVIEW-REASON  TO DB-CODE-VALUE
+<                  PERFORM 840-FIND-WPCSET1
+<                  IF (WBPCODES-NOTFOUND)
+<                     MOVE 510                          TO CRT-ERROR-NBR
+<                     MOVE PR29F1-WPN-REVIEW-REASON     TO CRT-ERR-VAR1
+<                     MOVE PR29F1-WPN-REVIEW-REASON-FN  TO CRT-FIELD-NBR
+<                     GO TO 210-END
+<                  END-IF 
+<               ELSE
+<               IF (PR29F1-WPN-BEN-STOP-RSN > SPACES)
+<                  MOVE "BENSTPRSN "              TO DB-CODE-NAME
+<                  MOVE PR29F1-WPN-BEN-STOP-RSN   TO DB-CODE-VALUE
+<                  PERFORM 840-FIND-WPCSET1
+<                  IF (WBPCODES-NOTFOUND)
+<                     MOVE 510                         TO CRT-ERROR-NBR
+<                     MOVE PR29F1-WPN-BEN-STOP-RSN     TO CRT-ERR-VAR1
+<                     MOVE PR29F1-WPN-BEN-STOP-RSN-FN  TO CRT-FIELD-NBR
+<                     GO TO 210-END.
+193,194c160,161
+< 001420             MOVE PNP-PENS-SEQ-NBR TO DB-PENS-SEQ-NBR
+< 001430                                      PR29F1-PNP-PENS-SEQ-NBR
+---
+> 001420             MOVE PNP-PENS-SEQ-NBR   TO DB-PENS-SEQ-NBR
+> 001430                                        PR29F1-PNP-PENS-SEQ-NBR.
+195d161
+< 001430                                     PR29F1-PNP-PENS-SEQ-NBR-DISP.
+230,231c196,197
+< 001780     MOVE PNP-PENS-SEQ-NBR        TO DB-PENS-SEQ-NBR
+< 001790                                     PR29F1-PNP-PENS-SEQ-NBR
+---
+> 001780     MOVE PNP-PENS-SEQ-NBR           TO DB-PENS-SEQ-NBR
+> 001790                                        PR29F1-PNP-PENS-SEQ-NBR.
+232d197
+< 001790                                     PR29F1-PNP-PENS-SEQ-NBR-DISP.
+425,483d389
+< 
+< GW5/03***** WBP MODS
+<            MOVE PNP-COMPANY            TO DB-COMPANY.
+<            MOVE PNP-EMPLOYEE           TO DB-EMPLOYEE.
+<            MOVE PNP-EFFECT-DATE        TO DB-EFFECT-DATE.
+<            MOVE PNP-PENS-SEQ-NBR       TO DB-PENS-SEQ-NBR.
+< 
+<            PERFORM 840-MODIFY-WPNSET1.
+<            IF  (WBPPRPENPY-FOUND)
+<                IF (PR29F1-FC = "A" OR "C")
+<                   MOVE PR29F1-WPN-BEN-START-DATE TO WPN-BEN-START-DATE
+<                   MOVE PR29F1-WPN-REVIEW-DATE    TO WPN-REVIEW-DATE   
+<                   MOVE PR29F1-WPN-REVIEW-REASON  TO WPN-REVIEW-REASON  
+<                   MOVE PR29F1-WPN-BEN-STOP-RSN   TO WPN-BEN-STOP-RSN    
+<                   PERFORM  820-STORE-WBPPRPENPY
+<                ELSE
+<                IF (PR29F1-FC = "D")
+<                   PERFORM 830-DELETE-WBPPRPENPY
+<                END-IF
+<                END-IF
+<            ELSE
+<            IF (PR29F1-FC = "A" OR "C")
+<                PERFORM 800-CREATE-WBPPRPENPY
+<                MOVE PNP-COMPANY               TO WPN-COMPANY
+<                MOVE PNP-EMPLOYEE              TO WPN-EMPLOYEE
+<                MOVE PNP-EFFECT-DATE           TO WPN-EFFECT-DATE
+<                MOVE PNP-PENS-SEQ-NBR          TO WPN-PENS-SEQ-NBR
+<                MOVE PR29F1-WPN-BEN-START-DATE TO WPN-BEN-START-DATE
+<                MOVE PR29F1-WPN-REVIEW-DATE    TO WPN-REVIEW-DATE   
+<                MOVE PR29F1-WPN-REVIEW-REASON  TO WPN-REVIEW-REASON  
+<                MOVE PR29F1-WPN-BEN-STOP-RSN   TO WPN-BEN-STOP-RSN    
+< 
+<                PERFORM  820-STORE-WBPPRPENPY.
+< ******** THERE SHOULD ONLY BE ONE PAY-CODE AND SEQ-NBR *********
+<            IF (PR29F1-FC = "A" OR "C")
+< 
+< 016220        MOVE PRPNP-COMPANY              TO DB-COMPANY
+< 016230        MOVE PRPNP-EMPLOYEE             TO DB-EMPLOYEE
+<               PERFORM 840-FIND-EMPSET1
+< 016240        MOVE PRPNP-PENS-SEQ-NBR         TO DB-PENS-SEQ-NBR
+<               MOVE STMSET6-PENS-SEQ-NBR   TO WS-DB-BEG-RNG
+<               PERFORM 850-MODIFY-BEGRNG-STMSET6
+<               PERFORM
+<                   UNTIL (STANDTIME-NOTFOUND)
+<                   IF (EMP-EMP-STATUS = "AI" OR "AM" OR "AR" OR "AS")
+<                      MOVE "3"                 TO STM-CHECK-GRP
+<                   ELSE
+<                   IF (PRPNP-PENS-DIST-CODE  = "G" OR "H")
+<                   OR (PRPNP-PENS-DST-CODE2  = "G" OR "H")
+<                      MOVE "B"                 TO STM-CHECK-GRP
+<                   ELSE
+<                      MOVE "A"                 TO STM-CHECK-GRP
+<                   END-IF
+<                   END-IF
+<                   PERFORM 820-STORE-STANDTIME
+<                   PERFORM 860-MODIFY-NXTRNG-STMSET6
+<               END-PERFORM.
+<               
+< ********** END WBP MODS
+563,570d468
+< 
+< GW5/03****** WBP MODS *********
+<            PERFORM 605-MOVE-WPN-TO-SCREEN
+<            THRU    605-END.
+< 
+<            PERFORM 610-MOVE-HEU-TO-SCREEN
+<            THRU    610-END.
+< *********  WBP MODS END
+630,633d527
+< 5/03GW****  BEGIN WBP MOD
+< *******     ASSUMES THERE WILL BE ONLY ONE PAY-CODE ON TIME-RECORD TAB
+< *******     
+<            MOVE STM-CHECK-GRP              TO PR29F1-STM-CHECK-GRP.
+635,636d528
+< 5/03GW****  END WBP MOD
+< 
+1098c990
+< 009490     MOVE PRPNP-PENS-SEQ-NBR      TO PR29F1-PNP-PENS-SEQ-NBR
+---
+> 009490     MOVE PRPNP-PENS-SEQ-NBR       TO PR29F1-PNP-PENS-SEQ-NBR.
+1099d990
+< 009490                                     PR29F1-PNP-PENS-SEQ-NBR-DISP.
+1209c1100
+< 010600     MOVE PNP-PENS-SEQ-NBR       TO PR29F1-PNP-PENS-SEQ-NBR
+---
+> 010600     MOVE PNP-PENS-SEQ-NBR       TO PR29F1-PNP-PENS-SEQ-NBR.
+1210d1100
+< 010600                                  PR29F1-PNP-PENS-SEQ-NBR-DISP.
+1244,1349d1133
+< 
+< 010420******************************************************************
+< GW5/03****** BEGIN WBP MODS *********
+< 010430 605-MOVE-WPN-TO-SCREEN.
+< 010440******************************************************************
+<            MOVE PNP-COMPANY            TO DB-COMPANY.
+<            MOVE PNP-EMPLOYEE           TO DB-EMPLOYEE.
+<            MOVE PNP-EFFECT-DATE        TO DB-EFFECT-DATE.
+<            MOVE PNP-PENS-SEQ-NBR       TO DB-PENS-SEQ-NBR.
+< 
+<            PERFORM 840-FIND-WPNSET1.
+<            IF (WBPPRPENPY-FOUND)
+<                MOVE WPN-BEN-START-DATE  TO PR29F1-WPN-BEN-START-DATE
+<                MOVE WPN-REVIEW-DATE     TO PR29F1-WPN-REVIEW-DATE
+<                MOVE WPN-REVIEW-REASON   TO PR29F1-WPN-REVIEW-REASON
+<                MOVE WPN-BEN-STOP-RSN    TO PR29F1-WPN-BEN-STOP-RSN
+< 
+<                IF (PR29F1-WPN-REVIEW-REASON > SPACES)
+<                   MOVE "BENREVRSN "              TO DB-CODE-NAME
+<                   MOVE PR29F1-WPN-REVIEW-REASON  TO DB-CODE-VALUE
+<                   PERFORM 840-FIND-WPCSET1
+<                   IF (WBPCODES-FOUND)
+<                      MOVE WPC-DESCRIPTION40 (1:14) 
+<                                  TO PR29F1-WPN-REVIEW-DESC
+<                   END-IF
+<               END-IF
+<               IF (PR29F1-WPN-BEN-STOP-RSN > SPACES)
+<                  MOVE "BENSTPRSN "              TO DB-CODE-NAME
+<                  MOVE PR29F1-WPN-BEN-STOP-RSN   TO DB-CODE-VALUE
+<                  PERFORM 840-FIND-WPCSET1
+<                  IF (WBPCODES-FOUND)
+<                      MOVE WPC-DESCRIPTION40 (1:14) 
+<                                    TO PR29F1-WPN-STOP-DESC
+<                  END-IF
+<               END-IF
+<            ELSE
+<                MOVE ZEROS               TO PR29F1-WPN-BEN-START-DATE
+<                MOVE ZEROS               TO PR29F1-WPN-REVIEW-DATE
+<                MOVE SPACES              TO PR29F1-WPN-REVIEW-REASON
+<                MOVE SPACES              TO PR29F1-WPN-REVIEW-DESC
+< 
+<                MOVE SPACES              TO PR29F1-WPN-BEN-STOP-RSN
+<                MOVE SPACES              TO PR29F1-WPN-STOP-DESC.
+< 
+<        605-END.
+< 
+< 010420******************************************************************
+< 010430 610-MOVE-HEU-TO-SCREEN.
+< 010440******************************************************************
+< 
+<            MOVE "P-W9 RECEIVED DATE"       TO DB-FIELD-NAME.
+<            PERFORM 840-FIND-HRUSET2.
+<            IF (HRUSERFLDS-FOUND)
+<               MOVE HRU-FIELD-KEY           TO DB-FIELD-KEY
+<               MOVE PNP-COMPANY             TO DB-COMPANY
+<               MOVE PNP-EMPLOYEE            TO DB-EMPLOYEE
+<               INITIALIZE                      DB-EMP-APP
+<               PERFORM 840-FIND-HEUSET1
+<               IF (HREMPUSF-FOUND)
+<                  MOVE HEU-D-FIELD          TO PR29F1-HEU-D-FIELD-W9
+<               ELSE
+<                  MOVE ZEROS                TO PR29F1-HEU-D-FIELD-W9.
+< 
+<            MOVE "A-Roster Code"            TO DB-FIELD-NAME.
+<            PERFORM 840-FIND-HRUSET2.
+<            IF (HRUSERFLDS-FOUND)
+<               MOVE HRU-FIELD-KEY           TO DB-FIELD-KEY
+<               MOVE PNP-COMPANY             TO DB-COMPANY
+<               MOVE PNP-EMPLOYEE            TO DB-EMPLOYEE
+<               INITIALIZE                      DB-EMP-APP
+<               PERFORM 840-FIND-HEUSET1
+<               IF (HREMPUSF-FOUND)
+<                  MOVE HEU-A-FIELD          TO PR29F1-HEU-A-FIELD-ROSTER
+<               ELSE
+<                  MOVE SPACES               TO PR29F1-HEU-A-FIELD-ROSTER.
+< 
+<            MOVE "A-QDRO-CRP"               TO DB-FIELD-NAME.
+<            PERFORM 840-FIND-HRUSET2.
+<            IF (HRUSERFLDS-FOUND)
+<               MOVE HRU-FIELD-KEY           TO DB-FIELD-KEY
+<               MOVE PNP-COMPANY             TO DB-COMPANY
+<               MOVE PNP-EMPLOYEE            TO DB-EMPLOYEE
+<               INITIALIZE                      DB-EMP-APP
+<               PERFORM 840-FIND-HEUSET1
+<               IF (HREMPUSF-FOUND)
+<                  MOVE HEU-A-FIELD          TO PR29F1-HEU-A-FIELD-QDRO  
+<               ELSE
+<                  MOVE SPACES               TO PR29F1-HEU-A-FIELD-QDRO.
+< 
+<            MOVE "R-PPPT#"                  TO DB-FIELD-NAME.
+<            PERFORM 840-FIND-HRUSET2.
+<            IF (HRUSERFLDS-FOUND)
+<               MOVE HRU-FIELD-KEY           TO DB-FIELD-KEY
+<               MOVE PNP-COMPANY             TO DB-COMPANY
+<               MOVE PNP-EMPLOYEE            TO DB-EMPLOYEE
+<               INITIALIZE                      DB-EMP-APP
+<               PERFORM 840-FIND-HEUSET1
+<               IF (HREMPUSF-FOUND)
+<                  MOVE HEU-A-FIELD          TO PR29F1-HEU-A-FIELD-R-PPPT
+<               ELSE
+<                  MOVE SPACES               TO PR29F1-HEU-A-FIELD-R-PPPT.
+< 
+<        610-END.
+< 
+< *******  WBP MODS END
+< 010900******************************************************************

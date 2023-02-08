@@ -1,0 +1,369 @@
+1c1
+< ******* PRTRDPD 62.2.18 <3771856819>
+---
+> ******* PRTRDPD 62.2.37 <4255227230>
+65,66c65,66
+< 004400
+< 004500
+---
+>       *
+>       ******************************************************************
+66a67,72
+>       *  GL/AC edits are skipped if -FN fields are not filled in, here *
+>       *  is the list of fields that may be set to perform those edits: *
+>       *         PRTRD-DST-ACCT-UNIT-FN, PRTRD-ACTIVITY-FN,             *
+>       *         PRTRD-DIST-PROC-LEV-FN, PRTRD-DIST-DEPART-FN,          *
+>       *         PRTRD-BUS-NBR-GRP-FN,   PRTRD-QC-ENT-NBR-GRP-FN        *
+>       ******************************************************************
+73c79
+<            INITIALIZE PRTRD-WARNING-COUNT.
+---
+>            INITIALIZE PRTRD-WARNING-COUNT
+73a80,81
+>                       PRTRD-ANNUAL-HOURS
+>                       PRTRD-NBR-FTE.
+196a205,206
+> P14594         MOVE PRTRD-COMPANY    TO DB-COMPANY
+> P14594         MOVE PRTRD-EMPLOYEE   TO DB-EMPLOYEE
+199a210,217
+> P40947         PERFORM 
+> P40947             UNTIL (PAEMPPOS-NOTFOUND)
+> P40152             OR (PEP-COMPANY     NOT = PRTRD-COMPANY)
+> P40152             OR (PEP-EMPLOYEE    NOT = PRTRD-EMPLOYEE)
+> P40497             OR (PEP-POS-LEVEL   NOT = PRTRD-POS-LVL)
+> P14594             OR (PEP-EFFECT-DATE    <= PRTRD-TR-DATE)
+> P14594             PERFORM 860-FIND-NEXT-PEPSET3
+> P40947         END-PERFORM
+201,216c219,234
+< P14594         AND (PEP-EFFECT-DATE NOT < PRTRD-TR-DATE)
+< P14594              MOVE PRTRD-TR-DATE  TO DB-BEG-DATE
+< P14594              PERFORM 850-FIND-NLT-PEPSET3
+< P14594              IF  (PAEMPPOS-FOUND)
+< P14594              AND (PEP-COMPANY   = DB-COMPANY)
+< P14594              AND (PEP-EMPLOYEE  = DB-EMPLOYEE)
+< P14594              AND (PEP-POS-LEVEL = DB-POS-LEVEL)
+< P14594                   IF (PEP-POS-LEVEL  = 1)
+< P14594                       MOVE PEP-POSITION TO HREMP-POSITION
+< P14594                       MOVE 1             TO PRTRD-PEP-POS-SW
+< P14594                   ELSE
+< P14594                       IF (PEP-POSITION = PRTRD-POSITION)
+< P14594                           MOVE PRTRD-PEP-POSITION
+< P14594                                           TO HREMP-POSITION
+< P14594                           MOVE 2     TO PRTRD-PEP-POS-SW
+< P14594                       END-IF
+---
+> P14594         AND (PEP-COMPANY       =  DB-COMPANY)
+> P14594         AND (PEP-EMPLOYEE      =  DB-EMPLOYEE)
+> P14594         AND (PEP-POS-LEVEL     =  DB-POS-LEVEL)
+> P40947         AND (PEP-EFFECT-DATE  <=  PRTRD-TR-DATE)
+> P14594             IF (PEP-POS-LEVEL  = 1)
+> P14594                 MOVE PEP-POSITION            TO HREMP-POSITION
+> P14594                 MOVE 1                       TO PRTRD-PEP-POS-SW
+> P50109                 MOVE PEP-JOB-CODE            TO HREMP-JOB-CODE
+> P14594             ELSE
+> P14594                 IF (PEP-POSITION = PRTRD-POSITION)
+> P14594                     MOVE PRTRD-PEP-POSITION  TO HREMP-POSITION
+> P50109                     MOVE PEP-JOB-CODE        TO HREMP-JOB-CODE
+> P14594                     MOVE 2                   TO PRTRD-PEP-POS-SW
+> P14594                 END-IF
+> P14594             END-IF
+> P14594          END-IF
+217,219d234
+< P14594                   END-IF
+< P14594              END-IF
+< P14594         END-IF
+273c288
+< 
+---
+> P39431*****************************************************************
+273a289,300
+> P39431*     VALIDATE PAY STATUS                                       *
+> P39431*****************************************************************
+> P39431
+> P39431     IF  (EMS-PAY-STATUS     = "NN" OR "NB")
+> P39431     AND (PRTRD-NOT-ADJUSTMENT)
+> P39431         MOVE 141                       TO CRT-ERROR-NBR
+> P39431         MOVE PRTRD-EMPLOYEE-FN         TO CRT-FIELD-NBR
+> P39431         IF (PRTRD-BATCH-PROGRAM = "Y")
+> P39431            PERFORM 2410-BATCH-ERROR
+> P39431            THRU    2410-END
+> P39431         ELSE
+> P39431            GO TO 2400-END.
+383a411
+> P45867     AND (HREMP-PAY-FREQUENCY NOT = ZEROS)
+393a422,423
+> GW0507         DISPLAY "EMP " PRTRD-EMPLOYEE " " PRTRD-PER-END-DATE " "
+>                         PRTRD-WRK-END-DATE
+418a449,456
+> P50977     IF (PRTRD-LOCAT-CODE NOT = SPACES)
+> P50977     AND (PRTRD-LOCAT-CODE NOT = HRPEM-LOCAT-CODE) 
+> GW0507       DISPLAY "PRTRD-PXL-I " PRTRD-PXL-I " " PRTRD-EMPLOYEE
+> P50977       ADD  1                 TO PRTRD-PXL-I
+> P50977       MOVE PRTRD-LOCAT-CODE  TO PRTRD-PXL-LOC-CODE (PRTRD-PXL-I) 
+> P50977       MOVE PRTRD-PER-BEG-DATE TO PRTRD-PXL-DATE (PRTRD-PXL-I) 
+> P50977     END-IF.
+> 
+540a579
+> P25122     MOVE WS-FALSE               TO PRTRD-PAPOS-VALUES-USED-SW.
+545c584
+< 036200         IF (PRTRD-DIST-PROC-LEV = SPACES)
+---
+> 036200         IF  (PRTRD-DIST-PROC-LEV = SPACES)
+545a585
+> P25122         AND (PRTRD-DIST-DEPART  = SPACES)
+547,555c587,595
+< P92581         END-IF
+< P92581         IF  (PRTRD-DIST-DEPART  = SPACES)
+< P92581             MOVE POS-DEPARTMENT       TO PRTRD-DIST-DEPART.
+< 036500
+< 036600     IF (PRTRD-DIST-PROC-LEV = SPACES)
+< P92030         MOVE HREMP-PROCESS-LEVEL    TO PRTRD-DIST-PROC-LEV.
+< P92030 
+< P92030     IF (PRTRD-DIST-DEPART = SPACES)
+< P92030         MOVE HREMP-DEPARTMENT       TO PRTRD-DIST-DEPART.
+---
+> P92581             MOVE POS-DEPARTMENT       TO PRTRD-DIST-DEPART
+> P25122             IF  (PRTRD-DIST-PROC-LEV NOT = SPACES)
+> P25122             AND (PRTRD-DIST-DEPART       = SPACES)
+> P25122                 MOVE WS-TRUE    TO PRTRD-PAPOS-VALUES-USED-SW
+> P25122             END-IF
+> P25122         END-IF
+> P25122     END-IF.
+> 
+> P25122     IF (PRTRD-PAPOSITION-VALUES-USED)
+555a596,603
+> P25122         NEXT SENTENCE
+> P25122     ELSE
+> 036600         IF (PRTRD-DIST-PROC-LEV = SPACES)
+> P92030             MOVE HREMP-PROCESS-LEVEL  TO PRTRD-DIST-PROC-LEV
+> P25122         END-IF
+> P92030         IF (PRTRD-DIST-DEPART = SPACES)
+> P92030             MOVE HREMP-DEPARTMENT     TO PRTRD-DIST-DEPART
+> P25122         END-IF.
+881c929
+<                    MOVE HREMP-TAX-PROVINCE TO PRTRD-WORK-STATE
+---
+> 100671             IF (PRTRD-WC-STATE      NOT = SPACES)
+881a930,933
+> 100671                 MOVE PRTRD-WC-STATE     TO PRTRD-WORK-STATE
+> 100671             ELSE
+>                        MOVE HREMP-TAX-PROVINCE TO PRTRD-WORK-STATE
+> 100671             END-IF                        
+1480a1533,1535
+> P37944
+> P37944         INITIALIZE IFACWS-GLT-TYPE
+> P43919                    IFACWS-BYPASS-UNITS-EDIT
+1482,1483c1537,1538
+< 089500         AND (PRTRD-HOURS    NOT = ZEROS)
+< 089600             MOVE "B"                TO IFACWS-GLT-TYPE
+---
+> P43919             IF  (PCD-CALC-TYPE = "H")
+> P43919                 MOVE "U"            TO IFACWS-GLT-TYPE
+1483a1539,1545
+> P43919             ELSE
+> P43919                 IF  (PRTRD-HOURS NOT = ZEROS)
+> P43919                     MOVE "B"        TO IFACWS-GLT-TYPE
+> P43919                 ELSE
+> P43919                     MOVE "A"        TO IFACWS-GLT-TYPE
+> P43919                 END-IF
+> P43919             END-IF
+1485,1486c1547,1548
+< 089800             MOVE "A"                TO IFACWS-GLT-TYPE
+< 089900         END-IF
+---
+> P37944             IF  (PRTRD-GL-UNITS = "N")
+> P43919                 IF  (PCD-CALC-TYPE = "H")
+1486a1549,1556
+> P43919                     MOVE "U"        TO IFACWS-GLT-TYPE
+> P43919                     MOVE "Y"        TO IFACWS-BYPASS-UNITS-EDIT
+> P43919                 ELSE
+> P43919                     MOVE "A"        TO IFACWS-GLT-TYPE
+> P43919                 END-IF
+> 089900             END-IF
+> P37944         END-IF
+> P37944
+1496a1567,1569
+>                    IF (CRT-ERROR-CAT       = "EDAU")
+>                        MOVE PRTRD-DST-ACCT-UNIT-FN      TO CRT-FIELD-NBR
+>                    ELSE
+1498c1571
+< 090800                 MOVE PRTRD-DST-ACCT-UNIT-FN      TO CRT-FIELD-NBR
+---
+> 090800                 MOVE PRTRD-DST-ACCOUNT-FN        TO CRT-FIELD-NBR
+1514a1588,1589
+>                    END-IF
+>                    END-IF
+1669a1745,1773
+> 109800*****************************************************************
+> 109900*     FILL EMPLOYEE,PENDING,HISTORY PAY RATE                    *
+> 110000*****************************************************************
+> 110100
+>       *  THIS SECTION OF CODE THAT FINDS THE HISTORY RATE WAS MOVED
+>       *  ABOVE THE SAG EDITS TO GUARANTEE THAT THE CORRECT SALARY
+>       *  CLASS WAS CAPTURED FOR THE TIME RECORD DATE
+> 
+> 110200*  PRIORITIES
+> 110300*      1 - PENDING RATE
+> 110400*      2 - HISTORY RATE, IF EMP-PAY-RATE NOT=ZERO
+> 110500*      3 - EMPLOYEE RATE
+> 110600
+> 110700     MOVE HREMP-PAY-RATE         TO PRTRD-EMP-PAY-RATE.
+> 110800     INITIALIZE PRTRD-OLD-RATE
+> 110900                PRTRD-NEW-RATE.
+> 111000
+> 111100     IF  (PRTRD-CHECK-TYPE NOT = "J")
+>            OR  (PRTRD-RECORD-TYPE = "2" OR "3")
+> 111200         PERFORM 6600-PENDING-RATE-CHANGE
+> 111300         IF  (NOT PRTRD-POSITION-RATE-ALL)
+> 111400             PERFORM 6700-HISTORY-RATE
+> P14594         ELSE
+> P14594             PERFORM 6800-HISTORY-RATE-ALL.
+> 
+> P48725     IF (HREMP-SALARY-CLASS = "S")
+> P48725        SET PRTRD-SALARY-TR-YES  TO TRUE
+> P48725     END-IF.
+> 111500
+1901,1921d2004
+< 109800*****************************************************************
+< 109900*     FILL EMPLOYEE,PENDING,HISTORY PAY RATE                    *
+< 110000*****************************************************************
+< 110100
+< 110200*  PRIORITIES
+< 110300*      1 - PENDING RATE
+< 110400*      2 - HISTORY RATE, IF EMP-PAY-RATE NOT=ZERO
+< 110500*      3 - EMPLOYEE RATE
+< 110600
+< 110700     MOVE HREMP-PAY-RATE         TO PRTRD-EMP-PAY-RATE.
+< 110800     INITIALIZE PRTRD-OLD-RATE
+< 110900                PRTRD-NEW-RATE.
+< 111000
+< 111100     IF  (PRTRD-CHECK-TYPE NOT = "J")
+<            OR  (PRTRD-RECORD-TYPE = "2" OR "3")
+< 111200         PERFORM 6600-PENDING-RATE-CHANGE
+< 111300         IF  (NOT PRTRD-POSITION-RATE-ALL)
+< 111400             PERFORM 6700-HISTORY-RATE
+< P14594         ELSE
+< P14594             PERFORM 6800-HISTORY-RATE-ALL.
+< 111500
+2089,2090c2172,2173
+< 126100     MOVE JBC-WC-CLASS           TO PRTRD-WC-CLASS.
+< 126100     MOVE JBC-CA-WC-CLASS        TO PRTRD-CA-WC-CLASS.
+---
+>            IF  (HREMP-CA-WORK-COUNTRY)
+>                MOVE PRTRD-COMPANY          TO DB-COMPANY
+2090a2174,2189
+>                MOVE HRWS-CA-WORK-COUNTRY   TO DB-COUNTRY-CODE
+>                MOVE JBC-JOB-CODE           TO DB-JOB-CODE
+>                MOVE PRTRD-WC-STATE         TO DB-STATE-PROV
+> 
+>                PERFORM 840-FIND-WCRSET1
+> 
+>                IF  (WCCLASSOVR-FOUND)
+>                    MOVE WCR-ST-PROV-CLASS  TO PRTRD-CA-WC-CLASS
+>                    MOVE SPACES             TO PRTRD-WC-CLASS
+>                ELSE
+> 126100             MOVE JBC-WC-CLASS       TO PRTRD-WC-CLASS
+> 126100             MOVE JBC-CA-WC-CLASS    TO PRTRD-CA-WC-CLASS
+>                END-IF
+>            ELSE
+> 126100         MOVE JBC-WC-CLASS       TO PRTRD-WC-CLASS
+> 126100         MOVE JBC-CA-WC-CLASS    TO PRTRD-CA-WC-CLASS.
+2101a2201,2205
+> 
+>            IF  (PSG-COUNTRY-CODE = HRWS-US-WORK-COUNTRY)
+>            AND (PSG-REMUN-CODE   = SPACES)
+>                 MOVE "E035"            TO PRTRD-REMUN-CODE.
+> 
+3784,3785c3888,3889
+<                MOVE PEP-ANNUAL-HOURS   TO PRTRD-ANNUAL-HOURS
+<                MOVE PEP-FTE            TO PRTRD-NBR-FTE
+---
+>                IF  (PRTRD-ANNUAL-HOURS = ZEROS)
+>                    MOVE PEP-ANNUAL-HOURS   TO PRTRD-ANNUAL-HOURS
+3785a3890,3893
+>                END-IF
+>                IF (PRTRD-NBR-FTE = ZEROES)
+>                    MOVE PEP-FTE        TO PRTRD-NBR-FTE
+>                END-IF
+3787,3788c3895,3896
+< 253100         MOVE HREMP-ANNUAL-HOURS TO PRTRD-ANNUAL-HOURS
+<                MOVE HREMP-NBR-FTE      TO PRTRD-NBR-FTE.
+---
+>                IF  (PRTRD-ANNUAL-HOURS = ZEROS)
+> 253100             MOVE HREMP-ANNUAL-HOURS TO PRTRD-ANNUAL-HOURS
+3788a3897,3899
+>                END-IF
+>                IF (PRTRD-NBR-FTE = ZEROES)
+>                    MOVE HREMP-NBR-FTE  TO PRTRD-NBR-FTE.
+4115c4226
+< 276500     AND (PCT-NEW-VALUE (PRTRD-I1) NOT = HREMP-SALARY-CLASS)
+---
+> P48725       IF (PCT-NEW-VALUE (PRTRD-I1) NOT = HREMP-SALARY-CLASS)
+4115a4227,4228
+> P48725         MOVE PCT-NEW-VALUE (PRTRD-I1) TO HREMP-SALARY-CLASS
+> P48725       ELSE
+4151a4265,4266
+>                 MOVE HRHRHWS-NBR-FTE          TO PRTRD-NBR-FTE
+>                 MOVE HRHRHWS-ANNUAL-HOURS     TO PRTRD-ANNUAL-HOURS
+4160,4161d4274
+< P14594     MOVE ZEROES                 TO PRTRD-OLD-RATE.
+< 
+4164d4276
+< P14594     OR  (PRTRD-EMP-PAY-RATE      = ZEROES)
+4167c4279
+< P14594     IF (PRTRD-POS-LVL = 1)
+---
+> P14594     MOVE ZEROES                 TO PRTRD-OLD-RATE.
+4168d4279
+< P14594         GO TO 6800-END.
+4178,4180c4289,4291
+< P14594      MOVE WS-HIGH-VALUES        TO DB-BEG-DATE.
+< P14594      MOVE WS-HIGH-VALUES        TO DB-SEQ-NBR.
+< P14594      PERFORM 850-FIND-NLT-PRHSET2.
+---
+> P40163      MOVE PRHSET2-POS-LEVEL     TO WS-DB-BEG-RNG.
+> P14594*      MOVE WS-HIGH-VALUES       TO DB-BEG-DATE.
+> P14594      PERFORM 850-FIND-BEGRNG-PRHSET2.
+4182c4293
+< P14594          GO TO 6800-END.
+---
+> P14594          GO TO 6800-END
+4182a4294,4304
+> P38285      ELSE
+> P40947          IF (PRH-BEG-DATE <= PRTRD-TR-DATE)
+> P38285              MOVE PRH-SALARY-CLASS  TO HREMP-SALARY-CLASS
+> P40947          ELSE    
+> P40947              PERFORM 
+> P40947                  UNTIL (PRRATEHIST-NOTFOUND)   
+> P40947                  OR    (PRH-BEG-DATE <= PRTRD-TR-DATE)
+> P40947                  PERFORM 860-FIND-NXTRNG-PRHSET2   
+> P40947              END-PERFORM
+> P40947              IF (PRRATEHIST-FOUND)
+> P40947                  MOVE PRH-SALARY-CLASS TO HREMP-SALARY-CLASS.
+4186a4309,4311
+> P40947      MOVE PRTRD-COMPANY         TO DB-COMPANY.
+> P40947      MOVE PRTRD-EMPLOYEE        TO DB-EMPLOYEE.
+> P40947      MOVE PRTRD-POS-LVL         TO DB-POS-LEVEL.
+4187a4313
+> P40163      MOVE WS-HIGH-VALUES        TO DB-SEQ-NBR.
+4195,4196d4320
+< P14594          MOVE PRH-BASE-PAY-RATE TO PRTRD-OLD-RATE
+< P14594                                    PRTRD-EMP-PAY-RATE
+4201a4326,4334
+> P14594     IF (PRTRD-POS-LVL = 1)
+> P14594         GO TO 6800-END.
+> 
+>            IF  (PRRATEHIST-FOUND)
+> P14594         MOVE PRH-BASE-PAY-RATE TO PRTRD-OLD-RATE
+> P14594                                   PRTRD-EMP-PAY-RATE
+>                MOVE PRH-NBR-FTE       TO PRTRD-NBR-FTE
+>                MOVE PRH-ANNUAL-HOURS  TO PRTRD-ANNUAL-HOURS.
+> 
+4323a4457,4459
+>            IF (PRTRD-REMUN-CODE-FN = ZEROS)
+>                MOVE TRD-REMUN-CODE     TO PRTRD-REMUN-CODE.
+> 
+4327,4329d4462
+< 
+<            IF (PRTRD-REMUN-CODE-FN = ZEROS)
+<                MOVE TRD-REMUN-CODE     TO PRTRD-REMUN-CODE.

@@ -1,0 +1,1600 @@
+1c1
+< ******* AR137PD 28.1.14.1.9 <2025585727>
+---
+> ******* AR137PD 28.1.14.1.4 <3858820849>
+2,5d1
+<       ******************************************************************
+<       * WORKER BENEFIT PLAN MODIFICATIONS
+<       * 04/05/27 HERWECK - ONLY PROCESS EMPLOYERS, SKIP DIRECT BILL
+<       * 04/05/27 HERWECK - LIMIT FINANCE CHARGE TO BALANCES OVER $2.00
+45,54d40
+<            IF (ACO-VERIFY-GLDATE        = "Y")
+<                MOVE PRM-COMPANY         TO IFSCWS-COMPANY
+<                MOVE "AR"                TO IFSCWS-SYSTEM
+<                MOVE PRM-AS-OF-DATE      TO IFSCWS-POSTING-DATE 
+<                PERFORM 620-EDIT-SYSTEM-CODE-60
+<                IF (ERROR-FOUND)
+<                    MOVE WS-TRUE         TO WS-PARAMETER-ERROR
+<                    PERFORM 780-PRINT-ERROR-MSG
+<                    GO TO 050-END.
+< 
+211a198
+>                MOVE WS-RESTART-FILENAMEE TO WS-AR137W5-NAME
+222a210,212
+>                    MOVE WS-AR137W5-NAME      TO WS-TMP-FILE
+>                    PERFORM 901-REMOVE-TMP-FILE
+> 
+234a225,227
+>            PERFORM 900-BUILD-TMP-FILE-NAME.
+>            MOVE WS-TMP-FILE         TO WS-AR137W5-NAME.
+> 
+239a233
+>            OPEN I-O AR137W5-FILE.
+241,252d234
+<            OPEN OUTPUT FINANCE-FILE.
+<            OPEN OUTPUT ERROR-FILE.
+< 
+<            IF (PROGRAM-RESTARTING      = WS-FALSE)
+<                INITIALIZE   RPT-PAGE-COUNT (AR137-R3)
+<                             AR137WS-ERROR-CNT
+<                MOVE PRM-COMPANY                TO G3-COMPANY
+<                MOVE ACO-NAME                   TO G3-NAME
+<                MOVE ACO-CURRENCY-CD            TO G3-CURRENCY-CD
+<                MOVE PRM-AS-OF-DATE             TO G3-AS-OF-DATE
+<                MOVE GN3-ERROR-REPORT           TO RPT-GROUP-REQUEST
+<                PERFORM 700-PRINT-RPT-GRP.
+264a247
+>            MOVE WS-AR137W5-NAME        TO WS-RESTART-FILENAMED.
+268a252,262
+>       **** DATA AND LANGUAGE TRANSLATION.
+>            OPEN OUTPUT LANGERR-FILE.
+>            INITIALIZE                         RPT-PAGE-COUNT (AR137-R3).
+>            MOVE PRM-AS-OF-DATE             TO G3-AS-OF-DATE.
+>            MOVE ACO-COMPANY                TO G3-COMPANY.
+>            MOVE ACO-NAME                   TO G3-NAME.
+>            MOVE ACO-CURRENCY-CD            TO G3-CURRENCY-CD.
+>            MOVE GN3-COMPANY                TO RPT-GROUP-REQUEST.
+>            PERFORM 700-PRINT-RPT-GRP.
+>       **** END
+> 
+274a269,270
+>            CLOSE AR137W5-FILE.
+> 
+276c272
+<            IF (AR137WS-ERROR-CNT  = 0)
+---
+>       **** DATA AND LANGUAGE TRANSLATION
+276a273,277
+>            IF (AR137WS-LANG-ERR-CNT NOT = 0)
+>                MOVE AR137WS-LANG-ERR-CNT TO CNT-COMPANY-COUNT
+>                MOVE T13-LANGUAGE-ERR-CNT TO RPT-GROUP-REQUEST
+>                PERFORM 700-PRINT-RPT-GRP
+>            ELSE
+284a286,288
+>            CLOSE LANGERR-FILE.
+>       **** END
+> 
+297a302
+>            OPEN I-O AR137W5-FILE.
+306a312
+>            CLOSE AR137W5-FILE.
+316,317c322,323
+< 
+<            CLOSE FINANCE-FILE.
+---
+>            MOVE WS-AR137W5-NAME      TO WS-TMP-FILE.
+>            PERFORM 901-REMOVE-TMP-FILE.
+318d323
+<            CLOSE ERROR-FILE.
+327,331d331
+<            PERFORM 1005-CREATE-ACM-FILTER
+<            THRU    1005-END.
+< 
+<            INITIALIZE AR137WS-FIN-CHRG-CD.
+< 
+335,336c335,336
+<            PERFORM 850-FILTER-BEGRNG-ACMSET1.
+<            PERFORM 1010-SEL-ARO-CUSTOMER
+---
+> 
+>            MOVE ACM-CUSTOMER           TO AR137WS-ARO-CUSTOMER
+336a337,353
+>                                           DB-CUSTOMER.
+>            IF (PRM-FUTURE-APPS     = "N")
+>                MOVE AROSET3-COMPANY    TO WS-DB-BEG-RNG
+>                PERFORM 850-FIND-BEGRNG-AROSET3
+>            ELSE
+>                MOVE AROSET6-COMPANY    TO WS-DB-BEG-RNG
+>                PERFORM 850-FIND-BEGRNG-AROSET6.
+> 
+>            PERFORM 1012-SEL-ARO-TRANS
+>            THRU    1012-END
+>                UNTIL (AROITEMS-NOTFOUND)
+>                OR    (ARO-COMPANY      NOT = PRM-COMPANY)
+>                OR    (AR137WS-END-PROG NOT = "N").
+> 
+>            INITIALIZE AR137WS-FIN-CHRG-CD.
+>            PERFORM 850-FIND-BEGRNG-ACMSET1.
+>            PERFORM 1010-SEL-ARO-COMPANY
+345c362
+<        1005-CREATE-ACM-FILTER.
+---
+>        1010-SEL-ARO-COMPANY.
+348c365
+<            INITIALIZE                  FILTER-STRING.
+---
+>            INITIALIZE                    AR137WS-W1-REC-CNT.
+349,548d365
+<            MOVE WS-FALSE               TO AR137WS-MULTI-FIN-CYCLES.
+< 
+<            MOVE 1                      TO AR137WS-I1.
+< 
+<            STRING "(" 
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            STRING FIL-ACM-LATE-PAY-FL
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            STRING "(" 
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (1)  NOT = SPACES)
+<               MOVE WS-TRUE              TO AR137WS-MULTI-FIN-CYCLES
+<               STRING FIL-ACM-FIN-CYCLE-1  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (2)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-2  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (3)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-3  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (4)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-4  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (5)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-5  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (6)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-6  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (7)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-7  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (8)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-8  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (9)  NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-9  
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            IF (PRM-FIN-CYCLE (10) NOT = SPACES)
+<               IF (AR137WS-MULTI-FIN-CYCLES = WS-TRUE)
+<                   STRING " OR "
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1
+<               ELSE
+<                   MOVE WS-TRUE          TO AR137WS-MULTI-FIN-CYCLES
+<               END-IF
+<               STRING FIL-ACM-FIN-CYCLE-10 
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            STRING "))" 
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            PERFORM 890-CREATE-FILTER.
+< 
+<            IF (PRM-FIN-CYCLE (1)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (1)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (2)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (2)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (3)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (3)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (4)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (4)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (5)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (5)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (6)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (6)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (7)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (7)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (8)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (8)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (9)  NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (9)  TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<            IF (PRM-FIN-CYCLE (10) NOT = SPACES)
+<                MOVE PRM-FIN-CYCLE (10) TO ALPHANUM-FILTER-VALUE
+<                PERFORM 890-SET-ALPHANUM-FILTER-VALUE.
+< 
+<        1005-END.
+550,551c367,368
+<       ******************************************************************
+<        1010-SEL-ARO-CUSTOMER.
+---
+>            IF (ACM-LATE-PAY-FL             = SPACE)
+>                GO TO 1010-NEXT-ARCUSTOMER.
+552d368
+<       ******************************************************************
+554c370
+<            INITIALIZE                    AR137WS-W1-REC-CNT.
+---
+>            IF  (PRM-FIN-CYCLE (1)      NOT = ACM-FIN-CYCLE)
+554a371,380
+>            AND (PRM-FIN-CYCLE (2)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (3)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (4)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (5)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (6)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (7)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (8)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (9)      NOT = ACM-FIN-CYCLE)
+>            AND (PRM-FIN-CYCLE (10)     NOT = ACM-FIN-CYCLE)
+>                GO TO 1010-NEXT-ARCUSTOMER.
+562,566c388,392
+<                MOVE ACM-CUSTOMER       TO D3-ERR-CUSTOMER
+<                MOVE PRM-TEXT-CODE      TO D3-FIELD-NAME
+<                MOVE 204                TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE        TO D3-FIELD-DATA-ERROR
+---
+>                MOVE PRM-COMPANY       TO LNG-COMPANY
+>                MOVE PRM-TEXT-CODE     TO LNG-TEXT-CODE
+>                MOVE ACM-LANGUAGE-CODE TO LNG-LANGUAGE-CODE
+>                MOVE ACM-CUSTOMER      TO LNG-CUSTOMER
+>                MOVE LANGUAGE-ERR      TO RPT-GROUP-REQUEST
+567,569d392
+<                MOVE D31-MESSAGE-ERRORS TO RPT-GROUP-REQUEST
+<                PERFORM 700-PRINT-RPT-GRP
+<                MOVE D31-MESSAGE-ERRORS TO RPT-GROUP-REQUEST
+571c394
+<                ADD  1                 TO AR137WS-ERROR-CNT
+---
+>                ADD  1                 TO AR137WS-LANG-ERR-CNT
+600,605c423,428
+<                    MOVE ACM-CUSTOMER       TO D3-ERR-CUSTOMER
+<                    MOVE ACM-FIN-CHRG-CD    TO D3-FIELD-NAME
+<                    MOVE 203                TO CRT-MSG-NBR
+<                    PERFORM 790-GET-MSG
+<                    MOVE CRT-MESSAGE        TO D3-FIELD-DATA-ERROR
+<                    MOVE D31-MESSAGE-ERRORS TO RPT-GROUP-REQUEST
+---
+>                    INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                    OPEN OUTPUT FINANCE-FILE
+>                    MOVE PRM-AS-OF-DATE         TO G1N-AS-OF-DATE
+>                    MOVE PRM-COMPANY            TO DB-COMPANY
+>                    PERFORM 840-FIND-ACOSET1
+>                    MOVE GN1-ARO-COMPANY-NET    TO RPT-GROUP-REQUEST
+605a429,432
+>                    PERFORM 700-PRINT-RPT-GRP
+>                    MOVE ACM-FIN-CHRG-CD        TO ERR-ACM-FIN-CHRG-CD
+>                    MOVE ACM-CUSTOMER           TO ERR-CUSTOMER
+>                    MOVE ERR-CD                 TO RPT-GROUP-REQUEST
+607c434
+<                    ADD  1                  TO AR137WS-ERROR-CNT
+---
+>                    CLOSE FINANCE-FILE 
+613,614c440,441
+<            MOVE PRM-COMPANY                TO DB-COMPANY.
+<            MOVE AR137WS-ARO-CUSTOMER       TO DB-CUSTOMER.
+---
+>            MOVE PRM-COMPANY                TO WF5-COMPANY.
+>            MOVE AR137WS-ARO-CUSTOMER       TO WF5-CUSTOMER.
+614a442,445
+>            INITIALIZE                      WF5-DUE-DATE
+>                                            WF5-TRANS-TYPE
+>                                            WF5-INVOICE
+>                                            WF5-PAYMENT-SEQ.
+616c447
+<       **** CALCULATE TOTAL OF UNAPPLIED PAYMENTS AND CREDIT MEMOS
+---
+>            MOVE WS-FALSE                    TO AR137EWS-FILE.
+617d447
+<       **** FOR EACH ARCUSTOMER
+619,627c449,457
+<            IF (ACO-INT-BY-DATE-FL              = "N")
+<                INITIALIZE                     AR137WS-CRED
+<                MOVE PRM-COMPANY            TO DB-COMPANY
+<                MOVE ACM-CUSTOMER           TO DB-CUSTOMER
+<                IF (PRM-FUTURE-APPS         = "N")
+<                    MOVE APMSET6-CUSTOMER   TO WS-DB-BEG-RNG
+<                    PERFORM 850-FIND-BEGRNG-APMSET6
+<                ELSE 
+<                    MOVE APMSET8-CUSTOMER   TO WS-DB-BEG-RNG
+---
+>            START AR137W5-FILE          KEY NOT < WF5-AR137-KEY
+>              INVALID KEY
+>                  MOVE WS-TRUE              TO AR137EWS-FILE.
+>                
+>            IF (AR137E-FOUND)
+>                MOVE WS-FALSE               TO AR137EWS-FILE
+>                READ AR137W5-FILE NEXT RECORD
+>                    AT END
+>                        MOVE WS-TRUE        TO AR137EWS-FILE.
+628,659d457
+<                    PERFORM 850-FIND-BEGRNG-APMSET8
+<                END-IF
+<                PERFORM 1035-UNAPPLIED-PAYMENTS
+<                THRU    1035-END
+<                    UNTIL (ARPAYMENT-NOTFOUND)
+<                MOVE PRM-COMPANY            TO DB-COMPANY
+<                MOVE ACM-CUSTOMER           TO AR137WS-CUSTOMER
+<                                               DB-CUSTOMER
+<                MOVE "C"                    TO DB-TRANS-TYPE
+<                IF (PRM-FUTURE-APPS    = "N")
+<                    MOVE AROSET3-TRANS-TYPE TO WS-DB-BEG-RNG
+<                    PERFORM 850-FIND-BEGRNG-AROSET3
+<                ELSE
+<                    MOVE AROSET6-TRANS-TYPE TO WS-DB-BEG-RNG
+<                    PERFORM 850-FIND-BEGRNG-AROSET6
+<                END-IF
+<                PERFORM 1040-CREDIT-MEMO
+<                THRU    1040-END
+<                    UNTIL (AROITEMS-NOTFOUND)
+<                    OR    (ARO-COMPANY      NOT = PRM-COMPANY)
+<                    OR    (ARO-CUSTOMER     NOT = AR137WS-CUSTOMER)
+<                    OR    (ARO-TRANS-TYPE   NOT = "C").
+<                       
+<            PERFORM 1013-CREATE-ARO-FILTER
+<            THRU    1013-END.
+< 
+<            IF (PRM-FUTURE-APPS     = "N")
+<                MOVE AROSET3-CUSTOMER   TO WS-DB-BEG-RNG
+<                PERFORM 850-FILTER-BEGRNG-AROSET3
+<            ELSE
+<                MOVE AROSET6-CUSTOMER   TO WS-DB-BEG-RNG
+<                PERFORM 850-FILTER-BEGRNG-AROSET6.
+661c459
+<            MOVE WS-FALSE               TO AR137WS-ARFINRATE-FOUND.
+---
+>            PERFORM 1015-SEL-ARO-CUSTOMER
+662d459
+<            PERFORM 1015-SEL-AROITEMS
+664,665c461,462
+<                UNTIL (AROITEMS-NOTFOUND)
+<                OR    (ARO-CUSTOMER NOT = AR137WS-ARO-CUSTOMER)
+---
+>                UNTIL (AR137E-NOTFOUND)
+>                OR    (WF5-CUSTOMER NOT = AR137WS-ARO-CUSTOMER)
+723,728c520,525
+<                        MOVE ACM-CUSTOMER        TO D3-ERR-CUSTOMER
+<                        MOVE ACM-FIN-CHRG-CD     TO D3-FIELD-NAME
+<                        MOVE 205                 TO CRT-MSG-NBR
+<                        PERFORM 790-GET-MSG
+<                        MOVE CRT-MESSAGE         TO D3-FIELD-DATA-ERROR
+<                        MOVE D31-MESSAGE-ERRORS  TO RPT-GROUP-REQUEST
+---
+>                        INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                        OPEN OUTPUT FINANCE-FILE
+>                        MOVE PRM-AS-OF-DATE      TO G1N-AS-OF-DATE
+>                        MOVE PRM-COMPANY         TO DB-COMPANY
+>                        PERFORM 840-FIND-ACOSET1
+>                        MOVE GN1-ARO-COMPANY-NET TO RPT-GROUP-REQUEST
+730c527
+<                        ADD  1                   TO AR137WS-ERROR-CNT
+---
+>                        MOVE ACM-FIN-CHRG-CD     TO ERR-ACM-FIN-CHRG-CD
+730a528,531
+>                        MOVE ACM-CUSTOMER        TO ERR-CUSTOMER
+>                        MOVE ERR-CD              TO RPT-GROUP-REQUEST
+>                        PERFORM 700-PRINT-RPT-GRP
+>                        CLOSE FINANCE-FILE 
+733,734c534,535
+< RAY   *--- 04/05/27 HERWECK LIMIT FINANCE CHARGE TO BALANCES OVER $2.00
+< RAY                    IF (AR137WS-PNMT > 2.00)
+---
+>                        COMPUTE AR137WS-FNET ROUNDED = AR137WS-PNMT
+>                                                     * AFI-CHRG-RATE
+735,738d535
+< RAY   *-----------------------------------------------------------------
+<                            COMPUTE AR137WS-FNET ROUNDED = AR137WS-PNMT
+<                                                         * AFI-CHRG-RATE
+<                        END-IF
+754c551
+<        1013-CREATE-ARO-FILTER.
+---
+>        1012-SEL-ARO-TRANS.
+757,759c554,556
+<            INITIALIZE                  FILTER-STRING.
+<            MOVE 1                      TO AR137WS-I1.
+< 
+---
+>            IF (ARO-INVOICE  NOT = AR137WS-INVOICE-SV)
+>                INITIALIZE                 WS-CHARGE-BY-DATE-INFO
+>                MOVE ARO-INVOICE        TO AR137WS-INVOICE-SV.
+760,768d556
+<            STRING "(" 
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+< 
+<            STRING FIL-ARO-BANK-INST-TYPE
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+770,773c558,561
+<            STRING FIL-ARO-DUE-DATE
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+---
+>       **** "D" = BOE PAYMENT TRANSACTIONS
+>       **** "B" = BANK SERVICE TRANSACTIONS
+>       **** "C" = CASH PAYMENT TRANSACTIONS
+>       ****
+773a562,563
+>            IF (ARO-DUE-DATE > PRM-AS-OF-DATE)
+>                GO TO 1012-FIND-NEXT-AROITEMS.
+775,780c565,570
+<            IF (ACO-INT-BY-DATE-FL = "N")
+<                STRING FIL-ARO-TRANS-TYPE  
+<                       DELIMITED BY SIZE
+<                       INTO                  FILTER-STRING
+<                       POINTER               AR137WS-I1
+<            END-IF.
+---
+>            MOVE ARO-COMPANY                TO WF5-COMPANY.
+>            MOVE ARO-CUSTOMER               TO WF5-CUSTOMER.
+>            MOVE ARO-DUE-DATE               TO WF5-DUE-DATE.
+>            MOVE ARO-TRANS-TYPE             TO WF5-TRANS-TYPE.
+>            MOVE ARO-INVOICE                TO WF5-INVOICE.
+>            MOVE ARO-PAYMENT-SEQ            TO WF5-PAYMENT-SEQ.
+780a571,579
+> 
+>            MOVE ARO-STATUS                 TO WF5-STATUS.
+>            MOVE ARO-LAST-FC-DATE           TO WF5-LAST-FC-DATE.
+>            MOVE ARO-ORIG-AMT               TO WF5-ORIG-AMT.
+>            MOVE ARO-TRANS-DATE             TO WF5-TRANS-DATE.
+>            MOVE ARO-ALT-TYPE               TO WF5-ALT-TYPE.
+>            MOVE ARO-TRAN-AMT               TO WF5-TRAN-AMT.
+>            MOVE ARO-APPLIED-SEQ            TO WF5-APPLIED-SEQ.
+>            MOVE ARO-DISPUTE-SEQ            TO WF5-DISPUTE-SEQ.
+782c581
+<            STRING ")" 
+---
+>            WRITE AR137W5-REC.
+783,785d581
+<                   DELIMITED BY SIZE
+<                   INTO                  FILTER-STRING
+<                   POINTER               AR137WS-I1.
+787c583
+<            PERFORM 890-CREATE-FILTER.
+---
+>        1012-FIND-NEXT-AROITEMS.
+789,790c585,586
+<            MOVE PRM-AS-OF-DATE          TO DATETIME-FILTER-VALUE.
+<            PERFORM 890-SET-DATETIME-FILTER-VALUE.
+---
+>            IF (PRM-FUTURE-APPS    = "N")
+>                PERFORM 860-FIND-NXTRNG-AROSET3
+790a587,588
+>            ELSE
+>                PERFORM 860-FIND-NXTRNG-AROSET6.
+792c590
+<        1013-END.
+---
+>        1012-END.
+795c593
+<        1015-SEL-AROITEMS.
+---
+>        1015-SEL-ARO-CUSTOMER.
+798,800c596,598
+<            MOVE ARO-COMPANY            TO DB-COMPANY.
+<            MOVE ARO-ALT-TYPE           TO DB-TRANS-TYPE.
+<            MOVE ARO-INVOICE            TO DB-INVOICE.
+---
+>            MOVE WF5-COMPANY            TO DB-COMPANY.
+>            MOVE WF5-ALT-TYPE           TO DB-TRANS-TYPE.
+>            MOVE WF5-INVOICE            TO DB-INVOICE.
+802a601,604
+>       **** "F" = FINANCE AND/OR LATE PAYMENT CHARGES
+>            IF (ARH-ORIG-CODE = "F")
+>                GO TO 1015-FIND-NEXT-AR137W5.
+> 
+805c607
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>                GO TO 1015-FIND-NEXT-AR137W5.
+807,808c609,610
+<            IF (ARH-ORIG-CODE = "F")
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>            IF (ARH-BANK-INST-TYPE = "D")
+>                GO TO 1015-FIND-NEXT-AR137W5.
+811c613
+<                MOVE ARO-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+---
+>                MOVE WF5-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+815c617
+<                     GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>                     GO TO 1015-FIND-NEXT-AR137W5.
+817,819c619,621
+<            IF (ARO-INVOICE NOT = AR137WS-INVOICE-SV)
+<                INITIALIZE                 WS-CHARGE-BY-DATE-INFO
+<                MOVE ARO-INVOICE        TO AR137WS-INVOICE-SV.
+---
+>       **** CALCULATE TOTAL OF UNAPPLIED PAYMENTS AND CREDIT MEMOS
+>       **** FOR EACH ARCUSTOMER
+> 
+819a622,668
+>            IF (WF5-CUSTOMER = AR137WS-CUSTOMER)
+>                NEXT SENTENCE
+>            ELSE
+>            IF (ACO-INT-BY-DATE-FL              = "N")
+>                IF (AR137WS-87                  = ZEROES)
+>                    INITIALIZE AR137WS-CRED
+>                    MOVE 1                      TO AR137WS-87
+>                    MOVE PRM-COMPANY            TO DB-COMPANY
+>                    MOVE WF5-CUSTOMER           TO DB-CUSTOMER
+>                    IF (PRM-FUTURE-APPS         = "N")
+>                        MOVE APMSET6-CUSTOMER   TO WS-DB-BEG-RNG
+>                        PERFORM 850-FIND-BEGRNG-APMSET6
+>                    ELSE 
+>                        MOVE APMSET8-CUSTOMER   TO WS-DB-BEG-RNG
+>                        PERFORM 850-FIND-BEGRNG-APMSET8
+>                    END-IF
+>                    PERFORM 1035-UNAPPLIED-PAYMENTS
+>                    THRU    1035-END
+>                        UNTIL (ARPAYMENT-NOTFOUND)
+>                    MOVE PRM-COMPANY            TO DB-COMPANY
+>                    MOVE WF5-CUSTOMER           TO AR137WS-CUSTOMER
+>                                                   DB-CUSTOMER
+>                    MOVE "C"                    TO DB-TRANS-TYPE
+>       **** "C" = CREDIT MEMO
+>                    IF (PRM-FUTURE-APPS    = "N")
+>                        MOVE AROSET3-TRANS-TYPE TO WS-DB-BEG-RNG
+>                        PERFORM 850-FIND-BEGRNG-AROSET3
+>                    ELSE
+>                        MOVE AROSET6-TRANS-TYPE TO WS-DB-BEG-RNG
+>                        PERFORM 850-FIND-BEGRNG-AROSET6
+>                    END-IF
+>                    PERFORM 1040-CREDIT-MEMO
+>                    THRU    1040-END
+>                        UNTIL (AROITEMS-NOTFOUND)
+>                        OR    (ARO-COMPANY      NOT = PRM-COMPANY)
+>                        OR    (ARO-CUSTOMER     NOT = AR137WS-CUSTOMER)
+>                        OR    (ARO-TRANS-TYPE   NOT = "C")
+>                     GO TO 1015-END
+>                END-IF
+>            END-IF 
+>            END-IF.
+>            
+>            IF (WF5-TRANS-TYPE = "C" OR "P")
+>                GO TO 1015-FIND-NEXT-AR137W5.
+> 
+>            IF (WF5-DUE-DATE > PRM-AS-OF-DATE)
+>                GO TO 1015-FIND-NEXT-AR137W5.
+821,830d669
+< 102104
+< RAY   *--- 04/05/27 HERWECK - ONLY PROCESS EMPLOYERS, SKIP DIRECT BILL -
+<            IF ((ARO-CUSTOMER(3:2) = "ER")
+<            AND (ARO-CUSTOMER(5:5) NUMERIC))
+<                CONTINUE
+<            ELSE
+< 102104         GO TO 1015-FIND-NEXT-AROITEMS.
+<       *--- END WBP MOD -------------------------------------------------
+< 102104
+< 102104
+836,841c675,680
+<            IF  (ARO-STATUS                 = "7")
+<            AND (ARO-TRANS-TYPE         NOT = "C")
+<                MOVE ARO-COMPANY            TO DB-COMPANY
+<                MOVE ARO-TRANS-TYPE         TO DB-TRANS-TYPE
+<                MOVE ARO-INVOICE            TO DB-INVOICE  
+<                MOVE ARO-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+---
+>            IF  (WF5-STATUS                 = "7")
+>            AND (WF5-TRANS-TYPE         NOT = "C")
+>                MOVE WF5-COMPANY            TO DB-COMPANY
+>                MOVE WF5-TRANS-TYPE         TO DB-TRANS-TYPE
+>                MOVE WF5-INVOICE            TO DB-INVOICE  
+>                MOVE WF5-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+851,852c690,691
+<                IF (ARO-TRAN-AMT            = AR137WS-ADJ-AMT)
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                IF (WF5-TRAN-AMT            = AR137WS-ADJ-AMT)
+>                    GO TO 1015-FIND-NEXT-AR137W5
+856,861c695,700
+<            IF  (ARO-STATUS                 = "7")
+<            AND (ARO-TRANS-TYPE             = "C")
+<                MOVE ARO-COMPANY            TO DB-COMPANY
+<                MOVE ARO-TRANS-TYPE         TO DB-TRANS-TYPE
+<                MOVE ARO-INVOICE            TO DB-INVOICE
+<                MOVE ARO-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+---
+>            IF  (WF5-STATUS                 = "7")
+>            AND (WF5-TRANS-TYPE             = "C")
+>                MOVE WF5-COMPANY            TO DB-COMPANY
+>                MOVE WF5-TRANS-TYPE         TO DB-TRANS-TYPE
+>                MOVE WF5-INVOICE            TO DB-INVOICE
+>                MOVE WF5-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+865c704
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                    GO TO 1015-FIND-NEXT-AR137W5
+870,872c709,711
+<            IF  (ARO-STATUS           = 8)
+<            AND (ARO-LAST-FC-DATE NOT = ZEROES)
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>            IF  (WF5-STATUS           = 8)
+>            AND (WF5-LAST-FC-DATE NOT = ZEROES)
+>                GO TO 1015-FIND-NEXT-AR137W5.
+875,876c714,715
+<            IF  (ARO-STATUS       = 8)
+<            AND (ARO-LAST-FC-DATE = ZEROES)
+---
+>            IF  (WF5-STATUS       = 8)
+>            AND (WF5-LAST-FC-DATE = ZEROES)
+878c717
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>                GO TO 1015-FIND-NEXT-AR137W5.
+891,892c730,731
+<                IF (ARO-LAST-FC-DATE            = ZEROES)
+<                    MOVE ARO-DUE-DATE           TO WSDR-FR-DATE
+---
+>                IF (WF5-LAST-FC-DATE            = ZEROES)
+>                    MOVE WF5-DUE-DATE           TO WSDR-FR-DATE
+901,903c740,742
+<                    IF (ARO-LAST-FC-DATE        > ARO-DUE-DATE)
+<                        MOVE ARO-LAST-FC-DATE   TO AR137WS-DUDT-FIN
+<                        MOVE ARO-LAST-FC-DATE   TO WSDR-FR-DATE
+---
+>                    IF (WF5-LAST-FC-DATE        > WF5-DUE-DATE)
+>                        MOVE WF5-LAST-FC-DATE   TO AR137WS-DUDT-FIN
+>                        MOVE WF5-LAST-FC-DATE   TO WSDR-FR-DATE
+905,906c744,745
+<                        MOVE ARO-DUE-DATE       TO AR137WS-DUDT-FIN
+<                        MOVE ARO-DUE-DATE       TO WSDR-FR-DATE
+---
+>                        MOVE WF5-DUE-DATE       TO AR137WS-DUDT-FIN
+>                        MOVE WF5-DUE-DATE       TO WSDR-FR-DATE
+920c759
+<                    MOVE ARO-DUE-DATE           TO WSDR-FR-DATE
+---
+>                    MOVE WF5-DUE-DATE           TO WSDR-FR-DATE
+922,923c761,762
+<                        IF (ARO-LAST-FC-DATE    > ARO-DUE-DATE)
+<                            MOVE ARO-LAST-FC-DATE TO WSDR-FR-DATE
+---
+>                        IF (WF5-LAST-FC-DATE    > WF5-DUE-DATE)
+>                            MOVE WF5-LAST-FC-DATE TO WSDR-FR-DATE
+927c766
+<                    IF (ARO-LAST-FC-DATE = ZEROES)
+---
+>                    IF (WF5-LAST-FC-DATE = ZEROES)
+936c775
+<                    MOVE ARO-DUE-DATE           TO WSDR-FR-DATE
+---
+>                    MOVE WF5-DUE-DATE           TO WSDR-FR-DATE
+972,976c811,815
+<                IF (ARO-APPLIED-SEQ         NOT = ZEROES)
+<                    MOVE "N"                    TO AR137WS-WORKB-DONE
+<                    MOVE ARO-COMPANY            TO DB-COMPANY
+<                    MOVE ARO-TRANS-TYPE         TO DB-TRANS-TYPE
+<                    MOVE ARO-INVOICE            TO DB-INVOICE
+---
+>                IF (WF5-APPLIED-SEQ         NOT = ZEROES)
+>                    MOVE WF5-COMPANY            TO DB-COMPANY
+>                    MOVE WF5-TRANS-TYPE         TO DB-TRANS-TYPE
+>                    MOVE WF5-INVOICE            TO DB-INVOICE
+>                    MOVE WF5-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+977d815
+<                    MOVE ARO-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+991c829
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                    GO TO 1015-FIND-NEXT-AR137W5
+999c837
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                    GO TO 1015-FIND-NEXT-AR137W5
+1005c843
+<                IF (ARO-DISPUTE-SEQ       NOT = ZEROES)
+---
+>                IF (WF5-DISPUTE-SEQ       NOT = ZEROES)
+1007,1010c845,848
+<                    MOVE ARO-CUSTOMER         TO DB-CUSTOMER
+<                    MOVE ARO-TRANS-TYPE       TO DB-TRANS-TYPE
+<                    MOVE ARO-INVOICE          TO DB-INVOICE
+<                    MOVE ARO-PAYMENT-SEQ      TO DB-PAYMENT-SEQ
+---
+>                    MOVE WF5-CUSTOMER         TO DB-CUSTOMER
+>                    MOVE WF5-TRANS-TYPE       TO DB-TRANS-TYPE
+>                    MOVE WF5-INVOICE          TO DB-INVOICE
+>                    MOVE WF5-PAYMENT-SEQ      TO DB-PAYMENT-SEQ
+1031c869
+<                IF (ARO-LAST-FC-DATE    = ZEROES)
+---
+>                IF (WF5-LAST-FC-DATE    = ZEROES)
+1042c880
+<                GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                GO TO 1015-FIND-NEXT-AR137W5
+1047c885
+<            AND (ARO-LAST-FC-DATE       = ZEROES)
+---
+>            AND (WF5-LAST-FC-DATE       = ZEROES)
+1054c892
+<                GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                GO TO 1015-FIND-NEXT-AR137W5
+1061,1064c899,902
+<                MOVE ARO-COMPANY        TO DB-COMPANY
+<                MOVE ARO-TRANS-TYPE     TO DB-TRANS-TYPE
+<                MOVE ARO-INVOICE        TO DB-INVOICE
+<                MOVE ARO-PAYMENT-SEQ    TO DB-PAYMENT-SEQ
+---
+>                MOVE WF5-COMPANY        TO DB-COMPANY
+>                MOVE WF5-TRANS-TYPE     TO DB-TRANS-TYPE
+>                MOVE WF5-INVOICE        TO DB-INVOICE
+>                MOVE WF5-PAYMENT-SEQ    TO DB-PAYMENT-SEQ
+1070c908
+<                    MOVE ARO-ORIG-AMT   TO AR137WS-OPEN-AMT
+---
+>                    MOVE WF5-ORIG-AMT   TO AR137WS-OPEN-AMT
+1098,1099c936,937
+<                IF (ARO-LAST-FC-DATE         = ZEROES)
+<                    MOVE ARO-DUE-DATE        TO AR137WS-FC-FROM-DATE (I2)
+---
+>                IF (WF5-LAST-FC-DATE         = ZEROES)
+>                    MOVE WF5-DUE-DATE        TO AR137WS-FC-FROM-DATE (I2)
+1101c939
+<                    MOVE ARO-LAST-FC-DATE    TO AR137WS-FC-FROM-DATE (I2)
+---
+>                    MOVE WF5-LAST-FC-DATE    TO AR137WS-FC-FROM-DATE (I2)
+1145c983
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>                GO TO 1015-FIND-NEXT-AR137W5.
+1149,1150c987,988
+<            IF (AR137WS-APAM              = ARO-TRAN-AMT)
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>            IF (AR137WS-APAM              = WF5-TRAN-AMT)
+>                GO TO 1015-FIND-NEXT-AR137W5.
+1152c990
+<            COMPUTE AR137WS-CPNMT ROUNDED = ARO-TRAN-AMT
+---
+>            COMPUTE AR137WS-CPNMT ROUNDED = WF5-TRAN-AMT
+1163c1001
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>                GO TO 1015-FIND-NEXT-AR137W5.
+1170c1008
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                    GO TO 1015-FIND-NEXT-AR137W5
+1183,1200c1021,1038
+<            IF (AR137WS-ARFINRATE-FOUND = WS-FALSE)
+<                MOVE ACM-FIN-CHRG-CD         TO DB-FIN-CHRG-CD
+<                MOVE PRM-AS-OF-DATE          TO DB-EFF-DATE
+<                PERFORM 850-FIND-NLT-AFISET2
+<                IF (ARFINRATE-NOTFOUND)
+<                OR (AFI-FIN-CHRG-CD          NOT = ACM-FIN-CHRG-CD)
+<                    MOVE ACM-CUSTOMER        TO D3-ERR-CUSTOMER
+<                    MOVE ACM-FIN-CHRG-CD     TO D3-FIELD-NAME
+<                    MOVE 205                 TO CRT-MSG-NBR
+<                    PERFORM 790-GET-MSG
+<                    MOVE CRT-MESSAGE         TO D3-FIELD-DATA-ERROR
+<                    MOVE D31-MESSAGE-ERRORS  TO RPT-GROUP-REQUEST
+<                    PERFORM 700-PRINT-RPT-GRP
+<                    ADD  1                   TO AR137WS-ERROR-CNT
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+<                ELSE
+<                    MOVE WS-TRUE             TO AR137WS-ARFINRATE-FOUND
+<                    MOVE AFI-CHRG-RATE       TO IFCAWS-BASERATE.
+---
+>            MOVE ACM-FIN-CHRG-CD         TO DB-FIN-CHRG-CD.
+>            MOVE PRM-AS-OF-DATE          TO DB-EFF-DATE.
+>            PERFORM 850-FIND-NLT-AFISET2.
+>            IF (ARFINRATE-NOTFOUND)
+>            OR (AFI-FIN-CHRG-CD          NOT = ACM-FIN-CHRG-CD)
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE      TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY         TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET TO RPT-GROUP-REQUEST
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACM-FIN-CHRG-CD     TO ERR-ACM-FIN-CHRG-CD
+>                MOVE ACM-CUSTOMER        TO ERR-CUSTOMER
+>                MOVE ERR-CD              TO RPT-GROUP-REQUEST
+>                PERFORM 700-PRINT-RPT-GRP
+>                CLOSE FINANCE-FILE 
+>                GO TO 1015-FIND-NEXT-AR137W5
+1200a1039,1040
+>            ELSE
+>                MOVE AFI-CHRG-RATE       TO IFCAWS-BASERATE.
+1226c1066
+<                GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>                GO TO 1015-FIND-NEXT-AR137W5.
+1235,1238c1075,1078
+<            MOVE ARO-DUE-DATE               TO WF-ARO-DUE-DATE.
+<            MOVE ARO-TRANS-TYPE             TO WF-TRANS-TYPE.
+<            MOVE ARO-INVOICE                TO WF-TRANS-NBR.
+<            MOVE ARO-CUSTOMER               TO WF-CUSTOMER.
+---
+>            MOVE WF5-DUE-DATE               TO WF-ARO-DUE-DATE.
+>            MOVE WF5-TRANS-TYPE             TO WF-TRANS-TYPE.
+>            MOVE WF5-INVOICE                TO WF-TRANS-NBR.
+>            MOVE WF5-CUSTOMER               TO WF-CUSTOMER.
+1242c1082
+<            MOVE ARO-TRANS-DATE             TO WF-TRANS-DATE.
+---
+>            MOVE WF5-TRANS-DATE             TO WF-TRANS-DATE.
+1244c1084
+<            MOVE ARO-PAYMENT-SEQ            TO WF-PAYMENT-SEQ.
+---
+>            MOVE WF5-PAYMENT-SEQ            TO WF-PAYMENT-SEQ.
+1251c1091
+<                MOVE ARO-COMPANY            TO IFCAWS-COMPANY
+---
+>                MOVE WF5-COMPANY            TO IFCAWS-COMPANY
+1289c1129
+<            GO TO 1015-FIND-NEXT-AROITEMS.
+---
+>            GO TO 1015-FIND-NEXT-AR137W5.
+1302,1306c1142,1146
+<                IF (ARO-APPLIED-SEQ    NOT = ZEROES)
+<                    MOVE "N"               TO AR137WS-WORKB-DONE
+<                    MOVE ARO-COMPANY       TO DB-COMPANY
+<                    MOVE ARO-TRANS-TYPE    TO DB-TRANS-TYPE
+<                    MOVE ARO-INVOICE       TO DB-INVOICE
+---
+>                IF (WF5-APPLIED-SEQ    NOT = ZEROES)
+>                    MOVE WF5-COMPANY       TO DB-COMPANY
+>                    MOVE WF5-TRANS-TYPE    TO DB-TRANS-TYPE
+>                    MOVE WF5-INVOICE       TO DB-INVOICE
+>                    MOVE WF5-PAYMENT-SEQ   TO DB-PAYMENT-SEQ
+1307d1146
+<                    MOVE ARO-PAYMENT-SEQ   TO DB-PAYMENT-SEQ
+1320c1159
+<                        GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                        GO TO 1015-FIND-NEXT-AR137W5
+1323c1162
+<                    GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                    GO TO 1015-FIND-NEXT-AR137W5
+1326c1165
+<                GO TO 1015-FIND-NEXT-AROITEMS
+---
+>                GO TO 1015-FIND-NEXT-AR137W5
+1329c1168
+<        1015-FIND-NEXT-AROITEMS.
+---
+>        1015-FIND-NEXT-AR137W5.
+1342,1344c1181,1183
+<            IF (PRM-FUTURE-APPS  = "N")
+<                PERFORM 860-FIND-NXTRNG-AROSET3
+<            ELSE
+---
+>            READ AR137W5-FILE NEXT RECORD
+>                 AT END
+>                    MOVE WS-TRUE            TO AR137EWS-FILE.
+1345d1183
+<                PERFORM 860-FIND-NXTRNG-AROSET6.
+1365c1203
+<            MOVE ARO-ALT-TYPE           TO DB-TRANS-TYPE.
+---
+> 
+1365a1204,1222
+>            MOVE ARO-COMPANY            TO WF5-COMPANY.
+>            MOVE ARO-CUSTOMER           TO WF5-CUSTOMER.
+>            MOVE ARO-DUE-DATE           TO WF5-DUE-DATE.
+>            MOVE ARO-TRANS-TYPE         TO WF5-TRANS-TYPE.
+>            MOVE ARO-INVOICE            TO WF5-INVOICE.
+>            MOVE ARO-PAYMENT-SEQ        TO WF5-PAYMENT-SEQ.
+> 
+>            READ AR137W5-FILE KEY WF5-AR137-KEY
+>                    INVALID KEY
+>                         MOVE WS-TRUE      TO AR137EWS-FILE
+>            END-READ.
+> 
+>            IF (AR137E-FOUND)
+>                MOVE WF5-ALT-TYPE        TO DB-TRANS-TYPE
+>            END-IF.
+> 
+>            MOVE ARZ-COMPANY            TO DB-COMPANY.
+>            MOVE ARZ-INVOICE            TO DB-INVOICE.
+>            MOVE ARZ-PAYMENT-SEQ        TO DB-PAYMENT-SEQ.
+1378c1235
+<            IF (ARO-TRANS-TYPE = "C")
+---
+>            IF (WF5-TRANS-TYPE = "C")
+1387c1244
+<            IF (ARO-DUE-DATE > PRM-AS-OF-DATE)
+---
+>            IF (WF5-DUE-DATE > PRM-AS-OF-DATE)
+1391c1248
+<            IF  (ARO-STATUS = 7)
+---
+>            IF  (WF5-STATUS = 7)
+1395,1396c1252,1253
+<            IF  (ARO-STATUS = 8)
+<            AND (ARO-LAST-FC-DATE NOT = ZEROES)
+---
+>            IF  (WF5-STATUS = 8)
+>            AND (WF5-LAST-FC-DATE NOT = ZEROES)
+1400,1401c1257,1258
+<            IF  (ARO-STATUS = 8)
+<            AND (ARO-LAST-FC-DATE = ZEROES)
+---
+>            IF  (WF5-STATUS = 8)
+>            AND (WF5-LAST-FC-DATE = ZEROES)
+1416,1417c1273,1274
+<                IF (ARO-LAST-FC-DATE            = ZEROES)
+<                    MOVE ARO-DUE-DATE           TO WSDR-FR-DATE
+---
+>                IF (WF5-LAST-FC-DATE            = ZEROES)
+>                    MOVE WF5-DUE-DATE           TO WSDR-FR-DATE
+1426,1428c1283,1285
+<                    IF (ARO-LAST-FC-DATE        > ARO-DUE-DATE)
+<                        MOVE ARO-LAST-FC-DATE   TO AR137WS-DUDT-FIN
+<                        MOVE ARO-LAST-FC-DATE   TO WSDR-FR-DATE
+---
+>                    IF (WF5-LAST-FC-DATE        > WF5-DUE-DATE)
+>                        MOVE WF5-LAST-FC-DATE   TO AR137WS-DUDT-FIN
+>                        MOVE WF5-LAST-FC-DATE   TO WSDR-FR-DATE
+1430,1431c1287,1288
+<                        MOVE ARO-DUE-DATE       TO AR137WS-DUDT-FIN
+<                        MOVE ARO-DUE-DATE       TO WSDR-FR-DATE
+---
+>                        MOVE WF5-DUE-DATE       TO AR137WS-DUDT-FIN
+>                        MOVE WF5-DUE-DATE       TO WSDR-FR-DATE
+1445c1302
+<                    MOVE ARO-DUE-DATE           TO WSDR-FR-DATE
+---
+>                    MOVE WF5-DUE-DATE           TO WSDR-FR-DATE
+1447c1304
+<                    IF (ARO-LAST-FC-DATE = ZEROES)
+---
+>                    IF (WF5-LAST-FC-DATE = ZEROES)
+1456c1313
+<                    MOVE ARO-DUE-DATE           TO WSDR-FR-DATE
+---
+>                    MOVE WF5-DUE-DATE           TO WSDR-FR-DATE
+1498,1502c1355,1359
+<                IF (ARO-APPLIED-SEQ         NOT = ZEROES)
+<                    MOVE ARO-COMPANY            TO DB-COMPANY
+<                    MOVE ARO-TRANS-TYPE         TO DB-TRANS-TYPE
+<                    MOVE ARO-INVOICE            TO DB-INVOICE
+<                    MOVE ARO-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+---
+>                IF (WF5-APPLIED-SEQ         NOT = ZEROES)
+>                    MOVE WF5-COMPANY            TO DB-COMPANY
+>                    MOVE WF5-TRANS-TYPE         TO DB-TRANS-TYPE
+>                    MOVE WF5-INVOICE            TO DB-INVOICE
+>                    MOVE WF5-PAYMENT-SEQ        TO DB-PAYMENT-SEQ
+1530c1387
+<                IF (ARO-DISPUTE-SEQ       NOT = ZEROES)
+---
+>                IF (WF5-DISPUTE-SEQ       NOT = ZEROES)
+1557c1414
+<                IF (ARO-LAST-FC-DATE    = ZEROES)
+---
+>                IF (WF5-LAST-FC-DATE    = ZEROES)
+1573c1430
+<            AND (ARO-LAST-FC-DATE       = ZEROES)
+---
+>            AND (WF5-LAST-FC-DATE       = ZEROES)
+1587,1590c1444,1447
+<                MOVE ARO-COMPANY        TO DB-COMPANY
+<                MOVE ARO-TRANS-TYPE     TO DB-TRANS-TYPE
+<                MOVE ARO-INVOICE        TO DB-INVOICE
+<                MOVE ARO-PAYMENT-SEQ    TO DB-PAYMENT-SEQ
+---
+>                MOVE WF5-COMPANY        TO DB-COMPANY
+>                MOVE WF5-TRANS-TYPE     TO DB-TRANS-TYPE
+>                MOVE WF5-INVOICE        TO DB-INVOICE
+>                MOVE WF5-PAYMENT-SEQ    TO DB-PAYMENT-SEQ
+1596c1453
+<                    MOVE ARO-ORIG-AMT   TO AR137WS-OPEN-AMT
+---
+>                    MOVE WF5-ORIG-AMT   TO AR137WS-OPEN-AMT
+1624c1481
+<                MOVE ARO-DUE-DATE            TO AR137WS-FC-FROM-DATE (I2)
+---
+>                MOVE WF5-DUE-DATE            TO AR137WS-FC-FROM-DATE (I2)
+1673c1530
+<            IF (AR137WS-APAM              = ARO-TRAN-AMT)
+---
+>            IF (AR137WS-APAM              = WF5-TRAN-AMT)
+1676c1533
+<            COMPUTE AR137WS-CPNMT ROUNDED = ARO-TRAN-AMT
+---
+>            COMPUTE AR137WS-CPNMT ROUNDED = WF5-TRAN-AMT
+1715,1720c1572,1577
+<                MOVE ACM-CUSTOMER        TO D3-ERR-CUSTOMER
+<                MOVE ACM-FIN-CHRG-CD     TO D3-FIELD-NAME
+<                MOVE 205                 TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE         TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS  TO RPT-GROUP-REQUEST
+---
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE      TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY         TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET TO RPT-GROUP-REQUEST
+1720a1578,1581
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACM-FIN-CHRG-CD     TO ERR-ACM-FIN-CHRG-CD
+>                MOVE ACM-CUSTOMER        TO ERR-CUSTOMER
+>                MOVE ERR-CD              TO RPT-GROUP-REQUEST
+1722c1583
+<                ADD  1                   TO AR137WS-ERROR-CNT
+---
+>                CLOSE FINANCE-FILE 
+1761c1622
+<            MOVE ARO-DUE-DATE               TO WF-ARO-DUE-DATE.
+---
+>            MOVE WF5-DUE-DATE               TO WF-ARO-DUE-DATE.
+1770c1631
+<            MOVE ARO-TRANS-DATE             TO WF-TRANS-DATE.
+---
+>            MOVE WF5-TRANS-DATE             TO WF-TRANS-DATE.
+1774c1635
+<                MOVE ARO-COMPANY            TO IFCAWS-COMPANY
+---
+>                MOVE WF5-COMPANY            TO IFCAWS-COMPANY
+1827c1688
+<                IF (ARO-APPLIED-SEQ    NOT = ZEROES)
+---
+>                IF (WF5-APPLIED-SEQ    NOT = ZEROES)
+1919c1780
+<                COMPUTE AR137WS-OPEN-AMT      = ARO-TRAN-AMT
+---
+>                COMPUTE AR137WS-OPEN-AMT      = WF5-TRAN-AMT
+1933c1794
+<                COMPUTE AR137WS-OPEN-AMT      = ARO-TRAN-AMT
+---
+>                COMPUTE AR137WS-OPEN-AMT      = WF5-TRAN-AMT
+1946,1947c1807,1808
+<            IF  (ARO-LAST-FC-DATE         NOT = ZEROES)
+<            AND (ARA-DEPOSIT-DATE             <= ARO-LAST-FC-DATE)
+---
+>            IF  (WF5-LAST-FC-DATE         NOT = ZEROES)
+>            AND (ARA-DEPOSIT-DATE             <= WF5-LAST-FC-DATE)
+1949c1810
+<                    COMPUTE AR137WS-OPEN-AMT  = ARO-TRAN-AMT
+---
+>                    COMPUTE AR137WS-OPEN-AMT  = WF5-TRAN-AMT
+1980c1841
+<                COMPUTE AR137WS-OPEN-AMT      = ARO-TRAN-AMT
+---
+>                COMPUTE AR137WS-OPEN-AMT      = WF5-TRAN-AMT
+2000c1861
+<            IF (ARO-LAST-FC-DATE             = ZEROES)
+---
+>            IF (WF5-LAST-FC-DATE             = ZEROES)
+2002c1863
+<                    MOVE ARO-DUE-DATE        TO AR137WS-FC-FROM-DATE (I2)
+---
+>                    MOVE WF5-DUE-DATE        TO AR137WS-FC-FROM-DATE (I2)
+2005c1866
+<                                             = ARO-TRAN-AMT
+---
+>                                             = WF5-TRAN-AMT
+2014c1875
+<                    MOVE ARO-LAST-FC-DATE    TO AR137WS-FC-FROM-DATE (I2)
+---
+>                    MOVE WF5-LAST-FC-DATE    TO AR137WS-FC-FROM-DATE (I2)
+2017c1878
+<                                             = ARO-TRAN-AMT
+---
+>                                             = WF5-TRAN-AMT
+2022c1883
+<                        MOVE ARO-LAST-FC-DATE TO AR137WS-FC-FROM-DATE(I2)
+---
+>                        MOVE WF5-LAST-FC-DATE TO AR137WS-FC-FROM-DATE(I2)
+2042c1903
+<            AND (ARO-LAST-FC-DATE     NOT = ZEROES)
+---
+>            AND (WF5-LAST-FC-DATE     NOT = ZEROES)
+2103c1964
+<            IF  (ARA-CR-TYPE        = "C")
+---
+>            IF (ARA-CR-TYPE                 = "C")
+2104d1964
+<            AND (ACO-INT-BY-DATE-FL = "N")
+2201c2061
+<            IF  (ARA-TRANS-TYPE      = "C")
+---
+>            IF (ARA-TRANS-TYPE              = "C")
+2202d2061
+<            AND (ACO-INT-BY-DATE-FL  = "N")
+2343,2349c2202,2208
+<            OR (AFI-FIN-CHRG-CD         NOT = ACM-FIN-CHRG-CD)
+<                MOVE ACM-CUSTOMER       TO D3-ERR-CUSTOMER
+<                MOVE ACM-FIN-CHRG-CD    TO D3-FIELD-NAME
+<                MOVE 205                TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE        TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS TO RPT-GROUP-REQUEST
+---
+>            OR (AFI-FIN-CHRG-CD          NOT = ACM-FIN-CHRG-CD)
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE      TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY         TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET TO RPT-GROUP-REQUEST
+2349a2209,2212
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACM-FIN-CHRG-CD    TO ERR-ACM-FIN-CHRG-CD
+>                MOVE ACM-CUSTOMER       TO ERR-CUSTOMER
+>                MOVE ERR-CD             TO RPT-GROUP-REQUEST
+2351c2214
+<                ADD  1                  TO AR137WS-ERROR-CNT
+---
+>                CLOSE FINANCE-FILE
+2363c2226
+<            MOVE ARO-DUE-DATE           TO WF-ARO-DUE-DATE.
+---
+>            MOVE WF5-DUE-DATE           TO WF-ARO-DUE-DATE.
+2373c2236
+<            MOVE ARO-TRANS-DATE         TO WF-TRANS-DATE.
+---
+>            MOVE WF5-TRANS-DATE         TO WF-TRANS-DATE.
+2403c2266
+<                MOVE ARO-COMPANY            TO IFCAWS-COMPANY
+---
+>                MOVE WF5-COMPANY            TO IFCAWS-COMPANY
+2457,2462c2320,2325
+<                    MOVE ARA-COMPANY                 TO WFB-COMPANY
+<                    MOVE ARA-TRANS-TYPE              TO WFB-TRANS-TYPE
+<                    MOVE ARA-INVOICE                 TO WFB-TRANS-NBR
+<                    MOVE ARA-PAYMENT-SEQ             TO WFB-PAYMENT-SEQ
+<                    MOVE ARA-BATCH-NBR               TO WFB-BATCH-NBR
+<                    MOVE ARA-APP-SEQ                 TO WFB-APP-SEQ
+---
+>                    MOVE WFC-COMPANY                 TO WFB-COMPANY
+>                    MOVE WFC-TRANS-TYPE              TO WFB-TRANS-TYPE
+>                    MOVE WFC-TRANS-NBR               TO WFB-TRANS-NBR
+>                    MOVE WFC-PAYMENT-SEQ             TO WFB-PAYMENT-SEQ
+>                    MOVE WFC-BATCH-NBR               TO WFB-BATCH-NBR
+>                    MOVE WFC-APP-SEQ                 TO WFB-APP-SEQ
+2487c2350
+<                MOVE ARO-ORIG-AMT                TO AR137WS-LAPAM
+---
+>                MOVE WF5-ORIG-AMT                TO AR137WS-LAPAM
+2551,2552c2414,2415
+<                IF (ARO-LAST-FC-DATE             = ZEROES)
+<                    MOVE ARO-DUE-DATE            TO WFC-ARO-DUE-DATE
+---
+>                IF (WF5-LAST-FC-DATE             = ZEROES)
+>                    MOVE WF5-DUE-DATE            TO WFC-ARO-DUE-DATE
+2554c2417
+<                    MOVE ARO-LAST-FC-DATE        TO WFC-ARO-DUE-DATE
+---
+>                    MOVE WF5-LAST-FC-DATE        TO WFC-ARO-DUE-DATE
+2557,2558c2420,2421
+<                IF (ARO-LAST-FC-DATE             = ZEROES)
+<                    MOVE ARO-DUE-DATE            TO WF-ARO-DUE-DATE
+---
+>                IF (WF5-LAST-FC-DATE             = ZEROES)
+>                    MOVE WF5-DUE-DATE            TO WF-ARO-DUE-DATE
+2560c2423
+<                    MOVE ARO-LAST-FC-DATE        TO WF-ARO-DUE-DATE
+---
+>                    MOVE WF5-LAST-FC-DATE        TO WF-ARO-DUE-DATE
+2572,2573c2435,2436
+<                MOVE ARO-TRANS-TYPE              TO WF-TRANS-TYPE
+<                MOVE ARO-INVOICE                 TO WF-TRANS-NBR
+---
+>                MOVE WF5-TRANS-TYPE              TO WF-TRANS-TYPE
+>                MOVE WF5-INVOICE                 TO WF-TRANS-NBR
+2705c2568
+<                MOVE ARO-TRANS-DATE              TO WFC-TRANS-DATE
+---
+>                MOVE WF5-TRANS-DATE              TO WFC-TRANS-DATE
+2707c2570
+<                MOVE ARO-TRANS-DATE              TO WF-TRANS-DATE
+---
+>                MOVE WF5-TRANS-DATE              TO WF-TRANS-DATE
+2752c2615
+<                MOVE ARO-COMPANY             TO IFCAWS-COMPANY
+---
+>                MOVE WF5-COMPANY             TO IFCAWS-COMPANY
+2799c2662
+<                MOVE ARO-PAYMENT-SEQ             TO WF-PAYMENT-SEQ
+---
+>                MOVE WF5-PAYMENT-SEQ             TO WF-PAYMENT-SEQ
+3015,3016c2878,2879
+<            MOVE ARO-TRAN-AMT               TO AR137WS-OPENC.
+<            IF (ARO-APPLIED-SEQ NOT = ZEROES)
+---
+>            MOVE WF5-TRAN-AMT               TO AR137WS-OPENC.
+>            IF (WF5-APPLIED-SEQ NOT = ZEROES)
+3064,3067c2927,2930
+<            MOVE ARO-COMPANY                TO DB-CR-COMPANY.
+<            MOVE ARO-CUSTOMER               TO DB-CR-CUSTOMER.
+<            MOVE ARO-TRANS-TYPE             TO DB-CR-TYPE.
+<            MOVE ARO-INVOICE                TO DB-CR-NBR.
+---
+>            MOVE WF5-COMPANY                TO DB-CR-COMPANY.
+>            MOVE WF5-CUSTOMER               TO DB-CR-CUSTOMER.
+>            MOVE WF5-TRANS-TYPE             TO DB-CR-TYPE.
+>            MOVE WF5-INVOICE                TO DB-CR-NBR.
+3182a3046,3047
+> 
+>       **** TRIANGULATION REQUIRED
+3390,3395c3255,3260
+<                MOVE ACM-CUSTOMER         TO D3-ERR-CUSTOMER
+<                MOVE ACM-CURRENCY-CD      TO D3-FIELD-NAME
+<                MOVE 202                  TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE          TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS   TO RPT-GROUP-REQUEST
+---
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE       TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY          TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET  TO RPT-GROUP-REQUEST
+3395a3261,3263
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACM-CURRENCY-CD      TO ERR-ACM-CURRENCY
+>                MOVE ERR-CURRENCY         TO RPT-GROUP-REQUEST
+3397d3264
+<                ADD  1                    TO AR137WS-ERROR-CNT
+3398a3266
+>                CLOSE FINANCE-FILE
+3407,3412c3275,3280
+<                MOVE ACM-CUSTOMER         TO D3-ERR-CUSTOMER
+<                MOVE ACM-CURRENCY-CD      TO D3-FIELD-NAME
+<                MOVE 201                  TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE          TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS   TO RPT-GROUP-REQUEST
+---
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE       TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY          TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET  TO RPT-GROUP-REQUEST
+3412a3281,3286
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACO-CUST-GROUP       TO DB-CUST-GROUP
+>                MOVE ACO-CURRENCY-CD      TO ERR1-ACO-CURRENCY
+>                MOVE WF5-CUSTOMER         TO ERR1-CUSTOMER
+>                MOVE ACM-CURRENCY-CD      TO ERR1-ACM-CURRENCY
+>                MOVE ERR-RELATIONSHIP     TO RPT-GROUP-REQUEST
+3414d3287
+<                ADD  1                    TO AR137WS-ERROR-CNT
+3415a3289
+>                CLOSE FINANCE-FILE
+3426,3431c3300,3305
+<                MOVE ACM-CUSTOMER         TO D3-ERR-CUSTOMER
+<                MOVE ACM-CURRENCY-CD      TO D3-FIELD-NAME
+<                MOVE 200                  TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE          TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS   TO RPT-GROUP-REQUEST
+---
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE       TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY          TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET  TO RPT-GROUP-REQUEST
+3431a3306,3310
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACO-CURRENCY-CD      TO ERR2-ACO-CURRENCY
+>                MOVE WF5-CUSTOMER         TO ERR2-CUSTOMER
+>                MOVE ACM-CURRENCY-CD      TO ERR2-ACM-CURRENCY
+>                MOVE ERR-RATE             TO RPT-GROUP-REQUEST
+3433d3311
+<                ADD  1                    TO AR137WS-ERROR-CNT
+3434a3313
+>                CLOSE FINANCE-FILE
+3493c3372
+<                MOVE ARO-DUE-DATE               TO WSDR-FR-DATE.
+---
+>                MOVE WF5-DUE-DATE               TO WSDR-FR-DATE.
+3499,3500c3378,3379
+<                    IF (ARO-LAST-FC-DATE        = ZEROES)
+<                        MOVE ARO-DUE-DATE       TO WSDR-FR-DATE
+---
+>                    IF (WF5-LAST-FC-DATE        = ZEROES)
+>                        MOVE WF5-DUE-DATE       TO WSDR-FR-DATE
+3502c3381
+<                        MOVE ARO-LAST-FC-DATE   TO WSDR-FR-DATE
+---
+>                        MOVE WF5-LAST-FC-DATE   TO WSDR-FR-DATE
+3522,3527c3401,3406
+<                MOVE ACM-CUSTOMER          TO D3-ERR-CUSTOMER
+<                MOVE ACM-FIN-CHRG-CD       TO D3-FIELD-NAME
+<                MOVE 205                   TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE           TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS    TO RPT-GROUP-REQUEST
+---
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE        TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY           TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET   TO RPT-GROUP-REQUEST
+3527a3407,3410
+>                PERFORM 700-PRINT-RPT-GRP
+>                MOVE ACM-FIN-CHRG-CD       TO ERR-ACM-FIN-CHRG-CD
+>                MOVE ACM-CUSTOMER          TO ERR-CUSTOMER
+>                MOVE ERR-CD                TO RPT-GROUP-REQUEST
+3529c3412
+<                ADD  1                     TO AR137WS-ERROR-CNT
+---
+>                CLOSE FINANCE-FILE 
+3782c3665
+<                COMPUTE AR137WS-FIN           = ARO-TRAN-AMT
+---
+>                COMPUTE AR137WS-FIN           = WF5-TRAN-AMT
+4357,4362c4240,4245
+<                MOVE ACM-CUSTOMER            TO D3-ERR-CUSTOMER
+<                MOVE ACM-FIN-CHRG-CD         TO D3-FIELD-NAME
+<                MOVE 205                     TO CRT-MSG-NBR
+<                PERFORM 790-GET-MSG
+<                MOVE CRT-MESSAGE             TO D3-FIELD-DATA-ERROR
+<                MOVE D31-MESSAGE-ERRORS      TO RPT-GROUP-REQUEST
+---
+>                INITIALIZE                      RPT-PAGE-COUNT (AR137-R2)
+>                OPEN OUTPUT FINANCE-FILE
+>                MOVE PRM-AS-OF-DATE          TO G1N-AS-OF-DATE
+>                MOVE PRM-COMPANY             TO DB-COMPANY
+>                PERFORM 840-FIND-ACOSET1
+>                MOVE GN1-ARO-COMPANY-NET     TO RPT-GROUP-REQUEST
+4364c4247
+<                ADD  1                       TO AR137WS-ERROR-CNT
+---
+>                MOVE ACM-FIN-CHRG-CD         TO ERR-ACM-FIN-CHRG-CD
+4364a4248,4251
+>                MOVE ACM-CUSTOMER            TO ERR-CUSTOMER
+>                MOVE ERR-CD                  TO RPT-GROUP-REQUEST
+>                PERFORM 700-PRINT-RPT-GRP
+>                CLOSE FINANCE-FILE
+4568a4456,4461
+>            IF (PROGRAM-RESTARTING      = WS-TRUE)
+>                IF (WS-RESTART-FIN-FLAG = "Y")
+>                    OPEN EXTEND FINANCE-FILE
+>                ELSE
+>                    OPEN OUTPUT FINANCE-FILE.
+> 
+4580c4473
+<                MOVE "Y"                    TO WS-RESTART-FIN-FLAG.
+---
+>                OPEN OUTPUT FINANCE-FILE
+4580a4474,4475
+>                MOVE "Y"                    TO WS-RESTART-FIN-FLAG
+>                INITIALIZE RPT-PAGE-COUNT (AR137-R1).
+4581a4477,4478
+>            MOVE PRM-AS-OF-DATE             TO G1-AS-OF-DATE.
+>            MOVE PRM-AS-OF-DATE             TO G1N-AS-OF-DATE.
+4585,4594c4482,4491
+<            IF (PROGRAM-RESTARTING      = WS-FALSE)
+<                INITIALIZE   RPT-PAGE-COUNT (AR137-R2)
+<                MOVE ACO-COMPANY            TO G1N-ARO-COMPANY
+<                MOVE ACO-NAME               TO G1N-ACO-NAME
+<                MOVE ACO-CURRENCY-CD        TO G1N-ACO-CURRENCY-CD
+<                MOVE PRM-AS-OF-DATE         TO G1N-AS-OF-DATE
+<                MOVE GN1-ARO-COMPANY-NET    TO RPT-GROUP-REQUEST
+<                PERFORM 700-PRINT-RPT-GRP
+<                MOVE ACO-COMPANY            TO G1-ARO-COMPANY.
+<                MOVE ACO-NAME               TO G1-ACO-NAME.
+---
+>            MOVE ACO-COMPANY                TO G1N-ARO-COMPANY.
+>            MOVE ACO-NAME                   TO G1N-ACO-NAME.
+>            MOVE ACO-CURRENCY-CD            TO G1N-ACO-CURRENCY-CD.
+>            MOVE GN1-ARO-COMPANY-NET        TO RPT-GROUP-REQUEST.
+>            PERFORM 700-PRINT-RPT-GRP.
+>            MOVE ACO-COMPANY                TO G1-ARO-COMPANY.
+>            MOVE ACO-NAME                   TO G1-ACO-NAME.
+>            MOVE ACO-CURRENCY-CD            TO G1-ACO-CURRENCY-CD.
+>            MOVE GN1-ARO-COMPANY            TO RPT-GROUP-REQUEST.
+>            PERFORM 700-PRINT-RPT-GRP.
+4595,4598d4491
+<                MOVE ACO-CURRENCY-CD        TO G1-ACO-CURRENCY-CD.
+<                MOVE PRM-AS-OF-DATE         TO G1-AS-OF-DATE.
+<                MOVE GN1-ARO-COMPANY        TO RPT-GROUP-REQUEST.
+<                PERFORM 700-PRINT-RPT-GRP.
+4606d4498
+<                MOVE WS-RESTART-COMPANY         TO WF-COMPANY
+4796a4689
+>            CLOSE FINANCE-FILE.
+4939d4831
+<                MOVE WF-COMPANY             TO WS-RESTART-COMPANY
+5036,5052c4928,4944
+<                        IF (ACO-CURRENCY-CD  NOT = ACM-CURRENCY-CD)
+<                            MOVE WF-COMPANY        TO IFCAWS-COMPANY
+<                            MOVE ACO-CURRENCY-CD   TO IFCAWS-FR-CURR-CODE
+<                            MOVE ACM-CURRENCY-CD   TO IFCAWS-TO-CURR-CODE
+<                            MOVE "AR"               TO IFCAWS-SYSTEM
+<                            MOVE PRM-AS-OF-DATE     TO IFCAWS-EFFECT-DATE
+<                            MOVE ZEROS              TO IFCAWS-BASE-AMOUNT
+<                            MOVE ACM-FIN-MIN-CHRG   TO IFCAWS-TRAN-AMOUNT
+<                            MOVE AR137WS-CURR-RATE  TO IFCAWS-BASERATE
+<                            MOVE AR137WS-CURR-MUDV  TO IFCAWS-MULT-DIV
+<                            MOVE ACO-BASE-ND        TO IFCAWS-TRAN-ND
+<                            MOVE AR137WS-ORIG-ND    TO IFCAWS-BASE-ND
+<                            PERFORM 690-CALCULATE-AMOUNT-60
+<                            MOVE IFCAWS-BASE-AMOUNT TO AR137WS-OFINC
+<                            MOVE ACM-FIN-MIN-CHRG   TO AR137WS-CFINC
+<                            MOVE 101                TO CRT-MSG-NBR
+<                            PERFORM 790-GET-MSG
+---
+>                        MOVE WF-COMPANY         TO IFCAWS-COMPANY
+>                        MOVE ACO-CURRENCY-CD    TO IFCAWS-FR-CURR-CODE
+>                        MOVE ACM-CURRENCY-CD    TO IFCAWS-TO-CURR-CODE
+>                        MOVE "AR"               TO IFCAWS-SYSTEM
+>                        MOVE PRM-AS-OF-DATE     TO IFCAWS-EFFECT-DATE
+>                        MOVE ZEROS              TO IFCAWS-BASE-AMOUNT
+>                        MOVE ACM-FIN-MIN-CHRG   TO IFCAWS-TRAN-AMOUNT
+>                        MOVE AR137WS-CURR-RATE  TO IFCAWS-BASERATE
+>                        MOVE AR137WS-CURR-MUDV  TO IFCAWS-MULT-DIV
+>                        MOVE ACO-BASE-ND        TO IFCAWS-TRAN-ND
+>                        MOVE AR137WS-ORIG-ND    TO IFCAWS-BASE-ND
+>                        PERFORM 690-CALCULATE-AMOUNT-60
+>                        MOVE IFCAWS-BASE-AMOUNT TO AR137WS-OFINC
+>                        MOVE ACM-FIN-MIN-CHRG   TO AR137WS-CFINC
+>                        MOVE 101                TO CRT-MSG-NBR
+>                        PERFORM 790-GET-MSG
+>                        MOVE CRT-MESSAGE        TO T21-MIN-MESSAGE
+5053,5059d4944
+<                            MOVE CRT-MESSAGE        TO T21-MIN-MESSAGE
+<                        ELSE
+<                            MOVE ACM-FIN-MIN-CHRG   TO AR137WS-CFINC
+<                            MOVE 101                TO CRT-MSG-NBR
+<                            PERFORM 790-GET-MSG
+<                            MOVE CRT-MESSAGE        TO T21-MIN-MESSAGE
+<                        END-IF
+5203c5088
+<                     MOVE ARO-ALT-TYPE      TO AR137WS-ARH-TRANS-TYPE
+---
+>                     MOVE WF5-ALT-TYPE      TO AR137WS-ARH-TRANS-TYPE
+5405d5289
+<                MOVE WF-COMPANY             TO WS-RESTART-COMPANY
+5713c5597
+<       **** CREATE DEBIT MEMOS (ARO-TRANS-TYPE = "D")
+---
+>       **** CREATE DEBIT MEMOS (WF5-TRANS-TYPE = "D")
+5727c5611
+<       **** OPEN TRANSACTIONS (ARO-STATUS = "1")
+---
+>       **** OPEN TRANSACTIONS (WF5-STATUS = "1")
+5835c5719
+<            MOVE ARO-COMPANY                 TO DB-COMPANY.
+---
+>            MOVE WF5-COMPANY                 TO DB-COMPANY.
+5842c5726
+<                MOVE ARO-COMPANY            TO ARS-COMPANY
+---
+>                MOVE WF5-COMPANY            TO ARS-COMPANY
+5845c5729
+<                MOVE ARO-TRAN-AMT           TO ARS-TODAYS-AMT
+---
+>                MOVE WF5-TRAN-AMT           TO ARS-TODAYS-AMT

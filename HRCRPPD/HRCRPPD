@@ -1,0 +1,884 @@
+******* HRCRPPD   1.0.00 <1680933557>
+      ******************************************************************
+      * For processes that are updating employee data to create a work  
+      * unit that will determin CRP account option settings for the 
+      * employee.
+      *
+      * Calling programs include:                                        
+      *  - HR11 - New Adds
+      *  - HR511 - New Adds
+      *  - PA52 - Immediate Actions(Subset of actions listed in PA100)
+      *  - PA100 - Pending Actions(Subset of actions listed in PA100)
+      *
+      ******************************************************************
+      *                            HRACCTOPT                           *
+      ******************************************************************
+      *                                                                *
+      *  Date       Pgmr     Notes                                     *
+      *  ------     ------   ----------------------------------------  *
+      * 04/06/2020 D.Steger  Create libary routine                     *
+      * 03/25/2021 MLF       US1541 - Add ITP action                   *
+      ******************************************************************
+000100******************************************************************
+000200 1000-SETUP-CRP-TRIGGER-WS       SECTION.
+000300******************************************************************
+000500 1000-START.
+
+      *--- Collect Employee Data for ADD trans from HR11 & HR511
+           MOVE "ON-BOARD"          TO HRCRP-ACTION-CODE.
+           MOVE HRCRP-COMPANY       TO DB-COMPANY.
+           MOVE HRCRP-EMPLOYEE      TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           PERFORM 840-FIND-PEMSET1.
+           MOVE EMP-DATE-HIRED      TO HRCRP-HIRE-DATE.
+           MOVE EMP-ANNIVERS-DATE   TO HRCRP-OLD-ANNV-DATE.
+           MOVE EMP-ANNIVERS-DATE   TO HRCRP-NEW-ANNV-DATE.
+           MOVE EMP-POSITION        TO HRCRP-OLD-POSITION.    
+           MOVE EMP-POSITION        TO HRCRP-NEW-POSITION.   
+           MOVE EMP-DEPARTMENT      TO HRCRP-OLD-DEPARTMENT.
+           MOVE EMP-DEPARTMENT      TO HRCRP-NEW-DEPARTMENT.
+           MOVE EMP-EMP-STATUS      TO HRCRP-NEW-EMP-STATUS.
+           MOVE EMP-EMP-STATUS      TO HRCRP-OLD-EMP-STATUS.
+           MOVE EMP-PROCESS-LEVEL   TO HRCRP-NEW-PROC-LEVEL.
+           MOVE EMP-PROCESS-LEVEL   TO HRCRP-OLD-PROC-LEVEL.
+           MOVE EMP-SUPERVISOR      TO HRCRP-OLD-SUPER-EMP. 
+           MOVE EMP-SUPERVISOR      TO HRCRP-NEW-SUPER-EMP. 
+           MOVE SPACES              TO HRCRP-NXT-OLD-SUPER-EMP.      
+           MOVE SPACES              TO HRCRP-NXT-NEW-SUPER-EMP.      
+           MOVE EMP-PAY-RATE        TO HRCRPWS-NUM-15.   
+           MOVE HRCRPWS-ALPHA-15    TO HRCRP-NEW-SALARY.
+           MOVE HRCRPWS-ALPHA-15    TO HRCRP-OLD-SALARY.
+CRP001     MOVE EMP-STAND-HOURS     TO HRCRPWS-NUM-15.
+CRP001     MOVE HRCRPWS-ALPHA-15    TO HRCRP-NEW-STD-HOURS.
+CRP001     MOVE HRCRPWS-ALPHA-15    TO HRCRP-OLD-STD-HOURS.
+           MOVE SPACES              TO HRCRP-REASON-1.
+           MOVE SPACES              TO HRCRP-REASON-2.
+           MOVE PEM-MAIL-GROUP      TO HRCRP-MAIL-GROUP.
+           MOVE "N"                 TO HRCRP-COMBINED-FL.
+CRP001*--- Retrieve "A-ROSTER"       user field number
+CRP001     MOVE "A-ROSTER CODE"        TO DB-FIELD-NAME.
+CRP001     PERFORM 840-FIND-HRUSET2.
+CRP001     IF (HRUSERFLDS-FOUND)
+CRP001         MOVE HRCRP-COMPANY      TO DB-COMPANY
+CRP001         MOVE HRCRP-EMPLOYEE     TO DB-EMPLOYEE
+CRP001         MOVE ZERO               TO DB-EMP-APP
+CRP001         MOVE HRU-FIELD-KEY      TO DB-FIELD-KEY
+CRP001         PERFORM 840-FIND-HEUSET1
+CRP001         IF (HREMPUSF-NOTFOUND)
+CRP001             MOVE SPACES         TO HEU-A-FIELD
+CRP001         END-IF
+CRP001     ELSE
+CRP001         MOVE SPACES             TO HEU-A-FIELD.
+CRP001*--- An "M" in the 4th position of the A-ROSTER Code user
+CRP001*--- means that it is a rostered person
+CRP001     IF (HEU-A-FIELD(4:1) = "M")
+CRP001         MOVE "Y"                TO HRCRP-ROSTERED
+CRP001     ELSE
+CRP001         MOVE "N"                TO HRCRP-ROSTERED.
+
+CRP001*--- Retrieve "A-CRP FULL" user field number
+CRP001     MOVE "A-CRP FULL"           TO DB-FIELD-NAME.
+CRP001     PERFORM 840-FIND-HRUSET2.
+CRP001     IF (HRUSERFLDS-FOUND)
+CRP001         MOVE HRCRP-COMPANY      TO DB-COMPANY
+CRP001         MOVE HRCRP-EMPLOYEE     TO DB-EMPLOYEE
+CRP001         MOVE ZERO               TO DB-EMP-APP
+CRP001         MOVE HRU-FIELD-KEY      TO DB-FIELD-KEY
+CRP001         PERFORM 840-FIND-HEUSET1
+CRP001         IF (HREMPUSF-NOTFOUND)
+CRP001             MOVE "N"            TO HEU-A-FIELD
+CRP001         END-IF
+CRP001     ELSE
+CRP001         MOVE "N"                TO HEU-A-FIELD.
+CRP001     MOVE HEU-A-FIELD            TO HRCRP-A-CRP-FULL.
+
+CRP001*--- Retrieve "CRP-ELIGIBILITY" user field number
+CRP001     MOVE "CRP-ELIGIBILITY"       TO DB-FIELD-NAME.
+CRP001     PERFORM 840-FIND-HRUSET2.
+CRP001     IF (HRUSERFLDS-FOUND)
+CRP001         MOVE HRCRP-COMPANY      TO DB-COMPANY
+CRP001         MOVE HRCRP-EMPLOYEE     TO DB-EMPLOYEE
+CRP001         MOVE ZERO               TO DB-EMP-APP
+CRP001         MOVE HRU-FIELD-KEY      TO DB-FIELD-KEY
+CRP001         PERFORM 840-FIND-HEUSET1
+CRP001         IF (HREMPUSF-NOTFOUND)
+CRP001             MOVE SPACES         TO HEU-A-FIELD
+CRP001         END-IF
+CRP001     ELSE
+CRP001         MOVE SPACES             TO HEU-A-FIELD.
+CRP001     MOVE HEU-A-FIELD            TO HRCRP-GF-OPTION.  
+
+      *--- Set CRP-ELIGIBILITY Effective date
+           MOVE "00000000"             TO HRCRP-GF-EFFECT-DATE.
+           MOVE HRCRP-COMPANY          TO DB-COMPANY.
+           MOVE HRCRP-EMPLOYEE         TO DB-EMPLOYEE.
+      *--- Add a FILTER to this to speed it up*****
+           MOVE HRHSET1-EMPLOYEE       TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-HRHSET1.
+           PERFORM
+               UNTIL (HRHISTORY-NOTFOUND)
+                   IF (HRH-FLD-NBR = 2042)
+                       MOVE HRH-BEG-DATE TO HRCRP-GF-EFFECT-DATE
+                   END-IF
+               PERFORM 860-FIND-NXTRNG-HRHSET1.
+
+           GO TO 1000-END.
+543200******************************************************************
+543300 1000-END.
+543400******************************************************************
+000100******************************************************************
+000200 2000-CREATE-CRP-TRIGGER         SECTION.
+000300******************************************************************
+000500 2000-START.
+
+      *--- Collect Additional Fields for IPA flow
+           MOVE HRCRP-COMPANY       TO DB-COMPANY.
+           MOVE HRCRP-EMPLOYEE      TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           MOVE HRCRP-NEW-POSITION  TO DB-POSITION.
+           IF (HRCRP-HIRE-DATE = SPACES)
+               MOVE EMP-DATE-HIRED      TO HRCRP-HIRE-DATE.
+           MOVE POSSET2-POSITION    TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-POSSET2.
+           IF (PAPOSITION-NOTFOUND)
+               MOVE ZEROES          TO POS-SHIFT        
+               MOVE SPACES          TO POS-PAY-GRADE.
+           MOVE POS-SHIFT           TO HRCRP-POS-SHIFT. 
+           MOVE POS-PAY-GRADE       TO HRCRP-POS-GRADE.
+
+CRP001     MOVE EMP-PENSION-PLAN       TO HRCRP-MANUAL-REVIEW.
+
+      *--- Open Database if it has not been opened
+           IF (NOT WF-OPEN-PERFORMED)
+               PERFORM 920-AUDIT-END
+               PERFORM 1000-OPEN-WORKFLOW-DB
+               PERFORM 910-AUDIT-BEGIN
+           END-IF.
+
+      *--- Check Status to see if service exists/enabled
+J36466     INITIALIZE WFAPI-INPUT
+J36466                WFAPI-OUTPUT.
+
+J36466     MOVE "CRPAcctOption"        TO WFAPI-I-SERVICE.
+J36466     INITIALIZE                     CRT-MESSAGE.
+
+J36466     PERFORM 1000-WF-SERVICE.
+J36466     IF (WFAPI-O-RETURN-CODE     NOT = ZEROES)
+               DISPLAY "Error From 1000-WF-SERVICE.  RC="
+               WFAPI-O-RETURN-CODE
+J36466         GO TO 2000-END
+J36466     END-IF.
+
+J36466*--- Create Work Unit Header        
+J36466     INITIALIZE WFAPI-INPUT.
+
+J36466     MOVE WFAPI-O-SERVICE        TO WFAPI-I-SERVICE.
+J36466     MOVE WFAPI-O-AGENT          TO WFAPI-I-AGENT.
+J36466     MOVE WFAPI-O-PROCEDURE      TO WFAPI-I-PROCEDURE.
+           MOVE SPACES                 TO WFAPI-I-WORK-TITLE.
+J93402
+J93402     STRING "CRP Acct Opt for Emp: "
+J93402            HRCRP-EMPLOYEE
+J93402     DELIMITED BY SIZE
+J93402     INTO WFAPI-I-WORK-TITLE.
+J93402
+J36466     INITIALIZE WFAPI-OUTPUT.
+J36466     PERFORM 1000-WF-CREATE-SETUP.
+J36466     
+J36466*---  Create Work Unit Variables    
+J36466     INITIALIZE WFAPI-INPUT.
+
+J36466     MOVE WFAPI-O-WORKUNIT       TO WFAPI-I-WORKUNIT.
+
+J36466*--- Company      
+J36466     MOVE "COMPANY"              TO WFAPI-I-VARIABLE-NAME (1).
+J36466     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (1).
+J36466     MOVE HRCRP-COMPANY          TO WFAPI-I-VARIABLE-VAL (1).
+J36466*--- Employee     
+J36466     MOVE "EMPLOYEE"             TO WFAPI-I-VARIABLE-NAME (2).
+J36466     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (2).
+J36466     MOVE HRCRP-EMPLOYEE         TO WFAPI-I-VARIABLE-VAL (2).
+CRP001*--- Process Level
+CRP001     MOVE "OLD_PROCESS_LEVEL"    TO WFAPI-I-VARIABLE-NAME (3).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (3).
+CRP001     MOVE HRCRP-OLD-PROC-LEVEL   TO WFAPI-I-VARIABLE-VAL (3).
+CRP001     MOVE "NEW_PROCESS_LEVEL"    TO WFAPI-I-VARIABLE-NAME (4).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (4).
+CRP001     MOVE HRCRP-NEW-PROC-LEVEL   TO WFAPI-I-VARIABLE-VAL (4).
+CRP001*--- Department    
+CRP001     MOVE "OLD_DEPARTMENT"       TO WFAPI-I-VARIABLE-NAME (5).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (5).
+CRP001     MOVE HRCRP-OLD-DEPARTMENT   TO WFAPI-I-VARIABLE-VAL (5).
+CRP001     MOVE "NEW_DEPARTMENT"       TO WFAPI-I-VARIABLE-NAME (6).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (6).
+CRP001     MOVE HRCRP-NEW-DEPARTMENT   TO WFAPI-I-VARIABLE-VAL (6).
+CRP001*--- Supervisor    
+CRP001     MOVE "OLD_SUPERVISOR"       TO WFAPI-I-VARIABLE-NAME (7).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (7).
+CRP001     MOVE HRCRP-OLD-SUPER-EMP    TO WFAPI-I-VARIABLE-VAL (7).
+CRP001     MOVE "NEW_SUPERVISOR"       TO WFAPI-I-VARIABLE-NAME (8).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (8).
+CRP001     MOVE HRCRP-NEW-SUPER-EMP    TO WFAPI-I-VARIABLE-VAL (8).
+CRP001*--- Next Supervisor    
+CRP001     MOVE "NEXT_OLD_SUPER"       TO WFAPI-I-VARIABLE-NAME (9).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (9).
+CRP001     MOVE HRCRP-NXT-OLD-SUPER-EMP TO WFAPI-I-VARIABLE-VAL (9).
+CRP001     MOVE "NEXT_NEW_SUPER"       TO WFAPI-I-VARIABLE-NAME (10).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (10).
+CRP001     MOVE HRCRP-NXT-NEW-SUPER-EMP TO WFAPI-I-VARIABLE-VAL (10).
+CRP001     
+CRP001     INITIALIZE WFAPI-OUTPUT.
+CRP001     PERFORM 1000-WF-ADD-VAR-SETUP.
+CRP001     INITIALIZE WFAPI-INPUT.
+CRP001     MOVE WFAPI-O-WORKUNIT       TO WFAPI-I-WORKUNIT.
+CRO001*--- Salary       
+CRP001     MOVE "OLD_PAY"              TO WFAPI-I-VARIABLE-NAME (1).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (1).
+CRP001     MOVE HRCRP-OLD-SALARY       TO WFAPI-I-VARIABLE-VAL (1).
+CRP001     MOVE "NEW_PAY"              TO WFAPI-I-VARIABLE-NAME (2).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (2).
+CRP001     MOVE HRCRP-NEW-SALARY       TO WFAPI-I-VARIABLE-VAL (2).
+CRP001*--- Action Code   
+CRP001     MOVE "ACTION"               TO WFAPI-I-VARIABLE-NAME (3).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (3).
+CRP001     MOVE HRCRP-ACTION-CODE      TO WFAPI-I-VARIABLE-VAL (3).
+CRP001*--- Effect Date
+CRP001     MOVE "EFFECT_DATE"          TO WFAPI-I-VARIABLE-NAME (4).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (4).
+CRP001     MOVE HRCRP-EFFECT-DATE      TO WFAPI-I-VARIABLE-VAL (4).
+CRP001*--- Reason codes  
+CRP001     MOVE "REASON_1"             TO WFAPI-I-VARIABLE-NAME (5).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (5).
+CRP001     MOVE HRCRP-REASON-1         TO WFAPI-I-VARIABLE-VAL (5).
+CRP001     MOVE "REASON_2"             TO WFAPI-I-VARIABLE-NAME (6).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (6).
+CRP001     MOVE HRCRP-REASON-2         TO WFAPI-I-VARIABLE-VAL (6).
+CRP001*--- Employee Status
+CRP001     MOVE "OLD_EMPLOYEE_STATUS"  TO WFAPI-I-VARIABLE-NAME (7).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (7).
+CRP001     MOVE HRCRP-OLD-EMP-STATUS   TO WFAPI-I-VARIABLE-VAL (7).
+CRP001     MOVE "NEW_EMPLOYEE_STATUS"  TO WFAPI-I-VARIABLE-NAME (8).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (8).
+CRP001     MOVE HRCRP-NEW-EMP-STATUS   TO WFAPI-I-VARIABLE-VAL (8).
+CRP001*--- Standard Hours     
+CRP001     MOVE "OLD_STANDARD_HOURS"   TO WFAPI-I-VARIABLE-NAME (9).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (9).
+CRP001     MOVE HRCRP-OLD-STD-HOURS    TO WFAPI-I-VARIABLE-VAL (9).
+CRP001     MOVE "NEW_STANDARD_HOURS"   TO WFAPI-I-VARIABLE-NAME (10).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (10).
+CRP001     MOVE HRCRP-NEW-STD-HOURS    TO WFAPI-I-VARIABLE-VAL (10).
+CRP001     
+CRP001     INITIALIZE WFAPI-OUTPUT.
+CRP001     PERFORM 1000-WF-ADD-VAR-SETUP.
+CRP001     INITIALIZE WFAPI-INPUT.
+CRP001     MOVE WFAPI-O-WORKUNIT       TO WFAPI-I-WORKUNIT.
+CRO001*--- Grandfather Option and Effect date
+CRP001     MOVE "GF_OPTION"            TO WFAPI-I-VARIABLE-NAME (1).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (1).
+CRP001     MOVE HRCRP-GF-OPTION        TO WFAPI-I-VARIABLE-VAL (1).
+CRP001     MOVE "GF_EFFECT_DATE"       TO WFAPI-I-VARIABLE-NAME (2).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (2).
+CRP001     MOVE HRCRP-GF-EFFECT-DATE   TO WFAPI-I-VARIABLE-VAL (2).
+CRP001*--- Grade from Position
+CRP001     MOVE "POS_GRADE"            TO WFAPI-I-VARIABLE-NAME (3).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (3).
+CRP001     MOVE HRCRP-POS-GRADE        TO WFAPI-I-VARIABLE-VAL (3).
+CRP001*--- Rostered    
+CRP001     MOVE "ROSTERED"             TO WFAPI-I-VARIABLE-NAME (4).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (4).
+CRP001     MOVE HRCRP-ROSTERED         TO WFAPI-I-VARIABLE-VAL (4).
+CRP001*--- Hire Date     
+CRP001     MOVE "HIRE_DATE"            TO WFAPI-I-VARIABLE-NAME (5).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (5).
+CRP001     MOVE HRCRP-HIRE-DATE        TO WFAPI-I-VARIABLE-VAL (5).
+CRP001*--- A CRP FULL user field
+CRP001     MOVE "A_CRP_FULL"           TO WFAPI-I-VARIABLE-NAME (6).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (6).
+CRP001     MOVE HRCRP-A-CRP-FULL       TO WFAPI-I-VARIABLE-VAL (6).
+CRP001*--- Combined Action Flag   
+CRP001     MOVE "COMBINED_FL"          TO WFAPI-I-VARIABLE-NAME (7).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (7).
+CRP001     MOVE HRCRP-COMBINED-FL      TO WFAPI-I-VARIABLE-VAL (7).
+CRP001*--- Anniversary Date       
+CRP001     MOVE "OLD_ANNIV_DATE"       TO WFAPI-I-VARIABLE-NAME (8).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (8).
+CRP001     MOVE HRCRP-OLD-ANNV-DATE    TO WFAPI-I-VARIABLE-VAL (8).
+CRP001     MOVE "NEW_ANNIV_DATE"       TO WFAPI-I-VARIABLE-NAME (9).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (9).
+CRP001     MOVE HRCRP-NEW-ANNV-DATE    TO WFAPI-I-VARIABLE-VAL (9).
+CRP001*--- Mail Group             
+CRP001     MOVE "MAIL_GROUP"           TO WFAPI-I-VARIABLE-NAME (10).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (10).
+CRP001     MOVE HRCRP-MAIL-GROUP       TO WFAPI-I-VARIABLE-VAL (10).
+CRP001     
+CRP001     INITIALIZE WFAPI-OUTPUT.
+CRP001     PERFORM 1000-WF-ADD-VAR-SETUP.
+CRP001     INITIALIZE WFAPI-INPUT.
+CRP001     MOVE WFAPI-O-WORKUNIT       TO WFAPI-I-WORKUNIT.
+CRO001*--- Grandfather Option and Effect date
+CRP001     MOVE "POS_SHIFT"            TO WFAPI-I-VARIABLE-NAME (1).
+CRP001     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (1).
+CRP001     MOVE HRCRP-POS-SHIFT        TO WFAPI-I-VARIABLE-VAL (1).
+CRP001     
+       2000-CONT.
+CRP001     INITIALIZE WFAPI-OUTPUT.
+CRP001     PERFORM 1000-WF-ADD-VAR-SETUP.
+CRP001     INITIALIZE WFAPI-INPUT.
+CRP001     MOVE WFAPI-O-WORKUNIT       TO WFAPI-I-WORKUNIT.
+
+
+      *--- Release Work Unit
+J36466    INITIALIZE WFAPI-OUTPUT.
+J36466    PERFORM 1000-WF-RELEASE-SETUP.                      
+
+543200******************************************************************
+543300 2000-END.
+543400******************************************************************
+CRP001******************************************************************
+CRP001 8000-SETUP-WS-FOR-PA100         SECTION.
+CRP001******************************************************************
+CRP001 8000-START.
+CRP001
+           MOVE EMP-DATE-HIRED      TO HRCRP-HIRE-DATE.
+CRP001*--- This routine requires that the PERSACTION record is in
+CRP001*--- memory prior to entering this logic.
+CRP001
+CRP001*---Process Level  
+CRP001     MOVE EMP-PROCESS-LEVEL      TO HRCRP-OLD-PROC-LEVEL
+CRP001                                    HRCRP-NEW-PROC-LEVEL.
+CRP001     MOVE HREMP-PROCESS-LEVEL-DN TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-NEW-PROC-LEVEL.
+CRP001    
+CRP001*---Department     
+CRP001     MOVE EMP-DEPARTMENT         TO HRCRP-OLD-DEPARTMENT 
+CRP001                                    HRCRP-NEW-DEPARTMENT. 
+CRP001     MOVE HREMP-DEPARTMENT-DN    TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-NEW-DEPARTMENT. 
+CRP001    
+CRP001*---Position      
+CRP001     MOVE EMP-POSITION           TO HRCRP-OLD-POSITION    
+CRP001                                    HRCRP-NEW-POSITION.   
+CRP001     MOVE HREMP-POSITION-DN      TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-NEW-POSITION.   
+CRP001    
+CRP001*---Supervisors    
+CRP001     MOVE EMP-SUPERVISOR         TO HRCRP-OLD-SUPER-EMP  
+CRP001                                    HRCRP-NEW-SUPER-EMP.  
+CRP001     MOVE HREMP-SUPERVISOR-DN    TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-NEW-SUPER-EMP.  
+CRP001     MOVE SPACES                 TO HRCRP-NXT-OLD-SUPER-EMP  
+CRP001                                    HRCRP-NXT-NEW-SUPER-EMP.  
+CRP001*--- Reason Codes
+CRP001     MOVE PCT-REASON(1)          TO HRCRP-REASON-1.
+CRP001     MOVE PCT-REASON(2)          TO HRCRP-REASON-2.
+CRP001     MOVE PCT-EFFECT-DATE        TO HRCRP-EFFECT-DATE.
+CRP001    
+CRP001*---Salary            
+CRP001     PERFORM 8433-CALC-OLD-SALARY.
+CRP001     MOVE HRCRP-OLD-SALARY-N     TO HRCRPWS-NUM-15.
+CRP001     MOVE HRCRPWS-ALPHA-15       TO HRCRP-OLD-SALARY.
+CRP001     PERFORM 8436-CALC-NEW-SALARY.
+CRP001     MOVE HRCRP-NEW-SALARY-N     TO HRCRPWS-NUM-15.
+CRP001     MOVE HRCRPWS-ALPHA-15       TO HRCRP-NEW-SALARY.
+
+CRP001*---Employee Status
+CRP001     MOVE EMP-EMP-STATUS         TO HRCRP-OLD-EMP-STATUS 
+CRP001                                    HRCRP-NEW-EMP-STATUS. 
+CRP001     MOVE HREMP-EMP-STATUS-DN    TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-NEW-EMP-STATUS. 
+CRP001
+CRP001*---Standard Hours
+CRP001     MOVE EMP-STAND-HOURS        TO HRCRPWS-NUM-15.
+CRP001     MOVE HRCRPWS-ALPHA-15       TO HRCRP-OLD-STD-HOURS
+CRP001                                    HRCRP-NEW-STD-HOURS.
+CRP001     MOVE HREMP-STAND-HOURS-DN   TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                     
+CRP001         INITIALIZE                 HRCRP-NEW-STD-HOURS
+CRP001         STRING HRCRP-NEW-VALUE(4:10) DELIMITED BY SIZE
+CRP001                "."                   DELIMITED BY SIZE
+CRP001                HRCRP-NEW-VALUE(15:4) DELIMITED BY SIZE
+CRP001                               INTO HRCRP-NEW-STD-HOURS.
+CRP001    
+CRP001*---Anniversary Date 
+CRP001     MOVE EMP-ANNIVERS-DATE      TO HRCRP-OLD-ANNV-DATE
+CRP001                                    HRCRP-NEW-ANNV-DATE.
+CRP001     MOVE HREMP-ANNIVERS-DATE-DN TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-NEW-ANNV-DATE. 
+CRP001    
+CRP001*---Mail Group         
+CRP001     MOVE HRCRP-COMPANY       TO DB-COMPANY.
+CRP001     MOVE HRCRP-EMPLOYEE      TO DB-EMPLOYEE.
+CRP001     PERFORM 840-FIND-EMPSET1.
+CRP001     MOVE PEM-MAIL-GROUP         TO HRCRP-MAIL-GROUP.   
+CRP001     MOVE HRPEM-MAIL-GROUP-DN    TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-MAIL-GROUP.     
+CRP001     IF (HRCRP-MAIL-GROUP = "*BLANK")
+CRP001         MOVE SPACES             TO HRCRP-MAIL-GROUP.
+CRP001
+CRP001*--- Retrieve "A-ROSTER"       user field number
+CRP001     MOVE "A-ROSTER CODE"        TO DB-FIELD-NAME.
+CRP001     PERFORM 840-FIND-HRUSET2.
+CRP001     IF (HRUSERFLDS-FOUND)
+CRP001         MOVE HRCRP-COMPANY      TO DB-COMPANY
+CRP001         MOVE HRCRP-EMPLOYEE     TO DB-EMPLOYEE
+CRP001         MOVE ZERO               TO DB-EMP-APP
+CRP001         MOVE HRU-FIELD-KEY      TO DB-FIELD-KEY
+CRP001         PERFORM 840-FIND-HEUSET1
+CRP001         IF (HREMPUSF-NOTFOUND)
+CRP001             MOVE SPACES         TO HEU-A-FIELD
+CRP001         END-IF
+CRP001     ELSE
+CRP001         MOVE SPACES             TO HEU-A-FIELD.
+CRP001     MOVE 2097          TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HEU-A-FIELD.          
+CRP001*--- An "M" in the 4th position of the A-ROSTER Code user
+CRP001*--- means that it is a rostered person
+CRP001     IF (HEU-A-FIELD(4:1) = "M")
+CRP001         MOVE "Y"                TO HRCRP-ROSTERED
+CRP001     ELSE
+CRP001         MOVE "N"                TO HRCRP-ROSTERED.
+
+CRP001*--- Retrieve "A-CRP FULL" user field number
+CRP001     MOVE "A-CRP FULL"           TO DB-FIELD-NAME.
+CRP001     PERFORM 840-FIND-HRUSET2.
+CRP001     IF (HRUSERFLDS-FOUND)
+CRP001         MOVE HRCRP-COMPANY      TO DB-COMPANY
+CRP001         MOVE HRCRP-EMPLOYEE     TO DB-EMPLOYEE
+CRP001         MOVE ZERO               TO DB-EMP-APP
+CRP001         MOVE HRU-FIELD-KEY      TO DB-FIELD-KEY
+CRP001         PERFORM 840-FIND-HEUSET1
+CRP001         IF (HREMPUSF-NOTFOUND)
+CRP001             MOVE "N"            TO HEU-A-FIELD
+CRP001         END-IF
+CRP001     ELSE
+CRP001         MOVE "N"                TO HEU-A-FIELD.
+CRP001     MOVE HEU-A-FIELD            TO HRCRP-A-CRP-FULL.
+CRP001     MOVE 2045          TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-A-CRP-FULL.     
+
+CRP001*--- Retrieve "CRP-ELIGIBILITY" user field number
+CRP001     MOVE "CRP-ELIGIBILITY"       TO DB-FIELD-NAME.
+CRP001     PERFORM 840-FIND-HRUSET2.
+CRP001     IF (HRUSERFLDS-FOUND)
+CRP001         MOVE HRCRP-COMPANY      TO DB-COMPANY
+CRP001         MOVE HRCRP-EMPLOYEE     TO DB-EMPLOYEE
+CRP001         MOVE ZERO               TO DB-EMP-APP
+CRP001         MOVE HRU-FIELD-KEY      TO DB-FIELD-KEY
+CRP001         PERFORM 840-FIND-HEUSET1
+CRP001         IF (HREMPUSF-NOTFOUND)
+CRP001             MOVE SPACES         TO HEU-A-FIELD
+CRP001         END-IF
+CRP001     ELSE
+CRP001         MOVE SPACES             TO HEU-A-FIELD.
+CRP001     MOVE HEU-A-FIELD            TO HRCRP-GF-OPTION.  
+CRP001     MOVE 2042          TO HRCRP-FLD-NBR.
+CRP001     PERFORM 8900-CHECK-FIELD-USAGE.
+CRP001     IF (FLD-CHANGED)                      
+CRP001         MOVE HRCRP-NEW-VALUE    TO HRCRP-GF-OPTION.      
+
+      *--- Set CRP-ELIGIBILITY Effective date
+          MOVE HRCRP-EFFECT-DATE       TO HRCRP-GF-EFFECT-DATE.
+
+
+CRP001    MOVE "N"                     TO HRCRP-COMBINED-FL.
+CRP001
+CRP001    GO TO 8000-END.
+CRP001******************************************************************
+CRP001 8000-END.               
+CRP001******************************************************************
+CRP001
+043300******************************************************************
+043400 8433-CALC-OLD-SALARY            SECTION.
+043500******************************************************************
+043600
+           INITIALIZE HRCRP-OLD-SALARY-N.
+
+043700     MOVE EMP-NBR-FTE                TO HRCRP-NBR-FTE-WF.
+           MOVE EMP-ANNUAL-HOURS           TO HRCRP-ANNUAL-HOURS-WF.
+043800
+           IF  (HRCRP-ANNUAL-HOURS-WF = ZEROES)
+043900         MOVE EMP-COMPANY            TO DB-COMPANY
+044000         MOVE EMP-JOB-CODE           TO DB-JOB-CODE
+044100         PERFORM 840-FIND-JBCSET1
+044200         IF (JOBCODE-FOUND)
+044300             MOVE JBC-ANNUAL-HOURS   TO HRCRP-ANNUAL-HOURS-WF
+               END-IF
+           END-IF.
+044400
+044500     IF (HRCRP-ANNUAL-HOURS-WF      = ZEROES)
+044600         MOVE EMP-COMPANY            TO DB-COMPANY
+044700         INITIALIZE DB-PROCESS-LEVEL
+044800         PERFORM 840-FIND-PRSSET1
+044900         MOVE PRS-ANNUAL-HOURS       TO HRCRP-ANNUAL-HOURS-WF
+           END-IF.
+045000
+045100     IF (HRCRP-ANNUAL-HOURS-WF      = ZEROES)
+045200         MOVE 2080                   TO HRCRP-ANNUAL-HOURS-WF.
+045300
+045400     IF (HRCRP-NBR-FTE-WF           = ZEROES)
+045500         MOVE 1                      TO HRCRP-NBR-FTE-WF.
+045600
+045700     IF (EMP-PAY-STEP                NOT = ZEROES)
+045800         PERFORM 8434-CALC-FROM-STEP-GRADE
+045900         THRU    8434-END
+046000     ELSE
+046100         PERFORM 8435-CALC-FROM-HR11
+046200         THRU    8435-END.
+046300
+           GO TO 8433-END.
+046500
+046600******************************************************************
+046700 8434-CALC-FROM-STEP-GRADE.
+046800******************************************************************
+046900
+047000     MOVE EMP-COMPANY                TO DB-COMPANY.
+047100     MOVE EMP-SCHEDULE               TO DB-SCHEDULE.
+P70533     IF (EMP-PAY-STEP = ZEROES)
+P70533         MOVE "G"                    TO DB-INDICATOR
+P70533     ELSE
+P70533         MOVE "S"                    TO DB-INDICATOR
+P70533     END-IF.
+047200     MOVE HRCRP-EFFECT-DATE     TO DB-EFFECT-DATE.
+047300     PERFORM 850-FIND-NLT-SGHSET2.
+047400
+047500     MOVE EMP-COMPANY                TO DB-COMPANY.
+047600     MOVE EMP-SCHEDULE               TO DB-SCHEDULE.
+047700     MOVE EMP-PAY-GRADE              TO DB-PAY-GRADE.
+047800     MOVE EMP-PAY-STEP               TO DB-PAY-STEP.
+047900     MOVE SGH-EFFECT-DATE            TO DB-EFFECT-DATE.
+048000     PERFORM 840-FIND-SGDSET3.
+048100
+048200     IF (EMP-SALARY-CLASS            = "H")
+048300         COMPUTE HRCRP-OLD-SALARY-N ROUNDED
+                                           = SGD-PAY-RATE
+048400                                     * HRCRP-ANNUAL-HOURS-WF
+048500                                     * HRCRP-NBR-FTE-WF
+048600     ELSE
+048700         MOVE SGD-PAY-RATE           TO HRCRP-OLD-SALARY-N.
+048800
+048900 8434-END.
+049000
+049100******************************************************************
+049200 8435-CALC-FROM-HR11.
+049300******************************************************************
+049400
+049500     IF (EMP-SALARY-CLASS            = "H")
+049600         COMPUTE HRCRP-OLD-SALARY-N ROUNDED
+                                           = EMP-PAY-RATE
+049700                                     * HRCRP-ANNUAL-HOURS-WF
+049800                                     * HRCRP-NBR-FTE-WF
+049900     ELSE
+050000         MOVE EMP-PAY-RATE           TO HRCRP-OLD-SALARY-N.
+050100
+050200 8435-END.
+050300
+046400 8433-END.
+043300******************************************************************
+043400 8436-CALC-NEW-SALARY            SECTION.
+043500******************************************************************
+043600
+      *--- Capture new values if changed.
+           IF (CRT-PROGRAM-CODE = "PA100")
+               PERFORM 8440-CHECK-SALARY-FIELDS
+               THRU    8440-END.
+
+           INITIALIZE HRCRP-NEW-SALARY-N.
+
+043700     MOVE HRCRP-NBR-FTE             TO HRCRP-NBR-FTE-WF.
+           MOVE HRCRP-ANNUAL-HOURS        TO HRCRP-ANNUAL-HOURS-WF.
+043800
+           IF  (HRCRP-ANNUAL-HOURS-WF = ZEROES)
+043900         MOVE EMP-COMPANY            TO DB-COMPANY
+044000         MOVE HRCRP-JOB-CODE        TO DB-JOB-CODE
+044100         PERFORM 840-FIND-JBCSET1
+044200         IF  (JOBCODE-FOUND)
+044300             MOVE JBC-ANNUAL-HOURS   TO HRCRP-ANNUAL-HOURS-WF
+               END-IF
+           END-IF.
+044400
+044500     IF (HRCRP-ANNUAL-HOURS-WF = ZEROES)
+044600         MOVE EMP-COMPANY            TO DB-COMPANY
+044700         INITIALIZE DB-PROCESS-LEVEL
+044800         PERFORM 840-FIND-PRSSET1
+044900         MOVE PRS-ANNUAL-HOURS       TO HRCRP-ANNUAL-HOURS-WF
+           END-IF.
+045000
+045100     IF (HRCRP-ANNUAL-HOURS-WF = ZEROES)
+045200         MOVE 2080                   TO HRCRP-ANNUAL-HOURS-WF.
+045300
+045400     IF (HRCRP-NBR-FTE-WF = ZEROES)
+045500         MOVE 1                      TO HRCRP-NBR-FTE-WF.
+045600
+045700     IF (HRCRP-PAY-STEP             NOT = ZEROES)
+045800         PERFORM 8437-CALC-FROM-STEP-GRADE
+045900         THRU    8437-END
+046000     ELSE
+046100         PERFORM 8438-CALC-FROM-HR11
+046200         THRU    8438-END.
+046300     GO TO 8436-END.
+046500
+046600******************************************************************
+046700 8437-CALC-FROM-STEP-GRADE.
+046800******************************************************************
+046900
+047000     MOVE EMP-COMPANY                TO DB-COMPANY.
+J33429     MOVE "S"                        TO DB-INDICATOR.
+047100     MOVE HRCRP-SCHEDULE             TO DB-SCHEDULE.
+047200     MOVE HRCRP-EFFECT-DATE          TO DB-EFFECT-DATE.
+047300     PERFORM 850-FIND-NLT-SGHSET2.
+047400
+047500     MOVE EMP-COMPANY                TO DB-COMPANY.
+047600     MOVE HRCRP-SCHEDULE            TO DB-SCHEDULE.
+047700     MOVE HRCRP-PAY-GRADE           TO DB-PAY-GRADE.
+047800     MOVE HRCRP-PAY-STEP            TO DB-PAY-STEP.
+047900     MOVE SGH-EFFECT-DATE            TO DB-EFFECT-DATE.
+048000     PERFORM 840-FIND-SGDSET3.
+048100
+048200     IF (HRCRP-SALARY-CLASS            = "H")
+048300         COMPUTE HRCRP-NEW-SALARY-N ROUNDED
+                                           = SGD-PAY-RATE
+048400                                     * HRCRP-ANNUAL-HOURS-WF
+048500                                     * HRCRP-NBR-FTE-WF
+048600     ELSE
+048700         MOVE SGD-PAY-RATE           TO HRCRP-NEW-SALARY-N.
+048800          
+048900 8437-END.
+049000
+049100******************************************************************
+049200 8438-CALC-FROM-HR11.
+049300******************************************************************
+049400
+049500     IF (HRCRP-SALARY-CLASS         = "H")
+049600         COMPUTE HRCRP-NEW-SALARY-N ROUNDED
+                                           = HRCRP-PAY-RATE
+049700                                     * HRCRP-ANNUAL-HOURS-WF
+049800                                     * HRCRP-NBR-FTE-WF
+049900     ELSE
+050000         MOVE HRCRP-PAY-RATE        TO HRCRP-NEW-SALARY-N.
+050100
+050200 8438-END.
+050300
+049100******************************************************************
+049200 8440-CHECK-SALARY-FIELDS.
+049300******************************************************************
+049400
+      **** CHECK TO SEE IF ANY SALARY RELATED FIELDS ARE CHANGED ****
+           INITIALIZE HRCRP-PAY-RATE
+                      HRCRP-SALARY-CLASS
+                      HRCRP-NBR-FTE
+                      HRCRP-SCHEDULE
+                      HRCRP-PAY-STEP
+                      HRCRP-PAY-GRADE
+                      HRCRP-ANNUAL-HOURS
+MG0301                HRCRP-JOB-CODE.
+
+      **** CHECK ANNUAL-HOURS ****
+           MOVE HREMP-ANNUAL-HOURS-DN  TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-ALPHA
+               PERFORM 8910-CONVERT-NUMBER
+               MOVE HRCRP-NUMBER      TO HRCRP-ANNUAL-HOURS
+           ELSE
+               MOVE EMP-ANNUAL-HOURS  TO HRCRP-ANNUAL-HOURS.
+
+      **** CHECK PAY RATE ****
+           MOVE HREMP-PAY-RATE-DN      TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               INITIALIZE HRCRP-ALPHA
+               STRING HRCRP-NEW-VALUE(2:12)    DELIMITED BY SIZE
+                      "."                      DELIMITED BY SIZE
+                      HRCRP-NEW-VALUE(14:2)    DELIMITED BY SIZE
+                                             INTO HRCRP-ALPHA
+               PERFORM 8910-CONVERT-NUMBER
+               MOVE HRCRP-NUMBER      TO HRCRP-PAY-RATE 
+           ELSE
+               MOVE EMP-PAY-RATE     TO HRCRP-PAY-RATE.
+
+      **** CHECK SALARY CLASS ****
+           MOVE HREMP-SALARY-CLASS-DN  TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-SALARY-CLASS 
+           ELSE
+               MOVE EMP-SALARY-CLASS   TO HRCRP-SALARY-CLASS.
+
+      **** CHECK NBR FTE ****
+           MOVE HREMP-NBR-FTE-DN       TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-ALPHA
+               PERFORM 8910-CONVERT-NUMBER
+c              MOVE HRCRP-NUMBER      TO HRCRP-NBR-FTE 
+           ELSE
+               MOVE EMP-NBR-FTE       TO HRCRP-NBR-FTE.
+
+      **** CHECK SCHEDULE ****
+           MOVE HREMP-SCHEDULE-DN      TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-SCHEDULE 
+           ELSE
+               MOVE EMP-SCHEDULE       TO HRCRP-SCHEDULE.
+
+      **** CHECK PAY STEP ****
+           MOVE HREMP-PAY-STEP-DN      TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-ALPHA
+               PERFORM 8910-CONVERT-NUMBER
+               MOVE HRCRP-NUMBER      TO HRCRP-PAY-STEP 
+           ELSE
+               MOVE EMP-PAY-STEP      TO HRCRP-PAY-STEP.
+
+      **** CHECK PAY GRADE ****
+           MOVE HREMP-PAY-GRADE-DN     TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-PAY-GRADE
+           ELSE
+               MOVE EMP-PAY-GRADE      TO HRCRP-PAY-GRADE.
+
+      **** CHECK JOB CODE
+           MOVE HREMP-JOB-CODE-DN      TO HRCRP-FLD-NBR.
+           PERFORM 8900-CHECK-FIELD-USAGE. 
+           IF (FLD-CHANGED)
+               MOVE HRCRP-NEW-VALUE    TO HRCRP-JOB-CODE 
+           ELSE
+               MOVE EMP-JOB-CODE       TO HRCRP-JOB-CODE.
+
+050200 8440-END.
+050300
+046400 8436-END.
+CRP001******************************************************************
+CRP001 8900-CHECK-FIELD-USAGE          SECTION.
+CRP001******************************************************************
+CRP001 8900-START.
+CRP001
+CRP001     SET FLD-NOTCHANGED TO TRUE.
+CRP001
+CRP001     PERFORM VARYING I1 FROM 1 BY 1
+CRP001         UNTIL (I1 > 36)
+CRP001         OR    (PCT-FLD-NBR(I1) = HRCRP-FLD-NBR).
+CRP001
+           IF (I1 > 36)
+               GO TO 8900-END.
+
+CRP001     IF (PCT-FLD-NBR(I1) = HRCRP-FLD-NBR)
+CRP001     AND (PCT-NEW-VALUE(I1) NOT = SPACES)
+CRP001         SET FLD-CHANGED TO TRUE
+CRP001         MOVE PCT-NEW-VALUE(I1)  TO HRCRP-NEW-VALUE.     
+CRP001
+CRP001******************************************************************
+CRP001 8900-END.
+CRP001******************************************************************
+CRP001******************************************************************
+CRP001 8910-CONVERT-NUMBER             SECTION.
+CRP001******************************************************************
+CRP001 8910-START.
+CRP001
+        IF (HRCRP-ALPHA(1:1) = SPACE)
+            MOVE ZEROES            TO HRCRP-ALPHA(1:1).
+
+           MOVE ZEROES                 TO HRCRP-NUMBER.
+           IF (HRCRP-ALPHA = "*BLANK")
+               GO TO 8910-END.
+
+           INITIALIZE I2
+                      I3.
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 15)
+               IF  (HRCRP-ALPHA (I1:1) = ".")
+                   MOVE I1             TO I2
+               END-IF
+               IF  (HRCRP-ALPHA (I1:1) = SPACE)
+               AND (I3 = ZEROS)
+                   COMPUTE I3 = I1 - 1
+               END-IF
+           END-PERFORM.
+           IF  (I2 = ZEROES)
+               COMPUTE I2 = I3 + 1
+           END-IF.
+           COMPUTE HRCRP-WHOLE-START = 1.
+           COMPUTE HRCRP-WHOLE-END   = I2 - 1.
+           COMPUTE HRCRP-FRACT-START = I2 + 1.
+           COMPUTE HRCRP-FRACT-END   = I3.
+           MOVE 10              TO I2.
+           PERFORM
+               VARYING I1 FROM HRCRP-WHOLE-END BY NEGATIVE-ONE
+               UNTIL  (I1 < HRCRP-WHOLE-START)
+               MOVE HRCRP-ALPHA (I1:1)    TO HRCRP-NUMBER-A (I2:1)
+               SUBTRACT 1                  FROM I2
+           END-PERFORM.
+           MOVE 11                     TO I2.
+           PERFORM
+               VARYING I1 FROM HRCRP-FRACT-START BY 1
+               UNTIL  (I1 > HRCRP-FRACT-END)
+               MOVE HRCRP-ALPHA (I1:1)    TO HRCRP-NUMBER-A (I2:1)
+               ADD 1                   TO I2
+           END-PERFORM.
+
+CRP001******************************************************************
+CRP001 8910-END.
+CRP001******************************************************************
+000100******************************************************************
+000200 9000-CHECK-ACTION-CODE          SECTION.
+000300******************************************************************
+000500 9000-START.
+CRP001
+CRP001     MOVE "Y"                TO HRCRP-RECALC-ACTION.
+CRP001
+CRP001     IF (HRCRP-ACTION-CODE NOT = "ER-WITHDRW")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "ER-CRPCDSP")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "JOBSAL CHG")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "CRP RECALC")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "JOB-ROSTER")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "POSITIONCG")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "UPDPOS")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "ROSTER")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "ADMIN")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "USERFIELDS")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "AO-EXCEPT")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "CRP-FULL")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "ER-ADOPT")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "OFF-BOARD")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "TERM")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "RETIRE")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "DIS-TERM")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "DIS-RETIRE")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "PART-TIME")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "TRANSFER")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "NH CORRECT")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "REHIRE")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "ON-BOARD")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "FULL-TIME")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "DIS-RTW")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "DIS-APPRV")
+CRP001     AND (HRCRP-ACTION-CODE NOT = "DIS-WAIVER")
+US1541     AND (HRCRP-ACTION-CODE NOT = "ITP")
+CRP001         MOVE "N"            TO HRCRP-RECALC-ACTION.
+CRP001
+543200******************************************************************
+543300 9000-END.
+543400******************************************************************

@@ -1,0 +1,19 @@
+      ******************************************************************
+      *                            WB720WS                             *
+      ******************************************************************
+       01  WB720WS.
+           02  WS-PRT-EOF-SW                  PIC 9(01)  VALUE ZEROES.
+               88 WS-PRT-EOF                             VALUE 1.
+           02  WS-WORK-DIR                    PIC X(50)  VALUE SPACES.
+           02  WS-PRT-INPUT-FILE              PIC X(100) VALUE SPACES.
+           02  WS-PRT-OUTPUT-FILE             PIC X(100) VALUE SPACES.
+           02  WS-MOVE-FILE-CMD               PIC X(200) VALUE SPACES.
+           02  WS-CMD-END-MARK                PIC X(01)  VALUE X"00".
+           02  WS-CMD-RETURN-CODE             PIC 9(08)  COMP VALUE 0.
+
+           02  WS-PRT-ESC-STRING              PIC X(22)  VALUE
+      *                                       "(10U(s0p12h0s3b4099T".
+                                              "s0p12h0s3b4099T".
+           02  WS-ESC-SEQ-FOUND-SW            PIC 9(01) VALUE ZEROES.
+               88  WS-ESC-SEQ-FOUND           VALUE 1 THRU 9.
+

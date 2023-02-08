@@ -1,0 +1,37 @@
+< IS PROD\PDLIB\BNBNFPD
+> IS VNLA\PDLIB\BNBNFPD
+2,7d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  CR0305  07/24/03  ADDED LOGIC FOR RETIREE BENEFICIARY         *
+91,99d84
+< CR0305         MOVE ZERO                        TO DB-PARTICIPNT
+< CR0305         MOVE 99999999                    TO DB-START-DATE
+< CR0305         PERFORM 850-KFIND-NLT-PTBSET4
+< CR0305         IF (PARTBEN-KNOTFOUND)
+< CR0305         OR (PTB-COMPANY    NOT = DB-COMPANY)
+< CR0305         OR (PTB-EMPLOYEE   NOT = DB-EMPLOYEE)
+< CR0305         OR (PTB-PLAN-TYPE  NOT = DB-PLAN-TYPE)
+< CR0305         OR (PTB-PLAN-CODE  NOT = DB-PLAN-CODE)
+< CR0305         OR (PTB-PARTICIPNT NOT = ZERO)
+101,107c86,92
+< 027200             MOVE 124                     TO CRT-ERROR-NBR
+< 027300             MOVE BNBNF-BEN-COMPANY-FN    TO CRT-FIELD-NBR
+< 000550             IF (BNBNF-BATCH-PROGRAM)
+< 000560                 PERFORM 2700-BATCH-ERROR
+< 000570                 THRU    2700-END
+<                    ELSE
+< 027400                 GO TO 2100-END.
+---
+> 027200         MOVE 124                     TO CRT-ERROR-NBR
+> 027300         MOVE BNBNF-BEN-COMPANY-FN    TO CRT-FIELD-NBR
+> 000550         IF (BNBNF-BATCH-PROGRAM)
+> 000560             PERFORM 2700-BATCH-ERROR
+> 000570             THRU    2700-END
+>                ELSE
+> 027400             GO TO 2100-END.
+634d618
+< 

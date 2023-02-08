@@ -1,0 +1,15 @@
+< prod/prsrc/PR134WS
+89,91d88
+< MG0325     02  WS-BYPASS-CG-SW         PIC 9(01)       VALUE ZEROS.
+< MG0325         88 BYPASS-CG                            VALUE 1.
+< MG0325         88 DO-NOT-BYPASS-CG                     VALUE 0.
+
+
+LINE 93  still there.
+
+
+  pm0301     02  WS-SALARY-CLASS        PIC X(01)         VALUE SPACES.
+
+Above lines were still in tact  /law/apps/prod11/prsrc/pr134ws  as lines 89-91      PEG. 06/15/07  LAWTAPP
+
+

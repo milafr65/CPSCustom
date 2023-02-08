@@ -1,0 +1,100 @@
+< prod/prsrc/PR.sr
+> vnla/prsrc/PR.sr
+2c2
+< 
+---
+>    
+3d2
+< 
+905,944d903
+< DEFINE RULE
+<        ID          ZN-WPC-0001
+<        SCRFLD      BN-CRPVESTING
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "CRPVESTING", BN-CRPVESTING 
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0002
+<        SCRFLD      BN-NONPARTRSN
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "NONPARTRSN", BN-NONPARTRSN
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0003
+<        SCRFLD      BN-SRAVESTING
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "SRAVESTING", BN-SRAVESTING 
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0010
+<        SCRFLD      PNSTOPRSN    
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENSTPRSN ", PNSTOPRSN     
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0011
+<        SCRFLD      PNREVRSN      
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENREVRSN ", PNREVRSN 
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+3018,3067d2976
+< 
+< DEFINE SELECT      "CRP Vesting Codes "
+<        ID          ZN-WPC-0001  
+<        SCRFLD      BN-CRPVESTING        
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "CRPVESTING"   
+<        NXTKEY      BN-CRPVESTING
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "Non Partic Reason"
+<        ID          ZN-WPC-0002
+<        SCRFLD      BN-NONPARTRSN
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "NONPARTRSN"   
+<        NXTKEY      BN-NONPARTRSN
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "SRA Vesting Codes "
+<        ID          ZN-WPC-0003  
+<        SCRFLD      BN-SRAVESTING        
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "SRAVESTING"   
+<        NXTKEY      BN-SRAVESTING
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE 
+< 
+< DEFINE SELECT      "Ben Stop Reason "
+<        ID          ZN-WPC-0010  
+<        SCRFLD      PNSTOPRSN         
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENSTPRSN "   
+<        NXTKEY      PNSTOPRSN
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "Ben Reveiew Reason"
+<        ID          ZN-WPC-0011  
+<        SCRFLD      PNREVRSN             
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENREVRSN "   
+<        NXTKEY      PNREVRSN
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE 

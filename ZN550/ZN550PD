@@ -1,0 +1,233 @@
+      *=================================================================
+      * THIS PROGRAM READS AN INPUT FILE, ZN550IN, AND CREATES AN 
+      * OUTPUT FILE, ZN550WRK.  THE JOB CAN BE RUN IN REPORT ONLY OR IN 
+      * UPDATE.  IF UPDATE IS SELECTED, A PERSONAL ACTION IS WRITTEN TO
+      * UPDATE THE TERM DATE AND THE STATUS.
+200319*
+200319* 200319  MLF  ERROR TRAPPING FOR ZERO EMPLOYEE NUMBER
+000100******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+000500
+000600 050-END.
+000700
+000800******************************************************************
+000900 100-PROGRAM-CONTROL             SECTION 10.
+001000******************************************************************
+001100 100-START.
+001200
+001300     MOVE 050                    TO CRT-MSG-NBR.
+001400     PERFORM 780-DISPLAY-MSG.
+
+003600     PERFORM 800-OPENOUTPUTCSV-ZN550WRK.
+003600     PERFORM 800-OPENINPUTCSV-ZN550IN.
+003800
+           INITIALIZE WRK-ZN550WRK-REC.  
+003900     PERFORM 1000-DO-REPORT.
+001700
+001800 100-END.
+001900
+002000******************************************************************
+002100 1000-DO-REPORT                  SECTION 50.
+002200******************************************************************
+002300 1000-START.
+002400
+002500     MOVE ZEROES                 TO RPT-PAGE-COUNT (ZN550-R1).
+002600
+002700     MOVE GN1H-WBP-START-DATE    TO RPT-GROUP-REQUEST.
+002800     PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM 800-READCSV-ZN550IN.   
+           IF (INP-LAST-NAME = "LastName")
+              PERFORM 800-READCSV-ZN550IN
+           END-IF.                       
+009000
+009100     PERFORM 1120-DO-EMPLOYEE
+009200     THRU    1120-END
+009300         UNTIL (ZN550IN-NOTFOUND).
+004100
+004200     GO TO 1000-END.
+004300
+013000******************************************************************
+013100 1120-DO-EMPLOYEE.
+013200******************************************************************
+013300
+           MOVE INP-TERM-DATE  TO WS-DATE-FIELD.
+           MOVE WS-CCYY-N      TO WS-CCYY-REF.
+           MOVE WS-MM-N        TO WS-MM-REF.
+           MOVE WS-DD-N        TO WS-DD-REF.
+
+004800     MOVE 1000                   TO WS-WBP-COMPANY.
+005000     MOVE 1000                   TO G1-WBP-COMPANY.
+006300     MOVE INP-EMPLOYEE           TO WS-WBP-EMPLOYEE.
+006500     MOVE INP-EMPLOYEE           TO G1-WBP-EMPLOYEE.
+           MOVE INP-FIRST-NAME         TO G1-EMP-FIRST-NAME.
+           MOVE INP-LAST-NAME          TO G1-EMP-LAST-NAME.
+*********  MOVE WS-DATE-NUMBER         TO G1-EMP-TERM-DATE.
+           MOVE INP-TERM-DATE          TO G1-TERM-DATE.
+           MOVE INP-EMP-STATUS-1       TO G1-EMP-EMP-STATUS.
+
+013700     IF (INP-PERSONAL-ACTION > SPACES)
+             MOVE INP-PERSONAL-ACTION TO G1-EMP-COMMENTS
+013800       MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST 
+             MOVE SPACES                TO G1-1-EMP-EMP-STATUS
+013900       PERFORM 700-PRINT-RPT-GRP 
+             MOVE SPACES TO G1-EMP-COMMENTS
+             MOVE SPACES             TO WRK-EMP-STATUS             
+             PERFORM 1130-MOVE-TO-WRK
+                THRU 1130-END
+             PERFORM 800-WRITECSV-ZN550WRK 
+             GO TO 1120-NEXT-INPUT
+           END-IF.
+           
+200319     IF (INP-EMPLOYEE = 0)
+200319       MOVE "MISSING EMPLOYEE NUMBER" TO G1-EMP-COMMENTS
+200319       MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST 
+200319       MOVE SPACES                TO G1-1-EMP-EMP-STATUS
+210319       PERFORM 700-PRINT-RPT-GRP 
+200319       MOVE SPACES TO G1-EMP-COMMENTS
+200319       MOVE SPACES             TO WRK-EMP-STATUS             
+200319       PERFORM 1130-MOVE-TO-WRK
+200319          THRU 1130-END
+200319       PERFORM 800-WRITECSV-ZN550WRK 
+200319       GO TO 1120-NEXT-INPUT
+200319     END-IF.
+           
+           MOVE "TP"               TO WRK-EMP-STATUS.
+           MOVE "TP"               TO G1-1-EMP-EMP-STATUS. 
+           IF (INP-PROCESS-LEVEL = "SEMSL")
+           OR (INP-PROCESS-LEVEL = "SEMFW")
+              MOVE "2T"               TO WRK-EMP-STATUS
+                                         G1-1-EMP-EMP-STATUS 
+           END-IF.
+                      
+           PERFORM 1130-MOVE-TO-WRK
+              THRU 1130-END.
+              
+
+           IF (PRM-WARN-FLAG = "U")
+              PERFORM 1140-CREATE-PERSONAL-ACTION
+                 THRU 1140-END
+           END-IF.
+           IF (WS-RPT-WRITTEN = "Y")
+             MOVE SPACES TO WS-RPT-WRITTEN
+             GO TO 1120-NEXT-INPUT
+           END-IF.
+           
+013800     MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST.
+013900     PERFORM 700-PRINT-RPT-GRP.
+014000
+014100 1120-NEXT-INPUT.
+           PERFORM 800-READCSV-ZN550IN.
+014300
+014400 1120-END.
+004400******************************************************************
+       1130-MOVE-TO-WRK.
+           MOVE INP-EMPLOYEE       TO WRK-EMPLOYEE.
+           MOVE INP-EFF-DATE       TO WRK-EFF-DATE.
+           MOVE INP-EMP-STATUS-1   TO WRK-EMP-STATUS-1.
+           MOVE INP-TERM-DATE      TO WRK-TERM-DATE.
+           MOVE INP-LAST-NAME      TO WRK-LAST-NAME.
+           MOVE INP-FIRST-NAME     TO WRK-FIRST-NAME.
+           MOVE INP-HIRE-DATE      TO WRK-HIRE-DATE.
+           MOVE INP-ADJ-HIRE-DATE  TO WRK-ADJ-HIRE-DATE.
+           MOVE INP-BIRTHDATE      TO WRK-BIRTHDATE. 
+           MOVE WS-CCYY-REF        TO WRK-TERM-DATE(1:4).  
+           MOVE WS-MM-REF          TO WRK-TERM-DATE(5:2).       
+           MOVE WS-DD-REF          TO WRK-TERM-DATE(7:2). 
+           MOVE WS-DATE-NUMBER     TO WRK-TERM-DATE.
+           MOVE INP-TERM-DATE      TO WRK-TERM-DATE. 
+           MOVE INP-PROCESS-LEVEL  TO WRK-PROCESS-LEVEL.
+           MOVE INP-PERSONAL-ACTION TO WRK-PERSONAL-ACTION.
+           PERFORM 800-WRITECSV-ZN550WRK.
+           INITIALIZE WRK-ZN550WRK-REC. 
+           
+014500 1130-END.
+004400******************************************************************
+       1140-CREATE-PERSONAL-ACTION.
+           PERFORM 910-AUDIT-BEGIN.
+           MOVE INP-EFF-DATE          TO WS-DATE-FIELD.
+           MOVE WS-CCYY-N             TO WS-CCYY-EFF.
+           MOVE WS-MM-N               TO WS-MM-EFF.
+           MOVE WS-DD-N               TO WS-DD-EFF.
+           
+           MOVE INP-TERM-DATE         TO WS-DATE-FIELD.
+           MOVE WS-CCYY-N             TO WS-CCYY-TERM.
+           MOVE WS-MM-N               TO WS-MM-TERM.
+           MOVE WS-DD-N               TO WS-DD-TERM.
+           
+           MOVE 1000                      TO DB-COMPANY.
+           MOVE "E"                       TO DB-ACTION-TYPE.
+           MOVE WS-REF-EFF-DATE           TO DB-EFFECT-DATE.
+           MOVE "OFF-BOARD"               TO DB-ACTION-CODE.
+           MOVE INP-EMPLOYEE              TO DB-EMPLOYEE.
+           MOVE 1                         TO DB-ACTION-NBR.
+
+           PERFORM 850-FIND-NLT-PCTSET2.
+           IF  (PERSACTION-FOUND)
+           AND (PCT-COMPANY     = DB-COMPANY)
+           AND (PCT-EMPLOYEE    = DB-EMPLOYEE)
+           AND (PCT-ACTION-CODE = DB-ACTION-CODE)
+           AND (PCT-EFFECT-DATE = DB-EFFECT-DATE)
+               MOVE "DUPL PERSONAL ACTION" TO G1-EMP-COMMENTS
+013800         MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST 
+013900         PERFORM 700-PRINT-RPT-GRP 
+               MOVE "Y"    TO WS-RPT-WRITTEN
+               MOVE SPACES TO G1-EMP-COMMENTS 
+               GO TO 1140-AUDIT-END.
+               
+           MOVE "TP"               TO G1-1-EMP-EMP-STATUS. 
+           MOVE ZERO               TO WS-ACTION-NBR.
+           MOVE INP-EMPLOYEE       TO DB-EMPLOYEE.
+           MOVE "OFF-BOARD"        TO DB-ACTION-CODE.
+           MOVE WS-REF-EFF-DATE    TO DB-EFFECT-DATE.
+           MOVE 99                 TO DB-ACTION-NBR.
+           PERFORM 850-FIND-NLT-PAHSET4.
+004000     IF  (PERSACTHST-FOUND)
+004100     AND (PAH-COMPANY  = DB-COMPANY)
+004200     AND (PAH-EMPLOYEE = DB-EMPLOYEE)
+004300     AND (PAH-ACTION-CODE  = DB-ACTION-CODE)
+           AND (PAH-EFFECT-DATE  = DB-EFFECT-DATE)
+               MOVE "DUPL HISTORY ACTION" TO G1-EMP-COMMENTS
+013800         MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST 
+013900         PERFORM 700-PRINT-RPT-GRP 
+               MOVE "Y"    TO WS-RPT-WRITTEN
+               MOVE SPACES TO G1-EMP-COMMENTS 
+               GO TO 1140-AUDIT-END.
+               
+           MOVE 1 TO DB-ACTION-NBR.
+                              
+           PERFORM 800-CREATE-PERSACTION.
+           MOVE 1000                      TO PCT-COMPANY.
+           MOVE "E"                       TO PCT-ACTION-TYPE.
+           MOVE WS-REF-EFF-DATE           TO PCT-EFFECT-DATE.
+           MOVE "OFF-BOARD"               TO PCT-ACTION-CODE.
+
+           MOVE INP-EMPLOYEE              TO PCT-EMPLOYEE.
+           COMPUTE PCT-ACTION-NBR = WS-ACTION-NBR + 1.
+           MOVE 1                         TO PCT-POS-LEVEL.
+      *===WK PHONE CNTRY ====20 ==EMP-STATUS==================
+           MOVE 20                        TO PCT-FLD-NBR (2).
+           INITIALIZE                        PCT-NEW-VALUE (2).
+           MOVE "TP"                      TO PCT-NEW-VALUE (2).
+           
+           IF (INP-PROCESS-LEVEL = "SEMSL")
+           OR (INP-PROCESS-LEVEL = "SEMFW")
+              MOVE "2T"               TO PCT-NEW-VALUE(2)
+           END-IF.
+      *===WK PHONE ===========27==TERM-DATE=====================
+           MOVE 27                        TO PCT-FLD-NBR (1).
+*******    MOVE WS-REF-TERM-DATE          TO PCT-NEW-VALUE (1).
+           MOVE WS-MM-TERM                TO PCT-NEW-VALUE(1)(1:2).
+           MOVE WS-DD-TERM                TO PCT-NEW-VALUE(1)(3:2).
+           MOVE WS-CCYY-TERM(3:2)         TO PCT-NEW-VALUE(1)(5:2).
+           MOVE "ZN550"                   TO PCT-USER-ID.
+           PERFORM 820-STORE-PERSACTION.
+       1140-AUDIT-END.           
+           PERFORM 920-AUDIT-END.
+       1140-END.
+014600******************************************************************
+014700 1000-END.
+014800******************************************************************
+014900

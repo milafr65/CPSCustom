@@ -1,0 +1,516 @@
+ ******* ZN31.scr 2.1.6.2.3 <1907302701>
+$RELEASE   02.1
+*
+*
+*
+*******************************************************************************
+*                            SCREEN   ZN31  (1)
+*******************************************************************************
+$FORM      ZN311    S
+$KEYFCS
+$DATAFCS   A
+$NEXTFCS
+$ADDFCS    A
+$DELFCS
+$LREQFCS   A
+$LDATAFCS  A
+$LADDFCS   A
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN311    S
+[ZN31[ ]                   ?Benefit Speed Entry
++      ]
+|                  Company:&    ]  ;                              ;
+|               Start Date:&      ]
+           ^Pl^Plan ]                                       ^Pct  ]     ^Pre^S]
+| Employee |Tp|Code |Option|Multiple|Cov,PayPer   |Sal,Annl |Amt  |Start|Aft|M]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+&         ][  [    ]  &  ]  &      ]&          ]&          ] [ ] &      ][ ][ ]
+$TAB-DETAIL
+$TAB-FORM  MORE              " More...  "
+|EOI |    Pre-Tax   |     After-Tax  |    Stop Date
+[ ]     &         ]      &        ]       &      ]   [   ] [   ] [        ]
+$END-TAB   MORE
+$TAB-FORM  HIPAA             " HIPAA "
+|Create Transaction |Reason                               |Member ID
+     [ ];   ;       [  ];                                ;& ];                ;
+$END-TAB   HIPAA
+$END-DETAIL
+|                     [ Benef ] [ SB Benef ] 
+$END-SCR   ZN311    S
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN311    S
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2    *SAL-OVER-XMIT         N     01          SB
+  2     ORIGINATOR            P     06          RO 
+  2     BEN-COMPANY           N     04          SR    01  C
+  2     PRS-NAME              AL    30          SB    CN 
+  2     ENROLLMENT-DATE       F     08          SL    H10
+  2     DETAIL-GROUP          G                 SB 
+   3    DETAIL-LINE           G                 SB 11
+    4   BEN-EMPLOYEE          N     09          LB    H07 
+    4   BEN-PLAN-TYPE         A     02          LB    HTL 
+    4   BEN-PLAN-CODE         A     04          LB    HTM 
+    4   BEN-COV-OPTION        N     02          LB    HAs
+    4   BEN-MULTIPLE          N     06        2 LB 
+    4   BEN-COVER-AMT         N     10        2 LB 
+    4   BEN-PAY-RATE          N     10        2 LB     
+    4   BEN-PCT-AMT-FLAG      A     01          LB 
+    4   BEN-START-DATE        F     08          LB    H08 
+    4   PRE-CONT-TAX-STS      A     01          LB    
+    4   BEN-SMOKER            A     01          LB    HK1 
+*
+    4  +MORE-TAB              AF    10          LB          
+    4  +BEN-PEND-EVIDENCE     A     01          LB   
+    4  +BEN-EMP-PRE-CONT      S     09        2 LB    
+    4  +BEN-EMP-AFT-CONT      N     08        2 LB    
+    4  +BEN-STOP-DATE         F     08          LB   *GZ3 
+    4  +DEP                   W     03          LB          HR13.3
+    4  +INV                   W     03          LB          BN36.1
+    4  +ADDED-BEN             W     08          LB          ZN31.4
+*
+    4  +HIPAA-TAB             AF    07          LB          
+    4  +HUT-CREATE-TRANS      A     01          LB   
+    4  +HUT-CREATE-TRANS      X     03          LB   
+    4  +HUT-REASON            A     02          LB   
+    4  +HUT-REASON            X     32          LB   
+    4  +HUT-MEMBER-ID         N     01          LB   
+    4  +HUT-MEMBER-ID         X     16          LB   
+    4  *BEN-USER-ID           A     10          LB
+  2     BENEF                 W     07          SB          BN47.1
+  2     SB-BENEF              W     10          SB          BN48.1
+$END-TRANS ZN311    S
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     ZN311    S
+  FC                    A                     A=Add
+                                              +=(+)PageDown
+                                              -=(-)PageUp
+  BEN-PLAN-TYPE                               DB=Defined Benefit
+                                              DC=Defined Contribution
+                                              DI=Disability
+                                              DL=Dependent Life
+                                              DN=Dental
+                                              EL=Employee Life
+                                              HL=Health
+                                              RS=Spending Account
+                                              SB=Savings Bonds
+                                              SP=Stock Purchase
+                                              VA=Vacation
+  BEN-PCT-AMT-FLAG                            A=Amount
+                                              P=Percent
+  PRE-CONT-TAX-STS                            P=Pretax
+                                              A=After-Tax
+                                              B=Both
+                                              N=No contribution
+  BEN-SMOKER                                   =
+                                              Y=Yes
+                                              N=No
+  BEN-PEND-EVIDENCE     N                     N=No
+                                              P=Pending
+                                              A=Approved
+  HUT-CREATE-TRANS                            N=No
+                                              Y=Yes
+  HUT-REASON                                  01=Divorce
+                                              02=Birth
+                                              03=Death
+                                              04=Retirement
+                                              05=Adoption
+                                              06=Strike
+                                              07=Termination of Benefits
+                                              08=Termination of Employment
+                                              09=COBRA
+                                              10=COBRA Premium Paid
+                                              11=Surviving Spouse
+                                              14=Voluntary Withdrawal
+                                              16=Quit
+                                              17=Fired
+                                              18=Suspended
+                                              21=Disability
+                                              22=Plan Change
+                                              26=Declined Coverage
+                                              27=Pre-Enrollment
+                                              28=Initial Enrollment
+                                              29=Benefit Selection
+                                              31=Legal Separation
+                                              32=Marriage
+                                              37=Leave of Absence with Benefits
+                                              38=Leave of Absence without Benefits
+                                              39=Layoff with Benefits
+                                              40=Layoff without Benefits
+                                              41=Re-enrollment
+                                              AI=No reason given
+  HUT-MEMBER-ID                               1=Social Number
+                                              2=EE or Dep Number
+$END-EDITS ZN311    S
+*
+*
+*******************************************************************************
+*                            SCREEN   ZN31  (2)
+*******************************************************************************
+$FORM      ZN312    S
+$KEYFCS    C
+$DATAFCS   AC
+$NEXTFCS   NP
+$ADDFCS    A
+$DELFCS
+$LREQFCS   AC
+$LDATAFCS  AC
+$LADDFCS   A
+$LINEKN    HTM
+$FCPAIRS   AA,CA
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN312    S
+[ZN31[ ]                      ?Benefit Speed Entry
++      ]
+                  |Company:&    ]      ;                              ;
+                 |Employee:&         ] ;                                 ;
+               |As of date:&      ]    ;                    ;
+                |Plan Type:[  [  [  [  [  [  [  [  [  [  [  ]
+|FC|*|Tp|Plan|Description    |Eligible |Start |Opt |Mult|Cov,PayPer|Sal,Annual]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+[ ]; :  :    :              ;;        ;&      &  &      &          &          ]
+$TAB-DETAIL
+$TAB-FORM  MORE              " More...  "
+|Pct,Amt]|Pre,Aft]|Smk]|EOI] |Pre-Tax]|Aft-Tax]|Stop Date]
+| [ ]      [ ]     [ ]  [ ]&         ]&        ]&      ][   [   [   [        ]
+|LCMS Roster]|SS Partici]|Em StsCd]|Pr Levl]|NonPartReason]|CRP Vst]|SRA Vst]
+|;          ;;          ;  ;  ;     ;     ;      [   ]       ;   ;    ;   ;
+$END-TAB   MORE
+$TAB-FORM  HIPAA             " HIPAA "
+|
+|Create Transaction |Reason                               |Member ID
+|    [ ];   ;       [  ];                                ;& ];                ;
+|
+$END-TAB   HIPAA
+$END-DETAIL           
+|
+|                     [ Benef ] [ SB Benef ] [ Comments ]    ; ;
+$END-SCR   ZN312    S
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN312    S
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2    *PT-COMPANY            N     04          SB
+  2    *PT-EMPLOYEE           N     09          SB
+  2    *PT-ENROLL-DATE        F     08          SB
+  2    *PT-PLAN-TYPE          A     02          SB 
+  2    *PT-PLAN-CODE          A     04          SB 
+  2    *PT-I9                 N     04          SB 
+  2    *SAL-OVER-XMIT         N     01          SB
+  2     ORIGINATOR            P     06          RO 
+  2     BEN-COMPANY           N     04          SK    01  C
+  2     PRS-NAME              AL    30          SB    CN
+  2     BEN-EMPLOYEE          N     09          SN    H07 
+  2     EMP-SHORT-NAME        AL    33          SB    HEN 
+  2     ENROLLMENT-DATE       F     08          SL    H10
+  2     EMP-FICA-NBR          A     20          SB
+  2     WS-DETAIL-GROUP       G                 SB 
+   3    WS-PLAN-TYPE-GRP      G                 SB 11
+    4  *WS-PLAN-TYPE          A     02          SB
+  2     PLAN-TYPE-GRP         G                 SB 11
+   3    INQ-PLAN-TYPE         A     02          SB       
+  2     DETAIL-GROUP          G                 SB 
+   3    DETAIL-LINE           G                 SB 09
+    4   LINE-FC               A     01          LF           
+    4  *FILTER-INDEX          N     04          LB 
+    4   EXISTS-FLAG           A     01          LB
+    4   BEN-PLAN-TYPE         A     02          LB    HTL
+    4   BEN-PLAN-CODE         A     04          LB    HTM 
+    4   PLN-DISPLAY-DESC      AL    15          LB    HTN
+    4   ELIGIBLE-DATE         F     08          LB
+    4   BEN-START-DATE        F     08          LB    H08 
+    4   BEN-COV-OPTION        N     02          LB    HAs
+    4   BEN-MULTIPLE          N     06        2 LB 
+    4   BEN-COVER-AMT         N     10        2 LB 
+    4   BEN-PAY-RATE          N     10        2 LB     
+*
+    4  +MORE-TAB              AF    10          LB                
+    4  +BEN-PCT-AMT-FLAG      A     01          LB 
+    4  +PRE-CONT-TAX-STS      A     01          LB    
+    4  +BEN-SMOKER            A     01          LB    HK1 
+    4  +BEN-PEND-EVIDENCE     A     01          LB    
+    4  +BEN-EMP-PRE-CONT      S     09        2 LB              
+    4  +BEN-EMP-AFT-CONT      N     08        2 LB              
+    4  +BEN-STOP-DATE         F     08          LB   *GZ3            
+    4  +DEP                   W     03          LB          HR13.3
+    4  +INV                   W     03          LB          BN36.1
+    4  +ERROR-WINDOW          W     03          LB          ZN31.3
+    4  *ERROR-MESSAGE         A     60          LB    HEM   ERROR-WINDOW
+    4  +ADDED-BEN             W     08          LB          ZN31.5
+    4  +WEN-LCMS-ROSTER       A     10          LB   *Hp5
+    4  +WEN-SS-PARTIC         A     10          LB   *ZZO
+    4  +WEN-EMP-STATUS        A     02          LB   *HH7
+    4  +WEN-PROCESS-LEVEL     A     05          LB   *H03
+    4  +WEN-NONPARTIC-CD      A     03          LB   *Wb2
+    4  +WEN-CRP-VEST          A     03          LB       
+    4  +WEN-SRA-VEST          A     03          LB       
+*
+    4  +HIPAA-TAB             AF    07          LB          
+    4  +HUT-CREATE-TRANS      A     01          LB   
+    4  +HUT-CREATE-TRANS      X     03          LB   
+    4  +HUT-REASON            A     02          LB   
+    4  +HUT-REASON            X     32          LB   
+    4  +HUT-MEMBER-ID         N     01          LB   
+    4  +HUT-MEMBER-ID         X     16          LB   
+    4  *BEN-USER-ID           A     10          LB
+  2     BENEF                 W     07          SB          BN47.1
+  2     SB-BENEF              W     10          SB          BN48.1
+  2     COMMENT               W     10          SB          BN90.1
+  2     FILLER                X     01          SB
+$END-TRANS ZN312    S
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     ZN312    S
+  FC                    I                     I=Inquire
+                                              N=Next
+                                              P=Previous
+                                              A=Add
+                                              +=(+)PageDown
+                                              -=(-)PageUp
+  INQ-PLAN-TYPE                               DB=Defined Benefit
+                                              DC=Defined Contribution
+                                              DI=Disability
+                                              DL=Dependent Life
+                                              DN=Dental
+                                              EL=Employee Life
+                                              HL=Health
+                                              RS=Spending Account
+                                              SB=Savings Bonds
+                                              SP=Stock Purchase
+                                              VA=Vacation
+  LINE-FC                                     A=Add
+  BEN-PCT-AMT-FLAG                            A=Amount
+                                              P=Percent
+  PRE-CONT-TAX-STS                            P=Pretax
+                                              A=After-Tax
+                                              B=Both
+                                              N=No contribution
+  BEN-SMOKER                                   =
+                                              Y=Yes
+                                              N=No
+  BEN-PEND-EVIDENCE     N                     N=No
+                                              P=Pending
+                                              A=Approved
+  HUT-CREATE-TRANS                            N=No
+                                              Y=Yes
+  HUT-REASON                                  01=Divorce
+                                              02=Birth
+                                              03=Death
+                                              04=Retirement
+                                              05=Adoption
+                                              06=Strike
+                                              07=Termination of Benefits
+                                              08=Termination of Employment
+                                              09=COBRA
+                                              10=COBRA Premium Paid
+                                              11=Surviving Spouse
+                                              14=Voluntary Withdrawal
+                                              16=Quit
+                                              17=Fired
+                                              18=Suspended
+                                              21=Disability
+                                              22=Plan Change
+                                              26=Declined Coverage
+                                              27=Pre-Enrollment
+                                              28=Initial Enrollment
+                                              29=Benefit Selection
+                                              31=Legal Separation
+                                              32=Marriage
+                                              37=Leave of Absence with Benefits
+                                              38=Leave of Absence without Benefits
+                                              39=Layoff with Benefits
+                                              40=Layoff without Benefits
+                                              41=Re-enrollment
+                                              AI=No reason given
+  HUT-MEMBER-ID                               1=Social Number
+                                              2=EE or Dep Number
+$END-EDITS ZN312    S
+*
+*
+*
+*******************************************************************************
+*                            SCREEN   ZN31  (3)
+*******************************************************************************
+$FORM      ZN313    S
+$DATAFCS   C
+$WINDOW
+$NOTKXFER
+$TITLE
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN313    S
++C]                      ?Error Message
+
+;                                                            ;
+$END-SCR   ZN313    S
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN313    S
+  2    *TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     ERROR-MESSAGE         A     60          SB    HEM
+$END-TRANS ZN313    S
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     ZN313    S
+  FC                    I                     C=Change
+$END-EDITS ZN313    S
+*
+*
+*
+*******************************************************************************
+*                            SCREEN   ZN31  (4)
+*******************************************************************************
+$FORM      ZN314    S
+$WINDOW
+$NOTKXFER
+$TITLE
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN314    S
++I]                      ?Benefits Added Automatically
+         ^Pln^Pln ]
+|Employee| Tp|Code|Start    |Stop  |Opt  |Coverage  |PreTax  |AftTax |Pct,Amt]
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+;         :  :    :        :        :  ;;          :         :        ;  ; ;
+$END-SCR   ZN314    S
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN314    S
+  2    *TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2    *BEN-COMPANY           N     04          SB    01  C
+  2    *BEN-EMPLOYEE          N     09          SB    H07 
+  2    *BEN-PLAN-TYPE         A     02          SB    HTL
+  2    *BEN-PLAN-CODE         A     04          SB    HTM 
+  2    *BEN-START-DATE        F     08          SB    H08 
+  2     ADDED-GROUP           G                 SB
+   3    ADDED-LINES           G                 SB 15
+    4   ABEN-EMPLOYEE         N     09          LB
+    4   ABEN-PLAN-TYPE        A     02          LB
+    4   ABEN-PLAN-CODE        A     04          LB
+    4   ABEN-START-DATE       F     08          LB
+    4   ABEN-STOP-DATE        F     08          LB    
+    4   ABEN-COV-OPTION       N     02          LB          ZZ
+    4   ABEN-COVER-AMT        N     10        2 LB          ZZZZZZZ.ZZ
+    4   ABEN-EMP-PRE-CONT     S     09        2 LB          ZZZZZ.ZZ-
+    4   ABEN-EMP-AFT-CONT     N     08        2 LB          ZZZZZ.ZZ
+    4   ABEN-PCT-AMT-FLAG     A     01          LB 
+    4  *ABEN-MULTIPLE         N     06        2 LB 
+    4  *ABEN-PAY-RATE         N     10        2 LB
+    4  *APRE-CONT-TAX-STS     A     01          LB    
+    4  *ABEN-SMOKER           A     01          LB
+$END-TRANS ZN314    S
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     ZN314    S
+  FC                    I                     I=Inquire
+$END-EDITS ZN314    S
+*
+*
+*
+*******************************************************************************
+*                            SCREEN   ZN31  (5)
+*******************************************************************************
+$FORM      ZN315    S
+$WINDOW
+$NOTKXFER
+$TITLE
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN315    S
++I]                      ?Benefits Added Automatically
+^Pln^Pln ]
+|Tp |Code|Start    |Stop  |Opt  |Coverage  |PreTax  |AftTax |Pct,Amt]
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+;  :    :        :        :  ;;          :         :        ;  ; ;
+$END-SCR   ZN315    S
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN315    S
+  2    *TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2    *BEN-COMPANY           N     04          SB    01  C
+  2    *BEN-EMPLOYEE          N     09          SB    H07 
+  2    *BEN-PLAN-TYPE         A     02          SB    HTL
+  2    *BEN-PLAN-CODE         A     04          SB    HTM 
+  2    *BEN-START-DATE        F     08          SB    H08 
+  2     ADDED-GROUP           G                 SB
+   3    ADDED-LINES           G                 SB 15
+    4   ABEN-PLAN-TYPE        A     02          LB
+    4   ABEN-PLAN-CODE        A     04          LB
+    4   ABEN-START-DATE       F     08          LB
+    4   ABEN-STOP-DATE        F     08          LB    
+    4   ABEN-COV-OPTION       N     02          LB          ZZ
+    4   ABEN-COVER-AMT        N     10        2 LB          ZZZZZZZ.ZZ
+    4   ABEN-EMP-PRE-CONT     S     09        2 LB          ZZZZZ.ZZ-
+    4   ABEN-EMP-AFT-CONT     N     08        2 LB          ZZZZZ.ZZ
+    4   ABEN-PCT-AMT-FLAG     A     01          LB 
+    4  *ABEN-EMPLOYEE         N     09          LB
+    4  *ABEN-MULTIPLE         N     06        2 LB 
+    4  *ABEN-PAY-RATE         N     10        2 LB
+    4  *APRE-CONT-TAX-STS     A     01          LB    
+    4  *ABEN-SMOKER           A     01          LB
+$END-TRANS ZN315    S
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     ZN315    S
+  FC                    I                     I=Inquire
+$END-EDITS ZN315    S

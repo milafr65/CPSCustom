@@ -1,0 +1,393 @@
+< IS PROD\PDLIB\BNENTPD
+> IS VNLA\PDLIB\BNENTPD
+3,37d2
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+< AI0095******************************************************************
+< AI0095*  AI0095  03/24/03  RETROACTIVE BENEFIT CHANGE MODIFICATION     *
+< AI0095******************************************************************
+< AI0010*
+< AI0010*  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+< AI0010*                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+< AI0010*                    END DATE FIELDS IN DETERMINATION OF THE     *
+< AI0010*                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+< AI0030*  AI0030  07/24/03  ADD LOGIC FOR DL AND HL BENEFICIARIES       *
+<       ******************************************************************
+<       *  WBP MOD 8/2003                                                *
+<       *  UPDATE WBPBENTAG FOR UPDATES TO BENEFIT                       *
+<       *  THE TBLS HAVE NO FIELDS IN COMMON EXCEPT FOR THE KEYS, SO WE  *
+<       *  ONLY INTERESTED IN ADDS AND DELETES.                          *
+<       *  ON ADD, USE SAME DEFAULTS AS USED ON ZN31.2                   *
+<       ******************************************************************
+< GW    *  1/2004 WHEN CREATING/CHANGING A WBP REC, IF THERE IS A        *
+< GW    *  STOP DATE ON THE CORRESPONDING BEN REC, THE START-DATE IN     *
+< GW    *  THE WBP REC SHOULD BE THE BEN-STOP-DATE + 1, NOT THE BEN-     *
+< GW    *  START-DATE BECAUSE THIS IS THE DATE WB120 NEEDS TO PERFORM    *
+< GW    *  A RECALC.  THIS CHANGE IS ALSO GOING INTO BNPTBPD FOR         *
+< GW    *  PARTBEN RECS.                                                 *
+<       ******************************************************************
+< GW    * 2/2005  WBP TRIGGER RECS AREN'T GETTING WRITTEN ON REHIRES     *
+<       *  SEE 4420-GET-LAST-BILLED-DATE.                                *
+<       *  EG WE FIND THE LAST PBH/PBK RECS FOR AN EE IS  PRIOR TO THE   *
+<       *   NEW BEN DATE SO WE DONT WRITE A WBP REC. BUT IT IS THE ER    *
+<       *   WHO IS GETTING BILLED AND THEIR MOST RECENT BILL DATE        *
+<       *   MAY BE MORE RECENT THAN THE BEN-START-DATE SO WE SHOULD HAVE *
+<       *   RETRO TRIGGER. SEE 4400-RETRO-BILL-TRIGGER.                  *
+<       ******************************************************************
+791d755
+< AI0010     MOVE BNBEN-ENROLLMENT-DATE      TO BNPEWS-START-DATE.
+2143,2144c2107,2108
+<            IF (BNBEN-PLAN-TYPE (I1)        = "DI" OR "EL" OR "DC" 
+< AI0030                                    OR "DB" OR "DL" OR "HL")
+---
+>            IF (BNBEN-PLAN-TYPE (I1)        = "DI" OR "EL" OR "DC")
+>            OR (BNBEN-PLAN-TYPE (I1)        = "DB")
+3546,3547d3509
+< GW         INITIALIZE WS-BNBEN-STOP-DATE.
+< GW       
+3587c3549
+< 126900         PERFORM 840-MODIFY-BENSET1
+---
+> 126900         PERFORM 840-MODIFY-BENSET1.
+3588,3590d3549
+< GW             IF  (BENEFIT-FOUND)
+< GW             AND (BNBEN-LINE-FC (I1) = "S")        
+< GW                 MOVE BEN-STOP-DATE      TO WS-BNBEN-STOP-DATE.
+3729,3730c3688,3689
+< WBP*****       PERFORM 820-STORE-BENEFIT.
+< WBP            PERFORM 820-STORE-BENEFIT 
+---
+>                PERFORM 820-STORE-BENEFIT.
+> 
+3731,3765d3689
+< ***********  WBP MOD 8/2003 TO UPDATE WBPBENTAG ************************
+<                IF  (BEN-PLAN-CODE >= "PAAA")
+<                AND (BEN-PLAN-CODE <= "PZZZ")
+< 
+<                   MOVE BEN-COMPANY       TO DB-COMPANY
+<                   MOVE BEN-PLAN-TYPE     TO DB-PLAN-TYPE
+<                   MOVE BEN-EMPLOYEE      TO DB-EMPLOYEE
+<                   MOVE BEN-START-DATE    TO DB-START-DATE
+<                   MOVE BEN-PLAN-CODE     TO DB-PLAN-CODE
+<                   PERFORM 840-MODIFY-WENSET1
+<                   IF (WBPBENTAG-NOTFOUND)
+<                      PERFORM 800-CREATE-WBPBENTAG
+<                      MOVE BEN-COMPANY       TO WEN-COMPANY
+<                      MOVE BEN-PLAN-TYPE     TO WEN-PLAN-TYPE
+<                      MOVE BEN-EMPLOYEE      TO WEN-EMPLOYEE
+<                      MOVE BEN-START-DATE    TO WEN-START-DATE
+<                      MOVE BEN-PLAN-CODE     TO WEN-PLAN-CODE
+<                      MOVE "0"               TO WEN-NONPARTIC-CD
+<                      MOVE "C"               TO WEN-CRP-VEST
+<                      MOVE "C"               TO WEN-SRA-VEST
+<                      MOVE CRT-USER-NAME     TO WEN-USER-ID
+<                      MOVE HHMMSS            TO WEN-TIME-STAMP
+<                      MOVE WS-SYSTEM-DATE-YMD   TO WEN-DATE-STAMP
+<                      PERFORM 4221-GET-WEN-FIELDS
+<                         THRU 4221-END
+<                      PERFORM 820-STORE-WBPBENTAG.
+< ***********  END WBP ***************************************************
+<           
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+< RAY   *----------------------------------------------------------------
+<    
+3766a3691
+>            AND (BNBEN-PLAN-TYPE (I1)      = "DC")
+3813,3824d3737
+< ***********  WBP MOD 8/2003 TO UPDATE WBPBENTAG ************************
+< 
+<                MOVE BEN-COMPANY       TO DB-COMPANY
+<                MOVE BEN-PLAN-TYPE     TO DB-PLAN-TYPE
+<                MOVE BEN-EMPLOYEE      TO DB-EMPLOYEE
+<                MOVE BEN-START-DATE    TO DB-START-DATE
+<                MOVE BEN-PLAN-CODE     TO DB-PLAN-CODE
+<                PERFORM 840-MODIFY-WENSET1
+<                IF (WBPBENTAG-FOUND)
+<                   PERFORM 830-DELETE-WBPBENTAG
+<                END-IF
+< ***********  END WBP ***************************************************
+3832,3873d3744
+< 137700******************************************************************
+<        4221-GET-WEN-FIELDS.
+< 137700******************************************************************
+< ***********  WBP MOD 8/2003 TO UPDATE WBPBENTAG ************************
+< 
+<            MOVE "A-Roster Code"           TO DB-FIELD-NAME.
+<            PERFORM 840-FIND-HRUSET2.
+<            IF (HRUSERFLDS-FOUND)
+<               MOVE BEN-COMPANY            TO DB-COMPANY
+<               INITIALIZE DB-EMP-APP
+<               MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE
+<               MOVE HRU-FIELD-KEY          TO DB-FIELD-KEY
+<               PERFORM 840-FIND-HEUSET1
+<               IF (HREMPUSF-FOUND)
+<                  MOVE HEU-A-FIELD  TO WEN-LCMS-ROSTER 
+<               ELSE
+<                  MOVE SPACES      TO WEN-LCMS-ROSTER.
+< 
+<            MOVE "A-Self Empl SS Part"  TO DB-FIELD-NAME.
+<            PERFORM 840-FIND-HRUSET2.
+<            IF (HRUSERFLDS-FOUND)
+<               MOVE BEN-COMPANY            TO DB-COMPANY
+<               INITIALIZE DB-EMP-APP
+<               MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE
+<               MOVE HRU-FIELD-KEY          TO DB-FIELD-KEY
+<               PERFORM 840-FIND-HEUSET1
+<               IF (HREMPUSF-FOUND)
+<                  MOVE HEU-A-FIELD  TO WEN-SS-PARTIC
+<               ELSE
+<                  MOVE SPACES       TO WEN-SS-PARTIC.
+< 
+<            MOVE BEN-COMPANY        TO DB-COMPANY.
+<            MOVE BEN-EMPLOYEE       TO DB-EMPLOYEE.
+<            PERFORM 840-FIND-EMPSET1.
+<            IF (EMPLOYEE-FOUND)
+<               MOVE EMP-EMP-STATUS    TO WEN-EMP-STATUS 
+<               MOVE EMP-PROCESS-LEVEL TO WEN-PROCESS-LEVEL
+<            ELSE
+<               MOVE SPACES    TO WEN-EMP-STATUS 
+<               MOVE SPACES    TO WEN-PROCESS-LEVEL.  
+<                                      
+<        4221-END.
+3875d3745
+< ***********  WBP END                                                   *
+4070,4082d3939
+<           
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY   *--- THE RETRO ROUTINE WILL BE PERFORMED FOR BOTH THE STOP OLD
+< RAY   *--- AND THE ADD NEW. THE STOP OLD WILL CREATE A TRIGGER, THE
+< RAY   *--- ADD WILL NOT BECAUSE THE DATE WILL BE THE SAME
+< RAY
+< RAY        MOVE "S"                        TO BNBEN-LINE-FC (I1).
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+< RAY        MOVE "A"                        TO BNBEN-LINE-FC (I1).
+< RAY   *----------------------------------------------------------------
+4257,4475d4113
+<       ******************************************************************
+<        4400-RETRO-BILL-TRIGGER.
+<       ******************************************************************
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< RAY   ****   TRIGGER REWRITE - HERWECK 5/5/04                      *****
+< AI0095******************************************************************
+<            MOVE BEN-COMPANY                TO DB-COMPANY.
+<            MOVE BEN-PLAN-TYPE              TO DB-PLAN-TYPE.
+<            MOVE BEN-PLAN-CODE              TO DB-PLAN-CODE.
+<            PERFORM 840-FIND-PLNSET1.
+< 
+< AI0095     IF (BNBEN-LINE-FC (I1) = "A" OR "C" OR "S")
+< RAY        AND (PLN-CONTRIB-TYPE > ZEROES)
+< AI0095         MOVE BEN-COMPANY            TO DB-COMPANY
+< AI0095         MOVE BEN-PLAN-TYPE          TO DB-PLAN-TYPE
+< AI0095         MOVE BEN-PLAN-CODE          TO DB-PLAN-CODE
+< AI0095         MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE
+< RAY            MOVE ZEROES                 TO DB-PARTICIPNT
+< GW             MOVE BEN-START-DATE         TO DB-START-DATE
+< RAY            PERFORM 840-FIND-WBPSET1
+< RAY            IF (WBPBENEFIT-NOTFOUND)
+< RAY                MOVE ZEROES             TO WS-BNBEN-START-DATE
+< RAY                MOVE ZEROES             TO WS-BNBEN-STOP-DATE
+< RAY            ELSE
+< RAY                MOVE WBP-RETRO-START-DT TO WS-BNBEN-START-DATE
+< RAY            END-IF
+< RAY            PERFORM 4420-GET-LAST-BILLED-DATE
+< AI0095         IF  (BNBEN-PROCESSED-DATE = ZERO)
+< AI0095         OR  (BEN-START-DATE <= BNBEN-PROCESSED-DATE)
+< RAY                PERFORM 4460-WBP-RETRO-START-DATE
+< RAY                PERFORM 4490-WRITE-RETRO-BILL-TRIGGER
+< RAY                THRU    4490-END
+< RAY            END-IF
+< RAY        END-IF. 
+< RAY
+< RAY        IF (BNBEN-LINE-FC (I1) = "D")
+< RAY        AND (PLN-CONTRIB-TYPE > ZEROES)
+< RAY            PERFORM 4420-GET-LAST-BILLED-DATE
+< RAY            MOVE BEN-COMPANY            TO DB-COMPANY
+< RAY            MOVE BEN-PLAN-TYPE          TO DB-PLAN-TYPE
+< RAY            MOVE BEN-PLAN-CODE          TO DB-PLAN-CODE
+< RAY            MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE
+< RAY            MOVE ZEROES                 TO DB-PARTICIPNT
+< RAY            MOVE BEN-START-DATE         TO DB-START-DATE
+< RAY            PERFORM 840-FIND-WBPSET1
+< RAY            IF  (BNBEN-PROCESSED-DATE = ZERO)
+< RAY            OR  (BEN-START-DATE <= BNBEN-PROCESSED-DATE)
+< RAY                MOVE BEN-START-DATE     TO WS-BNBEN-START-DATE
+< RAY                PERFORM 4490-WRITE-RETRO-BILL-TRIGGER
+< RAY                THRU    4490-END
+< RAY            END-IF
+< RAY        END-IF.
+< RAY
+< RAY   ******************************************************************
+< RAY    4420-GET-LAST-BILLED-DATE.
+< RAY   ******************************************************************
+< RAY
+< ******** GW 2/2005 WE ARE NOT LOOKING FOR THE EE'S LAST BILLING DATE.
+< ********  WE ARE LOOKING FOR ER'S LAST BILLING DATE
+< *********  WBP TRIGGER RECS AREN'T GETTING WRITTEN ON REHIRES
+< AI0095     MOVE ZERO                       TO BNBEN-PROCESSED-DATE.
+< AI0095*GW  MOVE BEN-COMPANY                TO DB-COMPANY.
+< AI0095*GW  MOVE BEN-EMPLOYEE               TO DB-EMPLOYEE.
+< RAY   *GW  MOVE BEN-PLAN-TYPE              TO DB-PLAN-TYPE.
+< RAY   *GW  MOVE BEN-PLAN-CODE              TO DB-PLAN-CODE.
+< AI0095*GW  MOVE PBHSETW1-PLAN-CODE          TO WS-DB-BEG-RNG.
+< AI0095*GW  PERFORM 850-FIND-BEGRNG-PBHSETW1.
+< AI0095*GW  PERFORM
+< AI0095*GW  UNTIL (PBHSTDTL-NOTFOUND)
+< AI0095*GW      MOVE PBH-COMPANY            TO DB-COMPANY
+< AI0095*GW      MOVE PBH-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+< AI0095*GW      MOVE PBH-INVOICE            TO DB-INVOICE
+< AI0095*GW      PERFORM 840-FIND-PBKSET1
+< AI0095*GW      IF  (PBHSTHDR-FOUND)
+< AI0095*GW      AND (PBK-PER-END-DATE > BNBEN-PROCESSED-DATE)
+< AI0095*GW          MOVE PBK-PER-END-DATE   TO BNBEN-PROCESSED-DATE
+< AI0095*GW      END-IF
+< AI0095*GW      PERFORM 860-FIND-NXTRNG-PBHSETW1
+< AI0095*GW  END-PERFORM.
+< 
+< GW2/05*NO  MOVE BEN-START-DATE             TO BNBEN-PROCESSED-DATE.
+< GW2/05     MOVE EMP-COMPANY                TO DB-COMPANY.
+< GW2/05     MOVE EMP-PROCESS-LEVEL          TO DB-PROCESS-LEVEL.
+< GW2/05     MOVE BEN-START-DATE             TO DB-INVOICE-DATE.
+< GW2/05     MOVE SPACES                     TO DB-INVOICE.
+< GW2/05     PERFORM 850-FIND-NLT-PBKSET5.
+< GW2/05     PERFORM
+< GW2/05      UNTIL (PBHSTHDR-NOTFOUND)
+< GW2/05         OR (PBK-PROCESS-LEVEL NOT = EMP-PROCESS-LEVEL)
+< GW2/05          IF (PBK-PER-END-DATE > BNBEN-PROCESSED-DATE)
+< GW2/05             MOVE PBK-PER-END-DATE   TO BNBEN-PROCESSED-DATE
+< GW2/05          END-IF
+< GW2/05          PERFORM 860-FIND-NEXT-PBKSET5.
+< 
+< RAY 
+< RAY   *    MOVE EMP-COMPANY                TO DB-COMPANY.
+< RAY   *    MOVE EMP-PROCESS-LEVEL          TO DB-PROCESS-LEVEL.
+< RAY   *    MOVE BEN-PLAN-TYPE              TO DB-PLAN-TYPE.
+< RAY   *    MOVE BEN-PLAN-CODE              TO DB-PLAN-CODE.
+< RAY   *    PERFORM 840-FIND-PBLSET1.
+< RAY   *--- USED DURING THE WRITE TO SEE IF ITS A FUTURE BILLING PERIOD
+< RAY   *    REMOVED 7/2004 - PBL ISN'T THERE IF THIS PLAN DIDN'T HAVE
+< RAY   *            ANYONE TO BILL FOR THE PAST MONTH. IT WOULD WORK IF 
+< RAY   *            YOU COULD JUST LOOK FOR THE HIGHEST DATE FOR THE
+< RAY   *            PROCESS LEVEL, REGARDLESS OF PLAN TYPE/CODE.
+< RAY
+< RAY   ******************************************************************
+< RAY    4460-WBP-RETRO-START-DATE.
+< RAY   ******************************************************************
+< RAY      
+< RAY        MOVE BEN-START-DATE         TO WS-BNBEN-START-DATE.
+< RAY   *    -------------------------------------------------------------
+< RAY   *    | IF THIS IS A NEW STOP DATE, CHANGE RETRO START DATE       |
+< RAY   *    | TO 1 DAY AFTER THE NEW STOP DATE.                         |
+< RAY   *    | NO NEED TO RECALC MONTHS THAT WERE BILLED CORRECTLY.      |
+< RAY   *    -------------------------------------------------------------
+< RAY        IF (BNBEN-LINE-FC (I1) NOT = "A")
+< GW         AND ((WS-BNBEN-STOP-DATE  = ZERO)
+< GW         OR  (WS-BNBEN-STOP-DATE  > BEN-STOP-DATE))
+< RAY        AND (BEN-STOP-DATE > ZERO)
+< GW             MOVE BEN-STOP-DATE      TO WSDR-FR-DATE
+< GW             PERFORM 900-DATE-TO-JULIAN
+< GW             ADD 1 TO WSDR-JULIAN-DAYS
+< GW             PERFORM 900-JULIAN-TO-DATE
+< RAY   *---     DON'T REPLACE AN EARLIER RETRO START DATE
+< RAY            IF (WSDR-FR-DATE < WS-BNBEN-START-DATE)
+< RAY            OR (WS-BNBEN-STOP-DATE = ZERO)
+< GW                 MOVE WSDR-FR-DATE   TO WS-BNBEN-START-DATE.
+< RAY
+< RAY   ******************************************************************
+< RAY    4490-WRITE-RETRO-BILL-TRIGGER.
+< RAY   ******************************************************************
+< RAY
+< RAY   *--- SKIP WRITE IF THE RETRO START DATE ALREADY EXISTS FOR THE 
+< RAY   *    SAME PLAN TYPE/PLAN CODE WITH A DIFFERENT START DATE
+< RAY        MOVE BEN-COMPANY            TO DB-COMPANY.
+< RAY        MOVE ZEROES                 TO DB-STATUS.
+< RAY        MOVE BEN-PLAN-TYPE          TO DB-PLAN-TYPE.
+< RAY        MOVE BEN-PLAN-CODE          TO DB-PLAN-CODE.
+< RAY        MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE.
+< RAY        INITIALIZE                     DB-PARTICIPNT.
+< RAY        INITIALIZE                     DB-START-DATE.
+< RAY        MOVE WBPSET4-EMPLOYEE       TO WS-DB-BEG-RNG.
+< RAY        PERFORM 850-FIND-BEGRNG-WBPSET4.
+< RAY        PERFORM 
+< RAY        UNTIL (WBPBENEFIT-NOTFOUND)
+< RAY            IF (WBP-RETRO-START-DT <= WS-BNBEN-START-DATE)
+< RAY                GO TO 4490-END
+< RAY            END-IF
+< RAY            PERFORM 860-FIND-NXTRNG-WBPSET4
+< RAY        END-PERFORM.
+< RAY
+< RAY   *--- SKIP WRITE IF FUTURE DATED RETRO
+< RAY   *    IF (PBBNPLAN-FOUND)
+< RAY   *    AND (WS-BNBEN-START-DATE > PBL-LAST-BILLED-DT)
+< RAY   *        GO TO 4490-END.
+< RAY
+< RAY        IF  ((BEN-STOP-DATE        > ZERO)
+< RAY        AND  (BNBEN-PROCESSED-DATE > ZERO)
+< RAY        AND  (BEN-STOP-DATE        > BNBEN-PROCESSED-DATE))
+< RAY        OR  ((BNBEN-PROCESSED-DATE > ZEROES)
+< RAY        AND (WS-BNBEN-START-DATE   >= BNBEN-PROCESSED-DATE))
+< RAY            GO TO 4490-END.
+< RAY
+< RAY        MOVE BEN-COMPANY            TO DB-COMPANY.
+< RAY        MOVE BEN-PLAN-TYPE          TO DB-PLAN-TYPE.
+< RAY        MOVE BEN-PLAN-CODE          TO DB-PLAN-CODE.
+< RAY        MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE.
+< RAY        INITIALIZE                     DB-PARTICIPNT.
+< GW****** USERS HAVE BEEN GETTING DUP RECORD FAILURES *************  
+< GW******   DUE TO DELETING AN EARLIER DATE THEN TRYING TO WRITE **
+< GW******   DUP REC WITH BEN-START-DATE ***************************
+< RAY        INITIALIZE                     DB-START-DATE.
+< RAY        MOVE WBPSET1-EMPLOYEE       TO WS-DB-BEG-RNG.
+< RAY        PERFORM 850-MODIFY-BEGRNG-WBPSET1.
+< 
+< GW         PERFORM
+< GW         UNTIL (WBPBENEFIT-NOTFOUND)
+< RAY            PERFORM 830-DELETE-WBPBENEFIT
+<                PERFORM 860-MODIFY-NXTRNG-WBPSET1 
+<            END-PERFORM.
+< 
+< RAY        PERFORM 800-CREATE-WBPBENEFIT.
+< RAY        MOVE BEN-COMPANY            TO WBP-COMPANY.
+< RAY        MOVE BEN-PLAN-TYPE          TO WBP-PLAN-TYPE.
+< RAY        MOVE BEN-PLAN-CODE          TO WBP-PLAN-CODE.
+< RAY        MOVE BEN-EMPLOYEE           TO WBP-EMPLOYEE.
+< RAY        MOVE ZEROES                 TO WBP-PARTICIPNT.
+< RAY        MOVE BEN-START-DATE         TO WBP-START-DATE.
+< 
+< RAY        PERFORM 4495-WBPBENEFIT-COMMON-FLDS.
+< RAY        MOVE WS-BNBEN-START-DATE    TO WBP-RETRO-START-DT.
+< RAY        PERFORM 820-STORE-WBPBENEFIT.
+< RAY
+< RAY    4490-END.
+< RAY
+< RAY   ******************************************************************
+< RAY    4495-WBPBENEFIT-COMMON-FLDS.
+< RAY   ******************************************************************
+< RAY
+< AI0095         MOVE HHMMSS                 TO WBP-TIME-STAMP.
+< AI0095         MOVE CRT-USER-NAME          TO WBP-USER-ID.
+< AI0095         MOVE WS-SYSTEM-DATE-YMD     TO WBP-UPD-DATE.
+< AI0095         MOVE CRT-PROGRAM-CODE       TO WBP-PROGRAM-CODE.
+< RAY
+< AI0095         IF (CRT-PROGRAM-CODE = "BN100")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN101")  
+< AI0095         OR (CRT-PROGRAM-CODE = "BN102")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN103")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN104")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN105")
+< AI0095             MOVE CRT-PROGRAM-CODE   TO WBP-USER-ID.
+< RAY
+< GW             MOVE ZERO                   TO WBP-STATUS.
+< GW             MOVE ZERO                   TO WBP-PROCESS-DATE.
+< GW             MOVE ZERO                   TO WBP-PROCESS-TIME.
+< RAY

@@ -1,0 +1,138 @@
+4d3
+< GW0506*  GW 5/2006 ADD "GO TO" FIELDS TO SCREEN
+111,116d109
+< GW0506     IF (BN71F1-GO-TO-PLAN-CODE > SPACES)
+<               IF (BN71F1-GO-TO-PLAN-TYPE NOT > SPACES)
+< 006900             MOVE 501                        TO CRT-ERROR-NBR
+< 007000             MOVE BN71F1-GO-TO-PLAN-TYPE-FN  TO CRT-FIELD-NBR
+< 007100             GO TO 210-END.
+< 
+121c114
+< 
+---
+> 008600
+254,258d246
+< GW0506     INITIALIZE BN71F1-GO-TO-PLAN-CODE 
+<                       BN71F1-GO-TO-PLAN-TYPE.  
+< 
+< GW0506     MOVE "N"                 TO WS-GO-TO-SW.
+< 
+292,297d279
+< GW0506     IF (BN71F1-GO-TO-PLAN-TYPE > SPACES)
+<               MOVE "Y"              TO WS-GO-TO-SW
+<               IF (BN71F1-GO-TO-PLAN-TYPE < PLN-PLAN-TYPE)
+<                   IF (BN71F1-GO-TO-PLAN-CODE < PLN-PLAN-CODE)
+<                      MOVE "-"                TO BN71F1-FC.
+<            
+312c294
+< GW0506          IF (WS-GO-TO-SW = "Y")
+---
+> 026900             PERFORM 484-MOVE-PLN-DTL-TO-SCREEN
+313,320d294
+<                  PERFORM 483-FIND-GO-TO-PLAN
+<                  THRU 483-END
+<                  UNTIL (WS-GO-TO-SW = "N")
+< 033700             OR (PLAN-NOTFOUND)
+< 033800             OR (PLN-COMPANY            NOT = DB-COMPANY)
+< 
+<                 ELSE
+< 026900           PERFORM 484-MOVE-PLN-DTL-TO-SCREEN
+325,326d298
+<                  END-IF
+< 
+374,377c346,349
+< 032000                    INITIALIZE DB-PLAN-TYPE
+< 032100                               DB-PLAN-CODE
+< 032200                PERFORM 850-FIND-NLT-PLNSET1
+< 032300                MOVE "P"               TO BNWS-RECORD-ORIG
+---
+> 032000                 INITIALIZE DB-PLAN-TYPE
+> 032100                            DB-PLAN-CODE
+> 032200                 PERFORM 850-FIND-NLT-PLNSET1
+> 032300                 MOVE "P"               TO BNWS-RECORD-ORIG
+388,395d359
+< GW0506       IF (WS-GO-TO-SW = "Y")
+<                PERFORM 483-FIND-GO-TO-PLAN
+<                 THRU 483-END
+<                 UNTIL (WS-GO-TO-SW = "N")
+< 033700             OR (PLAN-NOTFOUND)
+< 033800             OR (PLN-COMPANY            NOT = DB-COMPANY)
+< 
+<              ELSE
+401,402d364
+< 
+<              END-IF
+436,456d397
+< RAY
+< RAY        MOVE PAR-COMPANY            TO DB-COMPANY.
+< RAY        MOVE ZEROES                 TO DB-STATUS.
+< RAY        MOVE ZEROES                 TO DB-EMPLOYEE.
+< RAY        MOVE PAR-PARTICIPNT         TO DB-PARTICIPNT.
+< RAY        INITIALIZE                     DB-PLAN-TYPE.
+< RAY        INITIALIZE                     DB-PLAN-CODE.
+< RAY        INITIALIZE                     DB-START-DATE.
+< RAY        PERFORM 850-FIND-NLT-WBPSET3.
+< RAY        IF (WBPBENEFIT-NOTFOUND)
+< RAY        OR (WBP-COMPANY  NOT = PAR-COMPANY)
+< RAY        OR (WBP-STATUS   NOT = ZEROES)
+< RAY        OR (WBP-EMPLOYEE NOT = ZEROES)
+< RAY        OR (WBP-PARTICIPNT NOT = PAR-PARTICIPNT)
+< RAY            MOVE 200                TO CRT-MSG-NBR
+< RAY        ELSE
+< RAY            MOVE 201                TO CRT-MSG-NBR
+< RAY        END-IF.
+< RAY        MOVE "ZNMSG"                TO CRT-ERROR-CAT.
+< RAY        PERFORM 790-GET-MSG.
+< RAY        MOVE CRT-MESSAGE            TO BN71F1-RETRO-BTN.
+584,620d524
+<        483-FIND-GO-TO-PLAN.
+< 046400******************************************************************
+< 
+< 033400     PERFORM 484-MOVE-PLN-DTL-TO-SCREEN
+< 033500     THRU    484-END
+< 033600         UNTIL (I1                  = BN71F1-DETAIL-SIZE)
+< 033700         OR (PLAN-NOTFOUND)
+< 033800         OR (PLN-COMPANY            NOT = DB-COMPANY).
+< 
+< GW0506     IF (WS-GO-TO-SW = "Y")
+<                   PERFORM 
+<                   VARYING I3 FROM 1 BY 1
+<                   UNTIL (I3 > BN71F1-DETAIL-SIZE)
+<                      INITIALIZE BN71F1-LINE-FC (I3)
+<                                 BN71F1-HILIGHT (I3)
+<                                 BN71F1-PTB-PLAN-TYPE (I3)
+<                                 BN71F1-PTB-PLAN-CODE (I3)
+<                                 BN71F1-PLN-DISPLAY-DESC (I3)
+<                                 BN71F1-PTB-START-DATE (I3)
+<                                 BN71F1-PTB-STOP-DATE (I3)
+<                                 BN71F1-PTB-COV-OPTION (I3)
+<                                 BN71F1-PTB-SMOKER (I3)
+<                                 BN71F1-PTB-PAY-PER-AMT (I3)
+<                                 BN71F1-PTB-ANNUAL-AMT (I3)
+<                                 BN71F1-PTB-COVER-AMT (I3)
+<                   END-PERFORM
+<                
+<            END-IF.
+< 
+<            MOVE 0 TO I1.
+< 
+<            IF (BN71F1-FC = "+")
+<               ADD 1 TO BN71WS-PAGE-NBR
+<            ELSE
+<               SUBTRACT 1 FROM BN71WS-PAGE-NBR.
+<        483-END.
+< 046400******************************************************************
+697,709d600
+< 
+<            IF (WS-GO-TO-SW = "Y")
+<               IF (BN71F1-FC = "+")
+<                  IF (BN71F1-GO-TO-PLAN-TYPE <= PLN-PLAN-TYPE)
+<                     IF (BN71F1-GO-TO-PLAN-CODE <= PLN-PLAN-CODE)
+<                        MOVE "N"         TO  WS-GO-TO-SW
+<                     END-IF
+<                  END-IF
+<               ELSE
+<               IF (BN71F1-FC = "-")
+<                  IF (BN71F1-GO-TO-PLAN-TYPE >= PLN-PLAN-TYPE)
+<                     IF (BN71F1-GO-TO-PLAN-CODE >= PLN-PLAN-CODE)
+<                        MOVE "N"         TO  WS-GO-TO-SW.

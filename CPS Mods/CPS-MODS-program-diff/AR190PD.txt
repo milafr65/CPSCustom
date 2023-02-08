@@ -1,0 +1,216 @@
+< prod\arsrc\AR190PD
+> vnla\arscr\AR190PD
+2d1
+< ********** GW 7/2006 CHANGE TO 7000-ACCOUNT-DATA FOR CDSP LATE FEES ****
+333c332
+< GW0106*    PERFORM 850-FIND-BEGRNG-AMDSET3.
+---
+>            PERFORM 850-FIND-BEGRNG-AMDSET3.
+334,335d332
+< GW0106     PERFORM 910-AUDIT-BEGIN.
+<            PERFORM 850-MODIFY-BEGRNG-AMDSET3.
+339c336
+< GW0106*        PERFORM 860-FIND-NXTRNG-AMDSET3
+---
+>                PERFORM 860-FIND-NXTRNG-AMDSET3
+340d336
+<                PERFORM 860-MODIFY-NXTRNG-AMDSET3
+347d342
+< GW0106         PERFORM 920-AUDIT-END
+350,360d344
+< GW0106     PERFORM 830-DELETE-ARDISTRIB.
+<            PERFORM 810-RECREATE-ARDISTRIB.
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< GW0106**** THIS "X" IS TO ID RECORDS ALREADY PROCESSED
+< **********  BY 7000-ACCOUNT-DATA BECAUSE OF KEY CHANGE
+< **********   SEE 1400-DO-GL-DISTRIB
+<            MOVE  "X"         TO AMD-DRAFT-SOURCE.
+< GW0106     PERFORM 820-STORE-ARDISTRIB.
+< 
+371c355
+< GW0106*    PERFORM 910-AUDIT-BEGIN.
+---
+>            PERFORM 910-AUDIT-BEGIN.
+378c362
+< *******    PERFORM 920-AUDIT-END.
+---
+>            PERFORM 920-AUDIT-END.
+414,415d397
+< GW0106     MOVE WS-FALSE                TO ARDISTRIB-SW.
+< 
+420d401
+< GW0106     PERFORM 920-AUDIT-END.
+1596c1577
+< GW1205*    PERFORM 860-FIND-NXTRNG-AMDSET3.
+---
+>            PERFORM 860-FIND-NXTRNG-AMDSET3.
+1597,1607d1577
+< GW1205     PERFORM 860-MODIFY-NXTRNG-AMDSET3.
+< 
+< GW0106     IF  (ARDISTRIB-FOUND)
+< GW0106     AND (AMD-DST-SOURCE  NOT = "B")
+<               IF (AMD-DRAFT-SOURCE = "X")
+<                  GO TO 1400-NEXT
+<               ELSE
+< GW0106           PERFORM 7000-ACCOUNT-DATA
+<                   THRU   7000-END
+<                  MOVE  "X"         TO AMD-DRAFT-SOURCE  
+<                  PERFORM 820-STORE-ARDISTRIB.
+1645,1650d1614
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+<            IF (AMD-DRAFT-SOURCE = "X")
+<               MOVE  SPACES      TO AMD-DRAFT-SOURCE.
+< 
+1651a1616
+> 
+1764,1769d1728
+< GW0106     PERFORM 830-DELETE-ARDISTRIB.
+<            PERFORM 810-RECREATE-ARDISTRIB.
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+1887,1889d1845
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2010,2012d1965
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2149,2151d2101
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2237,2239d2186
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2371,2373d2317
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2461,2464d2404
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2789,2791d2728
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+2987,2989d2923
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+3109,3112d3042
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+3222,3225d3151
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+3320,3323d3245
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+3416,3419d3337
+< 
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+3535,3537d3452
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+3990,3992d3904
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+4040,4042d3951
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+5320,5322d5228
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+5402,5404d5307
+< GW0106     PERFORM 7000-ACCOUNT-DATA
+<             THRU   7000-END.
+< 
+5524,5589d5426
+<       ******************************************************************
+<        7000-ACCOUNT-DATA.
+<       ******************************************************************
+< 
+<            IF  (AMD-ACCT-UNIT = "1010")
+<            AND (AMD-ACCOUNT = 50010)
+<               MOVE "101901"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF  (AMD-ACCT-UNIT = "1010")
+<            AND (AMD-ACCOUNT = 50035)
+<               MOVE "101901"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "2010")
+<            AND (AMD-ACCOUNT = 50010)
+<               MOVE "101902"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "3010")
+<            AND (AMD-ACCOUNT = 50010)
+<               MOVE "101903"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "4010")
+<            AND (AMD-ACCOUNT = 50010)
+<               MOVE "101904"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "5010")
+<            AND (AMD-ACCOUNT = 50010)
+<               MOVE "101905"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "9999")
+<            AND (AMD-ACCOUNT = 13021 OR 13053 OR 20301 OR 10030
+<                  OR 13050)
+<               MOVE "999999"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "1001" OR "2001" OR "3001" OR "6001")
+<            AND (AMD-ACCOUNT = 20045)
+<               MOVE "101001"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "1010" OR "2010" OR "3010" OR "6010")
+<            AND (AMD-ACCOUNT = 60160)
+<               MOVE "101010"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "1001" OR "2001" OR "3001" OR "6001")
+<            AND (AMD-ACCOUNT = 20154)
+<               MOVE "101001"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+<            IF (AMD-ACCT-UNIT = "1001" OR "2001" OR "3001" OR "6001")
+<            AND (AMD-ACCOUNT = 20164)
+<               MOVE "101001"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY
+<            ELSE
+< GW7/06     IF (AMD-ACCT-UNIT = "2010")
+<            AND (AMD-ACCOUNT = 50035)
+<               MOVE "101902"                TO AMD-ACCT-UNIT
+<               MOVE 2000                    TO AMD-GL-COMPANY.
+< 
+<        7000-END.

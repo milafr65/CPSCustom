@@ -1,0 +1,62 @@
+******* WBIP.scr 6 <4170370273>
+*******************************************************************************
+*                            SCREEN   WBIP  (1)
+*******************************************************************************
+$FORM      WBIP1
+$NOTKXFER
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    WBIP1
+[WBIP[ ]                 ?Invoice Print Program                    
+
+|            Program:[     ]
+|            Company:&    ]
+|         Date Stamp:&        ]
+|         Time Stamp:&    ]
+
+|       Invoice Date:&        ]
+|       Posting Date:&        ]
+|   Transaction Date:&        ]
+
+$END-SCR   WBIP1
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     WBIP1
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     PROGRAM               A     05          SR       
+  2     COMPANY               N     04          SR    01  C
+  2     DATE-STAMP            N     08          SB       
+  2     TIME-STAMP            N     04          SB       
+*
+  2     INVOICE-DATE          N     08          SB       
+  2     POSTING-DATE          N     08          SB       
+  2     TR-DATE               N     08          SB       
+*
+  2    *PBHSTTEMP-NAME        A    100          SB
+  2    *GT70DISK-NAME         A    100          SB
+  2    *UPDATE                A     01          SB
+  2    *COLD-FILE-REQ         A     01          SB
+  2    *INV-REGISTER          A     01          SB
+  2    *INV-TYPE              N     01          SB
+  2    *CRT-PROGRAM           A     05          SB
+  2    *ERROR-NBR             N     03          SB
+  2    *ERROR-CAT             A     05          SB
+  2    *BILL-YEAR             N     04          SB
+  2    *BILL-PERIOD           N     02          SB
+  2    *PER-END-DATE          F     08          SB
+  2     COMMENT-GRP           G                 SB 
+   3    COMMENT-LINE          G                 SB 10
+    4  *COMMENT               A     75          SB 
+$END-TRANS WBIP1
+*
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     WBIP1
+  FC                                          I=Inquire
+$END-EDITS WBIP1
+
+

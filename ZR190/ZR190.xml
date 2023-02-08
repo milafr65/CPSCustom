@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<TRANS>
+	<TRAN id="ZR190" tServ="/servlet/Router/Batch" dServ="/servlet/Router/Drill" iossub="erp" data="LSAPPS" sys="ZR" ver="10.0.0" ScrType="R"  SCREEN="ZR190R" PGMCODE="ZR190" FCFldNbr="1" HKFldNbr="0" noLineFCok="1" longFCNames="A=Add,C=Change,D=Delete,I=Inquire,N=Next,P=Previous,V=Validate Request" KeyCheckFCs="CDR" DataReqFCs="AC" >
+		<FLD id="_f0" name="TC" sz="6" tp="AL" ts="0" hasFN="1"/>
+		<FLD id="_f1" name="FC" sz="1" tp="A" ts="8" fc="1" req="1" hasFN="1" dVal="I">
+			<VALS tran="A"/>
+			<VALS tran="C"/>
+			<VALS tran="D"/>
+			<VALS tran="I"/>
+			<VALS tran="N"/>
+			<VALS tran="P"/>
+			<VALS tran="V"/>
+</FLD>
+		<FLD id="_f2" name="RPT-FLD2" sz="10" tp="A" ts="11" req="1" hasFN="1"/>
+		<FLD id="_f3" name="SUBMIT" sz="10" tp="W" ts="23" keynbr="FC= S " req="1" hasFN="1"/>
+		<FLD id="_f4" name="REPORTS" sz="10" tp="W" ts="35" keynbr="FC= R " req="1" hasFN="1"/>
+		<FLD id="_f5" name="JOB-SCHEDULER" sz="10" tp="W" ts="47" keynbr="FC= J " req="1" hasFN="1" />
+		<FLD id="_f6" name="PRINT-MANAGER" sz="10" tp="W" ts="59" keynbr="FC= M " req="1" hasFN="1" />
+		<FLD id="_f7" name="JOB-NAME" sz="10" tp="A" ts="71" keynbr="@jn" key="1" req="1" hasFN="1" nknimp="1"/>
+		<FLD id="_f8" name="JOB-DESCRIPTION" sz="30" tp="AL" ts="83" keynbr="@jd" hasFN="1" nknimp="1"/>
+		<FLD id="_f9" name="USER-NAME" sz="30" tp="AL" ts="115" keynbr="@un" req="1" hasFN="1" nknimp="1" dVal=""/>
+		<FLD id="_f10" name="LONG-NAME" sz="30" tp="A" ts="147" keynbr="@ln" hasFN="1" nknimp="1" dVal=""/>
+		<FLD id="_f11" name="PRODUCT-LINE" sz="14" tp="AL" ts="179" hasFN="1" dVal=""/>
+		<FLD id="_f12" name="RPT-FLD12" sz="2" tp="N" ts="195" keynbr="@nr" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f13" name="RPT-FLD13" sz="14" tp="A" ts="199" keynbr="@F0" req="1" hasFN="1"/>
+		<FLD id="_f14" name="RPT-FLD14" sz="10" tp="A" ts="215" keynbr="@T0" req="1" hasFN="1"/>
+		<FLD id="_f15" name="RPT-FLD15" sz="10" tp="A" ts="227" keynbr="@G0" req="1" hasFN="1"/>
+		<FLD id="_f16" name="RPT-FLD16" sz="2" tp="N" ts="239" keynbr="@C0" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f17" name="RPT-FLD17" sz="3" tp="A" ts="243" keynbr="@S0" req="1" hasFN="1"/>
+		<FLD id="_f18" name="RPT-FLD18" sz="75" tp="A" ts="248" keynbr="@P0" req="1" hasFN="1"/>
+		<FLD id="_f19" name="RPT-FLD19" sz="14" tp="A" ts="325" keynbr="@F1" req="1" hasFN="1"/>
+		<FLD id="_f20" name="RPT-FLD20" sz="10" tp="A" ts="341" keynbr="@T1" req="1" hasFN="1"/>
+		<FLD id="_f21" name="RPT-FLD21" sz="10" tp="A" ts="353" keynbr="@G1" req="1" hasFN="1"/>
+		<FLD id="_f22" name="RPT-FLD22" sz="2" tp="N" ts="365" keynbr="@C1" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f23" name="RPT-FLD23" sz="3" tp="A" ts="369" keynbr="@S1" req="1" hasFN="1"/>
+		<FLD id="_f24" name="RPT-FLD24" sz="75" tp="A" ts="374" keynbr="@P1" req="1" hasFN="1"/>
+		<FLD id="_f25" name="RPT-FLD25" sz="14" tp="A" ts="451" keynbr="@F2" req="1" hasFN="1"/>
+		<FLD id="_f26" name="RPT-FLD26" sz="10" tp="A" ts="467" keynbr="@T2" req="1" hasFN="1"/>
+		<FLD id="_f27" name="RPT-FLD27" sz="10" tp="A" ts="479" keynbr="@G2" req="1" hasFN="1"/>
+		<FLD id="_f28" name="RPT-FLD28" sz="2" tp="N" ts="491" keynbr="@C2" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f29" name="RPT-FLD29" sz="3" tp="A" ts="495" keynbr="@S2" req="1" hasFN="1"/>
+		<FLD id="_f30" name="RPT-FLD30" sz="75" tp="A" ts="500" keynbr="@P2" req="1" hasFN="1"/>
+		<FLD id="_f31" name="RPT-FLD31" sz="14" tp="A" ts="577" keynbr="@F3" req="1" hasFN="1"/>
+		<FLD id="_f32" name="RPT-FLD32" sz="10" tp="A" ts="593" keynbr="@T3" req="1" hasFN="1"/>
+		<FLD id="_f33" name="RPT-FLD33" sz="10" tp="A" ts="605" keynbr="@G3" req="1" hasFN="1"/>
+		<FLD id="_f34" name="RPT-FLD34" sz="2" tp="N" ts="617" keynbr="@C3" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f35" name="RPT-FLD35" sz="3" tp="A" ts="621" keynbr="@S3" req="1" hasFN="1"/>
+		<FLD id="_f36" name="RPT-FLD36" sz="75" tp="A" ts="626" keynbr="@P3" req="1" hasFN="1"/>
+		<FLD id="_f37" name="RPT-FLD37" sz="14" tp="A" ts="703" keynbr="@F4" req="1" hasFN="1"/>
+		<FLD id="_f38" name="RPT-FLD38" sz="10" tp="A" ts="719" keynbr="@T4" req="1" hasFN="1"/>
+		<FLD id="_f39" name="RPT-FLD39" sz="10" tp="A" ts="731" keynbr="@G4" req="1" hasFN="1"/>
+		<FLD id="_f40" name="RPT-FLD40" sz="2" tp="N" ts="743" keynbr="@C4" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f41" name="RPT-FLD41" sz="3" tp="A" ts="747" keynbr="@S4" req="1" hasFN="1"/>
+		<FLD id="_f42" name="RPT-FLD42" sz="75" tp="A" ts="752" keynbr="@P4" req="1" hasFN="1"/>
+		<FLD id="_f43" name="RPT-FLD43" sz="14" tp="A" ts="829" keynbr="@F5" req="1" hasFN="1"/>
+		<FLD id="_f44" name="RPT-FLD44" sz="10" tp="A" ts="845" keynbr="@T5" req="1" hasFN="1"/>
+		<FLD id="_f45" name="RPT-FLD45" sz="10" tp="A" ts="857" keynbr="@G5" req="1" hasFN="1"/>
+		<FLD id="_f46" name="RPT-FLD46" sz="2" tp="N" ts="869" keynbr="@C5" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f47" name="RPT-FLD47" sz="3" tp="A" ts="873" keynbr="@S5" req="1" hasFN="1"/>
+		<FLD id="_f48" name="RPT-FLD48" sz="75" tp="A" ts="878" keynbr="@P5" req="1" hasFN="1"/>
+		<FLD id="_f49" name="RPT-FLD49" sz="14" tp="A" ts="955" keynbr="@F6" req="1" hasFN="1"/>
+		<FLD id="_f50" name="RPT-FLD50" sz="10" tp="A" ts="971" keynbr="@T6" req="1" hasFN="1"/>
+		<FLD id="_f51" name="RPT-FLD51" sz="10" tp="A" ts="983" keynbr="@G6" req="1" hasFN="1"/>
+		<FLD id="_f52" name="RPT-FLD52" sz="2" tp="N" ts="995" keynbr="@C6" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f53" name="RPT-FLD53" sz="3" tp="A" ts="999" keynbr="@S6" req="1" hasFN="1"/>
+		<FLD id="_f54" name="RPT-FLD54" sz="75" tp="A" ts="1004" keynbr="@P6" req="1" hasFN="1"/>
+		<FLD id="_f55" name="RPT-FLD55" sz="14" tp="A" ts="1081" keynbr="@F7" req="1" hasFN="1"/>
+		<FLD id="_f56" name="RPT-FLD56" sz="10" tp="A" ts="1097" keynbr="@T7" req="1" hasFN="1"/>
+		<FLD id="_f57" name="RPT-FLD57" sz="10" tp="A" ts="1109" keynbr="@G7" req="1" hasFN="1"/>
+		<FLD id="_f58" name="RPT-FLD58" sz="2" tp="N" ts="1121" keynbr="@C7" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f59" name="RPT-FLD59" sz="3" tp="A" ts="1125" keynbr="@S7" req="1" hasFN="1"/>
+		<FLD id="_f60" name="RPT-FLD60" sz="75" tp="A" ts="1130" keynbr="@P7" req="1" hasFN="1"/>
+		<FLD id="_f61" name="RPT-FLD61" sz="14" tp="A" ts="1207" keynbr="@F8" req="1" hasFN="1"/>
+		<FLD id="_f62" name="RPT-FLD62" sz="10" tp="A" ts="1223" keynbr="@T8" req="1" hasFN="1"/>
+		<FLD id="_f63" name="RPT-FLD63" sz="10" tp="A" ts="1235" keynbr="@G8" req="1" hasFN="1"/>
+		<FLD id="_f64" name="RPT-FLD64" sz="2" tp="N" ts="1247" keynbr="@C8" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f65" name="RPT-FLD65" sz="3" tp="A" ts="1251" keynbr="@S8" req="1" hasFN="1"/>
+		<FLD id="_f66" name="RPT-FLD66" sz="75" tp="A" ts="1256" keynbr="@P8" req="1" hasFN="1"/>
+		<FLD id="_f67" name="RPT-FLD67" sz="14" tp="A" ts="1333" keynbr="@F9" req="1" hasFN="1"/>
+		<FLD id="_f68" name="RPT-FLD68" sz="10" tp="A" ts="1349" keynbr="@T9" req="1" hasFN="1"/>
+		<FLD id="_f69" name="RPT-FLD69" sz="10" tp="A" ts="1361" keynbr="@G9" req="1" hasFN="1"/>
+		<FLD id="_f70" name="RPT-FLD70" sz="2" tp="N" ts="1373" keynbr="@C9" req="1" justify="right" hasFN="1"/>
+		<FLD id="_f71" name="RPT-FLD71" sz="3" tp="A" ts="1377" keynbr="@S9" req="1" hasFN="1"/>
+		<FLD id="_f72" name="RPT-FLD72" sz="75" tp="A" ts="1382" keynbr="@P9" req="1" hasFN="1"/>
+		<FLD id="_f73" name="COMPANY" sz="4" tp="N" ts="1459" keynbr="01" req="1" justify="right" company="1" input="1" blnkzero="1" fmtsize="4"  />
+		<FLD id="_f74" name="ACO-NAME" sz="30" tp="A" ts="1463" keynbr="01D" prot="1" blnkzero="1" fmtsize="30"  />
+		<FLD id="_f75" name="JRNL-BOOK-NBR" sz="12" tp="A" ts="1493" keynbr="JBN" input="1" blnkzero="1" fmtsize="12"  />
+		<FLD id="_f76" name="JRNL-BK-DESC" sz="30" tp="A" ts="1505" keynbr="JBD" prot="1" blnkzero="1" fmtsize="30"  />
+	</TRAN>
+</TRANS>

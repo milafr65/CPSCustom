@@ -1,0 +1,241 @@
+000100******************************************************************
+000200*                            ZN555WS                             *
+000300******************************************************************
+      ******************************************************************
+      *                        MODIFICATION LOG                        *
+      * INITIAL VERSION                                                *
+      *         MLF    05/28/2019                                      *
+      *                CREATE TERMSTATUS PERSONAL ACTION               *
+      ******************************************************************
+
+       01  ZN720WS.
+
+LWSN10     02  WS-DB-NULL-DATE            PIC 9(08) VALUE 17530101.
+
+           02  WS-DATE-OF-DEATH.
+               03  WS-DEATH-DATE          PIC 9(08) VALUE ZEROES.
+               
+           02  WS-BEN-RECORD-FOUND       PIC X(01) VALUE SPACES.
+           02  WS-PTB-RECORD-FOUND       PIC X(01) VALUE SPACES.
+           02  WS-YEAR-FOUND             PIC X(01) VALUE SPACES.
+           02  WS-MO-FOUND               PIC X(01) VALUE SPACES.
+
+           02  WS-MBR-AGE                PIC 9(02) VALUE ZEROS.
+           02  WS-AGE                    PIC 9(03) VALUE ZEROS.
+
+           02  WS-RPT-WRITTEN          PIC X(01) VALUE SPACES.
+           02  WS-ACTION-NBR           PIC 9(04) VALUE ZEROES. 
+           
+           02  WS-DATE-FIELD.
+               05  WS-CCYY             PIC X(04) VALUE SPACES.
+               05  WS-CCYY-N REDEFINES WS-CCYY  PIC 9(04).           
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-MM               PIC X(02) VALUE SPACES.
+               05  WS-MM-N REDEFINES WS-MM PIC 9(02).
+               05  FILLER              PIC X(01) VALUE "/".
+               05  WS-DD               PIC X(02) VALUE SPACES.
+               05  WS-DD-N REDEFINES WS-DD PIC 9(02).
+               05  FILLER              PIC X(08) VALUE SPACES.    
+               
+           02 WS-REF-EFF-DATE          PIC 9(08) VALUE ZEROS.
+           02  WS-DATE-EFF-N REDEFINES WS-REF-EFF-DATE.
+               05  WS-CCYY-EFF          PIC 9(04).
+               05  WS-MM-EFF            PIC 9(02).
+               05  WS-DD-EFF            PIC 9(02). 
+               
+           02 WS-REF-TERM-DATE          PIC 9(08) VALUE ZEROS.
+           02  WS-DATE-TERM-N REDEFINES WS-REF-TERM-DATE.
+               05  WS-CCYY-TERM         PIC 9(04).
+               05  WS-MM-TERM           PIC 9(02).
+               05  WS-DD-TERM           PIC 9(02). 
+                 
+           
+           02  WS-BIRTHDATE              PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-BIRTHDATE.
+               04  WS-BIRTHDATE-YYYY     PIC 9(04).
+               04  WS-BIRTHDATE-MM       PIC 9(02).
+               04  WS-BIRTHDATE-DD       PIC 9(02).
+               
+           02  WS-TERMDATE               PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-TERMDATE.
+               04  WS-TERMDATE-YYYY      PIC 9(04).
+               04  WS-TERMDATE-MM        PIC 9(02).
+               04  WS-TERMDATE-DD        PIC 9(02).
+               
+           02  WS-SYS-DATE               PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-SYS-DATE.
+               04  WS-SYS-YYYY           PIC 9(04).
+               04  WS-SYS-MMDD.
+                   06  WS-SYS-MM         PIC 9(02).
+                   06  WS-SYS-DD         PIC 9(02).
+                   
+           02  WS-SERV-START-DATE              PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-SERV-START-DATE.
+               04  WS-SERV-START-YYYY     PIC 9(04).
+               04  WS-SERV-START-MM       PIC 9(02).
+               04  WS-SERV-START-DD       PIC 9(02).
+
+           02  WS-SERV-STOP-DATE              PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-SERV-STOP-DATE.
+               04  WS-SERV-STOP-YYYY     PIC 9(04).
+               04  WS-SERV-STOP-MM       PIC 9(02).
+               04  WS-SERV-STOP-DD       PIC 9(02).
+                   
+
+           02  WS-REC-COUNT               PIC 9(07) VALUE ZEROES.
+           02  WS-FICA-NBR-IN.
+               03  WS-FICA-3-IN           PIC X(03) VALUE SPACES.
+               03  WS-FICA-DASH1          PIC X(01) VALUE SPACES.
+                   88  WS-FICA-CONTAINS-DASHES      VALUE "-".
+               03  WS-FICA-2-IN           PIC X(02) VALUE SPACES.
+               03  FILLER                 PIC X(01) VALUE SPACES.
+               03  WS-FICA-4-IN           PIC X(04) VALUE SPACES.
+           02  WS-FICA-NBR-OUT.
+               03  WS-FICA-3-OUT          PIC X(03) VALUE SPACES.
+               03  WS-FICA-2-OUT          PIC X(02) VALUE SPACES.
+               03  WS-FICA-4-OUT          PIC X(04) VALUE SPACES.
+           02  WS-SAVE-FICA-NBR           PIC X(09) VALUE SPACES.
+           
+SR4411     02  WS-EMP-EMPLOYEE            PIC 9(09) VALUE ZEROES.
+           02  WS-EMP-COMPANY             PIC 9(04) VALUE 1000.
+           
+           02  WS-PAH-STATUS              PIC X(25) VALUE SPACES.
+
+           02  WS-EMP-STATUS              PIC X(02).
+WO4819         88  WS-STATUS-ACTIVE-OTHER     VALUE "DP", "LG", "TD"
+WO4819                                              "TM", "TP", "TV".
+4881           88  WS-STATUS-INIT-DISABL      VALUE "DF", "DN", "ZD".
+               88  WS-STATUS-WAIVED-DISABL    VALUE "DW", "DS", "D ".
+               88  WS-STATUS-DISABL-NO-COV    VALUE "D ".
+               88  WS-STATUS-RETIRED          VALUE "DR", "RE",
+WO7244                                              "RN", "RD", "ZR",
+WO0452                                              "2N".
+WO0452         88  WS-STATUS-SURVIVOR         VALUE "SD", "SS", "ZS".
+WO7244         88  WS-STATUS-SURV-CHILD       VALUE "SD", "2D".
+WO7244         88  WS-STATUS-SURV-SPOUSE      VALUE "SS", "ZS", "2S".
+MLF001         88  WS-COBRA-SPECIAL-ELIG      VALUE "ZE".
+WO7244         88  WS-STUDENT-ACTIVE          VALUE "2A".
+WO7244         88  WS-STUDENT-EDUC-LEAVE      VALUE "2L".
+WO7244         88  WS-STUDENT-TERM            VALUE "2M".
+WO7244         88  WS-STUDENT-TERM-VESTED     VALUE "2V".
+WO7244         88  WS-STUDENT-EARLY-RETIREE   VALUE "2E".
+WO7244         88  WS-STUDENT-RETIREE         VALUE "2N".
+WO7244         88  WS-STUDENT-SURV-CHILD      VALUE "2D".
+WO7244         88  WS-STUDENT-SURV-SPOUSE     VALUE "2S".
+WO7244         88  WS-STUDENT-TERM-GRADUATE   VALUE "2T".  
+WO4819       02  FILLER                    REDEFINES WS-EMP-STATUS.
+WO4819         03  WS-STATUS-FIRST-CHAR    PIC X(01).
+WO4819             88  WS-STATUS-ACTIVE       VALUE "A".
+WO4819         03  FILLER                  PIC X(01).
+
+           02  WS-NEW-EMP-STATUS          PIC X(02) VALUE SPACES.
+
+           02  WS-SERV-SPAN-MONTHS        PIC 9(04) VALUE ZERO.
+           02  WS-CRP-SPAN-MONTHS         PIC 9(04) VALUE ZERO.
+           02  WS-OFFSET-MONTHS           PIC 9(04) VALUE ZERO.
+           02  WS-FULL-MONTHS             PIC 9(04) VALUE ZERO.
+           02  WS-ACCT-OPTION             PIC 9(04) VALUE ZERO.
+           02  WS-RMS-SPAN-MONTHS         PIC 9(04) VALUE ZERO.
+
+           02  WS-YEAR-SPAN              PIC 999 VALUE ZERO.
+           02  WS-MONTH-SPAN             PIC 99 VALUE ZERO.
+
+           02  WS-CRP-YEAR-SPAN              PIC 999 VALUE ZERO.
+           02  WS-CRP-MONTH-SPAN             PIC 99 VALUE ZERO.
+           
+           02  WS-RMS-YEAR-SPAN              PIC 999 VALUE ZERO.
+           02  WS-RMS-MONTH-SPAN             PIC 99 VALUE ZERO.
+
+           02  WS-CRP-START-DATE              PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-CRP-START-DATE.
+               04  WS-CRP-START-YYYY     PIC 9(04).
+               04  WS-CRP-START-MM       PIC 9(02).
+               04  WS-CRP-START-DD       PIC 9(02).
+
+           02  WS-CRP-STOP-DATE              PIC 9(08) VALUE ZEROS.
+           02  FILLER  REDEFINES WS-CRP-STOP-DATE.
+               04  WS-CRP-STOP-YYYY      PIC 9(04).
+               04  WS-CRP-STOP-MM        PIC 9(02).
+               04  WS-CRP-STOP-DD        PIC 9(02).
+           02  WS-POSITION               PIC X(05) VALUE SPACES.
+******* CHP           
+           02  WS-PARTICIPNT             PIC 9(11) VALUE ZEROS.
+           02  WS-EMP-ZERO REDEFINES WS-PARTICIPNT.
+               05 WS-EMPLOYEE            PIC 9(09).            
+               05 WS-ZERO                PIC 9(02).
+           02  WS-TERM-DATE-NXT-YR       PIC X(01) VALUE SPACES.
+           02  WS-CHP-START-DATE         PIC 9(08) VALUE ZEROS. 
+           02  FILLER REDEFINES WS-CHP-START-DATE.
+               04  WS-CHP-START-YYYY     PIC 9(04). 
+               04  WS-CHP-START-MM       PIC 9(02).
+               04  WS-CHP-START-DD       PIC 9(02). 
+           02  WS-CHP-STOP-DATE          PIC 9(08) VALUE ZEROS.
+           02  FILLER REDEFINES WS-CHP-STOP-DATE.
+               04  WS-CHP-STOP-YYYY      PIC 9(04). 
+               04  WS-CHP-STOP-MM        PIC 9(02).
+               04  WS-CHP-STOP-DD        PIC 9(02).                
+           02  WS-CONT-CHP-MOS           PIC 9(02) VALUE ZEROS.
+           02  WS-CHP-COVERAGE.
+               04  WS-CHP-YEAR          OCCURS 6.
+                   10  WS-CHP-YR        PIC 9(04) VALUE ZEROS.
+                   10  WS-CHP-MONTH OCCURS 12.
+                       15  WS-CHP-MO    PIC X(01) VALUE SPACES.
+                         
+*****************  10  WS-CHP-DEC       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-NOV       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-OCT       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-SEP       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-AUG       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-JUL       PIC X(01) VALUE SPACES.                                                         
+*****************  10  WS-CHP-JUN       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-MAY       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-APR       PIC X(01) VALUE SPACES.                   
+*****************  10  WS-CHP-MAR       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-FEB       PIC X(01) VALUE SPACES.
+*****************  10  WS-CHP-JAN       PIC X(01) VALUE SPACES.   
+
+           02  WS-YEAR                  PIC 9(04) VALUE ZEROS.
+           
+           02  WS-PA-PLAN-CODE-FLAG     PIC 9(01) VALUE ZEROS.
+           02  WS-CURR-PLAN-CODE        PIC X(04) VALUE SPACES.
+           
+********** USED FOR THE NRD CALC
+           02  WS-SSN-RETIRE            PIC 9(08) VALUE ZEROS.
+           02  WS-SSN-RETIRE-REDEF REDEFINES WS-SSN-RETIRE.
+               05  WS-SSN-RETIRE-BIRTH  PIC 9(04).
+               05  WS-SSN-RETIRE-AGE    PIC 9(02).
+               05  WS-SSN-RETIRE-MO     PIC 9(02).
+
+000700     02  WS-SSN-RETIRE-AGE-CHART.
+000700          05  FILLER             PIC 9(8) VALUE 19376500.
+000700          05  FILLER             PIC 9(8) VALUE 19386502.
+000700          05  FILLER             PIC 9(8) VALUE 19396504.
+000700          05  FILLER             PIC 9(8) VALUE 19406506.
+000700          05  FILLER             PIC 9(8) VALUE 19416508.
+000700          05  FILLER             PIC 9(8) VALUE 19426510.
+000700          05  FILLER             PIC 9(8) VALUE 19436600.
+000700          05  FILLER             PIC 9(8) VALUE 19446600.
+000700          05  FILLER             PIC 9(8) VALUE 19456600.
+000700          05  FILLER             PIC 9(8) VALUE 19466600.
+000700          05  FILLER             PIC 9(8) VALUE 19476600.
+000700          05  FILLER             PIC 9(8) VALUE 19486600.
+000700          05  FILLER             PIC 9(8) VALUE 19496600.
+000700          05  FILLER             PIC 9(8) VALUE 19506600.
+000700          05  FILLER             PIC 9(8) VALUE 19516600.
+000700          05  FILLER             PIC 9(8) VALUE 19526600.
+000700          05  FILLER             PIC 9(8) VALUE 19536600.
+000700          05  FILLER             PIC 9(8) VALUE 19546600.
+000700          05  FILLER             PIC 9(8) VALUE 19556602.
+000700          05  FILLER             PIC 9(8) VALUE 19566604.
+000700          05  FILLER             PIC 9(8) VALUE 19576605.
+000700          05  FILLER             PIC 9(8) VALUE 19586608.
+000700          05  FILLER             PIC 9(8) VALUE 19596610.         
+000700          05  FILLER             PIC 9(8) VALUE 19606700.
+           02 WS-CHART REDEFINES WS-SSN-RETIRE-AGE-CHART
+                                          OCCURS 24.
+                05  WS-SSN-YR          PIC 9(4).
+                05  WS-SSN-AGE         PIC 9(2).
+                05  WS-SSN-MO          PIC 9(2).     
+           
+
+

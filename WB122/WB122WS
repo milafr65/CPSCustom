@@ -1,0 +1,13 @@
+000100******************************************************************
+000200*                            WB122WS                             *
+000300******************************************************************
+000400 01  WB122WS.
+000500     02  WS-ACM-COMPANY          PIC 9(04) VALUE ZEROES.
+           02  WS-CURR-BAL             PIC S9(15)V99 VALUE ZEROS.
+           02  WS-LST-STA-BAL          PIC S9(15)V99 VALUE ZEROS.
+           02  WS-LST-PAYMENT          PIC S9(15)V99 VALUE ZEROS.
+           02  WS-TTL-CURR-BAL         PIC S9(15)V99 VALUE ZEROS.
+           02  WS-TTL-LST-STA-BAL      PIC S9(15)V99 VALUE ZEROS.
+           02  WS-TTL-DIFF             PIC S9(15)V99 VALUE ZEROS.
+           02  WS-GRAND-TTL-CURR-BAL   PIC S9(15)V99 VALUE ZEROS.
+000600

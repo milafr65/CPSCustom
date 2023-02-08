@@ -1,0 +1,10 @@
+******* ZA600WS 1 <758305742>
+000100******************************************************************
+000200*                            ZA600WS                             *
+000300******************************************************************
+000400 01  ZA600WS.
+000500     02  WS-GL-UNITS             PIC X(01) VALUE SPACES.
+000600     02  WS-DPT-PROCESS-LEVEL    PIC X(05) VALUE SPACES.
+000700     02  WS-DATA-TO-PRINT-SW     PIC 9(01) VALUE ZEROES.
+000800         88  NO-DATA-TO-PRINT    VALUE 0.
+000900         88  DATA-TO-PRINT       VALUE 1.

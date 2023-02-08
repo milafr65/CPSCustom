@@ -1,0 +1,8 @@
+000100******************************************************************
+000200*                             ZN72WS                             *
+000300******************************************************************
+000400
+P53491     01  BNPTB-LOCAL-WS.
+AI0095       02  BNPTB-PROCESSED-DATE        PIC 9(08)  VALUE ZERO.
+RAY          02  WS-BNPTB-START-DATE         PIC 9(8)   VALUE ZERO.
+GW           02  WS-BNPTB-STOP-DATE          PIC 9(8)   VALUE ZERO.

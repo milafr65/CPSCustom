@@ -1,0 +1,284 @@
+******* WB120WS 5 <63662768>
+SB0830*SDB INCREASE OCCURS TO 9000 FOR NEW HEALTH PLANS
+000100******************************************************************
+000200 01  WB120WS.
+000300******************************************************************
+001090     02  WB120WS-PLAN-TYPE-TBL PIC X(12)    VALUE "HLDNDIELDLDB".
+001110     02  WB120WS-PLAN-TYPE     REDEFINES WB120WS-PLAN-TYPE-TBL
+001130                               PIC X(02) OCCURS 6 TIMES.
+001130  
+000500     02  WS-GLI-OPTION         PIC X(1)  VALUE SPACES.
+000600
+001800     02  WS-GT7-REV-COMPANY    PIC 9(4)              VALUE ZEROS.
+001100     02  WS-GT7-REV-ACCT-UNIT  PIC X(15)             VALUE SPACES.
+001200     02  WS-GT7-REV-ACCOUNT    PIC 9(06)             VALUE ZEROS.
+001300     02  WS-GT7-REV-SUB-ACCT   PIC 9(04)             VALUE ZEROS.
+001800     02  WB120WS-DIST-COMPANY  PIC 9(4)              VALUE ZEROS.
+001100     02  WB120WS-DST-ACCT-UNIT PIC X(15)             VALUE SPACES.
+001200     02  WB120WS-DST-ACCOUNT   PIC 9(06)             VALUE ZEROS.
+001300     02  WB120WS-DST-SUB-ACCT  PIC 9(04)             VALUE ZEROS.
+001300     02  WB120WS-DST-DESC      PIC X(30)             VALUE SPACES.
+           
+           02  WB120WS-DIST-AMT      PIC S9(13)V99    VALUE ZEROES. 
+           02  WB120WS-BILLABLE-AMT  PIC S9(13)V99    VALUE ZEROES. 
+           02  WB120WS-TOT-DIST-AMT  PIC S9(13)V99    VALUE ZEROES. 
+           02  WB120WS-PRE-BILL-AMT  PIC S9(13)V99    VALUE ZEROES. 
+           02  WB120WS-LINE-NBR      PIC  9(06)       VALUE ZEROES.
+           02  WS-NBR-MTHS           PIC  9(02)       VALUE ZEROES.
+           02  WS-SV-PLAN-CODE       PIC  X(04)       VALUE SPACES.
+012930     02  WS-PREV-OLD-PROC-LVL  PIC  X(05)       VALUE SPACES.
+012930     02  WS-PREV-NEW-PROC-LVL  PIC  X(05)       VALUE SPACES.
+012930     02  WS-PREV-OLD-BILL-AMT  PIC S9(13)V99    VALUE ZEROES.
+012930     02  WS-PREV-NEW-BILL-AMT  PIC S9(13)V99    VALUE ZEROES.
+012930     02  I-DT                  PIC  9(02)       VALUE ZEROES.
+RAY        02  WS-BILLING-PROC-LEVEL PIC  X(05)       VALUE SPACES.
+RAY        02  WS-RETRO-DIFF-AMT     PIC S9(13)V99    VALUE ZEROES.
+012930 
+012930*--- Number of parameter plan types, codes
+012930
+AIC002*    02  I-PT                  PIC  9(03)       VALUE 5.
+AIC002     02  I-PT                  PIC  9(03)       VALUE 6.
+012930     02  I-PC                  PIC  9(03)       VALUE 6.
+012930 
+012930     02  WS-RETRO-DATE-TABLE.
+012930         03  WS-RETRO-DATE     OCCURS 50 TIMES
+012930                               PIC  9(08).
+012930     
+012930     02  WS-BILL-EMPLOYER-A    PIC  X(02)       VALUE SPACES.
+012930     02  WS-BILL-EMPLOYER-N REDEFINES WS-BILL-EMPLOYER-A
+012930                               PIC  9(02). 
+RAY        
+RAY        02  WS-TAIP-EMPLOYER-A    PIC  X(02)       VALUE SPACES.
+RAY        02  WS-TAIP-EMPLOYER-N REDEFINES WS-TAIP-EMPLOYER-A
+RAY                                  PIC  9(02). 
+RAY        
+AIC002     02  WS-PREV-PROCLEVL-A    PIC  X(02)       VALUE SPACES.
+AIC002     02  WS-PREV-PROCLEVL-N REDEFINES WS-PREV-PROCLEVL-A
+AIC002                               PIC  9(02). 
+002100
+012930     02  WS-BILL-ARREARS-A     PIC  X(02)       VALUE SPACES.
+012930     02  WS-BILL-ARREARS-N REDEFINES WS-BILL-ARREARS-A
+012930                               PIC  9(02). 
+002100
+002200     02  WS-CO-NAME              PIC X(30)      VALUE SPACES.
+002600
+000900     02  WS-OTD-FLAG           PIC 9                 VALUE ZEROS.
+001000         88 OTD-FOUND                                VALUE 1.
+000900     02  WS-LATE-ENROLL-SW     PIC 9                 VALUE ZEROS.
+001000         88 WS-NO-LATE-ENROLL                        VALUE 0.
+001000         88 WS-LATE-ENROLL                           VALUE 1.
+000900     02  WS-BILL-ARREARS-FL    PIC 9                 VALUE ZEROS.
+001000         88 BILL-ARREARS                             VALUE 1.
+000900     02  WS-EE-BILLED-FLAG     PIC 9                 VALUE ZEROS.
+001000         88 NOT-EE-BILLED                            VALUE 0.
+001000         88 EE-BILLED                                VALUE 1.
+000900     02  WS-PL-MATCH-FLAG      PIC 9                 VALUE ZEROS.
+001000         88 NO-PL-MATCH                              VALUE 0.
+001000         88 PL-MATCH                                 VALUE 1.
+000700     02  WS-SUB-TOT-AMT        PIC S9(9)V99          VALUE ZEROS.
+000800     02  WS-SUB-TOT-HOURS      PIC S9(7)V99          VALUE ZEROS.
+000900     02  WS-CHECK-FOUND-SW     PIC 9                 VALUE ZEROS.
+001000         88 WS-CHECK-FOUND                           VALUE 1.
+001100     02  WS-DST-ACCT-UNIT      PIC X(15)             VALUE SPACES.
+001200     02  WS-DST-ACCOUNT        PIC 9(06)             VALUE ZEROS.
+001300     02  WS-DST-SUB-ACCT       PIC 9(04)             VALUE ZEROS.
+001400     02  WS-ACCT-UNIT          PIC X(15)             VALUE SPACES.
+001500     02  WS-ACCOUNT            PIC 9(06)             VALUE ZEROS.
+001600     02  WS-SUB-ACCOUNT        PIC 9(04)             VALUE ZEROS.
+001800     02  WS-TO-COMPANY         PIC 9(4)              VALUE ZEROS.
+001700     02  WS-POSTING-DATE       PIC 9(8)              VALUE ZEROS.
+001900     02  WS-COMPANY            PIC 9(4)              VALUE ZEROS.
+002000     02  WS-RECORD-TYPE        PIC X(1)              VALUE SPACES.
+           02  WB120WS-AUDIT-COUNT   PIC 9(04)             VALUE ZEROES.
+002100
+007500     02  WS-END-OF-FILE-SW       PIC 9(01) VALUE ZEROS.
+007600         88 NO-END-OF-FILE                 VALUE 0.
+007700         88 END-OF-FILE                    VALUE 1.
+007700  
+000900     02  WS-SKIP-EMPLOYEE-FL   PIC 9                 VALUE ZEROS.
+001000         88 SKIP-EMPLOYEE                            VALUE 1.
+001000  
+003500     02  WS-TOTAL-FIELDS.
+003600         03  WS-TOT-DEBIT-AMT     PIC S9(9)V99        VALUE ZEROS.
+003700         03  WS-TOT-CREDIT-AMT    PIC S9(9)V99        VALUE ZEROS.
+003800         03  WS-TOT-DEBIT-HOURS   PIC S9(7)V99        VALUE ZEROS.
+003900         03  WS-TOT-CREDIT-HOURS  PIC S9(7)V99        VALUE ZEROS.
+004000     02  WS-GLT-WORK-FIELDS.
+004100         03  WS-AMOUNT            PIC S9(9)V99        VALUE ZEROS.
+004200         03  WS-UNITS             PIC S9(9)V99        VALUE ZEROS.
+004300         03  WS-DIST-AMT-TOT      PIC S9(9)V99        VALUE ZEROS.
+004400         03  WS-DIST-HOURS-TOT    PIC S9(7)V99        VALUE ZEROS.
+004500
+004600     02  WS-BENEFIT-DESC          PIC  X(30)         VALUE SPACES.
+004600     02  WS-EXP-DESC              PIC  X(30)         VALUE SPACES.
+004600     02  WS-EXC-PREM-DESC         PIC  X(30)         VALUE SPACES.
+004600     02  WS-ACCR-DESC             PIC  X(30)         VALUE SPACES.
+004600     02  WS-AR-DESC               PIC  X(30)         VALUE SPACES.
+004600     02  WS-AR-OFFSET-DESC        PIC  X(30)         VALUE SPACES.
+004600     02  WS-AR-REV-DESC           PIC  X(30)         VALUE SPACES.
+004600     02  WS-AR-RCV-DESC           PIC  X(30)         VALUE SPACES.
+004600     02  WS-ARREARS-DESC          PIC  X(30)         VALUE SPACES.
+004600 
+004600     02  WS-RESTARTING-PHASE-2-SW     PIC 9(01) VALUE 0.
+004700         88 RESTARTING-PHASE-2                  VALUE 1.
+005000
+           02  WS-RESTART-INFO.
+               03  WS-RS-PHASE-COUNTER PIC 9(01)  VALUE ZEROES.
+               03  WS-RS-IFGT-DONE-SW  PIC 9(01)  VALUE ZEROES.
+                   88  WS-RS-IFGT-DONE            VALUE 1.
+               03  WS-RS-RUN-DATE      PIC 9(08)  VALUE ZEROES.
+               03  WS-RS-RUN-TIME      PIC 9(06)  VALUE ZEROES.
+               03  WS-RS-GT70DISK-NAME PIC X(100) VALUE SPACES.
+               03  WS-RS-PBHSTTEMP-NAME PIC X(100) VALUE SPACES.
+gjl            03  WS-RS-WBWRK3-NAME   PIC X(100) VALUE SPACES.
+               03  WS-RS-CKP-ID        PIC 9(12)  VALUE ZEROES.
+               03  WS-RS-REC-CNT       PIC 9(08)  VALUE ZEROES.
+gjl            03  WS-RS-WBREMOTD-NAME PIC X(100) VALUE SPACES.
+RAY            03  WS-RS-WBWRK4-NAME   PIC X(100) VALUE SPACES.
+
+016700     02  WS-GT70SEQ-FILE         PIC X(74) VALUE SPACES.
+017200     02  WS-EMPLOYEE-N           PIC 9(09) VALUE ZEROS.
+017300     02  WS-EMPLOYEE-A           REDEFINES WS-EMPLOYEE-N
+017400                                 PIC X(09).
+017500     02  WS-RECORD-COUNT         PIC 9(08) VALUE ZEROS.
+017600     02  WS-OBJ-ID               PIC 9(12) VALUE ZEROS.
+018200
+000290     02  WB120WS-SAV-COMPANY        LIKE COMPANY    VALUE ZEROS.
+000300     02  WB120WS-SAV-PLAN-TYPE      LIKE PLAN-TYPE  VALUE SPACES.
+000310     02  WB120WS-SAV-PLAN-CODE      LIKE PLAN-CODE  VALUE SPACES.
+000320     02  WB120WS-SAV-EMPLOYEE       LIKE EMPLOYEE   VALUE ZEROS.
+000320     02  WB120WS-SAV-PARTICIPNT     LIKE PARTICIPNT VALUE ZEROS.
+000330     02  WB120WS-SAV-START-DATE     LIKE DATE       VALUE ZEROS.
+000340
+017700     02  WS-SUMMARY-CONTROL.
+017800         03  WS-GT7-PRD-OPTION   PIC X(01) VALUE SPACES.
+017900         03  WS-GT7-CLEARING     PIC X(01) VALUE SPACES.
+018000         03  WS-GT7-PROCESS-LEVEL PIC X(05) VALUE SPACES.
+018100         03  WS-GT7-RECORD-TYPE  PIC X(01) VALUE SPACES.
+018200
+018300     02  WS-PROGRAM-INFO.
+018400         03  WS-GT7-EMPLOYEE     PIC 9(09) VALUE ZEROS.
+018500         03  WS-GT7-CHECK-ID     PIC 9(12) VALUE ZEROS.
+018600         03  WS-GT7-DEPARTMENT   PIC X(05) VALUE SPACES.
+018700         03  WS-GT7-CHECK-TYPE   PIC X(01) VALUE SPACES.
+018800         03  WS-GT7-PCD-SEQ-NBR  PIC 9(04) VALUE ZEROS.
+018900         03  WS-GT7-DED-CODE     PIC X(04) VALUE SPACES.
+019000         03  WS-GT7-JOB-CODE     PIC X(09) VALUE SPACES.
+019100         03  WS-GT7-OBJ-ID       PIC 9(12) VALUE ZEROS.
+019200         03  WS-GT7-POSITION     PIC X(12) VALUE SPACES.
+019300         03  WS-GT7-INVOICE      PIC X(22) VALUE SPACES.
+019300         03  WS-GT7-ATTEND-CODE  PIC X(02) VALUE SPACES.
+019400
+021000     02  WS-RESOURCE-A.
+021100         03  FILLER                PIC X(01) VALUE SPACES.
+021200         03  WS-RESOURCE-N         PIC 9(09) VALUE ZEROS.
+025300
+026000     02  WS-SEQ-NBR                PIC 9(04) VALUE ZEROES.
+026300     02  WS-PAY-DATE-TABLE         OCCURS 500 TIMES.
+026400         03  WS-TBL-PAY-DATE       PIC 9(08) VALUE ZEROES.
+026500         03  WS-TBL-TO-COMP        PIC 9(04) VALUE ZEROES.
+026600         03  WS-TBL-REPORT         PIC X(01) VALUE SPACES.
+016800     02  WS-ONE                    PIC 9(01) VALUE 1.
+016800     02  WS-CHECK-TYPE             PIC X(01) VALUE SPACES.
+001900     02  WS-DIST-COMPANY           PIC 9(04) VALUE ZEROES.
+
+           02  WS-FR-RETRO-DATE          PIC 9(08) VALUE ZEROES.
+           02  WS-TO-RETRO-DATE          PIC 9(08) VALUE ZEROES.
+           02  WS-TMP-DATE               PIC 9(08) VALUE ZEROES.
+           02  WS-TMP-DATE-R REDEFINES WS-TMP-DATE.
+               03  WS-TMP-CCYY           PIC 9(04).
+               03  WS-TMP-CCYY-R REDEFINES WS-TMP-CCYY.
+                   04  WS-TMP-CC         PIC 9(02).
+                   04  WS-TMP-YY         PIC 9(02).
+               03  WS-TMP-MM             PIC 9(02).
+               03  WS-TMP-DD             PIC 9(02).
+
+           02  WS-WRK-DATE               PIC 9(08) VALUE ZEROES.
+           02  WS-WRK-DATE-R REDEFINES WS-WRK-DATE.
+               03  WS-WRK-CCYY           PIC 9(04).
+               03  WS-WRK-CCYY-R REDEFINES WS-WRK-CCYY.
+                   04  WS-WRK-CC         PIC 9(02).
+                   04  WS-WRK-YY         PIC 9(02).
+               03  WS-WRK-MM             PIC 9(02).
+               03  WS-WRK-DD             PIC 9(02).
+
+           02  WS-PRM-DATE               PIC 9(08) VALUE ZEROES.
+           02  WS-PRM-DATE-R REDEFINES WS-PRM-DATE.
+               03  WS-PRM-CCYY           PIC 9(04).
+               03  WS-PRM-CCYY-R REDEFINES WS-PRM-CCYY.
+                   04  WS-PRM-CC         PIC 9(02).
+                   04  WS-PRM-YY         PIC 9(02).
+               03  WS-PRM-MM             PIC 9(02).
+               03  WS-PRM-DD             PIC 9(02).
+
+           02  WS-MONTH-END              PIC 9(08) VALUE ZEROES.
+
+           02  WS-MONTH-BEG              PIC 9(08) VALUE ZEROES.
+
+002700     02  WS-PERIOD-MMYY          PIC 9(04) VALUE ZEROS.
+002800     02  WS-PERIOD-MMYY-RD       REDEFINES WS-PERIOD-MMYY.
+002900         03  WS-PERIOD-MM        PIC 9(02).
+003000         03  WS-PERIOD-YY        PIC 9(02).
+
+gjl        02  WS-INV-TYPE               PIC 9(01) VALUE ZEROES.
+gjl            88  EMPLOYER-RUN                    VALUE 1.
+gjl            88  EMPLOYEE-RUN                    VALUE 2.
+RAY            88  COMBINED-RUN                    VALUE 3.
+RAY
+RAY        02  WS-RUN-TYPE               PIC 9(01) VALUE ZEROES.
+RAY            88  RETRO-ONLY-RUN                  VALUE 1.
+gjl     
+gjl        02  WS-TYPE-FLAG              PIC 9(01) VALUE ZEROES.
+gjl            88  WS-TYPE-ENTERED                 VALUE 1.
+gjl     
+gjl        02  WS-CODE-FLAG              PIC 9(01) VALUE ZEROES.
+gjl            88  WS-CODE-ENTERED                 VALUE 1.
+gjl     
+           02  PRINT-903-MSG-SW        PIC 9(01) VALUE 0.
+               88  NO-PRINT-903        VALUE 0.
+               88  PRINT-903           VALUE 1.
+           02  WS-INVOICE-PER          PIC 9999  VALUE ZEROS.
+
+gjl        02  WB120WS-ACCT-INFO.
+gjl            03  WB120WS-COMP             PIC X(04).
+gjl            03  WB120WS-COMP-N REDEFINES WB120WS-COMP
+gjl                                         PIC 9(04).
+gjl            03  FILLER                   PIC X(01).
+gjl            03  WB120WS-ACCT-UNIT        PIC X(15).
+gjl            03  FILLER                   PIC X(01).
+gjl            03  WB120WS-ACCOUNT          PIC X(06).
+gjl            03  WB120WS-ACCOUNT-N REDEFINES WB120WS-ACCOUNT
+gjl                                         PIC 9(06).
+gjl            03  FILLER                   PIC X(01).
+gjl            03  WB120WS-SUB-ACCT         PIC X(04).  
+gjl            03  WB120WS-SUB-ACCT-N REDEFINES WB120WS-SUB-ACCT
+gjl                                         PIC 9(04).
+gjl     
+gjl   *    02  I-PLGRP                      PIC 9(04) VALUE 1500.
+SB0830     02  I-PLGRP                      PIC 9(04) VALUE 9000. 
+gjl        02  WB120WS-WBP-PLAN-GROUP-TBL.
+gjl   *        03  WB120WS-PLAN-GROUP-ENTRY OCCURS 1500 TIMES.
+SB0830         03  WB120WS-PLAN-GROUP-ENTRY OCCURS 9000 TIMES.         
+gjl                04  WB120WS-PLAN-KEY.
+gjl                    05  WB120WS-COLUMN       PIC X(01).
+gjl                    05  WB120WS-COLUMN-N REDEFINES WB120WS-COLUMN
+gjl                                             PIC 9(01).
+gjl                    05  WB120WS-PLN-TYPE     PIC X(02).
+gjl                    05  WB120WS-PLN-CODE     PIC X(04).
+gjl                04  WB120WS-WBP-PLAN-GROUP   PIC X(10).
+gjl
+RAY        02  WB120WS-PLAN-OPTS-TBL-MAX        PIC 9(02) VALUE 25.
+RAY        02  WB120WS-PLAN-OPTIONS-TABLE.
+RAY            03  WB120WS-PLAN-OPT             OCCURS 25 TIMES
+RAY                                             PIC 9(02) VALUE ZEROES.
+RAY        02  WB120WS-OPTIMIZE-PARTBEN         PIC 9(01) VALUE ZEROES.
+RAY            88  WB120WS-FILTER-PARTBEN           VALUE 0.
+RAY            88  WB120WS-DO-NOT-FILTER-PARTBEN    VALUE 1.
+RAY        02  WB120WS-AR-CUSTOMER              PIC X(09) VALUE SPACES.
+           02  WB120WS-WBP-STATUS-CODES.
+RAY            05  WB120WS-WBP-UNPROCESSED      PIC 9(01) VALUE ZEROES.
+RAY            05  WB120WS-WBP-PROCESSED        PIC 9(01) VALUE 1.
+RAY            05  WB120WS-WBP-NO-EFFECT        PIC 9(01) VALUE 3.
+RAY        02  WS-PBK-COMPANY                   LIKE COMPANY.
+RAY        02  WS-PBK-CUSTOMER                  LIKE CUSTOMER.
+

@@ -1,0 +1,44 @@
+2,9d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  AI0030  03/24/03  MODIFY TO ALL PLAN TYPE OF HL AND DL.       *
+<       ******************************************************************
+< 
+32,33d23
+< AI0030     AND (PRM-PLAN-TYPE (5)  = SPACES)
+< AI0030     AND (PRM-PLAN-TYPE (6)  = SPACES)
+187,206d176
+< 016400
+< AI0030     IF (PRM-PLAN-TYPE (5) = "X")
+< AI0030         MOVE "DL"               TO DB-PLAN-TYPE
+< AI0030         PERFORM 850-FIND-NLT-BNFSET1
+< AI0030         PERFORM 1060-SEL-BNF-PLAN-CODE
+< AI0030         THRU    1060-END
+< AI0030             UNTIL (BENEFICRY-NOTFOUND)
+< AI0030             OR    (BNF-COMPANY   NOT = DB-COMPANY)
+< AI0030             OR    (BNF-EMPLOYEE  NOT = DB-EMPLOYEE)
+< AI0030             OR    (BNF-PLAN-TYPE NOT = DB-PLAN-TYPE).
+< 017400
+< AI0030     IF (PRM-PLAN-TYPE (6) = "X")
+< AI0030         MOVE "HL"               TO DB-PLAN-TYPE
+< AI0030         PERFORM 850-FIND-NLT-BNFSET1
+< AI0030         PERFORM 1060-SEL-BNF-PLAN-CODE
+< AI0030         THRU    1060-END
+< AI0030             UNTIL (BENEFICRY-NOTFOUND)
+< AI0030             OR    (BNF-COMPANY   NOT = DB-COMPANY)
+< AI0030             OR    (BNF-EMPLOYEE  NOT = DB-EMPLOYEE)
+< AI0030             OR    (BNF-PLAN-TYPE NOT = DB-PLAN-TYPE).
+273c243
+< AI0030     IF (BNF-PLAN-TYPE = "DL")
+---
+> 024000         MOVE 5                  TO SF1-PLAN-TYPE-NBR.
+274,279d243
+< AI0030         MOVE 5                  TO SF1-PLAN-TYPE-NBR
+< AI0030     ELSE
+< AI0030     IF (BNF-PLAN-TYPE = "HL")
+< AI0030         MOVE 6                  TO SF1-PLAN-TYPE-NBR
+< AI0030     ELSE
+< AI0030         MOVE 7                  TO SF1-PLAN-TYPE-NBR.

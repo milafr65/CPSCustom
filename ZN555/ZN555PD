@@ -1,0 +1,1143 @@
+MJK001******************************************************************
+MJK001*                        MODIFICATION LOG                        *
+MJK001*----------------------------------------------------------------*
+      *  INITIAL VERSION                                               *
+      *  MLF     05/28/2019                                            *
+      *          CREATE TERMSTATUS PERSONAL ACTION                     *
+000100******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+000300******************************************************************
+000400 050-START.
+000500
+000600     MOVE PRM-COMPANY            TO DB-COMPANY.
+000700     PERFORM 840-FIND-BNCSET1.
+000800     IF (BNCOMPANY-NOTFOUND)
+000900         MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+001000         MOVE 050                TO CRT-ERROR-NBR
+001100         MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+001200         PERFORM 780-PRINT-ERROR-MSG
+001300         GO TO 050-END.
+
+           MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE SPACES                 TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+        
+           IF (PRSYSTEM-NOTFOUND)
+               MOVE PRM-COMPANY        TO CRT-ERR-VAR1
+               MOVE 101                TO CRT-ERROR-NBR
+               PERFORM 780-PRINT-ERROR-MSG
+               GO TO 050-END
+           ELSE
+               MOVE PRS-COMPANY        TO G1-COMPANY
+               MOVE PRS-NAME           TO G1-PRS-NAME.
+               
+           MOVE PRM-UPD-FLAG           TO G1-UPD-MODE.
+     
+       050-END.
+      
+      ******************************************************************
+       100-PROGRAM-CONTROL             SECTION 10.
+      ******************************************************************
+       100-START.
+      
+      *     OPEN OUTPUT CIGNA-FILE.
+      
+           MOVE GN1H-COMPANY-ERR   TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           MOVE GN1S-EMPLOYEE-ERR  TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM 1000-DO-EXTRACT.
+      
+           MOVE WS-REC-COUNT           TO CRT-ERR-VAR1.
+           MOVE 100                    TO CRT-MSG-NBR.
+
+           PERFORM 780-DISPLAY-MSG.
+      *     CLOSE CIGNA-FILE.
+
+
+       100-END.
+      
+      ******************************************************************
+       1000-DO-EXTRACT                 SECTION 50.
+      ******************************************************************
+       1000-START.
+
+MLF005     MOVE 1 TO I1.      
+WO4116     PERFORM 1020-EMP-SELECTION
+MLF005     THRU    1020-END.
+                 
+           GO TO 1000-END.
+
+      ******************************************************************
+WO4116 1020-EMP-SELECTION.
+WO4116******************************************************************
+WO4116     INITIALIZE FILTER-STRING.
+WO4116     MOVE 1                          TO SUB1.
+WO4116     
+WO4116     STRING "(EMP-EMP-STATUS = ""TP"") "
+                  DELIMITED BY SIZE
+                  INTO FILTER-STRING
+                  POINTER SUB1.
+
+           PERFORM 890-CREATE-FILTER.
+      
+WO4116*     MOVE PRM-COMPANY            TO DB-COMPANY.
+           MOVE WS-EMP-COMPANY          TO DB-COMPANY.
+181201     MOVE EMPSET1-COMPANY         TO WS-DB-BEG-RNG.
+MLF005
+WO4116     PERFORM 850-FILTER-BEGRNG-EMPSET1.
+MLF005     IF (EMPLOYEE-NOTFOUND)
+MLF005        DISPLAY "EMPLOYEE NOT FOUND".
+MLF005        
+      
+      *      DISPLAY "TP STATUS EMPLOYEE REPORT".
+181201      PERFORM 1160-PROCESS-EMPLOYEE
+181201      THRU    1160-END
+            UNTIL   (EMPLOYEE-NOTFOUND)
+      *      OR      (EMP-COMPANY NOT = PRM-COMPANY).
+            OR      (EMP-COMPANY NOT = WS-EMP-COMPANY).
+            
+            DISPLAY "TOTAL COUNT:", WS-REC-COUNT.
+
+       
+       1020-END.
+      
+      
+      ******************************************************************
+       1160-PROCESS-EMPLOYEE.
+      ******************************************************************
+      
+MLF005     MOVE EMP-EMPLOYEE           TO WS-EMP-EMPLOYEE.
+
+           PERFORM 1100-CALCULATE-AGE
+              THRU 1100-END.
+              
+           PERFORM 1110-GET-SOC-SEC-RET-AGE
+              THRU 1110-END.
+
+           MOVE 0 TO                   WS-PA-PLAN-CODE-FLAG.
+           PERFORM 1120-PARTICIPATION
+              THRU 1120-END.
+              
+           INITIALIZE     WS-CONT-CHP-MOS.
+           INITIALIZE     WS-CHP-COVERAGE.        
+           PERFORM 1400-GET-CURRENT-PLAN
+              THRU 1400-END.
+           IF (WS-TERM-DATE-NXT-YR = "X")
+             MOVE 300                    TO CRT-ERROR-NBR
+           ELSE
+             PERFORM 1500-GET-CONTINUOUS-SERVICE
+                THRU 1500-END
+           END-IF.     
+           
+           MOVE SPACES TO WS-NEW-EMP-STATUS.
+           PERFORM 2000-CALC-EMP-STATUS
+              THRU 2000-END.   
+              
+      * WRITE A RECORD OUT TO THE REPORT 
+      
+      * IF THE UPDATE FLAG IS ON        
+      * WRITE A RECORD OUT TO PERSACTION (3000)
+      
+           IF (PRM-UPD-FLAG = "Y")
+               PERFORM 3000-CREATE-PERSONAL-ACTION
+                  THRU 3000-END
+           END-IF.
+   
+       1160-NEXT-EMPLOYEE.
+                         
+           PERFORM 4000-PRINT-REPORT.
+                   
+           ADD 1 TO WS-REC-COUNT.        
+       
+       
+WO4116     PERFORM 860-FIND-NXTRNG-EMPSET1.
+       
+       1160-END.
+       
+008000******************************************************************
+       1100-CALCULATE-AGE.
+008000******************************************************************
+           MOVE PRS-COMPANY        TO DB-COMPANY.
+           MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE.
+           PERFORM 840-FIND-PEMSET1.
+           IF (PAEMPLOYEE-NOTFOUND)
+      *         MOVE "PAEMPLOYEE NOT FOUND" TO CRT-MESSAGE
+               DISPLAY "1100: PAEMPLOYEE NOT FOUND"
+               GO TO 1100-END.
+
+           INITIALIZE WS-AGE,
+                      WS-BIRTHDATE,
+                      WS-SYS-DATE.
+
+           MOVE PEM-BIRTHDATE      TO WS-BIRTHDATE.
+           MOVE EMP-TERM-DATE      TO WS-SYS-DATE.
+           COMPUTE WS-AGE = (WS-SYS-YYYY - WS-BIRTHDATE-YYYY).
+           IF (WS-SYS-MM < WS-BIRTHDATE-MM)
+               SUBTRACT 1 FROM WS-AGE
+           ELSE
+               IF (WS-SYS-MM = WS-BIRTHDATE-MM)
+                   IF (WS-SYS-DD < WS-BIRTHDATE-DD)
+                         SUBTRACT 1 FROM WS-AGE
+                   END-IF
+               END-IF
+           END-IF.
+
+           MOVE WS-AGE          TO WS-MBR-AGE.
+
+       1100-END.
+       
+       1110-GET-SOC-SEC-RET-AGE.
+           INITIALIZE                    WS-SSN-RETIRE-BIRTH
+                                         WS-SSN-RETIRE-AGE
+                                         WS-SSN-RETIRE-MO.
+ 
+           IF (PEM-BIRTHDATE(1:4) < 1937)
+              MOVE PEM-BIRTHDATE(1:4) TO WS-SSN-RETIRE-BIRTH
+              MOVE 65                 TO WS-SSN-RETIRE-AGE
+              MOVE 00                 TO WS-SSN-RETIRE-MO
+           ELSE
+           IF (PEM-BIRTHDATE(1:4) > 1960)
+              MOVE PEM-BIRTHDATE(1:4) TO WS-SSN-RETIRE-BIRTH
+              MOVE 67                 TO WS-SSN-RETIRE-AGE
+              MOVE 00                 TO WS-SSN-RETIRE-MO
+           ELSE
+           PERFORM VARYING I1 FROM 1 BY 1
+             UNTIL (I1 > 24)
+                OR (WS-SSN-YR(I1) = PEM-BIRTHDATE(1:4))
+                   MOVE I1 TO I2
+           END-PERFORM.
+
+           IF (WS-SSN-RETIRE-AGE NOT > 0)  
+             IF (WS-SSN-YR(I1) = PEM-BIRTHDATE(1:4))
+               MOVE WS-SSN-YR(I1)  TO WS-SSN-RETIRE-BIRTH
+               MOVE WS-SSN-AGE(I1) TO WS-SSN-RETIRE-AGE
+               MOVE WS-SSN-MO(I1)  TO WS-SSN-RETIRE-MO
+             END-IF
+           END-IF.
+           IF (I1 > 24)
+             MOVE "BIRTHDATE NOT IN TBL" TO CRT-MESSAGE
+           END-IF.          
+
+       1110-END. 
+       
+       
+008200******************************************************************
+       1120-PARTICIPATION. 
+008200******************************************************************
+
+           INITIALIZE                WS-SERV-SPAN-MONTHS.
+           INITIALIZE                WS-CRP-SPAN-MONTHS.
+           INITIALIZE                WS-RMS-SPAN-MONTHS.           
+           INITIALIZE                WS-EMP-STATUS.
+           INITIALIZE                WS-POSITION.
+           INITIALIZE                WS-OFFSET-MONTHS.
+           INITIALIZE                WS-FULL-MONTHS.
+           INITIALIZE                WS-ACCT-OPTION.
+
+           MOVE EMP-EMPLOYEE      TO DB-EMPLOYEE.
+
+           MOVE BENSETWB1-EMPLOYEE  TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-BENSETWB1.
+           PERFORM 1130-CALCULATE-YEARS-OF-SERVICE
+           THRU    1130-END
+           UNTIL (BENEFIT-NOTFOUND).
+
+           DIVIDE WS-SERV-SPAN-MONTHS BY 12
+                       GIVING WS-YEAR-SPAN
+                       REMAINDER WS-MONTH-SPAN.
+
+           DIVIDE WS-CRP-SPAN-MONTHS BY 12
+                       GIVING WS-CRP-YEAR-SPAN
+                       REMAINDER WS-CRP-MONTH-SPAN.
+
+       1120-END.
+
+008000******************************************************************
+       1130-CALCULATE-YEARS-OF-SERVICE.
+008000******************************************************************
+
+           IF (BEN-PLAN-CODE < "OAAA")
+           OR (BEN-PLAN-CODE > "PZZZ")
+              GO TO 1130-CONTINUE.
+
+           IF (BEN-PLAN-CODE = "PNP")
+              GO TO 1130-CONTINUE.
+
+           IF (BEN-START-DATE > EMP-TERM-DATE)
+              GO TO 1130-CONTINUE.
+
+           MOVE BEN-START-DATE        TO WS-SERV-START-DATE.
+
+           IF (BEN-STOP-DATE > ZERO)
+              IF (EMP-TERM-DATE > BEN-STOP-DATE)
+                 MOVE BEN-STOP-DATE      TO WS-SERV-STOP-DATE
+              ELSE
+                 MOVE EMP-TERM-DATE   TO WS-SERV-STOP-DATE
+           ELSE
+              MOVE EMP-TERM-DATE      TO WS-SERV-STOP-DATE.
+
+           MOVE BEN-COMPANY           TO DB-COMPANY.
+           MOVE BEN-EMPLOYEE          TO DB-EMPLOYEE.
+           MOVE BEN-START-DATE        TO DB-START-DATE.
+           MOVE BEN-PLAN-TYPE         TO DB-PLAN-TYPE.
+           MOVE BEN-PLAN-CODE         TO DB-PLAN-CODE.  
+           PERFORM 840-FIND-WENSET2.
+GW4/07*    IF (BEN-PLAN-CODE = "OEO")
+GW4/07*       IF (WBPBENTAG-FOUND)
+GW4/07*          IF (WEN-CRP-VEST > SPACES)
+GW4/07*             GO TO 1130-CONTINUE.
+
+           PERFORM 1170-CALC-TOTAL-SERV
+              THRU 1170-END.
+           PERFORM 1140-FIND-CRP-SERVICE
+              THRU 1140-END.
+
+       1130-CONTINUE.
+           PERFORM 860-FIND-NXTRNG-BENSETWB1.
+
+       1130-END.
+
+      ******************************************************************
+       1140-FIND-CRP-SERVICE.
+      ******************************************************************
+           IF (WBPBENTAG-FOUND)
+              IF (WEN-CRP-VEST = "B") 
+              OR (WEN-CRP-VEST = "C")
+              OR (WEN-CRP-VEST = "D")
+              OR (WEN-CRP-VEST = "E")
+              OR (WEN-CRP-VEST = "L")
+              OR (WEN-CRP-VEST = "M")
+              OR (WEN-CRP-VEST = "S")
+              OR (WEN-CRP-VEST = "T")
+              OR (WEN-CRP-VEST = "U")
+              OR (WEN-CRP-VEST = "V")
+              OR (WEN-CRP-VEST = "W")
+                 PERFORM 1200-CALC-SPAN
+                    THRU 1200-END
+                 PERFORM 1300-CALC-CRP-SERVICE
+                    THRU 1300-END
+              END-IF
+           END-IF.           
+
+       1140-END.    
+                                
+009700******************************************************************
+       1170-CALC-TOTAL-SERV.
+009700******************************************************************
+           IF (WS-SERV-START-YYYY = WS-SERV-STOP-YYYY)
+              COMPUTE WS-SERV-SPAN-MONTHS 
+                 = WS-SERV-SPAN-MONTHS
+                 + WS-SERV-STOP-MM
+                 - WS-SERV-START-MM
+                 + 1
+              IF (WS-SERV-START-DD > 01)
+                    SUBTRACT 1 FROM WS-SERV-SPAN-MONTHS
+              END-IF
+           ELSE
+           IF (WS-SERV-START-YYYY < WS-SERV-STOP-YYYY)
+              COMPUTE WS-SERV-SPAN-MONTHS 
+                 = WS-SERV-SPAN-MONTHS
+                 + 13
+                 - WS-SERV-START-MM
+              COMPUTE WS-SERV-SPAN-MONTHS 
+                 = WS-SERV-SPAN-MONTHS
+                 + WS-SERV-STOP-MM
+              COMPUTE WS-SERV-SPAN-MONTHS 
+                 = WS-SERV-SPAN-MONTHS
+                 + ((WS-SERV-STOP-YYYY - WS-SERV-START-YYYY - 1) * 12)
+              IF (WS-SERV-START-DD > 01)
+                    SUBTRACT 1 FROM WS-SERV-SPAN-MONTHS
+              END-IF
+           ELSE
+              MOVE ZERO TO WS-SERV-SPAN-MONTHS.
+
+       1170-END.
+009700******************************************************************
+       1200-CALC-SPAN.
+009700******************************************************************
+
+           IF (BEN-PLAN-CODE (1:2) = "PA")
+               MOVE 1                  TO WS-PA-PLAN-CODE-FLAG
+           END-IF.
+
+           IF (WS-SERV-START-YYYY = WS-SERV-STOP-YYYY)
+              IF (BEN-PLAN-CODE (1:2) = "PR")
+                 COMPUTE WS-OFFSET-MONTHS 
+                    = WS-OFFSET-MONTHS
+                    + WS-SERV-STOP-MM
+                    - WS-SERV-START-MM
+                    + 1
+              END-IF
+              IF (BEN-PLAN-CODE (1:2) = "PF")
+                 COMPUTE WS-FULL-MONTHS 
+                    = WS-FULL-MONTHS
+                    + WS-SERV-STOP-MM
+                    - WS-SERV-START-MM
+                    + 1
+              END-IF
+      *==============================================================
+      * SDB511 - ADD THE TOTAL FOR THE ACCOUNT OPTION MONTHS
+      *==============================================================
+              IF (BEN-PLAN-CODE (1:2) = "PA")
+                 COMPUTE WS-ACCT-OPTION 
+                    = WS-ACCT-OPTION
+                    + WS-SERV-STOP-MM
+                    - WS-SERV-START-MM
+                    + 1
+              END-IF
+      *==============================================================
+              IF (WS-SERV-START-DD > 01)
+                    IF (BEN-PLAN-CODE (1:2) = "PR")
+                       SUBTRACT 1 FROM WS-OFFSET-MONTHS
+                    END-IF
+                    IF (BEN-PLAN-CODE (1:2) = "PF")
+                       SUBTRACT 1 FROM WS-FULL-MONTHS
+                    END-IF
+
+              END-IF
+           ELSE
+           IF (WS-SERV-START-YYYY < WS-SERV-STOP-YYYY)
+              IF (BEN-PLAN-CODE (1:2) = "PR")
+                 COMPUTE WS-OFFSET-MONTHS 
+                    = WS-OFFSET-MONTHS
+                    + 13
+                    - WS-SERV-START-MM
+                 COMPUTE WS-OFFSET-MONTHS 
+                   = WS-OFFSET-MONTHS
+                   + WS-SERV-STOP-MM
+                 COMPUTE WS-OFFSET-MONTHS 
+                   = WS-OFFSET-MONTHS
+                   + ((WS-SERV-STOP-YYYY - WS-SERV-START-YYYY - 1) * 12)
+              END-IF
+              IF (BEN-PLAN-CODE (1:2) = "PF")
+                 COMPUTE WS-FULL-MONTHS 
+                    = WS-FULL-MONTHS
+                    + 13
+                    - WS-SERV-START-MM
+                COMPUTE WS-FULL-MONTHS 
+                   = WS-FULL-MONTHS
+                   + WS-SERV-STOP-MM
+                COMPUTE WS-FULL-MONTHS 
+                   = WS-FULL-MONTHS
+                   + ((WS-SERV-STOP-YYYY - WS-SERV-START-YYYY - 1) * 12)
+              END-IF
+      *==============================================================
+      * SDB511 - ADD THE TOTAL FOR THE ACCOUNT OPTION MONTHS
+      *==============================================================
+              IF (BEN-PLAN-CODE (1:2) = "PA")
+                 COMPUTE WS-ACCT-OPTION 
+                    = WS-ACCT-OPTION
+                    + 13
+                    - WS-SERV-START-MM
+                COMPUTE WS-ACCT-OPTION 
+                   = WS-ACCT-OPTION
+                   + WS-SERV-STOP-MM
+                COMPUTE WS-ACCT-OPTION 
+                   = WS-ACCT-OPTION
+                   + ((WS-SERV-STOP-YYYY - WS-SERV-START-YYYY - 1) * 12)
+              END-IF
+      *==============================================================
+              IF (WS-SERV-START-DD > 01)
+                    IF (BEN-PLAN-CODE (1:2) = "PR")
+                       SUBTRACT 1 FROM WS-OFFSET-MONTHS
+                    END-IF
+                    IF (BEN-PLAN-CODE (1:2) = "PF")
+                       SUBTRACT 1 FROM WS-FULL-MONTHS
+                    END-IF
+      *==============================================================
+      * SDB511 - ADD THE TOTAL FOR THE ACCOUNT OPTION MONTHS
+      *==============================================================
+                    IF (BEN-PLAN-CODE (1:2) = "PA")
+                       SUBTRACT 1 FROM WS-ACCT-OPTION
+                    END-IF
+      *==============================================================
+              END-IF
+           ELSE
+              MOVE ZERO TO WS-OFFSET-MONTHS
+                           WS-ACCT-OPTION
+                           WS-FULL-MONTHS.
+
+       1200-END.
+009700******************************************************************
+       1300-CALC-CRP-SERVICE.
+009700******************************************************************
+
+           IF (WS-SERV-START-YYYY = WS-SERV-STOP-YYYY)
+              COMPUTE WS-CRP-SPAN-MONTHS 
+                 = WS-CRP-SPAN-MONTHS
+                 + WS-SERV-STOP-MM
+                 - WS-SERV-START-MM
+                 + 1
+              IF (WS-SERV-START-DD > 01)
+                    SUBTRACT 1 FROM WS-CRP-SPAN-MONTHS
+              END-IF
+           ELSE
+           IF (WS-SERV-START-YYYY < WS-SERV-STOP-YYYY)
+              COMPUTE WS-CRP-SPAN-MONTHS 
+                 = WS-CRP-SPAN-MONTHS
+                 + 13
+                 - WS-SERV-START-MM
+              COMPUTE WS-CRP-SPAN-MONTHS 
+                 = WS-CRP-SPAN-MONTHS
+                 + WS-SERV-STOP-MM
+              COMPUTE WS-CRP-SPAN-MONTHS 
+                 = WS-CRP-SPAN-MONTHS
+                 + ((WS-SERV-STOP-YYYY - WS-SERV-START-YYYY - 1) * 12)
+              IF (WS-SERV-START-DD > 01)
+                    SUBTRACT 1 FROM WS-CRP-SPAN-MONTHS
+              END-IF
+           ELSE
+              MOVE ZERO TO WS-CRP-SPAN-MONTHS.
+
+       1300-END.
+
+009700******************************************************************         
+       1400-GET-CURRENT-PLAN.
+009700******************************************************************         
+      *****  READ THE BENEFIT TABLE TO GET THE CURRENT PLAN CODE
+      *********
+           MOVE WS-EMP-COMPANY          TO DB-COMPANY.
+           MOVE WS-EMP-EMPLOYEE         TO DB-EMPLOYEE.
+           MOVE "HL"                    TO DB-PLAN-TYPE.
+0113*****  MOVE WS-PLAN-START-DATE      TO DB-START-DATE.
+0113       MOVE WS-HIGH-VALUES          TO DB-START-DATE.
+           INITIALIZE                      DB-PLAN-CODE.
+           
+           PERFORM 850-FIND-NLT-BENSET1.
+0113       IF (BEN-EMPLOYEE NOT = WS-EMP-EMPLOYEE)
+0113         PERFORM 870-FIND-PREV-BENSET1
+0113       END-IF.           
+           MOVE "N" TO WS-BEN-RECORD-FOUND.
+           PERFORM 1425-GET-CURRENT-PLAN
+              THRU 1425-END
+             UNTIL (BENEFIT-NOTFOUND)
+                OR (BEN-EMPLOYEE NOT = WS-EMP-EMPLOYEE)
+                OR (WS-BEN-RECORD-FOUND = "Y").
+           
+           IF (WS-BEN-RECORD-FOUND = "Y")
+             NEXT SENTENCE
+           ELSE  
+             PERFORM 1430-PARTBEN-PROCESS
+                THRU 1430-END
+           END-IF.
+
+           IF  (WS-PTB-RECORD-FOUND = "N")
+           AND (WS-BEN-RECORD-FOUND = "N")
+               MOVE  "NONE"           TO WS-CURR-PLAN-CODE
+           END-IF.                        
+       1400-END.  
+       1425-GET-CURRENT-PLAN.
+021700*****************************************************************
+      *  READ THE BENEFIT TABLE FOR THE CURRENT BENEFIT PLAN.    
+      *================================================================
+           IF  (BEN-START-DATE <= EMP-TERM-DATE)
+           AND ((BEN-STOP-DATE >=  EMP-TERM-DATE)
+           OR  (BEN-STOP-DATE = ZERO))
+               IF  (BEN-EMP-AFT-CONT > ZERO)
+               AND (BEN-EMPLOYEE  = WS-EMP-EMPLOYEE)
+                     MOVE BEN-PLAN-CODE    TO WS-CURR-PLAN-CODE
+                     MOVE "Y"              TO WS-BEN-RECORD-FOUND
+                     GO TO 1425-END
+               END-IF
+           END-IF.
+       1425-CONTINUE.
+           PERFORM 870-FIND-PREV-BENSET1.
+       1425-END.
+       1430-PARTBEN-PROCESS.        
+           MOVE "N"                     TO WS-PTB-RECORD-FOUND.
+03000      MOVE 1000                   TO DB-COMPANY.
+003100     MOVE "HL"                   TO DB-PLAN-TYPE.
+003200     MOVE WS-EMP-EMPLOYEE        TO DB-EMPLOYEE.
+           MOVE ZEROS                  TO DB-PARTICIPNT.
+003400     MOVE WS-HIGH-VALUES         TO DB-START-DATE.
+003500     MOVE SPACES                 TO DB-PLAN-CODE.
+           PERFORM 850-FIND-NLT-PTBSET1.
+0113       IF (PTB-EMPLOYEE   NOT = WS-EMP-EMPLOYEE)
+0113             PERFORM 870-FIND-PREV-PTBSET1
+0113       END-IF. 
+
+0113       IF (PTB-EMPLOYEE   NOT = WS-EMP-EMPLOYEE)
+               MOVE "N"                     TO WS-PTB-RECORD-FOUND
+03000          MOVE 1000                   TO DB-COMPANY
+003100         MOVE "HL"                   TO DB-PLAN-TYPE
+003200         MOVE WS-EMP-EMPLOYEE    TO WS-EMPLOYEE
+               MOVE WS-PARTICIPNT          TO DB-PARTICIPNT
+               MOVE ZEROS                  TO DB-EMPLOYEE
+003400         MOVE WS-HIGH-VALUES         TO DB-START-DATE
+003500         MOVE SPACES                 TO DB-PLAN-CODE
+               PERFORM 850-FIND-NLT-PTBSET1
+               IF (PTB-PARTICIPNT NOT = WS-PARTICIPNT)
+                     PERFORM 870-FIND-PREV-PTBSET1
+               END-IF 
+           END-IF.
+           IF  (PTB-PARTICIPNT = ZERO)
+           AND (PTB-EMPLOYEE NOT = WS-EMP-EMPLOYEE)
+             MOVE "X"          TO WS-PTB-RECORD-FOUND
+           END-IF.
+           IF  (PTB-EMPLOYEE = ZERO)
+           AND (PTB-PARTICIPNT NOT = WS-PARTICIPNT)
+             MOVE "X"            TO WS-PTB-RECORD-FOUND
+           END-IF.
+                           
+           PERFORM 1440-CHECK-PARTBEN
+                THRU 1440-END
+               UNTIL (PARTBEN-NOTFOUND)
+                  OR (WS-PTB-RECORD-FOUND = "Y")
+                  OR (WS-PTB-RECORD-FOUND = "X").
+           IF (WS-PTB-RECORD-FOUND = "X")
+              MOVE "N" TO  WS-PTB-RECORD-FOUND
+           END-IF.   
+       1430-END.
+       1440-CHECK-PARTBEN.
+          IF  (PTB-START-DATE <= EMP-TERM-DATE)
+           AND ((PTB-STOP-DATE >= EMP-TERM-DATE)
+           OR  (PTB-STOP-DATE = ZERO))
+               IF   (PTB-EMP-AFT-CONT > ZERO)
+               AND ((PTB-EMPLOYEE  = WS-EMP-EMPLOYEE)
+                OR  (PTB-PARTICIPNT =  WS-PARTICIPNT))   
+                     MOVE PTB-PLAN-CODE    TO WS-CURR-PLAN-CODE
+                     MOVE "Y"              TO WS-PTB-RECORD-FOUND
+                     GO TO 1440-END
+                END-IF
+           END-IF.
+           IF  (PTB-EMPLOYEE = ZEROS)
+           AND (PTB-PARTICIPNT NOT = WS-PARTICIPNT)
+              MOVE "X" TO WS-PTB-RECORD-FOUND
+              GO TO 1440-END
+           END-IF.
+           IF (PTB-PARTICIPNT = ZERO)
+           AND (PTB-EMPLOYEE NOT = WS-EMP-EMPLOYEE)
+             MOVE "X" TO WS-PTB-RECORD-FOUND
+             GO TO 1440-END
+           END-IF.     
+       1440-CONTINUE.
+           PERFORM 870-FIND-PREV-PTBSET1.
+       1440-END. 
+       1500-GET-CONTINUOUS-SERVICE.
+           IF  (WS-CURR-PLAN-CODE = "NONE") 
+               GO TO 1500-END
+           END-IF.   
+           
+           MOVE EMP-TERM-DATE(1:4) TO WS-CHP-YR(1).
+           COMPUTE WS-CHP-YR(2) = WS-CHP-YR(1) - 1.
+           COMPUTE WS-CHP-YR(3) = WS-CHP-YR(2) - 1.
+           COMPUTE WS-CHP-YR(4) = WS-CHP-YR(3) - 1.
+           COMPUTE WS-CHP-YR(5) = WS-CHP-YR(4) - 1.
+           COMPUTE WS-CHP-YR(6) = WS-CHP-YR(5) - 1.
+           
+           INITIALIZE WS-CONT-CHP-MOS.
+003000     MOVE 1000                   TO DB-COMPANY.
+003100     MOVE "HL"                   TO DB-PLAN-TYPE.
+003200     MOVE WS-EMP-EMPLOYEE        TO DB-EMPLOYEE.
+003400     MOVE WS-HIGH-VALUES         TO DB-START-DATE.
+003500     INITIALIZE                     DB-PLAN-CODE.
+003600     PERFORM 850-FIND-NLT-BENSET1.
+           IF (BEN-EMPLOYEE NOT = WS-EMP-EMPLOYEE)
+             PERFORM 870-FIND-PREV-BENSET1
+           END-IF.           
+           
+            
+003800     PERFORM 1520-COUNT-BENEFIT    
+003900     THRU    1520-END
+004000         UNTIL (BENEFIT-NOTFOUND)
+                  OR (WS-CONT-CHP-MOS > 60)
+                  OR (BEN-PLAN-TYPE NOT = "HL")
+                  OR (BEN-EMPLOYEE NOT = WS-EMP-EMPLOYEE).
+***************** OR (WS-COUNT > 50).
+      
+003000     MOVE 1000                   TO DB-COMPANY.
+003100     MOVE "HL"                   TO DB-PLAN-TYPE.
+003200     MOVE WS-EMP-EMPLOYEE        TO DB-EMPLOYEE.
+           MOVE ZEROES                 TO DB-PARTICIPNT.
+003400     MOVE WS-HIGH-VALUES         TO DB-START-DATE.
+003500     MOVE SPACES                 TO DB-PLAN-CODE.
+003600     PERFORM 850-FIND-NLT-PTBSET1.
+           IF (PTB-EMPLOYEE NOT = WS-EMP-EMPLOYEE)
+             PERFORM 870-FIND-PREV-PTBSET1
+           END-IF.           
+           PERFORM 1530-COUNT-PARTBEN-EE
+              THRU 1530-END
+                 UNTIL (PARTBEN-NOTFOUND)
+                  OR (WS-CONT-CHP-MOS > 60)
+                  OR (PTB-PLAN-TYPE NOT = "HL")
+                  OR (PTB-EMPLOYEE NOT = WS-EMP-EMPLOYEE).
+                  
+003000     MOVE 1000                   TO DB-COMPANY.
+003100     MOVE "HL"                   TO DB-PLAN-TYPE.
+003200     MOVE WS-EMP-EMPLOYEE        TO WS-EMPLOYEE.
+           MOVE WS-PARTICIPNT          TO DB-PARTICIPNT.
+           MOVE ZEROS                  TO DB-EMPLOYEE.
+003400     MOVE WS-HIGH-VALUES         TO DB-START-DATE.
+003500     MOVE SPACES                 TO DB-PLAN-CODE.
+003600     PERFORM 850-FIND-NLT-PTBSET1.
+           IF (PTB-PARTICIPNT NOT = WS-PARTICIPNT)
+             PERFORM 870-FIND-PREV-PTBSET1
+           END-IF.   
+           PERFORM 1540-COUNT-PARTBEN-PAR
+              THRU 1540-END
+                 UNTIL (PARTBEN-NOTFOUND)
+                  OR (WS-CONT-CHP-MOS > 60)
+                  OR (PTB-PLAN-TYPE NOT = "HL")
+                  OR (PTB-PARTICIPNT NOT = WS-PARTICIPNT).                  
+
+***********PERFORM VARYING I1 FROM 1 BY 1 
+************ UNTIL (I1 > 6)
+************   PERFORM VARYING I2 FROM 12 BY -1
+************     UNTIL (I2 < 1)
+************   END-PERFORM
+***********END-PERFORM. 
+                     
+           INITIALIZE WS-MO-FOUND.
+           MOVE EMP-TERM-DATE TO WS-CHP-START-DATE.
+           PERFORM VARYING I2 FROM WS-CHP-START-MM BY -1
+             UNTIL (I2 < 1)
+              OR (WS-MO-FOUND = "N")
+                IF (WS-CHP-MO(1,I2) = "X")
+                  ADD 1 TO WS-CONT-CHP-MOS
+                ELSE
+                  MOVE "N"  TO WS-MO-FOUND
+                END-IF
+           END-PERFORM.
+           
+           IF (WS-CONT-CHP-MOS NOT > ZERO)
+             GO TO 1500-END
+           END-IF.
+           INITIALIZE WS-MO-FOUND.
+           PERFORM VARYING I1 FROM 2 BY 1
+             UNTIL (I1 > 6)          
+                OR (WS-MO-FOUND = "N")
+              PERFORM VARYING I2 FROM 12 BY -1
+                UNTIL (I2 < 1)  
+                   OR (WS-MO-FOUND = "N")
+                IF (WS-CHP-MO(I1,I2) = "X")
+                  ADD 1 TO WS-CONT-CHP-MOS
+                ELSE
+                  MOVE "N"  TO WS-MO-FOUND
+                END-IF
+              END-PERFORM
+           END-PERFORM.   
+
+       1500-END.
+       1520-COUNT-BENEFIT.
+006500     IF (BEN-PLAN-TYPE  NOT = "HL")
+              GO TO 1520-NEXT-BENEFIT
+           END-IF.
+          
+           IF (BEN-PLAN-CODE(1:2) = "ES")
+              GO TO 1520-NEXT-BENEFIT
+           END-IF.
+            
+*********  IF (BEN-PLAN-CODE(1:1) = "C")
+**********    GO TO 1520-NEXT-BENEFIT
+***********END-IF.           
+           
+           IF (BEN-PLAN-CODE(3:2) = "MH")
+              GO TO 1520-NEXT-BENEFIT
+           END-IF.           
+                       
+013000     IF (BEN-PLAN-CODE = "DECL")
+                GO TO 1520-NEXT-BENEFIT   
+           END-IF.
+           
+           IF (BEN-START-DATE > EMP-TERM-DATE)
+                GO TO 1520-NEXT-BENEFIT   
+           END-IF.
+                   
+*********WS-CONT-CHP-MOS                      
+           MOVE BEN-START-DATE      TO WS-CHP-START-DATE.
+           MOVE BEN-STOP-DATE       TO WS-CHP-STOP-DATE.
+           IF (BEN-STOP-DATE = ZEROS)
+           OR (BEN-STOP-DATE >  EMP-TERM-DATE)
+             MOVE EMP-TERM-DATE(1:4) TO WS-CHP-STOP-YYYY
+             MOVE EMP-TERM-DATE(5:2) TO WS-CHP-STOP-MM
+             MOVE EMP-TERM-DATE(7:2) TO WS-CHP-STOP-DD
+           END-IF. 
+           
+**********THIS LOGIC IS FOR A TERM DATE IN A FUTURE YEAR
+           IF  (WS-TERM-DATE-NXT-YR = "Y")
+           AND (BEN-STOP-DATE = ZEROS)
+***********IF  (BEN-STOP-DATE = ZEROS)
+***********AND (EMP-TERM-DATE(1:4) > WS-SYSTEM-DATE-YMD(1:4))
+              MOVE EMP-TERM-DATE(1:4) TO WS-CHP-START-DATE(1:4)
+              MOVE 01                    TO WS-CHP-START-DATE(5:2)
+              MOVE 01                    TO WS-CHP-START-DATE(7:2)
+              MOVE EMP-TERM-DATE         TO WS-CHP-STOP-DATE
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              MOVE BEN-START-DATE        TO WS-CHP-START-DATE
+              MOVE BEN-START-DATE(1:4)   TO WS-CHP-STOP-YYYY
+              MOVE 12                    TO WS-CHP-STOP-MM
+              MOVE 31                    TO WS-CHP-STOP-DD
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              GO TO 1520-NEXT-BENEFIT   
+           END-IF.
+
+*********THIS LOGIC IS FOR THE SEM STUDENTS
+           IF (BEN-START-DATE(1:4) <  BEN-STOP-DATE(1:4))
+              MOVE BEN-STOP-DATE(1:4)  TO WS-CHP-START-DATE(1:4)
+              MOVE 01                    TO WS-CHP-START-DATE(5:2)
+              MOVE 01                    TO WS-CHP-START-DATE(7:2)
+              MOVE BEN-STOP-DATE         TO WS-CHP-STOP-DATE    
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              MOVE BEN-START-DATE        TO WS-CHP-START-DATE
+              MOVE BEN-START-DATE(1:4)   TO WS-CHP-STOP-YYYY
+              MOVE 12                    TO WS-CHP-STOP-MM
+              MOVE 31                    TO WS-CHP-STOP-DD
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              GO TO 1520-NEXT-BENEFIT                    
+           END-IF.                       
+                        
+           PERFORM 1550-CHECK-YEAR
+              THRU 1550-END.
+                   
+       1520-NEXT-BENEFIT.
+           PERFORM 870-FIND-PREV-BENSET1.
+           
+       1520-END. 
+       
+       1530-COUNT-PARTBEN-EE.
+006500     IF (PTB-PLAN-TYPE  NOT = "HL")
+              GO TO 1530-NEXT-PARTBEN
+           END-IF.
+          
+           IF (PTB-PLAN-CODE(1:2) = "ES")
+              GO TO 1530-NEXT-PARTBEN
+           END-IF.
+            
+           IF (PTB-PLAN-CODE(1:1) = "C")
+              GO TO 1530-NEXT-PARTBEN
+           END-IF.           
+                       
+013000     IF (PTB-PLAN-CODE = "DECL")
+                GO TO 1530-NEXT-PARTBEN   
+           END-IF.
+*********WS-CONT-CHP-MOS                      
+           MOVE PTB-START-DATE      TO WS-CHP-START-DATE.
+           MOVE PTB-STOP-DATE       TO WS-CHP-STOP-DATE.
+           IF (PTB-STOP-DATE = ZEROS)
+           OR (PTB-STOP-DATE > EMP-TERM-DATE)
+             MOVE EMP-TERM-DATE(1:4) TO WS-CHP-STOP-YYYY
+             MOVE EMP-TERM-DATE(5:2) TO WS-CHP-STOP-MM
+             MOVE EMP-TERM-DATE(7:2) TO WS-CHP-STOP-DD     
+           END-IF.         
+
+**********THIS LOGIC IS FOR A TERM DATE IN A FUTURE YEAR
+           IF  (WS-TERM-DATE-NXT-YR = "Y")
+           AND (PTB-STOP-DATE = ZEROS)
+***********IF  (PTB-STOP-DATE = ZEROS)
+***********AND (EMP-TERM-DATE(1:4) > WS-SYSTEM-DATE-YMD(1:4))
+              MOVE EMP-TERM-DATE(1:4)    TO WS-CHP-START-DATE(1:4)
+              MOVE 01                    TO WS-CHP-START-DATE(5:2)
+              MOVE 01                    TO WS-CHP-START-DATE(7:2)
+              MOVE EMP-TERM-DATE         TO WS-CHP-STOP-DATE
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              MOVE PTB-START-DATE        TO WS-CHP-START-DATE
+              MOVE PTB-START-DATE(1:4)   TO WS-CHP-STOP-YYYY
+              MOVE 12                    TO WS-CHP-STOP-MM
+              MOVE 31                    TO WS-CHP-STOP-DD
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+           END-IF.
+           
+*********THIS LOGIC IS FOR THE SEM STUDENTS
+           IF (PTB-START-DATE(1:4) <  PTB-STOP-DATE(1:4))
+              MOVE PTB-STOP-DATE(1:4)  TO WS-CHP-START-DATE(1:4)
+              MOVE 01                    TO WS-CHP-START-DATE(5:2)
+              MOVE 01                    TO WS-CHP-START-DATE(7:2)
+              MOVE PTB-STOP-DATE         TO WS-CHP-STOP-DATE    
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              MOVE PTB-START-DATE        TO WS-CHP-START-DATE
+              MOVE PTB-START-DATE(1:4)   TO WS-CHP-STOP-YYYY
+              MOVE 12                    TO WS-CHP-STOP-MM
+              MOVE 31                    TO WS-CHP-STOP-DD
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              GO TO 1530-NEXT-PARTBEN                    
+           END-IF.                                        
+           
+           PERFORM 1550-CHECK-YEAR
+              THRU 1550-END.
+                   
+       1530-NEXT-PARTBEN.
+           PERFORM 870-FIND-PREV-PTBSET1.
+       1530-END.
+       1540-COUNT-PARTBEN-PAR.
+006500     IF (PTB-PLAN-TYPE  NOT = "HL")
+              GO TO 1540-NEXT-PARTBEN
+           END-IF.
+          
+           IF (PTB-PLAN-CODE(1:2) = "ES")
+              GO TO 1540-NEXT-PARTBEN
+           END-IF.
+            
+           IF (PTB-PLAN-CODE(1:1) = "C")
+              GO TO 1540-NEXT-PARTBEN
+           END-IF.           
+                       
+013000     IF (PTB-PLAN-CODE = "DECL")
+                GO TO 1540-NEXT-PARTBEN   
+           END-IF.
+*********WS-CONT-CHP-MOS                      
+           MOVE PTB-START-DATE      TO WS-CHP-START-DATE.
+           MOVE PTB-STOP-DATE       TO WS-CHP-STOP-DATE.
+           IF (PTB-STOP-DATE = ZEROS)
+             MOVE EMP-TERM-DATE(1:4) TO WS-CHP-STOP-YYYY
+             MOVE EMP-TERM-DATE(5:2) TO WS-CHP-STOP-MM
+             MOVE EMP-TERM-DATE(7:2) TO WS-CHP-STOP-DD     
+           END-IF.  
+
+**********THIS LOGIC IS FOR A TERM DATE IN A FUTURE YEAR           
+           IF  (WS-TERM-DATE-NXT-YR = "Y")
+           AND (PTB-STOP-DATE = ZEROS)
+***********IF  (PTB-STOP-DATE = ZEROS)
+***********AND (EMP-TERM-DATE(1:4) > WS-SYSTEM-DATE-YMD(1:4))           
+              MOVE EMP-TERM-DATE(1:4)    TO WS-CHP-START-DATE(1:4)
+              MOVE 01                    TO WS-CHP-START-DATE(5:2)
+              MOVE 01                    TO WS-CHP-START-DATE(7:2)
+              MOVE EMP-TERM-DATE         TO WS-CHP-STOP-DATE
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              MOVE PTB-START-DATE        TO WS-CHP-START-DATE
+              MOVE PTB-START-DATE(1:4)   TO WS-CHP-STOP-YYYY
+              MOVE 12                    TO WS-CHP-STOP-MM
+              MOVE 31                    TO WS-CHP-STOP-DD
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+           END-IF.
+           
+*********THIS LOGIC IS FOR THE SEM STUDENTS
+           IF (PTB-START-DATE(1:4) <  PTB-STOP-DATE(1:4))
+              MOVE PTB-STOP-DATE(1:4)  TO WS-CHP-START-DATE(1:4)
+              MOVE 01                    TO WS-CHP-START-DATE(5:2)
+              MOVE 01                    TO WS-CHP-START-DATE(7:2)
+              MOVE PTB-STOP-DATE         TO WS-CHP-STOP-DATE    
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              MOVE PTB-START-DATE        TO WS-CHP-START-DATE
+              MOVE PTB-START-DATE(1:4)   TO WS-CHP-STOP-YYYY
+              MOVE 12                    TO WS-CHP-STOP-MM
+              MOVE 31                    TO WS-CHP-STOP-DD
+              PERFORM 1550-CHECK-YEAR
+                 THRU 1550-END
+              GO TO 1540-NEXT-PARTBEN                    
+           END-IF.                                           
+           PERFORM 1550-CHECK-YEAR
+             THRU 1550-END.
+                   
+       1540-NEXT-PARTBEN.
+           PERFORM 870-FIND-PREV-PTBSET1.
+       1540-END.       
+       1550-CHECK-YEAR.
+********* ccyymmdd       
+
+           MOVE SPACES  TO WS-YEAR-FOUND.
+           PERFORM VARYING I1 FROM 1 BY 1
+              UNTIL (I1 > 6)
+                OR (WS-YEAR-FOUND = "Y")
+                  IF (WS-CHP-START-DATE(1:4) = WS-CHP-YR(I1))
+                    MOVE "Y"  TO WS-YEAR-FOUND
+                    PERFORM 1575-CHECK-MONTHS
+                       THRU 1575-END
+                  END-IF 
+           END-PERFORM.
+           
+       1550-END.
+       1575-CHECK-MONTHS.
+
+           PERFORM VARYING I2 FROM WS-CHP-START-MM BY 1
+              UNTIL (I2 > WS-CHP-STOP-MM)
+                OR (I2 > 12)
+                  MOVE "X" TO WS-CHP-MO(I1,I2)
+           END-PERFORM.
+           
+       1575-END.
+       
+      ******************************************************************
+       2000-CALC-EMP-STATUS.
+      ******************************************************************   
+    
+         IF (WS-AGE < 55)
+            IF (WS-PA-PLAN-CODE-FLAG = 0)
+               IF (WS-CRP-SPAN-MONTHS >= 60)
+                   MOVE "TV" TO WS-NEW-EMP-STATUS
+               ELSE
+                   MOVE "TM" TO WS-NEW-EMP-STATUS
+               END-IF
+            ELSE
+               IF (WS-CRP-SPAN-MONTHS >= 60)
+                   MOVE "TV" TO WS-NEW-EMP-STATUS
+               ELSE
+                  IF (WS-CRP-SPAN-MONTHS >= 36)
+                      MOVE "TO" TO WS-NEW-EMP-STATUS
+                  ELSE
+                      MOVE "TM" TO WS-NEW-EMP-STATUS
+                  END-IF
+               END-IF            
+            END-IF          
+         ELSE
+            IF (WS-PA-PLAN-CODE-FLAG = 0)
+               IF (WS-CRP-SPAN-MONTHS >= 60)
+                   IF (WS-AGE < WS-SSN-RETIRE-AGE)
+                       MOVE "RE" TO WS-NEW-EMP-STATUS
+                   ELSE
+                       MOVE "RN" TO WS-NEW-EMP-STATUS
+                   END-IF
+               ELSE
+                   MOVE "TM" TO WS-NEW-EMP-STATUS
+               END-IF
+            ELSE
+               IF (WS-CRP-SPAN-MONTHS >= 60)
+                   IF (WS-AGE < WS-SSN-RETIRE-AGE)
+                       MOVE "RE" TO WS-NEW-EMP-STATUS
+                   ELSE
+                       MOVE "RN" TO WS-NEW-EMP-STATUS
+                   END-IF
+               ELSE
+                  IF (WS-CRP-SPAN-MONTHS >= 36)
+                      MOVE "TO" TO WS-NEW-EMP-STATUS
+                  ELSE
+                      MOVE "TM" TO WS-NEW-EMP-STATUS
+                  END-IF
+               END-IF            
+            END-IF          
+         END-IF.
+         
+    
+       2000-END.
+       
+       3000-CREATE-PERSONAL-ACTION.
+           PERFORM 910-AUDIT-BEGIN.
+
+           MOVE EMP-TERM-DATE         TO WS-REF-EFF-DATE.
+                      
+           MOVE 1000                      TO DB-COMPANY.
+           MOVE "E"                       TO DB-ACTION-TYPE.
+           MOVE WS-REF-EFF-DATE           TO DB-EFFECT-DATE.
+           MOVE "TERMSTATUS"              TO DB-ACTION-CODE.
+           MOVE EMP-EMPLOYEE              TO DB-EMPLOYEE.
+           MOVE 1                         TO DB-ACTION-NBR.
+           
+           PERFORM 850-FIND-NLT-PCTSET2.
+
+           IF  (PERSACTION-FOUND)
+           AND (PCT-COMPANY     = DB-COMPANY)
+           AND (PCT-EMPLOYEE    = DB-EMPLOYEE)
+           AND (PCT-ACTION-CODE = DB-ACTION-CODE)
+           AND (PCT-EFFECT-DATE = DB-EFFECT-DATE)
+               MOVE "NOT PROCESSED, PERSONAL ACTION PENDING" 
+               TO G1-DTL-ERROR-MSG
+               GO TO 3000-AUDIT-END.
+               
+           MOVE "TP"               TO WS-EMP-STATUS. 
+           MOVE ZERO               TO WS-ACTION-NBR.
+           MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE.
+           MOVE "TERMSTATUS"       TO DB-ACTION-CODE.
+           MOVE WS-REF-EFF-DATE    TO DB-EFFECT-DATE.
+           MOVE 99                 TO DB-ACTION-NBR.
+           PERFORM 850-FIND-NLT-PAHSET4.
+004000     IF  (PERSACTHST-FOUND)
+004100     AND (PAH-COMPANY  = DB-COMPANY)
+004200     AND (PAH-EMPLOYEE = DB-EMPLOYEE)
+004300     AND (PAH-ACTION-CODE  = DB-ACTION-CODE)
+           AND (PAH-EFFECT-DATE  = DB-EFFECT-DATE)
+               MOVE "NOT PROCESSED, PERSONAL ACTION PENDING" 
+               TO G1-DTL-ERROR-MSG
+               GO TO 3000-AUDIT-END.
+               
+           MOVE 1 TO DB-ACTION-NBR.
+                              
+           PERFORM 800-CREATE-PERSACTION.
+           MOVE 1000                      TO PCT-COMPANY.
+           MOVE "E"                       TO PCT-ACTION-TYPE.
+           MOVE WS-REF-EFF-DATE           TO PCT-EFFECT-DATE.
+           MOVE "TERMSTATUS"              TO PCT-ACTION-CODE.
+
+           MOVE EMP-EMPLOYEE              TO PCT-EMPLOYEE.
+           COMPUTE PCT-ACTION-NBR = WS-ACTION-NBR + 1.
+           MOVE 1                         TO PCT-POS-LEVEL.
+      *=======20 ==EMP-STATUS==================
+      *     MOVE 20                        TO PCT-FLD-NBR (2).
+      *     INITIALIZE                        PCT-NEW-VALUE (2).
+      *     MOVE "TP"                      TO PCT-NEW-VALUE (2).
+           MOVE 20                        TO PCT-FLD-NBR (1).
+           INITIALIZE                        PCT-NEW-VALUE (1).
+           MOVE WS-NEW-EMP-STATUS         TO PCT-NEW-VALUE (1).
+           
+           IF (EMP-PROCESS-LEVEL = "SEMSL")
+           OR (EMP-PROCESS-LEVEL = "SEMFW")
+              MOVE "2T"               TO PCT-NEW-VALUE(2)
+           END-IF.
+      *=======27==TERM-DATE=====================
+      *     MOVE 27                        TO PCT-FLD-NBR (1).
+********    MOVE WS-REF-TERM-DATE          TO PCT-NEW-VALUE (1).
+      *     MOVE WS-MM-TERM                TO PCT-NEW-VALUE(1)(1:2).
+      *     MOVE WS-DD-TERM                TO PCT-NEW-VALUE(1)(3:2).
+      *     MOVE WS-CCYY-TERM(3:2)         TO PCT-NEW-VALUE(1)(5:2).
+           MOVE "ZN555"                   TO PCT-USER-ID.
+           PERFORM 820-STORE-PERSACTION.
+       3000-AUDIT-END.           
+           PERFORM 920-AUDIT-END.
+       3000-END.  
+       
+      ******************************************************************
+       4000-PRINT-REPORT.
+      ******************************************************************
+
+           DISPLAY EMP-EMPLOYEE, EMP-EMP-STATUS,
+                   "/", WS-NEW-EMP-STATUS,
+                   "(", WS-PA-PLAN-CODE-FLAG, ")",
+                   EMP-FIRST-NAME, EMP-LAST-NAME,
+                   "MONTHS: ", WS-CRP-SPAN-MONTHS,
+                   "AGE: ", WS-MBR-AGE, 
+                   "TERM DATE: ", EMP-TERM-DATE,
+                   WS-PAH-STATUS.
+      
+      
+           PERFORM 4050-MOVE-BEN-FIELDS.
+           PERFORM 4500-PRINT-LINE.
+
+
+      ******************************************************************
+       4050-MOVE-BEN-FIELDS.
+      ******************************************************************
+      
+           MOVE    EMP-EMPLOYEE        TO G1-DTL-EMPLOYEE.
+           MOVE    EMP-LAST-NAME       TO G1-DTL-LAST-NAME.
+           MOVE    EMP-FIRST-NAME      TO G1-DTL-FIRST-NAME.
+           MOVE    WS-MBR-AGE          TO G1-DTL-AGE.
+           MOVE    WS-CRP-SPAN-MONTHS  TO G1-DTL-MONTHS.
+           MOVE    WS-NEW-EMP-STATUS   TO G1-DTL-STATUS.
+
+      ******************************************************************
+       4500-PRINT-LINE.
+      ******************************************************************
+           MOVE ZEROES                 TO CRT-ERROR-NBR.
+           IF (CRT-MSG-NBR NOT = ZEROES)
+               IF  (CRT-MSG-NBR < 200)
+               AND (CRT-MSG-NBR > 299)
+                   MOVE CRT-MSG-NBR    TO CRT-ERROR-NBR
+               END-IF
+               PERFORM 790-GET-MSG.
+    
+           MOVE GN1D-EMPLOYEE-ERR     TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+           MOVE SPACES                 TO G1-DTL-EMPLOYEE,
+                                          G1-DTL-LAST-NAME,
+                                          G1-DTL-FIRST-NAME,
+                                          G1-DTL-AGE,
+                                          G1-DTL-MONTHS,
+                                          G1-DTL-STATUS,
+                                          G1-DTL-ERROR-MSG.
+       
+    ******************************************************************
+       1000-END.
+    ******************************************************************    
+

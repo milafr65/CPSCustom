@@ -1,0 +1,22 @@
+2,14d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+<       *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+<       *                    END DATE FIELDS IN DETERMINATION OF THE     *
+<       *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+<       ******************************************************************
+<       ******************************************************************
+<       *  SDB     09/24/04  ADDED LINE TO MATCH CUSTOM PRE-MSP 8        *
+< 000100******************************************************************
+2386d2372
+< AI0010     MOVE WS-EFFECT-DATE         TO BNPEWS-START-DATE.
+7759c7745
+< ********       MOVE BEN-STOP-DATE      TO BNBEN-STOP-DATE (1)
+---
+>                MOVE BEN-STOP-DATE      TO BNBEN-STOP-DATE (1)
+7760d7745
+<                MOVE WF2-STOP-DATE  TO BNBEN-STOP-DATE (1)

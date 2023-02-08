@@ -1,0 +1,320 @@
+< IS PROD\PDLIB\BNPTBPD
+> IS VNLA\PDLIB\BNPTBPD
+2,14d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+<       *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+<       *                    END DATE FIELDS IN DETERMINATION OF THE     *
+<       *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+<       ******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+255d241
+< AI0010     MOVE BNPTB-ENROLLMENT-DATE      TO BNPEWS-START-DATE.
+836d821
+< 
+839d823
+< 
+1306,1307d1289
+< GW         MOVE PTB-STOP-DATE             TO WS-BNPTB-STOP-DATE.
+< 
+1392,1397d1373
+< 
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+1412,1419d1387
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY
+< RAY        MOVE "S"                        TO BNPTB-LINE-FC (I1).
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+< RAY        MOVE "A"                        TO BNPTB-LINE-FC (I1).
+1442,1452d1409
+< RAY
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY   *--- THE RETRO ROUTINE WILL BE PERFORMED FOR BOTH THE STOP OLD
+< RAY   *--- AND THE ADD NEW. THE STOP OLD WILL CREATE A TRIGGER, THE
+< RAY   *--- ADD WILL NOT BECAUSE THE DATE WILL BE THE SAME
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+< RAY   *----------------------------------------------------------------
+< 110000
+1461,1465d1417
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+1533,1538d1484
+< 110000
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< AI0095******************************************************************
+< RAY        PERFORM 4400-RETRO-BILL-TRIGGER.
+1542,1543d1487
+< 121100     INITIALIZE BNPTB-LINE-FC (I1).
+< 121200
+1591c1535
+< 124700
+---
+> 
+1593c1537
+< RAY
+---
+> 124900
+1594,1835d1537
+< RAY    4400-RETRO-BILL-TRIGGER.
+< AI0095******************************************************************
+< AI0095****   ANALYSTS INTERNATIONAL   RDAHL    3/24/03             *****
+< AI0095****   ENHANCEMENT FOR MOD 9.5 RETROACTIVE BILLING           *****
+< RAY   ****   TRIGGER REWRITE - HERWECK 5/5/04                      *****
+< AI0095******************************************************************
+< RAY        MOVE PTB-COMPANY                TO DB-COMPANY.
+< RAY        MOVE PTB-PLAN-TYPE              TO DB-PLAN-TYPE.
+< RAY        MOVE PTB-PLAN-CODE              TO DB-PLAN-CODE.
+< RAY        PERFORM 840-FIND-PLNSET1.
+< 
+< AI0095     IF (BNPTB-LINE-FC (I1) = "A" OR "C" OR "S")
+< RAY        AND (PLN-CONTRIB-TYPE > ZEROES)
+< AI0095         MOVE PTB-COMPANY            TO DB-COMPANY
+< AI0095         MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE
+< AI0095         MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE
+< AI0095         MOVE PTB-EMPLOYEE           TO DB-EMPLOYEE
+< RAY            MOVE PTB-PARTICIPNT         TO DB-PARTICIPNT
+< GW             MOVE PTB-START-DATE         TO DB-START-DATE
+< RAY            PERFORM 840-FIND-WBPSET1
+< RAY            IF (WBPBENEFIT-NOTFOUND)
+< RAY                MOVE ZEROES             TO WS-BNPTB-START-DATE
+< RAY                MOVE ZEROES             TO WS-BNPTB-STOP-DATE
+< RAY            ELSE
+< RAY                MOVE WBP-RETRO-START-DT TO WS-BNPTB-START-DATE
+< RAY            END-IF
+< RAY            IF (PTB-PARTICIPNT = ZEROES)
+< RAY                PERFORM 4420-GET-LAST-BILLED-DATE
+< RAY            ELSE
+< RAY                PERFORM 4425-GET-LAST-BILLED-PTB
+< RAY            END-IF
+< AI0095         IF  (BNPTB-PROCESSED-DATE = ZERO)
+< AI0095         OR  (PTB-START-DATE < BNPTB-PROCESSED-DATE)
+< RAY                PERFORM 4460-WBP-RETRO-START-DATE
+< RAY                PERFORM 4490-WRITE-RETRO-BILL-TRIGGER
+< RAY                THRU    4490-END
+< RAY            END-IF
+< RAY        END-IF. 
+< RAY
+< RAY        IF (BNPTB-LINE-FC (I1) = "D")
+< RAY        AND (PLN-CONTRIB-TYPE > ZEROES)
+< RAY            IF (PTB-PARTICIPNT = ZEROES)
+< RAY                PERFORM 4420-GET-LAST-BILLED-DATE
+< RAY            ELSE
+< RAY                PERFORM 4425-GET-LAST-BILLED-PTB
+< RAY            END-IF
+< RAY            MOVE PTB-COMPANY            TO DB-COMPANY
+< RAY            MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE
+< RAY            MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE
+< RAY            MOVE PTB-EMPLOYEE           TO DB-EMPLOYEE
+< RAY            MOVE PTB-PARTICIPNT         TO DB-PARTICIPNT
+< RAY            MOVE PTB-START-DATE         TO DB-START-DATE
+< RAY            PERFORM 840-FIND-WBPSET1
+< RAY            IF  (BNPTB-PROCESSED-DATE = ZERO)
+< RAY            OR  (PTB-START-DATE < BNPTB-PROCESSED-DATE)
+< RAY                MOVE PTB-START-DATE     TO WS-BNPTB-START-DATE
+< RAY                PERFORM 4490-WRITE-RETRO-BILL-TRIGGER
+< RAY                THRU    4490-END
+< RAY            END-IF
+< RAY        END-IF.
+< RAY
+< RAY   ******************************************************************
+< RAY    4420-GET-LAST-BILLED-DATE.
+< RAY   ******************************************************************
+< RAY
+< AI0095     MOVE ZERO                       TO BNPTB-PROCESSED-DATE.
+< AI0095     MOVE PTB-COMPANY                TO DB-COMPANY.
+< AI0095     MOVE PTB-EMPLOYEE               TO DB-EMPLOYEE.
+< RAY        MOVE PTB-PLAN-TYPE              TO DB-PLAN-TYPE.
+< RAY        MOVE PTB-PLAN-CODE              TO DB-PLAN-CODE.
+< AI0095     MOVE PBHSETW1-PLAN-CODE          TO WS-DB-BEG-RNG.
+< AI0095     PERFORM 850-FIND-BEGRNG-PBHSETW1.
+< AI0095     PERFORM
+< AI0095     UNTIL (PBHSTDTL-NOTFOUND)
+< AI0095         MOVE PBH-COMPANY            TO DB-COMPANY
+< AI0095         MOVE PBH-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+< AI0095         MOVE PBH-INVOICE            TO DB-INVOICE
+< AI0095         PERFORM 840-FIND-PBKSET1
+< AI0095         IF  (PBHSTHDR-FOUND)
+< AI0095         AND (PBK-PER-END-DATE > BNPTB-PROCESSED-DATE)
+< AI0095             MOVE PBK-PER-END-DATE   TO BNPTB-PROCESSED-DATE
+< AI0095         END-IF
+< AI0095         PERFORM 860-FIND-NXTRNG-PBHSETW1
+< AI0095     END-PERFORM.
+< RAY
+< RAY   *    PERFORM 4430-GET-LAST-BILL-PERIOD.
+< RAY    
+< RAY   ******************************************************************
+< RAY    4425-GET-LAST-BILLED-PTB.
+< RAY   ******************************************************************
+< RAY
+< AI0095         MOVE ZERO                   TO BNPTB-PROCESSED-DATE.
+< RAY
+< RAY            MOVE PTB-COMPANY            TO DB-COMPANY.
+< RAY            MOVE PTB-PARTICIPNT         TO DB-CUSTOMER.
+< RAY            MOVE "D"                    TO DB-CUSTOMER(1:1).
+< RAY            INITIALIZE                     DB-PER-END-DATE.
+< RAY            INITIALIZE                     DB-INVOICE.
+< RAY            MOVE PBKSETW1-CUSTOMER TO WS-DB-BEG-RNG.
+< RAY            PERFORM 850-FIND-BEGRNG-PBKSETW1.
+< RAY            PERFORM
+< RAY            UNTIL (PBHSTHDR-NOTFOUND)
+< RAY            OR (BNPTB-PROCESSED-DATE > ZEROES)
+< RAY                MOVE PBK-COMPANY        TO DB-COMPANY
+< RAY                MOVE PBK-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+< RAY                MOVE PBK-INVOICE        TO DB-INVOICE
+< RAY                MOVE PBHSET1-INVOICE    TO WS-DB-BEG-RNG
+< RAY                PERFORM 850-FIND-BEGRNG-PBHSET1
+< RAY                PERFORM 
+< RAY                UNTIL (PBHSTDTL-NOTFOUND)
+< RAY                OR (BNPTB-PROCESSED-DATE > ZEROES)
+< RAY                    IF  (PBHSTDTL-FOUND)
+< RAY                    AND (PBH-PLAN-TYPE = PTB-PLAN-TYPE)
+< RAY                    AND (PBH-PLAN-CODE = PTB-PLAN-CODE)
+< RAY                        MOVE PBK-PER-END-DATE TO BNPTB-PROCESSED-DATE
+< RAY                    ELSE   
+< RAY                        PERFORM 860-FIND-NXTRNG-PBHSET1
+< RAY                    END-IF
+< RAY                END-PERFORM
+< RAY                PERFORM 860-FIND-NXTRNG-PBKSETW1
+< RAY            END-PERFORM.
+< RAY
+< RAY   *    PERFORM 4430-GET-LAST-BILL-PERIOD.
+< RAY 
+< RAY   ******************************************************************
+< RAY   *4430-GET-LAST-BILL-PERIOD.
+< RAY   ******************************************************************
+< RAY   *    MOVE EMP-COMPANY                TO DB-COMPANY.
+< RAY   *    MOVE EMP-PROCESS-LEVEL          TO DB-PROCESS-LEVEL.
+< RAY   *    MOVE PTB-PLAN-TYPE              TO DB-PLAN-TYPE.
+< RAY   *    MOVE PTB-PLAN-CODE              TO DB-PLAN-CODE.
+< RAY   *    PERFORM 840-FIND-PBLSET1.
+< RAY   *--- USED DURING THE WRITE TO SEE IF ITS A FUTURE BILLING PERIOD
+< RAY   *    REMOVED 7/2004 - PBL ISN'T THERE IF THIS PLAN DIDN'T HAVE
+< RAY   *            ANYONE TO BILL FOR THE PAST MONTH. IT WOULD WORK IF 
+< RAY   *            YOU COULD JUST LOOK FOR THE HIGHEST DATE FOR THE
+< RAY   *            PROCESS LEVEL, REGARDLESS OF PLAN TYPE/CODE.
+< RAY
+< RAY   ******************************************************************
+< RAY    4460-WBP-RETRO-START-DATE.
+< RAY   ******************************************************************
+< RAY      
+< RAY        MOVE PTB-START-DATE         TO WS-BNPTB-START-DATE.
+< RAY   *    -------------------------------------------------------------
+< RAY   *    | IF THIS IS A NEW STOP DATE, CHANGE RETRO START DATE       |
+< RAY   *    | TO 1 DAY AFTER THE NEW STOP DATE.                         |
+< RAY   *    | NO NEED TO RECALC MONTHS THAT WERE BILLED CORRECTLY.      |
+< RAY   *    -------------------------------------------------------------
+< RAY        IF (BNPTB-LINE-FC (I1) NOT = "A")
+< GW         AND ((WS-BNPTB-STOP-DATE  = ZERO)
+< GW         OR  (WS-BNPTB-STOP-DATE  > PTB-STOP-DATE))
+< RAY        AND (PTB-STOP-DATE > ZERO)
+< GW             MOVE PTB-STOP-DATE  TO WSDR-FR-DATE
+< GW             PERFORM 900-DATE-TO-JULIAN
+< GW             ADD 1 TO WSDR-JULIAN-DAYS
+< GW             PERFORM 900-JULIAN-TO-DATE
+< RAY   *---     DON'T REPLACE AN EARLIER RETRO START DATE
+< RAY            IF (WSDR-FR-DATE < WS-BNPTB-START-DATE)
+< RAY            OR (WS-BNPTB-STOP-DATE = ZERO)
+< GW                 MOVE WSDR-FR-DATE   TO WS-BNPTB-START-DATE.
+< RAY
+< RAY   ******************************************************************
+< RAY    4490-WRITE-RETRO-BILL-TRIGGER.
+< RAY   ******************************************************************
+< RAY
+< RAY   *--- SKIP WRITE IF THE RETRO START DATE ALREADY EXISTS FOR THE 
+< RAY   *    SAME PLAN TYPE/PLAN CODE WITH A DIFFERENT START DATE
+< RAY        MOVE PTB-COMPANY            TO DB-COMPANY.
+< RAY        MOVE ZEROES                 TO DB-STATUS.
+< RAY        MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE.
+< RAY        MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE.
+< RAY        MOVE PTB-EMPLOYEE           TO DB-EMPLOYEE.
+< RAY        MOVE PTB-PARTICIPNT         TO DB-PARTICIPNT.
+< RAY        INITIALIZE                     DB-START-DATE.
+< RAY        MOVE WBPSET4-PARTICIPNT     TO WS-DB-BEG-RNG.
+< RAY        PERFORM 850-FIND-BEGRNG-WBPSET4.
+< RAY        PERFORM 
+< RAY        UNTIL (WBPBENEFIT-NOTFOUND)
+< RAY            IF (WBP-RETRO-START-DT <= WS-BNPTB-START-DATE)
+< RAY                GO TO 4490-END
+< RAY            END-IF
+< RAY            PERFORM 860-FIND-NXTRNG-WBPSET4
+< RAY        END-PERFORM.
+< RAY
+< RAY   *--- SKIP WRITE IF FUTURE DATED RETRO
+< RAY   *    IF (PBBNPLAN-FOUND)
+< RAY   *    AND (WS-BNPTB-START-DATE > PBL-LAST-BILLED-DT)
+< RAY   *        GO TO 4490-END.
+< RAY
+< RAY        IF  ((PTB-STOP-DATE        > ZERO)
+< RAY        AND  (BNPTB-PROCESSED-DATE > ZERO)
+< RAY        AND  (PTB-STOP-DATE        > BNPTB-PROCESSED-DATE))
+< RAY        OR  ((BNPTB-PROCESSED-DATE > ZEROES)
+< RAY        AND (WS-BNPTB-START-DATE   >= BNPTB-PROCESSED-DATE))
+< RAY            GO TO 4490-END.
+< RAY              
+< RAY        MOVE PTB-COMPANY            TO DB-COMPANY.
+< RAY        MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE.
+< RAY        MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE.
+< RAY        MOVE PTB-EMPLOYEE           TO DB-EMPLOYEE.
+< RAY        MOVE PTB-PARTICIPNT         TO DB-PARTICIPNT.
+< RAY        INITIALIZE                     DB-START-DATE.
+<            MOVE WBPSET1-PARTICIPNT     TO WS-DB-BEG-RNG.
+< RAY        PERFORM 850-MODIFY-BEGRNG-WBPSET1.
+< RAY        IF (WBPBENEFIT-FOUND)
+< RAY            PERFORM 830-DELETE-WBPBENEFIT
+< RAY        END-IF.                      
+< RAY        PERFORM 800-CREATE-WBPBENEFIT.
+< RAY        MOVE PTB-COMPANY            TO WBP-COMPANY.
+< RAY        MOVE PTB-PLAN-TYPE          TO WBP-PLAN-TYPE.
+< RAY        MOVE PTB-PLAN-CODE          TO WBP-PLAN-CODE.
+< RAY        MOVE PTB-EMPLOYEE           TO WBP-EMPLOYEE.
+< RAY        MOVE PTB-PARTICIPNT         TO WBP-PARTICIPNT.
+< RAY        MOVE PTB-START-DATE         TO WBP-START-DATE.
+< RAY
+< RAY        PERFORM 4495-WBPBENEFIT-COMMON-FLDS.
+< RAY        MOVE WS-BNPTB-START-DATE    TO WBP-RETRO-START-DT.
+< RAY        PERFORM 820-STORE-WBPBENEFIT.
+< RAY    
+< RAY    4490-END.
+< RAY
+< RAY   ******************************************************************
+< RAY    4495-WBPBENEFIT-COMMON-FLDS.
+< RAY   ******************************************************************
+< RAY
+< AI0095         MOVE HHMMSS                 TO WBP-TIME-STAMP.
+< AI0095         MOVE CRT-USER-NAME          TO WBP-USER-ID.
+< AI0095         MOVE WS-SYSTEM-DATE-YMD     TO WBP-UPD-DATE.
+< AI0095         MOVE CRT-PROGRAM-CODE       TO WBP-PROGRAM-CODE.
+< RAY
+< AI0095         IF (CRT-PROGRAM-CODE = "BN100")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN101")  
+< AI0095         OR (CRT-PROGRAM-CODE = "BN102")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN103")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN104")
+< AI0095         OR (CRT-PROGRAM-CODE = "BN105")
+< AI0095             MOVE CRT-PROGRAM-CODE   TO WBP-USER-ID.
+< RAY
+< GW             MOVE ZERO                   TO WBP-STATUS.
+< GW             MOVE ZERO                   TO WBP-PROCESS-DATE.
+< GW             MOVE ZERO                   TO WBP-PROCESS-TIME.
+< RAY

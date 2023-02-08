@@ -1,0 +1,2246 @@
+      ******************************************************************
+      *                             WB10PD                             *
+      ******************************************************************
+      ******************************************************************
+      *                     MODIFICATION LOG                           *
+      * 05/21/03  AI0521  BJR  CHANGED CODE TO JUST MOVE THE RELATION- *
+      *                        SHIP CODE RATHER THAN THE DESCRIPTION.  *
+      *                                                                *
+      * 10/07/04  MJK001  MJK  ADDED MIDDLE INITIAL TO NAME            *
+      *                                                                *
+      * 07/15/05  MLG001  MLG  ADDED CODE FOR ZN33 HYPERLINK           *
+      *                                                                *
+      * 06/16/05  MLG002  MLG  ADDED CODE FOR ZH11 HYPERLINK           *
+      *                                                                *
+      ******************************************************************
+      * 7/2008 GW ADDED CODE FOR ZD10 BUTTON                           *
+      ******************************************************************
+      * 12/2010 KShields Adapted for 9.0.0                             *
+      ******************************************************************
+      * 4/2011 SDB ADDED LOGIC TO MOVE IN NAME FOR EMDEPEND   SDB411   *
+      ******************************************************************
+      * 4/2012 SDB WO1517 ADDED LOGIC FOR THE BN72 BUTTON   (SDB412)   *
+      ******************************************************************
+      * 1/2014 SDB FP5124 ADDED LOGIC FOR THE BN72 BUTTON   (SDB5124   *
+      *================================================================*
+      * 6/2016 SDB SR1376 SHOW BN72 BUTTON IF ANY RECORDS 
+      ******************************************************************
+       WB10S1-TRANSACTION              SECTION 10.
+      ******************************************************************
+       WB10S1-START.
+      
+           PERFORM 200-EDIT-TRAN
+           THRU    200-END.
+      
+           IF (NO-ERROR-FOUND)
+               PERFORM 400-PROCESS-TRAN
+               THRU    400-END.
+      
+           GO TO WB10S1-TRANSACTION-END.
+      
+      ******************************************************************
+       200-EDIT-TRAN.
+      ******************************************************************
+      
+           PERFORM 210-EDIT-ACCESS
+           THRU    210-END.
+      
+           IF (ERROR-FOUND)
+               GO TO 200-END.
+      
+       200-END.
+      
+      ******************************************************************
+       210-EDIT-ACCESS.
+      ******************************************************************
+      
+           MOVE WB10F1-EMD-COMPANY                  TO DB-COMPANY.
+           MOVE SPACES                              TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+           IF (PRSYSTEM-NOTFOUND)
+               MOVE 100                             TO CRT-ERROR-NBR
+               MOVE WB10F1-EMD-COMPANY-FN           TO CRT-FIELD-NBR
+               GO TO 210-END
+           ELSE
+               MOVE PRS-NAME                         TO WB10F1-PRS-NAME.
+      
+      
+           IF  (WB10F1-EMD-EMPLOYEE = ZEROES)
+           AND (WB10F1-SSN          = SPACES)
+           AND (WB10F1-FIRST-NAME   = SPACES)
+           AND (WB10F1-LAST-NAME    = SPACES)
+           AND (WB10F1-BIRTHDATE    = ZEROES)
+               MOVE 107                             TO CRT-ERROR-NBR
+               MOVE WB10F1-FC-FN                    TO CRT-FIELD-NBR
+               GO TO 210-END.
+      
+           IF (WB10F1-FC = "+" OR "-")
+               GO TO 210-END.
+      
+           IF (WB10F1-EMD-EMPLOYEE NOT = ZEROES)
+               MOVE WB10F1-EMD-EMPLOYEE             TO DB-EMPLOYEE
+               PERFORM 840-FIND-PEMSET1
+               IF (PAEMPLOYEE-NOTFOUND)
+                   MOVE 101                         TO CRT-ERROR-NBR
+                   MOVE WB10F1-EMD-EMPLOYEE-FN      TO CRT-FIELD-NBR
+                   GO TO 210-END
+               ELSE
+                   PERFORM 840-FIND-EMPSET1
+                   IF (EMPLOYEE-NOTFOUND)
+                       MOVE 102                     TO CRT-ERROR-NBR
+                       MOVE WB10F1-EMD-EMPLOYEE-FN  TO CRT-FIELD-NBR
+                       GO TO 210-END
+                   ELSE
+                       MOVE EMP-FICA-NBR            TO WB10F1-SSN.
+      
+           IF (WB10F1-SSN (1:9) IS NUMERIC)
+               MOVE WB10F1-SSN (1:9)                TO WB10WS-SSN
+               MOVE WB10WS-SSN-NUM                  TO WB10WS-SSN-EDIT
+               INSPECT WB10WS-SSN-EDIT
+                   REPLACING ALL SPACE              BY "-"
+               MOVE WB10WS-SSN-EDIT                 TO WB10F1-SSN.
+
+           IF (WB10F1-SSN NOT = SPACES)
+               MOVE WB10F1-SSN                      TO DB-FICA-NBR
+               MOVE EMPSET4-FICA-NBR                TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMPSET4
+               IF (EMPLOYEE-NOTFOUND)
+                   MOVE WB10F1-SSN                  TO DB-FICA-NBR
+                   MOVE EMDSET21-FICA-NBR           TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-EMDSET21
+                   IF (EMDEPEND-NOTFOUND)
+                       MOVE 103                     TO CRT-ERROR-NBR
+                       MOVE WB10F1-SSN-FN           TO CRT-FIELD-NBR
+                       GO TO 210-END
+                   END-IF
+               ELSE
+                   MOVE EMP-EMPLOYEE                TO DB-EMPLOYEE
+                   PERFORM 840-FIND-PEMSET1
+                   IF (PAEMPLOYEE-NOTFOUND)
+                       MOVE 101                     TO CRT-ERROR-NBR
+                       MOVE WB10F1-SSN-FN           TO CRT-FIELD-NBR
+                       GO TO 210-END.
+      
+           IF  (WB10F1-EMD-EMPLOYEE = ZEROES)
+           AND (WB10F1-SSN          = SPACES)
+               IF (WB10F1-FIRST-NAME = SPACES)
+                   MOVE 104                         TO CRT-ERROR-NBR
+                   MOVE WB10F1-FIRST-NAME-FN        TO CRT-FIELD-NBR
+                   GO TO 210-END
+               END-IF
+               IF (WB10F1-LAST-NAME = SPACES)
+                   MOVE 104                         TO CRT-ERROR-NBR
+                   MOVE WB10F1-LAST-NAME-FN         TO CRT-FIELD-NBR
+                   GO TO 210-END.
+      
+           IF  (WB10F1-FIRST-NAME NOT = SPACES)
+           AND (WB10F1-LAST-NAME NOT = SPACES)
+               MOVE WB10F1-EMD-COMPANY              TO DB-COMPANY
+               MOVE WB10F1-LAST-NAME                TO DB-LAST-NAME-UC
+               MOVE WB10F1-FIRST-NAME               TO DB-FIRST-NAME-UC
+               MOVE EMPSET6-FIRST-NAME-UC              TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMPSET6
+               IF (EMPLOYEE-NOTFOUND)
+                   MOVE EMDSET23-FIRST-NAME         TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-EMDSET23
+                   IF (EMDEPEND-NOTFOUND)
+                       IF (WB10F1-BIRTHDATE = ZEROES)
+                           MOVE 105                 TO CRT-ERROR-NBR
+                           MOVE WB10F1-FIRST-NAME-FN
+                                                    TO CRT-FIELD-NBR
+                           GO TO 210-END
+                       ELSE
+                           MOVE WB10F1-EMD-COMPANY  TO DB-COMPANY
+                           MOVE WB10F1-BIRTHDATE    TO DB-BIRTHDATE
+                           MOVE PEMSET20-BIRTHDATE  TO WS-DB-BEG-RNG
+                           PERFORM 850-FIND-BEGRNG-PEMSET20
+                           IF (PAEMPLOYEE-NOTFOUND)
+                               MOVE EMDSET20-BIRTHDATE TO WS-DB-BEG-RNG
+                               PERFORM 850-FIND-BEGRNG-EMDSET20
+                               IF (EMDEPEND-NOTFOUND)
+                                   MOVE 108         TO CRT-ERROR-NBR
+                                   MOVE WB10F1-BIRTHDATE-FN
+                                                    TO CRT-FIELD-NBR
+                                   GO TO 210-END
+                               END-IF
+                           ELSE
+                               MOVE PEM-EMPLOYEE    TO DB-EMPLOYEE
+                               PERFORM 840-FIND-EMPSET1
+                           END-IF
+                       END-IF
+                   END-IF
+               END-IF
+           ELSE
+           IF (WB10F1-BIRTHDATE NOT = ZEROES)
+               MOVE WB10F1-EMD-COMPANY              TO DB-COMPANY
+               MOVE WB10F1-BIRTHDATE                TO DB-BIRTHDATE
+               MOVE PEMSET20-BIRTHDATE              TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PEMSET20
+               IF (PAEMPLOYEE-NOTFOUND)
+                   MOVE EMDSET20-BIRTHDATE          TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-EMDSET20
+                   IF (EMDEPEND-NOTFOUND)
+                       MOVE 106                     TO CRT-ERROR-NBR
+                       MOVE WB10F1-BIRTHDATE-FN     TO CRT-FIELD-NBR
+                       GO TO 210-END
+                   END-IF
+               ELSE
+                   MOVE PEM-EMPLOYEE                TO DB-EMPLOYEE
+                   PERFORM 840-FIND-EMPSET1.
+      
+       210-END.
+      
+      ******************************************************************
+       400-PROCESS-TRAN.
+      ******************************************************************
+      
+           IF (WB10F1-FC = "I" OR "-" OR "+")
+               PERFORM 480-INQUIRE
+               THRU    480-END.
+      
+       400-END.
+      
+      ******************************************************************
+       480-INQUIRE.
+      ******************************************************************
+      
+      
+           PERFORM 900-BUILD-TMP-FILE-NAME.
+           MOVE WS-TMP-FILE                TO WB10WS-FILENAME.
+      
+           PERFORM 9810-OPEN-IO-WB10TEMP
+           THRU    9810-END.
+      
+           PERFORM 500-FILL-RECORDS
+           THRU    500-END.
+      
+      *** Move records from workfile to array to display on screen ***
+      
+           PERFORM 590-FILL-TABLE
+           THRU    590-END.
+      
+           IF (WB10F1-FC = "I")
+               INITIALIZE WB10F1-PT-TOP
+                          WB10F1-PT-BOTTOM
+                          WB10F1-DETAIL-GROUP
+               MOVE "+"                    TO WB10F1-FC.
+      
+           IF (WB10F1-FC = "+")
+               MOVE WB10F1-PT-BOTTOM       TO I2
+               IF   (I2                        < WB10WS-TABLE-MAX)
+               AND ((WB10WS-DTL-LAST (I2 + 1)    NOT = SPACES)
+                OR  (WB10WS-DTL-EMP-NBR (I2 + 1) NOT = ZEROES)
+                OR  (WB10WS-DEPEND-NBR (I2 + 1)  NOT = ZEROES))
+                   INITIALIZE WB10F1-DETAIL-GROUP
+                   PERFORM 610-PROCESS-DETAIL
+                   THRU    610-END
+                       VARYING I1 FROM 1 BY 1
+                       UNTIL  (I1 > WB10WS-SCR-DTL-MAX)
+                   ADD WB10WS-SCR-DTL-MAX    TO WB10F1-PT-BOTTOM
+                   COMPUTE WB10F1-PT-TOP     = WB10F1-PT-BOTTOM
+                                             - WB10WS-SCR-DTL-MAX + 1
+                   IF  (I2                        < WB10WS-TABLE-MAX)
+                   AND (WB10WS-DTL-LAST (I2 + 1)    = SPACES)
+                   AND (WB10WS-DTL-EMP-NBR (I2 + 1) = ZEROES)
+                   AND (WB10WS-DEPEND-NBR (I2 + 1)  = ZEROES)
+                       MOVE CRT-INQ-COMPLETE TO CRT-MESSAGE
+                   ELSE
+                       MOVE CRT-MORE-RECS    TO CRT-MESSAGE
+                   END-IF
+               ELSE
+               IF  (I2                        < WB10WS-TABLE-MAX)
+               AND (WB10WS-DTL-LAST (I2 + 1)    = SPACES)
+               AND (WB10WS-DTL-EMP-NBR (I2 + 1) = ZEROES)
+               AND (WB10WS-DEPEND-NBR (I2 + 1)  = ZEROES)
+                   MOVE CRT-INQ-COMPLETE     TO CRT-MESSAGE
+               ELSE
+                   MOVE 11                          TO CRT-ERROR-NBR
+                   MOVE WB10F1-FC-FN                TO CRT-FIELD-NBR
+               END-IF
+               END-IF
+           ELSE
+           IF (WB10F1-PT-TOP > 1)
+               INITIALIZE WB10F1-DETAIL-GROUP
+               MOVE WB10F1-PT-TOP            TO I2
+               PERFORM 610-PROCESS-DETAIL
+               THRU    610-END
+                   VARYING I1 FROM WB10WS-SCR-DTL-MAX BY -1
+                   UNTIL  (I1 < 1)
+               SUBTRACT WB10WS-SCR-DTL-MAX   FROM WB10F1-PT-TOP
+                                                  WB10F1-PT-BOTTOM
+               IF (WB10F1-PT-TOP = 1)
+                   MOVE CRT-INQ-COMPLETE     TO CRT-MESSAGE
+               ELSE
+                   MOVE CRT-MORE-RECS        TO CRT-MESSAGE
+               END-IF
+           ELSE
+               MOVE 11                              TO CRT-ERROR-NBR
+               MOVE WB10F1-FC-FN                    TO CRT-FIELD-NBR.
+      
+      
+           IF (WB10WS-DTL-LAST (WB10WS-TABLE-MAX)    NOT = SPACES)
+           OR (WB10WS-DTL-EMP-NBR (WB10WS-TABLE-MAX) NOT = ZEROES)
+           OR (WB10WS-DEPEND-NBR (WB10WS-TABLE-MAX)  NOT = ZEROES)
+               MOVE "WB10"                   TO CRT-ERROR-CAT
+               MOVE 900                             TO CRT-ERROR-NBR.
+      
+           PERFORM 9900-CLOSE-WB10TEMP
+           THRU    9900-END.
+      
+           MOVE WB10WS-FILENAME              TO WS-TMP-FILE.
+           PERFORM 901-REMOVE-TMP-FILE.
+      
+       480-END.
+      
+      ******************************************************************
+       500-FILL-RECORDS.
+      ******************************************************************
+      
+           MOVE "A-Cross Ref ID"         TO WB10WS-FLD-PREFIX.
+           MOVE 1                        TO WB10WS-FLD-SUFFIX.
+           MOVE ZEROES                   TO WB10WS-SAVE-REL-EMP-NBR.
+      
+      ***  Fill record sequence handled by Record type.
+      ***  Record type 1 = Employee details
+      ***  Record type 2 = Related employee record
+      ***  Record type 3 = Dependent details
+      ***  Record type 4 = Dep related employee record
+      
+           IF (WB10F1-SSN NOT = SPACES)
+               MOVE WB10F1-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F1-SSN           TO DB-FICA-NBR
+               MOVE EMPSET4-FICA-NBR     TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMPSET4
+               PERFORM
+                   UNTIL (EMPLOYEE-NOTFOUND)
+      
+                   PERFORM 501-WRITE-EMPLOYEE
+                   THRU    501-END
+      
+                   PERFORM 503-GET-USERFLDS-FOR-EMP
+                   THRU    503-END
+      
+                   PERFORM 860-FIND-NXTRNG-EMPSET4
+               END-PERFORM
+      
+               MOVE WB10F1-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F1-SSN           TO DB-FICA-NBR
+               MOVE EMDSET21-FICA-NBR    TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMDSET21
+               PERFORM
+                   UNTIL (EMDEPEND-NOTFOUND)
+      
+                   PERFORM 502-WRITE-DEPENDENT
+                   THRU    502-END
+      
+                   PERFORM 506-GET-USERFLDS-FOR-DEP
+                   THRU    506-END
+      
+                   PERFORM 860-FIND-NXTRNG-EMDSET21
+               END-PERFORM.
+      
+           MOVE WS-TRUE                  TO WB10WS-SKIP-BIRTHDATE-PROC.
+      
+           IF  (WB10F1-FIRST-NAME NOT = SPACES)
+           AND (WB10F1-LAST-NAME  NOT = SPACES)
+               MOVE WB10F1-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F1-LAST-NAME     TO DB-LAST-NAME-UC
+               MOVE WB10F1-FIRST-NAME    TO DB-FIRST-NAME-UC
+               MOVE EMPSET6-FIRST-NAME-UC   TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMPSET6
+               IF (EMPLOYEE-FOUND)
+                   PERFORM
+                       UNTIL (EMPLOYEE-NOTFOUND)
+                       MOVE EMP-EMPLOYEE TO DB-EMPLOYEE
+                       PERFORM 840-FIND-PEMSET1
+      
+                       IF  ((WB10F1-SEX NOT = SPACES)
+                       AND  (WB10F1-SEX = PEM-SEX))
+                       OR   (WB10F1-SEX = SPACES)
+                           PERFORM 501-WRITE-EMPLOYEE
+                           THRU    501-END
+      
+                           PERFORM 503-GET-USERFLDS-FOR-EMP
+                           THRU    503-END
+                       END-IF
+      
+                       PERFORM 860-FIND-NXTRNG-EMPSET6
+                   END-PERFORM
+               ELSE
+                   MOVE WS-FALSE         TO WB10WS-SKIP-BIRTHDATE-PROC
+               END-IF
+      
+               MOVE WB10F1-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F1-LAST-NAME     TO DB-LAST-NAME
+               MOVE WB10F1-FIRST-NAME    TO DB-FIRST-NAME
+               MOVE EMDSET23-FIRST-NAME  TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMDSET23
+               IF (EMDEPEND-FOUND)
+      
+                   PERFORM
+                       UNTIL (EMDEPEND-NOTFOUND)
+      
+                       IF  ((WB10F1-SEX NOT = SPACES)
+                       AND  (WB10F1-SEX = EMD-SEX))
+                       OR   (WB10F1-SEX = SPACES)
+                           PERFORM 502-WRITE-DEPENDENT
+                           THRU    502-END
+      
+                           PERFORM 506-GET-USERFLDS-FOR-DEP
+                           THRU    506-END
+      
+                       END-IF
+                       PERFORM 860-FIND-NXTRNG-EMDSET23
+                   END-PERFORM
+               ELSE
+                   MOVE WS-FALSE         TO WB10WS-SKIP-BIRTHDATE-PROC
+               END-IF
+           ELSE
+               MOVE WS-FALSE             TO WB10WS-SKIP-BIRTHDATE-PROC
+           END-IF.
+      
+           IF  (WB10F1-BIRTHDATE           NOT = ZEROES)
+           AND (WB10WS-SKIP-BIRTHDATE-PROC = WS-FALSE)
+               PERFORM 507-DO-EMP-FOR-BIRTHDATE
+               THRU    507-END
+      
+               PERFORM 508-DO-DEP-FOR-BIRTHDATE
+               THRU    508-END.
+      
+       500-END.
+      
+      ******************************************************************
+       501-WRITE-EMPLOYEE.
+      ******************************************************************
+      
+           INITIALIZE WB10TEMP-REC.
+      *** Rec-key
+           MOVE WB10F1-EMD-COMPANY     TO WF1-COMPANY.
+      *    MOVE WB10F1-SSN             TO WF1-FICA-NBR.
+      *    MOVE WB10F1-EMD-EMPLOYEE    TO WF1-EMPLOYEE.
+           MOVE 1                      TO WF1-EMP-RECORD-TYPE.
+           MOVE EMP-LAST-NAME          TO WF1-DTL-LAST.
+           MOVE EMP-FIRST-NAME         TO WF1-DTL-FIRST.
+MJK001     MOVE EMP-MIDDLE-INIT        TO WF1-MIDDLE-INIT.
+           MOVE EMP-EMPLOYEE           TO WF1-DTL-EMP-NBR.
+           MOVE EMP-FICA-NBR           TO WF1-DTL-SSN.
+      
+           MOVE EMP-EMP-STATUS         TO WF1-EMP-STATUS.
+           MOVE PEM-BIRTHDATE          TO WF1-BIRTHDATE.
+           MOVE PEM-SEX                TO WF1-GENDER.
+      
+           MOVE ZEROES                 TO WF1-REL-EMP-NBR.
+      
+           PERFORM 8000-WRITE-DETAIL
+           THRU    8000-END.
+      
+       501-END.
+      
+      ******************************************************************
+       502-WRITE-DEPENDENT.
+      ******************************************************************
+      
+           INITIALIZE WB10TEMP-REC.
+      
+           MOVE WB10F1-EMD-COMPANY     TO WF1-COMPANY.
+      *    MOVE WB10F1-SSN             TO WF1-FICA-NBR.
+      *    MOVE WB10F1-EMD-EMPLOYEE    TO WF1-EMPLOYEE.
+           MOVE EMD-SEQ-NBR            TO WF1-DEPEND-NBR.
+           MOVE EMD-LAST-NAME          TO WF1-DTL-LAST.
+           MOVE EMD-FIRST-NAME         TO WF1-DTL-FIRST.
+MJK001     MOVE EMD-MIDDLE-INIT        TO WF1-MIDDLE-INIT.
+           MOVE ZEROES                 TO WF1-REL-EMP-NBR.
+           MOVE EMD-FICA-NBR           TO WF1-DTL-SSN.
+      
+           MOVE EMD-EMPLOYEE           TO WF1-DTL-EMP-NBR.
+           MOVE WS-HIGH-VALUES         TO WF1-EMP-RECORD-TYPE.
+           MOVE 3                      TO WF1-DEP-RECORD-TYPE.
+      
+           MOVE EMD-EMPLOYEE           TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           PERFORM 840-FIND-PEMSET1.
+      
+           MOVE EMD-ACTIVE-FLAG        TO WF1-EMP-STATUS.
+           MOVE EMD-BIRTHDATE          TO WF1-BIRTHDATE.
+           MOVE EMD-SEX                TO WF1-GENDER.
+           MOVE EMD-REL-CODE           TO WF1-RELATIONSHIP.
+      
+      
+           PERFORM 8000-WRITE-DETAIL
+           THRU    8000-END.
+      
+       502-END.
+      
+      ******************************************************************
+       503-GET-USERFLDS-FOR-EMP.
+      ******************************************************************
+      
+           MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+           PERFORM 840-FIND-PEMSET1.
+           IF (PAEMPLOYEE-NOTFOUND)
+               INITIALIZE PAEMPLOYEE.
+      
+           MOVE 1                      TO WB10WS-FLD-SUFFIX.
+      
+           PERFORM
+               UNTIL (WB10WS-FLD-SUFFIX > 7)
+               MOVE "A"                TO DB-FIELD-TYPE
+               MOVE WB10WS-USER-FIELDS TO DB-FIELD-NAME
+               PERFORM 840-FIND-HRUSET5
+               IF (HRUSERFLDS-FOUND)
+                   PERFORM 510-WRITE-EMP-DETAILS
+                   THRU    510-END
+               END-IF
+               ADD 1                   TO WB10WS-FLD-SUFFIX
+      
+           END-PERFORM.
+      
+       503-END.
+      
+      
+      ******************************************************************
+       506-GET-USERFLDS-FOR-DEP.
+      ******************************************************************
+      
+           MOVE 1                      TO WB10WS-FLD-SUFFIX.
+      
+           PERFORM
+               UNTIL (WB10WS-FLD-SUFFIX > 7)
+               MOVE "A"                TO DB-FIELD-TYPE
+               MOVE WB10WS-USER-FIELDS TO DB-FIELD-NAME
+               PERFORM 840-FIND-HRUSET5
+               IF (HRUSERFLDS-FOUND)
+                   PERFORM 520-MOVE-DEPEND-DETAILS
+                   THRU    520-END
+                   PERFORM 8000-WRITE-DETAIL
+                   THRU    8000-END
+               END-IF
+               ADD 1                   TO WB10WS-FLD-SUFFIX
+      
+           END-PERFORM.
+      
+       506-END.
+      
+      ******************************************************************
+       507-DO-EMP-FOR-BIRTHDATE.
+      ******************************************************************
+      
+           IF (WB10F1-BIRTHDATE NOT = ZEROES)
+               MOVE WB10F1-EMD-COMPANY TO DB-COMPANY
+               MOVE WB10F1-BIRTHDATE   TO DB-BIRTHDATE
+               MOVE PEMSET20-BIRTHDATE TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PEMSET20
+               PERFORM
+                   UNTIL (PAEMPLOYEE-NOTFOUND)
+      
+                   MOVE PEM-EMPLOYEE   TO DB-EMPLOYEE
+                   PERFORM 840-FIND-EMPSET1
+      
+                   IF   ((WB10F1-SEX         NOT = SPACES)
+                   AND   (WB10F1-SEX         = PEM-SEX))
+                   OR     (WB10F1-SEX         = SPACES)
+      
+                       PERFORM 501-WRITE-EMPLOYEE
+                       THRU    501-END
+      
+                       PERFORM 503-GET-USERFLDS-FOR-EMP
+                       THRU    503-END
+                   END-IF
+      
+                   PERFORM 860-FIND-NXTRNG-PEMSET20
+               END-PERFORM.
+      
+       507-END.
+      
+      ******************************************************************
+       508-DO-DEP-FOR-BIRTHDATE.
+      ******************************************************************
+      
+           IF (WB10F1-BIRTHDATE NOT = ZEROES)
+               MOVE WB10F1-EMD-COMPANY TO DB-COMPANY
+               MOVE WB10F1-BIRTHDATE   TO DB-BIRTHDATE
+               MOVE EMDSET20-BIRTHDATE TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMDSET20
+               PERFORM
+                   UNTIL (EMDEPEND-NOTFOUND)
+      
+                   IF   ((WB10F1-SEX          NOT = SPACES)
+                   AND   (WB10F1-SEX          = EMD-SEX))
+                   OR     (WB10F1-SEX          = SPACES)
+      
+                       PERFORM 502-WRITE-DEPENDENT
+                       THRU    502-END
+      
+                       PERFORM 506-GET-USERFLDS-FOR-DEP
+                       THRU    506-END
+                   END-IF
+      
+                   PERFORM 860-FIND-NXTRNG-EMDSET20
+               END-PERFORM.
+      
+       508-END.
+      
+      ******************************************************************
+       510-WRITE-EMP-DETAILS.
+      ******************************************************************
+      
+           MOVE ZEROES                       TO WB10WS-SAVE-REL-EMP-NBR.
+      
+           MOVE EMP-COMPANY                  TO DB-COMPANY.
+           INITIALIZE DB-EMP-APP.
+           MOVE EMP-EMPLOYEE                 TO DB-EMPLOYEE.
+           MOVE HRU-FIELD-KEY                TO DB-FIELD-KEY.
+           PERFORM 840-FIND-HEUSET1.
+           IF (HREMPUSF-NOTFOUND)
+               GO TO 510-END.
+      
+           MOVE EMP-EMPLOYEE                 TO WB10WS-SAVE-REL-EMP-NBR.
+      
+      ***  HEU-A-FIELD defined for Employee relationship for Xref field
+      ***  is defined as a left justified Alpha field. This should be
+      ***  converted to Numeric for reading Employee table.
+      
+           INITIALIZE WB10WS-ALPHA-NBR
+                      WB10WS-NUM-OF-DIGITS
+                      WB10WS-NUMERIC.
+      
+           MOVE HEU-A-FIELD                  TO WB10WS-ALPHA-NBR.
+           INSPECT WB10WS-ALPHA-NBR
+               TALLYING WB10WS-NUM-OF-DIGITS FOR CHARACTERS
+                                             BEFORE INITIAL SPACE.
+      
+           INITIALIZE I5
+                      I6.
+      
+           MOVE WB10WS-ALPHA-NBR             TO WB10WS-EMPL-NBR-ALPHA.
+      
+           PERFORM
+               VARYING I5 FROM 1 BY 1
+               UNTIL  (I5 > WB10WS-NUM-OF-DIGITS)
+      
+               COMPUTE I6                    = 10 - WB10WS-NUM-OF-DIGITS
+                                             + I5
+               MOVE WB10WS-EMPL-NBR-N (I5)   TO WB10WS-N (I6)
+      
+           END-PERFORM.
+           MOVE WB10WS-NUMERIC               TO WB10WS-EMPLOYEE-NBR-N.
+      
+           MOVE WB10WS-EMPLOYEE-NBR-N        TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           PERFORM 840-FIND-PEMSET1.
+           IF (EMPLOYEE-NOTFOUND)
+           OR (PAEMPLOYEE-NOTFOUND)
+               GO TO 510-END.
+      
+           IF  (WB10F1-SEX NOT = SPACES)
+           AND (PEM-SEX    NOT = WB10F1-SEX)
+               GO TO 510-END.
+      
+           INITIALIZE WB10TEMP-REC.
+      *** Rec-key
+           MOVE WB10F1-EMD-COMPANY           TO WF1-COMPANY.
+      *    MOVE WB10F1-SSN             TO WF1-FICA-NBR.
+      *    MOVE WB10F1-EMD-EMPLOYEE    TO WF1-EMPLOYEE.
+           MOVE EMP-LAST-NAME                TO WF1-DTL-LAST.
+           MOVE EMP-FIRST-NAME               TO WF1-DTL-FIRST.
+MJK001     MOVE EMP-MIDDLE-INIT              TO WF1-MIDDLE-INIT.
+           MOVE 2                            TO WF1-EMP-RECORD-TYPE.
+           MOVE EMP-EMPLOYEE                 TO WF1-DTL-EMP-NBR.
+           MOVE EMP-FICA-NBR                 TO WF1-DTL-SSN.
+      
+           MOVE EMP-EMP-STATUS               TO WF1-EMP-STATUS.
+           MOVE PEM-BIRTHDATE                TO WF1-BIRTHDATE.
+           MOVE PEM-SEX                      TO WF1-GENDER.
+      
+           MOVE WB10WS-SAVE-REL-EMP-NBR      TO WF1-REL-EMP-NBR.
+      
+           PERFORM 8000-WRITE-DETAIL
+           THRU    8000-END.
+      
+      
+       510-END.
+      
+      ******************************************************************
+       520-MOVE-DEPEND-DETAILS.
+      ******************************************************************
+      
+           MOVE ZEROES                       TO WB10WS-SAVE-REL-EMP-NBR.
+      
+           MOVE EMD-COMPANY                  TO DB-COMPANY.
+           INITIALIZE DB-EMP-APP.
+           MOVE EMD-EMPLOYEE                 TO DB-EMPLOYEE.
+           MOVE HRU-FIELD-KEY                TO DB-FIELD-KEY.
+           PERFORM 840-FIND-HEUSET1.
+           IF (HREMPUSF-NOTFOUND)
+               GO TO 520-END.
+      
+           MOVE EMD-EMPLOYEE                 TO WB10WS-SAVE-REL-EMP-NBR.
+      
+      ***  HEU-A-FIELD defined for Employee relationship for Xref field
+      ***  is defined as a left justified Alpha field. This should be
+      ***  converted to Numeric for reading Employee table.
+      
+           INITIALIZE WB10WS-ALPHA-NBR
+                      WB10WS-NUM-OF-DIGITS
+                      WB10WS-NUMERIC.
+      
+           MOVE HEU-A-FIELD                  TO WB10WS-ALPHA-NBR.
+           INSPECT WB10WS-ALPHA-NBR
+               TALLYING WB10WS-NUM-OF-DIGITS FOR CHARACTERS
+                                             BEFORE INITIAL SPACE.
+      
+           INITIALIZE I5
+                      I6.
+      
+           MOVE WB10WS-ALPHA-NBR             TO WB10WS-EMPL-NBR-ALPHA.
+      
+           PERFORM
+               VARYING I5 FROM 1 BY 1
+               UNTIL  (I5 > WB10WS-NUM-OF-DIGITS)
+      
+               COMPUTE I6                    = 10 - WB10WS-NUM-OF-DIGITS
+                                             + I5
+               MOVE WB10WS-EMPL-NBR-N (I5)   TO WB10WS-N (I6)
+      
+           END-PERFORM.
+           MOVE WB10WS-NUMERIC               TO WB10WS-EMPLOYEE-NBR-N.
+      
+           MOVE WB10WS-EMPLOYEE-NBR-N        TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMPLOYEE-NOTFOUND)
+               GO TO 520-END.
+      
+      
+           MOVE EMP-EMPLOYEE                 TO WF1-DTL-EMP-NBR.
+           MOVE WS-HIGH-VALUES               TO WF1-EMP-RECORD-TYPE.
+           MOVE 4                            TO WF1-DEP-RECORD-TYPE.
+           MOVE EMP-FICA-NBR                 TO WF1-DTL-SSN.
+      
+           MOVE EMP-EMP-STATUS               TO WF1-EMP-STATUS.
+      
+           MOVE WB10WS-SAVE-REL-EMP-NBR      TO WF1-REL-EMP-NBR.
+      
+           PERFORM 840-FIND-PEMSET1.
+           IF (PAEMPLOYEE-FOUND)
+               MOVE PEM-BIRTHDATE            TO WF1-BIRTHDATE
+               MOVE PEM-SEX                  TO WF1-GENDER.
+      
+       520-END.
+      
+      ******************************************************************
+       8000-WRITE-DETAIL.
+      ******************************************************************
+      
+           SET WB10WS-WF1-FOUND            TO TRUE.
+      
+           READ WB10TEMP-FILE
+                KEY
+                WF1-REC-KEY
+               INVALID KEY
+                   SET WB10WS-WF1-NOTFOUND TO TRUE.
+      
+           IF (WB10WS-WF1-NOTFOUND)
+               WRITE WB10TEMP-REC
+           ELSE
+               REWRITE WB10TEMP-REC.
+      
+       8000-END.
+      
+      ******************************************************************
+       590-FILL-TABLE.
+      ******************************************************************
+      
+           INITIALIZE I1
+                      WB10WS-DTL-LINE-TABLE.
+      
+           INITIALIZE WF1-REC-KEY.
+           PERFORM 8500-READ-NLT-WB10TEMP
+           THRU    8500-END.
+      
+           PERFORM 592-FILL-TABLE-DATA
+           THRU    592-END
+               UNTIL (WB10WS-WF1-NOTFOUND)
+               OR    (I1 = WB10WS-TABLE-MAX).
+      
+       590-END.
+      
+      ******************************************************************
+       592-FILL-TABLE-DATA.
+      ******************************************************************
+      
+           ADD 1                       TO I1.
+           MOVE WF1-DTL-LAST           TO WB10WS-DTL-LAST (I1).
+           MOVE WF1-DTL-FIRST          TO WB10WS-DTL-FIRST (I1).
+MJK001     MOVE WF1-MIDDLE-INIT        TO WB10WS-MIDDLE-INIT (I1).
+           MOVE WF1-DTL-EMP-NBR        TO WB10WS-DTL-EMP-NBR (I1).
+           MOVE WF1-DEPEND-NBR         TO WB10WS-DEPEND-NBR (I1).
+           MOVE WF1-DTL-SSN            TO WB10WS-DTL-SSN (I1).
+           MOVE WF1-EMP-STATUS         TO WB10WS-DTL-EMP-STAT (I1).
+           MOVE WF1-RELATIONSHIP       TO WB10WS-RELATIONSHIP (I1).
+           MOVE WF1-BIRTHDATE          TO WB10WS-DTL-BIRTHDATE (I1).
+           MOVE WF1-GENDER             TO WB10WS-DTL-GENDER (I1).
+           MOVE WF1-REL-EMP-NBR        TO WB10WS-REL-EMP-NBR (I1).
+           MOVE WF1-COBRA-PART         TO WB10WS-COBRA-PART (I1).
+      
+           PERFORM 8600-READ-NEXT-WB10TEMP
+           THRU    8600-END.
+      
+       592-END.
+      
+      ******************************************************************
+       610-PROCESS-DETAIL.
+      ******************************************************************
+      
+           IF (WB10F1-FC = "+")
+               ADD 1                       TO I2
+               IF   (I2                      > WB10WS-TABLE-MAX)
+               OR  ((WB10WS-DTL-LAST (I2)    = SPACES)
+               AND  (WB10WS-DTL-EMP-NBR (I2) = ZEROES)
+               AND  (WB10WS-DEPEND-NBR (I2)  = ZEROES))
+                   MOVE WB10WS-SCR-DTL-MAX TO I1
+                   GO TO 610-END
+               END-IF
+           ELSE
+               SUBTRACT 1                  FROM I2
+               IF   (I2                      = ZERO)
+               OR  ((WB10WS-DTL-LAST (I2)    = SPACES)
+               AND  (WB10WS-DTL-EMP-NBR (I2) = ZEROES)
+               AND  (WB10WS-DEPEND-NBR (I2)  = ZEROES))
+                   MOVE ZERO               TO I1
+                   GO TO 610-END.
+      
+           MOVE WB10WS-DTL-LAST (I2)       TO WB10F1-DTL-LAST (I1).
+           MOVE WB10WS-DTL-FIRST (I2)      TO WB10F1-DTL-FIRST (I1).
+           MOVE WB10WS-DTL-EMP-NBR (I2)    TO WB10F1-DTL-EMP-NBR (I1).
+           MOVE WB10WS-DEPEND-NBR (I2)     TO WB10F1-DEPEND-NBR (I1).
+           MOVE WB10WS-DTL-SSN (I2)        TO WB10F1-DTL-SSN (I1).
+           MOVE WB10WS-DTL-EMP-STAT (I2)  TO WB10F1-DTL-EMP-STATUS (I1).
+           MOVE WB10WS-RELATIONSHIP (I2)   TO WB10F1-RELATIONSHIP (I1).
+           MOVE WB10WS-DTL-BIRTHDATE (I2)  TO WB10F1-DTL-BIRTHDATE (I1).
+           MOVE WB10WS-DTL-GENDER (I2)     TO WB10F1-DTL-GENDER (I1).
+           MOVE WB10WS-REL-EMP-NBR (I2)    TO WB10F1-REL-EMP-NBR (I1).
+           MOVE WB10WS-COBRA-PART (I2)     TO WB10F1-COBRA-PART (I1).
+      
+      ***  Check COBRA participant
+           MOVE WB10F1-EMD-COMPANY         TO DB-COMPANY.
+           MOVE WB10F1-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE.
+           MOVE WB10F1-DEPEND-NBR (I1)     TO DB-DEPENDENT.
+           MOVE PARSET20-DEPENDENT         TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PARSET20.
+           IF (PARTICIPNT-FOUND)
+               MOVE "*"                    TO WB10F1-COBRA-PART (I1).
+      
+       610-END.
+      
+      ******************************************************************
+       8500-READ-NLT-WB10TEMP.
+      ******************************************************************
+      
+           SET WB10WS-WF1-FOUND            TO TRUE.
+      
+           START WB10TEMP-FILE
+                 KEY NOT < WF1-REC-KEY
+               INVALID KEY
+                   SET WB10WS-WF1-NOTFOUND TO TRUE.
+      
+           IF (WB10WS-WF1-FOUND)
+               PERFORM 8600-READ-NEXT-WB10TEMP
+               THRU    8600-END.
+      
+       8500-END.
+      
+      ******************************************************************
+       8600-READ-NEXT-WB10TEMP.
+      ******************************************************************
+      
+           SET WB10WS-WF1-FOUND            TO TRUE.
+      
+           READ WB10TEMP-FILE NEXT RECORD
+               AT END
+                   SET WB10WS-WF1-NOTFOUND TO TRUE.
+      
+       8600-END.
+      
+      ******************************************************************
+       9810-OPEN-IO-WB10TEMP.
+      ******************************************************************
+      
+           OPEN I-O WB10TEMP-FILE.
+      
+       9810-END.
+      
+      ******************************************************************
+       9900-CLOSE-WB10TEMP.
+      ******************************************************************
+      
+           CLOSE WB10TEMP-FILE.
+      
+       9900-END.
+      
+      ******************************************************************
+       WB10S1-TRANSACTION-END.
+      ******************************************************************
+      
+      ******************************************************************
+       WB10S2-TRANSACTION              SECTION 10.
+      ******************************************************************
+       WB10S2-START.
+      
+           PERFORM 200-EDIT-TRAN
+           THRU    200-END.
+      
+           IF (NO-ERROR-FOUND)
+               PERFORM 400-PROCESS-TRAN
+               THRU    400-END.
+      
+           GO TO WB10S2-TRANSACTION-END.
+      
+      ******************************************************************
+       200-EDIT-TRAN.
+      ******************************************************************
+      
+           PERFORM 210-EDIT-ACCESS
+           THRU    210-END.
+      
+           IF (ERROR-FOUND)
+               GO TO 200-END.
+      
+       200-END.
+      
+      ******************************************************************
+       210-EDIT-ACCESS.
+      ******************************************************************
+      
+           MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY.
+           MOVE SPACES                     TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+           IF (PRSYSTEM-NOTFOUND)
+               MOVE 100                    TO CRT-ERROR-NBR
+               MOVE WB10F2-EMD-COMPANY-FN  TO CRT-FIELD-NBR
+               GO TO 210-END
+           ELSE
+               MOVE PRS-NAME               TO WB10F2-PRS-NAME.
+      
+      
+           IF  (WB10F2-EMD-EMPLOYEE = ZEROES)
+           AND (WB10F2-SSN          = SPACES)
+           AND (WB10F2-FIRST-NAME   = SPACES)
+           AND (WB10F2-LAST-NAME    = SPACES)
+           AND (WB10F2-BIRTHDATE    = ZEROES)
+               MOVE 107                    TO CRT-ERROR-NBR
+               MOVE WB10F2-FC-FN           TO CRT-FIELD-NBR
+               GO TO 210-END.
+      
+           IF (WB10F2-FC = "+" OR "-")
+               GO TO 210-END.
+      
+           IF (WB10F2-EMD-EMPLOYEE NOT = ZEROES)
+               MOVE WB10F2-EMD-EMPLOYEE    TO DB-EMPLOYEE
+               PERFORM 840-FIND-PEMSET1
+               IF (PAEMPLOYEE-NOTFOUND)
+                   MOVE 101                    TO CRT-ERROR-NBR
+                   MOVE WB10F2-EMD-EMPLOYEE-FN TO CRT-FIELD-NBR
+                   GO TO 210-END
+               ELSE
+                   PERFORM 840-FIND-EMPSET1
+                   IF (EMPLOYEE-NOTFOUND)
+                       MOVE 102                TO CRT-ERROR-NBR
+                       MOVE WB10F2-EMD-EMPLOYEE-FN  TO CRT-FIELD-NBR
+                       GO TO 210-END
+                   ELSE
+                       MOVE EMP-FICA-NBR       TO WB10F2-SSN.
+      
+           IF (WB10F2-SSN (1:9) IS NUMERIC)
+               MOVE WB10F2-SSN (1:9)       TO WB10WS-SSN
+               MOVE WB10WS-SSN-NUM         TO WB10WS-SSN-EDIT
+               INSPECT WB10WS-SSN-EDIT
+                   REPLACING ALL SPACE     BY "-"
+               MOVE WB10WS-SSN-EDIT        TO WB10F2-SSN.
+           
+           IF (WB10F2-SSN NOT = SPACES)
+               MOVE WB10F2-SSN             TO DB-FICA-NBR
+               MOVE EMPSET4-FICA-NBR       TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMPSET4
+               IF (EMPLOYEE-NOTFOUND)
+                   MOVE WB10F2-SSN         TO DB-FICA-NBR
+                   MOVE EMDSET21-FICA-NBR  TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-EMDSET21
+                   IF (EMDEPEND-NOTFOUND)
+                       MOVE 103            TO CRT-ERROR-NBR
+                       MOVE WB10F2-SSN-FN  TO CRT-FIELD-NBR
+                       GO TO 210-END
+                   END-IF
+               ELSE
+                   MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE
+                   PERFORM 840-FIND-PEMSET1
+                   IF (PAEMPLOYEE-NOTFOUND)
+                       MOVE 101                     TO CRT-ERROR-NBR
+                       MOVE WB10F2-SSN-FN           TO CRT-FIELD-NBR
+                       GO TO 210-END.
+      
+           IF  (WB10F2-EMD-EMPLOYEE = ZEROES)
+           AND (WB10F2-SSN          = SPACES)
+      *        IF (WB10F2-FIRST-NAME = SPACES)
+      *            MOVE 104                         TO CRT-ERROR-NBR
+      *            MOVE WB10F2-FIRST-NAME-FN        TO CRT-FIELD-NBR
+      *            GO TO 210-END
+      *        END-IF
+               IF (WB10F2-LAST-NAME = SPACES)
+                   MOVE 104                         TO CRT-ERROR-NBR
+                   MOVE WB10F2-LAST-NAME-FN         TO CRT-FIELD-NBR
+                   GO TO 210-END.
+      
+           IF (WB10F2-LAST-NAME  NOT = SPACES)
+               MOVE WB10F2-EMD-COMPANY              TO DB-COMPANY
+               MOVE WB10F2-LAST-NAME                TO DB-LAST-NAME-UC
+               MOVE WB10F2-FIRST-NAME               TO DB-FIRST-NAME-UC
+               MOVE EMPSET6-LAST-NAME-UC               TO WS-DB-BEG-RNG
+
+               IF  (WB10F2-FIRST-NAME NOT = SPACES)
+               AND (WB10F2-FIRST-SRCH NOT = "Y")
+                   MOVE EMPSET6-FIRST-NAME-UC          TO WS-DB-BEG-RNG
+               END-IF
+               PERFORM 850-FIND-BEGRNG-EMPSET6
+               IF (EMPLOYEE-NOTFOUND)
+SDB411* ADDED THE NEXT 2 LINES TO GET A HIT ON EMDEPEND TABLE
+                   MOVE WB10F2-LAST-NAME         TO DB-LAST-NAME   
+                   MOVE WB10F2-FIRST-NAME        TO DB-FIRST-NAME   
+                 
+                   MOVE EMDSET23-FIRST-NAME         TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-EMDSET23
+                   IF (EMDEPEND-NOTFOUND)
+                       IF (WB10F2-BIRTHDATE = ZEROES)
+                           MOVE 105                 TO CRT-ERROR-NBR
+                           MOVE WB10F2-FIRST-NAME-FN
+                                                    TO CRT-FIELD-NBR
+                           GO TO 210-END
+                       ELSE
+                           MOVE WB10F2-EMD-COMPANY     TO DB-COMPANY
+                           MOVE WB10F2-BIRTHDATE       TO DB-BIRTHDATE
+                           MOVE PEMSET20-BIRTHDATE     TO WS-DB-BEG-RNG
+                           PERFORM 850-FIND-BEGRNG-PEMSET20
+                           IF (PAEMPLOYEE-NOTFOUND)
+                               MOVE EMDSET20-BIRTHDATE TO WS-DB-BEG-RNG
+                               PERFORM 850-FIND-BEGRNG-EMDSET20
+                               IF (EMDEPEND-NOTFOUND)
+                                   MOVE 108         TO CRT-ERROR-NBR
+                                   MOVE WB10F2-BIRTHDATE-FN
+                                                    TO CRT-FIELD-NBR
+                                   GO TO 210-END
+                               END-IF
+                           ELSE
+                               MOVE PEM-EMPLOYEE       TO DB-EMPLOYEE
+                               PERFORM 840-FIND-EMPSET1
+                           END-IF
+                        END-IF
+                   END-IF
+               END-IF
+           ELSE
+           IF (WB10F2-BIRTHDATE NOT = ZEROES)
+               MOVE WB10F2-EMD-COMPANY                 TO DB-COMPANY
+               MOVE WB10F2-BIRTHDATE                   TO DB-BIRTHDATE
+               MOVE PEMSET20-BIRTHDATE                 TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PEMSET20
+               IF (PAEMPLOYEE-NOTFOUND)
+                   MOVE EMDSET20-BIRTHDATE             TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-EMDSET20
+                   IF (EMDEPEND-NOTFOUND)
+                       MOVE 106                     TO CRT-ERROR-NBR
+                       MOVE WB10F2-BIRTHDATE-FN     TO CRT-FIELD-NBR
+                       GO TO 210-END
+                   END-IF
+               ELSE
+                   MOVE PEM-EMPLOYEE                   TO DB-EMPLOYEE
+                   PERFORM 840-FIND-EMPSET1.
+      
+       210-END.
+      
+      ******************************************************************
+       400-PROCESS-TRAN.
+      ******************************************************************
+      
+           IF (WB10F2-FC = "I" OR "-" OR "+")
+               PERFORM 480-INQUIRE
+               THRU    480-END.
+      
+       400-END.
+      
+      ******************************************************************
+       480-INQUIRE.
+      ******************************************************************
+      
+      
+           PERFORM 900-BUILD-TMP-FILE-NAME.
+           MOVE WS-TMP-FILE                  TO WB10WS-FILENAME.
+      
+           PERFORM 9810-OPEN-IO-WB10TEMP
+           THRU    9810-END.
+      
+           PERFORM 500-FILL-RECORDS
+           THRU    500-END.
+      
+      *** Move records from workfile to array to display on screen ***
+      
+           PERFORM 590-FILL-TABLE
+           THRU    590-END.
+      
+           IF (WB10F2-FC = "I")
+               INITIALIZE WB10F2-PT-TOP
+                          WB10F2-PT-BOTTOM
+                          WB10F2-DETAIL-GROUP
+               MOVE "+"                      TO WB10F2-FC.
+      
+           IF (WB10F2-FC = "+")
+               MOVE WB10F2-PT-BOTTOM         TO I2
+               IF   (I2                        < WB10WS-TABLE-MAX)
+               AND ((WB10WS-DTL-LAST (I2 + 1)    NOT = SPACES)
+                OR  (WB10WS-DTL-EMP-NBR (I2 + 1) NOT = ZEROES)
+                OR  (WB10WS-DEPEND-NBR (I2 + 1)  NOT = ZEROES))
+                   INITIALIZE WB10F2-DETAIL-GROUP
+                   PERFORM 610-PROCESS-DETAIL
+                   THRU    610-END
+                       VARYING I1 FROM 1 BY 1
+                       UNTIL  (I1 > WB10WS-SCR-DTL-MAX)
+                   ADD WB10WS-SCR-DTL-MAX    TO WB10F2-PT-BOTTOM
+                   COMPUTE WB10F2-PT-TOP     = WB10F2-PT-BOTTOM
+                                             - WB10WS-SCR-DTL-MAX + 1
+                   IF  (I2                        < WB10WS-TABLE-MAX)
+                   AND (WB10WS-DTL-LAST (I2 + 1)    = SPACES)
+                   AND (WB10WS-DTL-EMP-NBR (I2 + 1) = ZEROES)
+                   AND (WB10WS-DEPEND-NBR (I2 + 1)  = ZEROES)
+                       MOVE CRT-INQ-COMPLETE TO CRT-MESSAGE
+                   ELSE
+                       MOVE CRT-MORE-RECS    TO CRT-MESSAGE
+                   END-IF
+               ELSE
+               IF  (I2                        < WB10WS-TABLE-MAX)
+               AND (WB10WS-DTL-LAST (I2 + 1)    = SPACES)
+               AND (WB10WS-DTL-EMP-NBR (I2 + 1) = ZEROES)
+               AND (WB10WS-DEPEND-NBR (I2 + 1)  = ZEROES)
+                   MOVE CRT-INQ-COMPLETE     TO CRT-MESSAGE
+               ELSE
+                   MOVE 11                          TO CRT-ERROR-NBR
+                   MOVE WB10F2-FC-FN                TO CRT-FIELD-NBR
+               END-IF
+               END-IF
+           ELSE
+           IF (WB10F2-PT-TOP > 1)
+               INITIALIZE WB10F2-DETAIL-GROUP
+               MOVE WB10F2-PT-TOP            TO I2
+               PERFORM 610-PROCESS-DETAIL
+               THRU    610-END
+                   VARYING I1 FROM WB10WS-SCR-DTL-MAX BY -1
+                   UNTIL  (I1 < 1)
+               SUBTRACT WB10WS-SCR-DTL-MAX   FROM WB10F2-PT-TOP
+                                                  WB10F2-PT-BOTTOM
+               IF (WB10F2-PT-TOP = 1)
+                   MOVE CRT-INQ-COMPLETE     TO CRT-MESSAGE
+               ELSE
+                   MOVE CRT-MORE-RECS        TO CRT-MESSAGE
+               END-IF
+           ELSE
+               MOVE 11                              TO CRT-ERROR-NBR
+               MOVE WB10F2-FC-FN                    TO CRT-FIELD-NBR.
+      
+      
+           IF (WB10WS-DTL-LAST (WB10WS-TABLE-MAX)    NOT = SPACES)
+           OR (WB10WS-DTL-EMP-NBR (WB10WS-TABLE-MAX) NOT = ZEROES)
+           OR (WB10WS-DEPEND-NBR (WB10WS-TABLE-MAX)  NOT = ZEROES)
+               MOVE "WB10"                   TO CRT-ERROR-CAT
+               MOVE 900                             TO CRT-ERROR-NBR.
+      
+           PERFORM 9900-CLOSE-WB10TEMP
+           THRU    9900-END.
+      
+           MOVE WB10WS-FILENAME              TO WS-TMP-FILE.
+           PERFORM 901-REMOVE-TMP-FILE.
+      
+       480-END.
+      
+      ******************************************************************
+       500-FILL-RECORDS.
+      ******************************************************************
+      
+           MOVE "A-Cross Ref ID"         TO WB10WS-FLD-PREFIX.
+           MOVE 1                        TO WB10WS-FLD-SUFFIX.
+           MOVE ZEROES                   TO WB10WS-SAVE-REL-EMP-NBR.
+      
+      ***  Fill record sequence handled by Record type.
+      ***  Record type 1 = Employee details
+      ***  Record type 2 = Related employee record
+      ***  Record type 3 = Dependent details
+      ***  Record type 4 = Dep related employee record
+      
+           IF (WB10F2-SSN NOT = SPACES)
+               MOVE WB10F2-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F2-SSN           TO DB-FICA-NBR
+               MOVE EMPSET4-FICA-NBR     TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMPSET4
+               PERFORM
+               UNTIL (EMPLOYEE-NOTFOUND)
+      
+                   PERFORM 501-WRITE-EMPLOYEE
+                   THRU    501-END
+      
+                   PERFORM 860-FIND-NXTRNG-EMPSET4
+               END-PERFORM
+      
+               MOVE WB10F2-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F2-SSN           TO DB-FICA-NBR
+               MOVE EMDSET21-FICA-NBR    TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMDSET21
+               PERFORM
+                   UNTIL (EMDEPEND-NOTFOUND)
+      
+                   PERFORM 502-WRITE-DEPENDENT
+                   THRU    502-END
+      
+                   PERFORM 506-GET-USERFLDS-FOR-DEP
+                   THRU    506-END
+      
+                   PERFORM 860-FIND-NXTRNG-EMDSET21
+               END-PERFORM.
+      
+           MOVE WS-TRUE                  TO WB10WS-SKIP-BIRTHDATE-PROC.
+      
+           IF (WB10F2-LAST-NAME  NOT = SPACES)
+               MOVE WB10F2-EMD-COMPANY              TO DB-COMPANY
+               MOVE WB10F2-LAST-NAME                TO DB-LAST-NAME-UC
+               MOVE WB10F2-FIRST-NAME               TO DB-FIRST-NAME-UC
+               MOVE EMPSET6-LAST-NAME-UC               TO WS-DB-BEG-RNG
+               IF  (WB10F2-FIRST-NAME NOT = SPACES)
+               AND (WB10F2-FIRST-SRCH NOT = "Y")
+                   MOVE EMPSET6-FIRST-NAME-UC          TO WS-DB-BEG-RNG
+               END-IF
+
+               PERFORM 850-FIND-BEGRNG-EMPSET6
+               IF (EMPLOYEE-FOUND)
+                   PERFORM
+                       UNTIL (EMPLOYEE-NOTFOUND)
+                       MOVE EMP-EMPLOYEE TO DB-EMPLOYEE
+                       PERFORM 840-FIND-PEMSET1
+      
+                       IF  ((WB10F2-SEX NOT = SPACES)
+                       AND  (WB10F2-SEX = PEM-SEX))
+                       OR   (WB10F2-SEX = SPACES)
+                           PERFORM 501-WRITE-EMPLOYEE
+                           THRU    501-END
+                       END-IF
+      
+                       PERFORM 860-FIND-NXTRNG-EMPSET6
+                   END-PERFORM
+               ELSE
+                   MOVE WS-FALSE         TO WB10WS-SKIP-BIRTHDATE-PROC
+               END-IF
+      
+               MOVE WB10F2-EMD-COMPANY   TO DB-COMPANY
+               MOVE WB10F2-LAST-NAME     TO DB-LAST-NAME
+               MOVE WB10F2-FIRST-NAME    TO DB-FIRST-NAME
+               MOVE EMDSET23-LAST-NAME   TO WS-DB-BEG-RNG
+               IF (WB10F2-FIRST-NAME NOT = SPACES)
+                   MOVE EMDSET23-FIRST-NAME  TO WS-DB-BEG-RNG
+               END-IF
+               PERFORM 850-FIND-BEGRNG-EMDSET23
+               IF (EMDEPEND-FOUND)
+                   PERFORM
+                   UNTIL (EMDEPEND-NOTFOUND)
+                       IF  ((WB10F2-SEX NOT = SPACES)
+                       AND  (WB10F2-SEX = EMD-SEX))
+                       OR   (WB10F2-SEX = SPACES)
+                           PERFORM 502-WRITE-DEPENDENT
+                           THRU    502-END
+      
+                           PERFORM 506-GET-USERFLDS-FOR-DEP
+                           THRU    506-END
+      
+                       END-IF
+                       PERFORM 860-FIND-NXTRNG-EMDSET23
+                   END-PERFORM
+               ELSE
+                   MOVE WS-FALSE         TO WB10WS-SKIP-BIRTHDATE-PROC
+               END-IF
+           ELSE
+               MOVE WS-FALSE             TO WB10WS-SKIP-BIRTHDATE-PROC
+           END-IF.
+      
+           IF  (WB10F2-BIRTHDATE           NOT = ZEROES)
+           AND (WB10WS-SKIP-BIRTHDATE-PROC = WS-FALSE)
+               PERFORM 507-DO-EMP-FOR-BIRTHDATE
+               THRU    507-END
+      
+               PERFORM 508-DO-DEP-FOR-BIRTHDATE
+               THRU    508-END.
+      
+       500-END.
+      
+      ******************************************************************
+       501-WRITE-EMPLOYEE.
+      ******************************************************************
+      
+           INITIALIZE WB10TEMP-REC.
+
+           INITIALIZE WB10WS-NUM-OF-DIGITS.
+           IF (WB10F2-FIRST-SRCH = "Y")
+               UNSTRING WB10F2-FIRST-NAME  DELIMITED BY SPACE
+                                           INTO WB10WS-SRCH-STR
+               INSPECT WB10WS-SRCH-STR    
+                       CONVERTING LOWER-CASE TO UPPER-CASE
+               INSPECT WB10WS-SRCH-STR
+                       TALLYING WB10WS-NUM-OF-DIGITS
+                                FOR CHARACTERS BEFORE INITIAL SPACE.
+
+           IF (WB10F2-FIRST-SRCH = "Y")
+               IF (WB10WS-NUM-OF-DIGITS = ZERO)
+                   GO TO 501-END
+               ELSE
+                   IF (EMP-FIRST-NAME (1:WB10WS-NUM-OF-DIGITS) 
+                                       NOT = WB10WS-SRCH-STR)
+                       GO TO 501-END.
+
+      *** Rec-key
+           MOVE WB10F2-EMD-COMPANY     TO WF1-COMPANY.
+      *    MOVE WB10F2-SSN             TO WF1-FICA-NBR.
+      *    MOVE WB10F2-EMD-EMPLOYEE    TO WF1-EMPLOYEE.
+           MOVE 1                      TO WF1-EMP-RECORD-TYPE.
+           MOVE EMP-LAST-NAME          TO WF1-DTL-LAST.
+           MOVE EMP-FIRST-NAME         TO WF1-DTL-FIRST.
+MJK001     MOVE EMP-MIDDLE-INIT        TO WF1-MIDDLE-INIT.
+           MOVE EMP-EMPLOYEE           TO WF1-DTL-EMP-NBR.
+           MOVE EMP-FICA-NBR           TO WF1-DTL-SSN.
+      
+           MOVE EMP-EMP-STATUS         TO WF1-EMP-STATUS.
+           MOVE PEM-BIRTHDATE          TO WF1-BIRTHDATE.
+           MOVE PEM-SEX                TO WF1-GENDER.
+      
+           MOVE ZEROES                 TO WF1-REL-EMP-NBR.
+      
+           PERFORM 8000-WRITE-DETAIL
+           THRU    8000-END.
+      
+           PERFORM 503-GET-USERFLDS-FOR-EMP
+           THRU    503-END.
+      
+       501-END.
+      
+      ******************************************************************
+       502-WRITE-DEPENDENT.
+      ******************************************************************
+      
+           INITIALIZE WB10TEMP-REC.
+      
+           MOVE WB10F2-EMD-COMPANY     TO WF1-COMPANY.
+      *    MOVE WB10F2-SSN             TO WF1-FICA-NBR.
+      *    MOVE WB10F2-EMD-EMPLOYEE    TO WF1-EMPLOYEE.
+           MOVE EMD-SEQ-NBR            TO WF1-DEPEND-NBR.
+           MOVE EMD-LAST-NAME          TO WF1-DTL-LAST.
+           MOVE EMD-FIRST-NAME         TO WF1-DTL-FIRST.
+MJK001     MOVE EMD-MIDDLE-INIT        TO WF1-MIDDLE-INIT.
+           MOVE ZEROES                 TO WF1-REL-EMP-NBR.
+           MOVE EMD-FICA-NBR           TO WF1-DTL-SSN.
+      
+           MOVE EMD-EMPLOYEE           TO WF1-DTL-EMP-NBR.
+           MOVE WS-HIGH-VALUES         TO WF1-EMP-RECORD-TYPE.
+           MOVE 3                      TO WF1-DEP-RECORD-TYPE.
+      
+           MOVE EMD-EMPLOYEE           TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           PERFORM 840-FIND-PEMSET1.
+      
+           MOVE EMD-ACTIVE-FLAG        TO WF1-EMP-STATUS.
+           MOVE EMD-BIRTHDATE          TO WF1-BIRTHDATE.
+           MOVE EMD-SEX                TO WF1-GENDER.
+           MOVE EMD-REL-CODE           TO WF1-RELATIONSHIP.
+      
+      
+           PERFORM 8000-WRITE-DETAIL
+           THRU    8000-END.
+      
+       502-END.
+      
+      ******************************************************************
+       503-GET-USERFLDS-FOR-EMP.
+      ******************************************************************
+      
+           MOVE EMP-EMPLOYEE               TO DB-EMPLOYEE.
+           PERFORM 840-FIND-PEMSET1.
+           IF (PAEMPLOYEE-NOTFOUND)
+               INITIALIZE PAEMPLOYEE.
+      
+           MOVE 1                          TO WB10WS-FLD-SUFFIX.
+      
+           PERFORM
+               UNTIL (WB10WS-FLD-SUFFIX > 7)
+               MOVE "A"                        TO DB-FIELD-TYPE
+               MOVE WB10WS-USER-FIELDS         TO DB-FIELD-NAME
+               PERFORM 840-FIND-HRUSET5
+               IF (HRUSERFLDS-FOUND)
+                   PERFORM 510-WRITE-EMP-DETAILS
+                   THRU    510-END
+               END-IF
+               ADD 1                       TO WB10WS-FLD-SUFFIX
+      
+           END-PERFORM.
+      
+       503-END.
+      
+      
+      ******************************************************************
+       506-GET-USERFLDS-FOR-DEP.
+      ******************************************************************
+      
+           MOVE 1                      TO WB10WS-FLD-SUFFIX.
+      
+           PERFORM
+               UNTIL (WB10WS-FLD-SUFFIX > 7)
+               MOVE "A"                    TO DB-FIELD-TYPE
+               MOVE WB10WS-USER-FIELDS     TO DB-FIELD-NAME
+               PERFORM 840-FIND-HRUSET5
+               IF (HRUSERFLDS-FOUND)
+                   PERFORM 520-MOVE-DEPEND-DETAILS
+                   THRU    520-END
+                   PERFORM 8000-WRITE-DETAIL
+                   THRU    8000-END
+               END-IF
+               ADD 1 TO WB10WS-FLD-SUFFIX
+           END-PERFORM.
+      
+       506-END.
+      
+      ******************************************************************
+       507-DO-EMP-FOR-BIRTHDATE.
+      ******************************************************************
+      
+           IF (WB10F2-BIRTHDATE NOT = ZEROES)
+               MOVE WB10F2-EMD-COMPANY     TO DB-COMPANY
+               MOVE WB10F2-BIRTHDATE       TO DB-BIRTHDATE
+               MOVE PEMSET20-BIRTHDATE     TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-PEMSET20
+               PERFORM
+               UNTIL (PAEMPLOYEE-NOTFOUND)
+                   MOVE PEM-EMPLOYEE       TO DB-EMPLOYEE
+                   PERFORM 840-FIND-EMPSET1
+                   IF ((WB10F2-SEX NOT = SPACES)
+                   AND (WB10F2-SEX = PEM-SEX))
+                   OR (WB10F2-SEX  = SPACES)
+                       PERFORM 501-WRITE-EMPLOYEE
+                       THRU    501-END
+                       PERFORM 503-GET-USERFLDS-FOR-EMP
+                       THRU    503-END
+                   END-IF
+                   PERFORM 860-FIND-NXTRNG-PEMSET20
+               END-PERFORM.
+      
+       507-END.
+      
+      ******************************************************************
+       508-DO-DEP-FOR-BIRTHDATE.
+      ******************************************************************
+      
+           IF (WB10F2-BIRTHDATE NOT = ZEROES)
+               MOVE WB10F2-EMD-COMPANY TO DB-COMPANY
+               MOVE WB10F2-BIRTHDATE   TO DB-BIRTHDATE
+               MOVE EMDSET20-BIRTHDATE TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMDSET20
+               PERFORM
+               UNTIL (EMDEPEND-NOTFOUND)
+                   IF ((WB10F2-SEX NOT = SPACES)
+                   AND (WB10F2-SEX  = EMD-SEX))
+                   OR (WB10F2-SEX  = SPACES)
+      
+                       PERFORM 502-WRITE-DEPENDENT
+                       THRU    502-END
+      
+                       PERFORM 506-GET-USERFLDS-FOR-DEP
+                       THRU    506-END
+                   END-IF
+      
+                   PERFORM 860-FIND-NXTRNG-EMDSET20
+               END-PERFORM.
+      
+       508-END.
+      
+      ******************************************************************
+       510-WRITE-EMP-DETAILS.
+      ******************************************************************
+      
+           MOVE ZEROES                     TO WB10WS-SAVE-REL-EMP-NBR.
+      
+           MOVE EMP-COMPANY                TO DB-COMPANY.
+           INITIALIZE DB-EMP-APP.
+           MOVE EMP-EMPLOYEE               TO DB-EMPLOYEE.
+           MOVE HRU-FIELD-KEY              TO DB-FIELD-KEY.
+           PERFORM 840-FIND-HEUSET1.
+           IF (HREMPUSF-NOTFOUND)
+               GO TO 510-END.
+      
+           MOVE EMP-EMPLOYEE               TO WB10WS-SAVE-REL-EMP-NBR.
+      
+      ***  HEU-A-FIELD defined for Employee relationship for Xref field
+      ***  is defined as a left justified Alpha field. This should be
+      ***  converted to Numeric for reading Employee table.
+      
+           INITIALIZE WB10WS-ALPHA-NBR
+                      WB10WS-NUM-OF-DIGITS
+                      WB10WS-NUMERIC.
+      
+           MOVE HEU-A-FIELD                TO WB10WS-ALPHA-NBR.
+           INSPECT WB10WS-ALPHA-NBR
+                                           TALLYING WB10WS-NUM-OF-DIGITS
+                                           FOR CHARACTERS
+                                           BEFORE INITIAL SPACE.
+      
+           INITIALIZE I5
+                      I6.
+      
+           MOVE WB10WS-ALPHA-NBR           TO WB10WS-EMPL-NBR-ALPHA.
+      
+           PERFORM
+           VARYING I5 FROM 1 BY 1
+           UNTIL  (I5 > WB10WS-NUM-OF-DIGITS)
+               COMPUTE I6 = 10 - WB10WS-NUM-OF-DIGITS + I5
+               MOVE WB10WS-EMPL-NBR-N (I5) TO WB10WS-N (I6)
+           END-PERFORM.
+           MOVE WB10WS-NUMERIC             TO WB10WS-EMPLOYEE-NBR-N.
+      
+           MOVE WB10WS-EMPLOYEE-NBR-N      TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           PERFORM 840-FIND-PEMSET1.
+           IF (EMPLOYEE-NOTFOUND)
+           OR (PAEMPLOYEE-NOTFOUND)
+               GO TO 510-END.
+      
+           IF  (WB10F2-SEX NOT = SPACES)
+           AND (PEM-SEX    NOT = WB10F2-SEX)
+               GO TO 510-END.
+      
+           INITIALIZE WB10TEMP-REC.
+      *** Rec-key
+           MOVE WB10F2-EMD-COMPANY         TO WF1-COMPANY.
+      *    MOVE WB10F2-SSN                 TO WF1-FICA-NBR.
+      *    MOVE WB10F2-EMD-EMPLOYEE        TO WF1-EMPLOYEE.
+           MOVE EMP-LAST-NAME              TO WF1-DTL-LAST.
+           MOVE EMP-FIRST-NAME             TO WF1-DTL-FIRST.
+MJK001     MOVE EMP-MIDDLE-INIT            TO WF1-MIDDLE-INIT.
+           MOVE 2                          TO WF1-EMP-RECORD-TYPE.
+           MOVE EMP-EMPLOYEE               TO WF1-DTL-EMP-NBR.
+           MOVE EMP-FICA-NBR               TO WF1-DTL-SSN.
+      
+           MOVE EMP-EMP-STATUS             TO WF1-EMP-STATUS.
+           MOVE PEM-BIRTHDATE              TO WF1-BIRTHDATE.
+           MOVE PEM-SEX                    TO WF1-GENDER.
+      
+           MOVE WB10WS-SAVE-REL-EMP-NBR    TO WF1-REL-EMP-NBR.
+      
+           PERFORM 8000-WRITE-DETAIL
+           THRU    8000-END.
+      
+      
+       510-END.
+      
+      ******************************************************************
+       520-MOVE-DEPEND-DETAILS.
+      ******************************************************************
+      
+           MOVE ZEROES                     TO WB10WS-SAVE-REL-EMP-NBR.
+      
+           MOVE EMD-COMPANY                TO DB-COMPANY.
+           INITIALIZE DB-EMP-APP.
+           MOVE EMD-EMPLOYEE               TO DB-EMPLOYEE.
+           MOVE HRU-FIELD-KEY              TO DB-FIELD-KEY.
+           PERFORM 840-FIND-HEUSET1.
+           IF (HREMPUSF-NOTFOUND)
+               GO TO 520-END.
+      
+           MOVE EMD-EMPLOYEE               TO WB10WS-SAVE-REL-EMP-NBR.
+      
+      ***  HEU-A-FIELD defined for Employee relationship for Xref field
+      ***  is defined as a left justified Alpha field. This should be
+      ***  converted to Numeric for reading Employee table.
+      
+           INITIALIZE WB10WS-ALPHA-NBR
+                      WB10WS-NUM-OF-DIGITS
+                      WB10WS-NUMERIC.
+      
+           MOVE HEU-A-FIELD                TO WB10WS-ALPHA-NBR.
+           INSPECT WB10WS-ALPHA-NBR        TALLYING WB10WS-NUM-OF-DIGITS
+                                           FOR CHARACTERS
+                                           BEFORE INITIAL SPACE.
+      
+           INITIALIZE I5
+                      I6.
+           MOVE WB10WS-ALPHA-NBR           TO WB10WS-EMPL-NBR-ALPHA.
+      
+           PERFORM
+           VARYING I5 FROM 1 BY 1
+           UNTIL  (I5 > WB10WS-NUM-OF-DIGITS)
+               COMPUTE I6 = 10 - WB10WS-NUM-OF-DIGITS + I5
+               MOVE WB10WS-EMPL-NBR-N (I5)     TO WB10WS-N (I6)
+           END-PERFORM.
+           MOVE WB10WS-NUMERIC             TO WB10WS-EMPLOYEE-NBR-N.
+      
+           MOVE WB10WS-EMPLOYEE-NBR-N      TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMPLOYEE-NOTFOUND)
+               GO TO 520-END.
+      
+      
+           MOVE EMP-EMPLOYEE               TO WF1-DTL-EMP-NBR.
+           MOVE WS-HIGH-VALUES             TO WF1-EMP-RECORD-TYPE.
+           MOVE 4                          TO WF1-DEP-RECORD-TYPE.
+           MOVE EMP-FICA-NBR               TO WF1-DTL-SSN.
+      
+           MOVE EMP-EMP-STATUS             TO WF1-EMP-STATUS.
+      
+           MOVE WB10WS-SAVE-REL-EMP-NBR    TO WF1-REL-EMP-NBR.
+      
+           PERFORM 840-FIND-PEMSET1.
+           IF (PAEMPLOYEE-FOUND)
+               MOVE PEM-BIRTHDATE              TO WF1-BIRTHDATE
+               MOVE PEM-SEX                    TO WF1-GENDER.
+      
+       520-END.
+      
+      ******************************************************************
+       8000-WRITE-DETAIL.
+      ******************************************************************
+      
+           SET WB10WS-WF1-FOUND            TO TRUE.
+      
+           READ WB10TEMP-FILE KEY WF1-REC-KEY
+               INVALID KEY
+                   SET WB10WS-WF1-NOTFOUND TO TRUE.
+      
+           IF (WB10WS-WF1-NOTFOUND)
+               WRITE WB10TEMP-REC
+           ELSE
+               REWRITE WB10TEMP-REC.
+      
+       8000-END.
+      
+      ******************************************************************
+       590-FILL-TABLE.
+      ******************************************************************
+      
+           INITIALIZE I1
+                      WB10WS-DTL-LINE-TABLE.
+      
+           INITIALIZE WF1-REC-KEY.
+           PERFORM 8500-READ-NLT-WB10TEMP
+           THRU    8500-END.
+      
+           PERFORM 592-FILL-TABLE-DATA
+           THRU    592-END
+               UNTIL (WB10WS-WF1-NOTFOUND)
+               OR    (I1 = WB10WS-TABLE-MAX).
+      
+       590-END.
+      
+      ******************************************************************
+       592-FILL-TABLE-DATA.
+      ******************************************************************
+      
+           ADD 1 TO I1.
+           MOVE WF1-DTL-LAST               TO WB10WS-DTL-LAST (I1).
+           MOVE WF1-DTL-FIRST              TO WB10WS-DTL-FIRST (I1).
+MJK001     MOVE WF1-MIDDLE-INIT            TO WB10WS-MIDDLE-INIT (I1).
+           MOVE WF1-DTL-EMP-NBR            TO WB10WS-DTL-EMP-NBR (I1).
+           MOVE WF1-DEPEND-NBR             TO WB10WS-DEPEND-NBR (I1).
+           MOVE WF1-DTL-SSN                TO WB10WS-DTL-SSN (I1).
+           MOVE WF1-EMP-STATUS             TO WB10WS-DTL-EMP-STAT (I1).
+           MOVE WF1-RELATIONSHIP           TO WB10WS-RELATIONSHIP (I1).
+           MOVE WF1-BIRTHDATE              TO WB10WS-DTL-BIRTHDATE (I1).
+           MOVE WF1-GENDER                 TO WB10WS-DTL-GENDER (I1).
+           MOVE WF1-REL-EMP-NBR            TO WB10WS-REL-EMP-NBR (I1).
+           MOVE WF1-COBRA-PART             TO WB10WS-COBRA-PART (I1).
+      
+           PERFORM 8600-READ-NEXT-WB10TEMP
+           THRU    8600-END.
+      
+       592-END.
+      
+      ******************************************************************
+       610-PROCESS-DETAIL.
+      ******************************************************************
+      
+           IF (WB10F2-FC = "+")
+               ADD 1 TO I2
+               IF (I2 > WB10WS-TABLE-MAX)
+               OR ((WB10WS-DTL-LAST (I2)     = SPACES)
+               AND  (WB10WS-DTL-EMP-NBR (I2) = ZEROES)
+               AND  (WB10WS-DEPEND-NBR (I2)  = ZEROES))
+                   MOVE WB10WS-SCR-DTL-MAX TO I1
+                   GO TO 610-END
+               END-IF
+           ELSE
+               SUBTRACT 1  FROM I2
+               IF (I2 = ZERO)
+               OR ((WB10WS-DTL-LAST (I2)     = SPACES)
+               AND  (WB10WS-DTL-EMP-NBR (I2) = ZEROES)
+               AND  (WB10WS-DEPEND-NBR (I2)  = ZEROES))
+                   MOVE ZERO TO I1
+                   GO TO 610-END.
+      
+           MOVE WB10WS-DTL-LAST (I2)       TO HRWS-LAST-NAME.
+           MOVE WB10WS-DTL-FIRST (I2)      TO HRWS-FIRST-NAME.
+MJK001     MOVE WB10WS-MIDDLE-INIT (I2)    TO HRWS-MIDDLE-INIT.
+MJK001     MOVE SPACES                     TO HRWS-NAME-SUFFIX.
+MJK001     MOVE SPACES                     TO HRWS-LAST-NAME-PRE.
+      *    MOVE EMP-MIDDLE-INIT            TO HRWS-MIDDLE-INIT.
+      *    MOVE EMP-NAME-SUFFIX            TO HRWS-NAME-SUFFIX.
+      *    MOVE EMP-LAST-NAME-PRE          TO HRWS-LAST-NAME-PRE.
+           PERFORM 750-HR-FORMAT-NAME.
+           MOVE HRWS-FORMAT-NAME           TO WB10F2-FULL-NAME (I1).
+      
+           MOVE WB10WS-DTL-EMP-NBR (I2)    TO WB10F2-DTL-EMP-NBR (I1).
+           MOVE WB10WS-DEPEND-NBR (I2)     TO WB10F2-DEPEND-NBR (I1).
+           MOVE WB10WS-DTL-SSN (I2)        TO WB10F2-DTL-SSN (I1).
+           MOVE WB10WS-DTL-EMP-STAT (I2)   TO WB10F2-DTL-EMP-STATUS(I1).
+           MOVE WB10WS-RELATIONSHIP (I2)   TO WB10F2-RELATIONSHIP (I1).
+           MOVE WB10WS-DTL-BIRTHDATE (I2)  TO WB10F2-DTL-BIRTHDATE (I1).
+           MOVE WB10WS-DTL-GENDER (I2)     TO WB10F2-DTL-GENDER (I1).
+           MOVE WB10WS-REL-EMP-NBR (I2)    TO WB10F2-REL-EMP-NBR (I1).
+      
+      ***  Check COBRA participant
+           MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY.
+           MOVE WB10F2-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE.
+           MOVE WB10F2-DEPEND-NBR (I1)     TO DB-DEPENDENT.
+           MOVE PARSET20-DEPENDENT         TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PARSET20.
+           IF (PARTICIPNT-FOUND)
+               MOVE PAR-PARTICIPNT         TO WB10F2-DTL-PART-NBR (I1)
+               MOVE "BN70"                 TO WB10F2-BTN-BN70 (I1).
+********* PUT IN WINDOW TO ZD10 AND MAKE IT ALWAYS VISIBLE
+GW0708*    MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY.
+      *    MOVE WB10F2-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE.
+      *    MOVE WD3SET1-EMPLOYEE           TO WS-DB-BEG-RNG.
+      *    PERFORM 850-FIND-BEGRNG-WD3SET1.
+      *    IF (WBPDSABLTY-FOUND)
+               MOVE "ZD10"                 TO WB10F2-BTN-ZD10 (I1).
+      
+
+           MOVE "HR11"                     TO WB10F2-BTN-HR11 (I1).
+      
+           IF (WB10WS-DEPEND-NBR (I2) > ZEROES)
+               MOVE "HR13"                 TO WB10F2-BTN-HR13 (I1).
+      
+MLG002     MOVE "ZH11"                     TO WB10F2-BTN-ZH11 (I1).
+
+           PERFORM 1000-SEARCH-BENEFIT.
+           IF (WS-BEN-ACTIVITY)
+               MOVE "ZN32"                 TO WB10F2-BTN-ZN32 (I1)
+MLG001         MOVE "ZN33"                 TO WB10F2-BTN-ZN33 (I1).
+      
+SB5124     INITIALIZE                      WB10WS-PTB-PARTICIPNT
+                                           WB10WS-PTB-EMPLOYEE. 
+           PERFORM 1200-SEARCH-PARTBEN.
+           IF (WS-PTB-ACTIVITY)
+SB5124         IF (WB10WS-PTB-PARTICIPNT > ZEROES)
+                   MOVE "BN71"             TO WB10F2-BTN-BN71 (I1)
+               ELSE
+                   MOVE "BN72"             TO WB10F2-BTN-BN72 (I1).
+
+           
+           MOVE ZEROS                      TO  WS-ACTIVITY-FOUND-SW.   
+
+SDB412     PERFORM 1250-SEARCH-PARTBEN-BN72
+SDB412        THRU 1250-END.
+SDB412     IF (WS-PTB-ACTIVITY)
+SDB412         MOVE "BN72"             TO WB10F2-BTN-BN72 (I1).
+
+      ***  Check FOR DEPENDENTS    
+           IF (WB10F2-DEPEND-NBR (I1) = ZEROES)
+               MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY
+               MOVE WB10F2-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE
+               MOVE EMDSET1-EMPLOYEE           TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-EMDSET1
+               IF (EMDEPEND-FOUND)
+                   MOVE "Dependents"           TO WB10F2-BTN-WB103 (I1).
+      
+       610-END.
+
+      ******************************************************************
+       1000-SEARCH-BENEFIT.
+      ******************************************************************
+      
+           MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY.
+           MOVE WB10F2-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE.
+           INITIALIZE DB-PLAN-TYPE.
+           INITIALIZE DB-PLAN-CODE.
+           MOVE WS-HIGH-VALUES             TO DB-START-DATE.
+           MOVE BENSET3-EMPLOYEE           TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-BENSET3.
+      
+           SET WS-NO-ACTIVITY-FOUND        TO TRUE.
+           PERFORM
+               UNTIL (BENEFIT-NOTFOUND)
+               OR    (WS-ANY-ACTIVITY-FOUND)
+1376*********  IF (BEN-START-DATE NOT = BEN-STOP-DATE)
+1376*********      IF  ((BEN-START-DATE <= WS-SYSTEM-DATE-YMD)
+1376*********      AND ((BEN-STOP-DATE  = ZEROES)
+1376*********       OR  (BEN-STOP-DATE  >= WS-SYSTEM-DATE-YMD)))
+1376           IF (BEN-EMPLOYEE = WB10F2-DTL-EMP-NBR(I1))
+1376                   SET WS-BEN-ACTIVITY TO TRUE
+               END-IF
+               PERFORM 860-FIND-NXTRNG-BENSET3
+           END-PERFORM.
+      
+      ******************************************************************
+       1200-SEARCH-PARTBEN.
+      ******************************************************************
+           MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY.
+           IF (WB10F2-DTL-PART-NBR (I1) = ZEROES)
+               MOVE WB10F2-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE
+               MOVE ZEROES                     TO DB-PARTICIPNT
+           ELSE
+               MOVE ZEROES                     TO DB-EMPLOYEE
+               MOVE WB10F2-DTL-PART-NBR (I1)   TO DB-PARTICIPNT.
+           INITIALIZE DB-PLAN-TYPE.
+           INITIALIZE DB-PLAN-CODE.
+           MOVE WS-HIGH-VALUES             TO DB-START-DATE.
+           MOVE PTBSET4-EMPLOYEE           TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PTBSET4.
+
+           SET WS-NO-ACTIVITY-FOUND        TO TRUE.
+           PERFORM
+               UNTIL (PARTBEN-NOTFOUND)
+               OR    (WS-ANY-ACTIVITY-FOUND)
+1376********** IF (PTB-START-DATE NOT = PTB-STOP-DATE)
+1376**********     IF  ((PTB-START-DATE <= WS-SYSTEM-DATE-YMD)
+1376**********     AND  ((PTB-STOP-DATE =  ZEROES)
+1376**********     OR    (PTB-STOP-DATE >= WS-SYSTEM-DATE-YMD)))
+1376           IF (PTB-PARTICIPNT = WB10F2-DTL-PART-NBR(I1))
+1376           OR (PTB-EMPLOYEE   = WB10F2-DTL-EMP-NBR(I1))
+                       SET WS-PTB-ACTIVITY TO TRUE
+SB5124                 MOVE PTB-PARTICIPNT TO WB10WS-PTB-PARTICIPNT
+SB5124                 MOVE PTB-EMPLOYEE   TO WB10WS-PTB-EMPLOYEE     
+               END-IF
+               PERFORM 860-FIND-NXTRNG-PTBSET4
+           END-PERFORM.
+      ******************************************************************
+       1250-SEARCH-PARTBEN-BN72.
+SDB412******************************************************************
+           MOVE WB10F2-EMD-COMPANY         TO DB-COMPANY.
+           IF (WB10F2-DTL-PART-NBR (I1) = ZEROES)
+               GO TO 1250-END.
+           MOVE WB10F2-DTL-EMP-NBR (I1)    TO DB-EMPLOYEE.
+           MOVE ZEROS                      TO DB-PARTICIPNT.
+           INITIALIZE DB-PLAN-TYPE.
+           INITIALIZE DB-PLAN-CODE.
+           MOVE WS-HIGH-VALUES             TO DB-START-DATE.
+           MOVE PTBSET4-EMPLOYEE           TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PTBSET4.
+
+           SET WS-NO-ACTIVITY-FOUND        TO TRUE.
+           PERFORM
+               UNTIL (PARTBEN-NOTFOUND)
+               OR    (WS-ANY-ACTIVITY-FOUND)
+               IF (PTB-START-DATE NOT = PTB-STOP-DATE)
+                   IF  ((PTB-START-DATE <= WS-SYSTEM-DATE-YMD)
+                   AND  ((PTB-STOP-DATE =  ZEROES)
+                   OR    (PTB-STOP-DATE >= WS-SYSTEM-DATE-YMD)))
+                       SET WS-PTB-ACTIVITY TO TRUE
+                   END-IF
+               END-IF
+               PERFORM 860-FIND-NXTRNG-PTBSET4
+           END-PERFORM.
+SDB412 1250-END.            
+
+      ******************************************************************
+       8500-READ-NLT-WB10TEMP.
+      ******************************************************************
+      
+           SET WB10WS-WF1-FOUND            TO TRUE.
+      
+           START WB10TEMP-FILE
+                 KEY NOT < WF1-REC-KEY
+               INVALID KEY
+                   SET WB10WS-WF1-NOTFOUND TO TRUE.
+      
+           IF (WB10WS-WF1-FOUND)
+               PERFORM 8600-READ-NEXT-WB10TEMP
+               THRU    8600-END.
+      
+       8500-END.
+      
+      ******************************************************************
+       8600-READ-NEXT-WB10TEMP.
+      ******************************************************************
+      
+           SET WB10WS-WF1-FOUND            TO TRUE.
+      
+           READ WB10TEMP-FILE NEXT RECORD
+               AT END
+                   SET WB10WS-WF1-NOTFOUND TO TRUE.
+      
+       8600-END.
+      
+      ******************************************************************
+       9810-OPEN-IO-WB10TEMP.
+      ******************************************************************
+      
+           OPEN I-O WB10TEMP-FILE.
+      
+       9810-END.
+      
+      ******************************************************************
+       9900-CLOSE-WB10TEMP.
+      ******************************************************************
+      
+           CLOSE WB10TEMP-FILE.
+      
+       9900-END.
+      
+      ******************************************************************
+       WB10S2-TRANSACTION-END.
+      ******************************************************************
+      ******************************************************************
+       WB10S3-TRANSACTION              SECTION 10.
+      ******************************************************************
+       WB10S3-START.
+      
+           PERFORM 210-EDIT-ACCESS
+           THRU    210-END.
+      
+           IF (NO-ERROR-FOUND)
+               PERFORM 480-INQUIRE
+               THRU    480-END.
+      
+           GO TO WB10S3-TRANSACTION-END.
+      
+      ******************************************************************
+       210-EDIT-ACCESS.
+      ******************************************************************
+      
+           MOVE WB10F3-EMP-COMPANY     TO DB-COMPANY.
+           MOVE WB10F3-EMP-EMPLOYEE    TO DB-EMPLOYEE.
+      
+           IF (WB10F3-FC = "N")
+               PERFORM 850-FIND-NLT-EMPSET1
+               IF  (EMPLOYEE-FOUND)
+               AND (EMP-COMPANY  = DB-COMPANY)
+               AND (EMP-EMPLOYEE = DB-EMPLOYEE)
+                   PERFORM 860-FIND-NEXT-EMPSET1.
+      
+           IF (WB10F3-FC = "P")
+               PERFORM 850-FIND-NLT-EMPSET1
+               PERFORM 870-FIND-PREV-EMPSET1.
+      
+           IF (WB10F3-FC = "N" OR "P")
+               IF (EMPLOYEE-NOTFOUND)
+                   MOVE 12                          TO CRT-ERROR-NBR
+                   MOVE WB10F3-FC-FN                TO CRT-FIELD-NBR
+                   GO TO 210-END
+               ELSE
+                   MOVE EMP-COMPANY    TO WB10F3-EMP-COMPANY
+                                          DB-COMPANY
+                   MOVE EMP-EMPLOYEE   TO WB10F3-EMP-EMPLOYEE
+                                          DB-EMPLOYEE.
+      
+           MOVE WB10F3-EMP-COMPANY     TO DB-COMPANY.
+           MOVE SPACES                 TO DB-PROCESS-LEVEL.
+           PERFORM 840-FIND-PRSSET1.
+           IF (PRSYSTEM-NOTFOUND)
+               MOVE 100                             TO CRT-ERROR-NBR
+               MOVE WB10F3-EMP-COMPANY-FN           TO CRT-FIELD-NBR
+               GO TO 210-END.
+      
+           IF (WB10F3-FC = "N" OR "P")
+               GO TO 210-END.
+      
+           MOVE WB10F3-EMP-COMPANY     TO DB-COMPANY.
+           MOVE WB10F3-EMP-EMPLOYEE    TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+      
+           IF  (EMPLOYEE-NOTFOUND)
+           AND (WB10F3-FC = "I" OR "+" OR "-")
+               MOVE 101                             TO CRT-ERROR-NBR
+               MOVE WB10F3-EMP-EMPLOYEE-FN          TO CRT-FIELD-NBR
+               GO TO 210-END.
+      
+       210-END.
+      
+      ******************************************************************
+       480-INQUIRE.
+      ******************************************************************
+      
+           PERFORM 600-MOVE-TO-SCREEN
+           THRU    600-END.
+      
+           MOVE WB10F3-EMP-COMPANY            TO DB-COMPANY.
+           MOVE WB10F3-EMP-EMPLOYEE           TO DB-EMPLOYEE.
+      
+           IF (WB10F3-FC    = "I" OR "N" OR "P")
+           OR (EMP-COMPANY  NOT = WB10F3-PT-EMP-COMPANY)
+           OR (EMP-EMPLOYEE NOT = WB10F3-PT-EMP-EMPLOYEE)
+               INITIALIZE DB-SEQ-NBR
+               IF (WB10F3-FC = "-")
+                   MOVE "+"                   TO WB10F3-FC
+               END-IF
+           ELSE
+           IF (WB10F3-FC = "-")
+               MOVE WB10F3-EMD-SEQ-NBR (1)    TO DB-SEQ-NBR
+           ELSE
+           IF (WB10F3-FC = "+")
+               MOVE WB10F3-PT-EMD-SEQ-NBR     TO DB-SEQ-NBR
+           ELSE
+               MOVE WB10F3-PT-EMD-SEQ-NBR     TO DB-SEQ-NBR.
+      
+           PERFORM 850-FIND-NLT-EMDSET1.
+           IF (WB10F3-FC = "-")
+               PERFORM 870-FIND-PREV-EMDSET1.
+      
+           IF (WB10F3-FC = "-" OR "+")
+               IF  (EMDEPEND-FOUND)
+               AND (EMD-COMPANY  = WB10F3-EMP-COMPANY)
+               AND (EMD-EMPLOYEE = WB10F3-EMP-EMPLOYEE)
+                   IF (WB10F3-FC = "-")
+                       MOVE WB10F3-EMD-SEQ-NBR (1)
+                                              TO WB10F3-PT-EMD-SEQ-NBR
+                   END-IF
+               ELSE
+                   MOVE 11                          TO CRT-ERROR-NBR
+                   MOVE WB10F3-FC-FN                TO CRT-FIELD-NBR
+                   GO TO 480-END.
+      
+           IF (WB10F3-FC = "I")
+               MOVE "+"                       TO WB10F3-FC.
+      
+           INITIALIZE WB10F3-DETAIL-GROUP.
+      
+           IF (WB10F3-FC = "-")
+               PERFORM 610-MOVE-DTL-TO-SCREEN
+               THRU    610-END
+                   VARYING I1 FROM 10 BY NEGATIVE-ONE
+                   UNTIL  (I1           < 1)
+                   OR     (EMDEPEND-NOTFOUND)
+                   OR     (EMD-COMPANY  NOT = WB10F3-EMP-COMPANY)
+                   OR     (EMD-EMPLOYEE NOT = WB10F3-EMP-EMPLOYEE)
+      
+               IF (I1 NOT < 1)
+                   MOVE I1                    TO I9
+                   ADD 1                      TO I9
+                   MOVE 1                     TO I1
+                   PERFORM
+                       UNTIL (I9 > 10)
+      
+                       MOVE WB10F3-DETAIL-LINE (I9)
+                                              TO WB10F3-DETAIL-LINE (I1)
+                       INITIALIZE WB10F3-DETAIL-LINE (I9)
+                       ADD 1                  TO I1
+                       ADD 1                  TO I9
+                   END-PERFORM
+                   MOVE "+"                   TO WB10F3-FC
+                   MOVE WB10F3-EMP-COMPANY    TO DB-COMPANY
+                   MOVE WB10F3-EMP-EMPLOYEE   TO DB-EMPLOYEE
+                   MOVE WB10F3-PT-EMD-SEQ-NBR TO DB-SEQ-NBR
+                   PERFORM 850-FIND-NLT-EMDSET1
+                   PERFORM 610-MOVE-DTL-TO-SCREEN
+                   THRU    610-END
+                       VARYING I1 FROM I1 BY 1
+                       UNTIL  (I1           > 10)
+                       OR     (EMDEPEND-NOTFOUND)
+                       OR     (EMD-COMPANY  NOT = WB10F3-EMP-COMPANY)
+                       OR     (EMD-EMPLOYEE NOT = WB10F3-EMP-EMPLOYEE)
+      
+                   IF (EMDEPEND-NOTFOUND)
+                   OR (EMD-COMPANY  NOT = WB10F3-EMP-COMPANY)
+                   OR (EMD-EMPLOYEE NOT = WB10F3-EMP-EMPLOYEE)
+                       INITIALIZE WB10F3-PT-EMD-SEQ-NBR
+                   ELSE
+                       MOVE EMD-SEQ-NBR       TO WB10F3-PT-EMD-SEQ-NBR
+                   END-IF
+               END-IF
+               IF (EMDEPEND-NOTFOUND)
+               OR (EMD-COMPANY  NOT = WB10F3-EMP-COMPANY)
+               OR (EMD-EMPLOYEE NOT = WB10F3-EMP-EMPLOYEE)
+                   MOVE CRT-INQ-COMPLETE      TO CRT-MESSAGE
+               ELSE
+                   MOVE CRT-MORE-RECS         TO CRT-MESSAGE
+           ELSE
+               PERFORM 610-MOVE-DTL-TO-SCREEN
+               THRU    610-END
+                   VARYING I1 FROM 1 BY 1
+                   UNTIL  (I1           > 10)
+                   OR     (EMDEPEND-NOTFOUND)
+                   OR     (EMD-COMPANY  NOT = WB10F3-EMP-COMPANY)
+                   OR     (EMD-EMPLOYEE NOT = WB10F3-EMP-EMPLOYEE)
+      
+               IF (EMDEPEND-NOTFOUND)
+               OR (EMD-COMPANY  NOT = WB10F3-EMP-COMPANY)
+               OR (EMD-EMPLOYEE NOT = WB10F3-EMP-EMPLOYEE)
+                   INITIALIZE WB10F3-PT-EMD-SEQ-NBR
+                   MOVE CRT-INQ-COMPLETE      TO CRT-MESSAGE
+               ELSE
+                   MOVE EMD-SEQ-NBR           TO WB10F3-PT-EMD-SEQ-NBR
+                   MOVE CRT-MORE-RECS         TO CRT-MESSAGE.
+      
+       480-END.
+      
+      ******************************************************************
+       600-MOVE-TO-SCREEN.
+      ******************************************************************
+      
+           MOVE EMP-COMPANY            TO WB10F3-EMP-COMPANY.
+           MOVE EMP-EMPLOYEE           TO WB10F3-EMP-EMPLOYEE.
+      
+           MOVE EMP-LAST-NAME          TO HRWS-LAST-NAME.
+           MOVE EMP-FIRST-NAME         TO HRWS-FIRST-NAME.
+           MOVE EMP-MIDDLE-INIT        TO HRWS-MIDDLE-INIT.
+           MOVE EMP-NAME-SUFFIX        TO HRWS-NAME-SUFFIX.
+           MOVE EMP-LAST-NAME-PRE      TO HRWS-LAST-NAME-PRE.
+           PERFORM 750-HR-FORMAT-NAME.
+           MOVE HRWS-FORMAT-NAME       TO WB10F3-EMP-SHORT-NAME.
+     
+       600-END.
+      
+      ******************************************************************
+       610-MOVE-DTL-TO-SCREEN.
+      ******************************************************************
+      
+           MOVE EMD-SEQ-NBR            TO WB10F3-EMD-SEQ-NBR (I1).
+           MOVE EMD-FICA-NBR           TO WB10F3-EMD-FICA-NBR (I1).
+           MOVE EMD-REL-CODE           TO WB10F3-EMD-REL-CODE (I1).
+           MOVE EMD-DEP-TYPE           TO WB10F3-EMD-DEP-TYPE (I1).
+           MOVE EMD-SEX                TO WB10F3-EMD-SEX (I1).
+      
+           MOVE EMD-LAST-NAME          TO HRWS-LAST-NAME.
+           MOVE EMD-FIRST-NAME         TO HRWS-FIRST-NAME.
+           MOVE EMD-MIDDLE-INIT        TO HRWS-MIDDLE-INIT.
+           MOVE EMD-NAME-SUFFIX        TO HRWS-NAME-SUFFIX.
+           MOVE EMD-LAST-NAME-PRE      TO HRWS-LAST-NAME-PRE.
+           PERFORM 750-HR-FORMAT-NAME.
+           MOVE HRWS-FORMAT-NAME       TO WB10F3-EMD-SHORT-NAME (I1).
+      
+           MOVE WS-SYSTEM-DATE-YMD     TO DATE-1.
+           PERFORM 520-COMPUTE-JULIAN.
+           MOVE JULIAN-DAYS            TO WB10WS-J-CURRENT-DATE.
+      
+           MOVE EMD-BIRTHDATE          TO DATE-1.
+           PERFORM 520-COMPUTE-JULIAN.
+           MOVE JULIAN-DAYS            TO WB10WS-J-EMD-BIRTHDATE.
+      
+           COMPUTE WB10WS-EMD-CUR-AGE ROUNDED = (((WB10WS-J-CURRENT-DATE
+                                               - WB10WS-J-EMD-BIRTHDATE)
+                                              / 365.25) - 0.5).
+      
+           MOVE WB10WS-EMD-CUR-AGE         TO WB10F3-EMD-CUR-AGE (I1).
+      
+           MOVE "HR11"                     TO WB10F3-BTN-HR11 (I1).
+           MOVE "HR13"                     TO WB10F3-BTN-HR13 (I1).
+      
+      ***  Check DEPENDENT COBRA participant
+           MOVE WB10F3-EMP-COMPANY         TO DB-COMPANY.
+           MULTIPLY WB10F3-EMP-EMPLOYEE    BY 100 GIVING DB-PARTICIPNT.
+           ADD WB10F3-EMD-SEQ-NBR (I1)     TO DB-EMPLOYEE.
+           MOVE PARSET1-PARTICIPNT         TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PARSET1.
+           IF (PARTICIPNT-FOUND)
+               MOVE "BN70"                 TO WB10F3-BTN-BN70 (I1)
+               PERFORM 650-MOVE-COBRA-TO-SCREEN.
+      
+      ***  Check SPONSER COBRA participant
+           MOVE WB10F3-EMP-COMPANY         TO DB-COMPANY.
+           MULTIPLY WB10F3-EMP-EMPLOYEE    BY 100 GIVING DB-PARTICIPNT.
+           MOVE PARSET1-PARTICIPNT         TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PARSET1.
+           IF (PARTICIPNT-FOUND)
+               MOVE "BN70"                 TO WB10F3-BTN-BN70 (I1).
+
+           IF (WB10F3-FC = "-")
+               PERFORM 870-FIND-PREV-EMDSET1
+           ELSE
+               PERFORM 860-FIND-NEXT-EMDSET1.
+      
+       610-END.
+      
+      ******************************************************************
+       640-MOVE-DEP-TO-SCREEN.
+      ******************************************************************
+      
+      * DEP BENEFITS FROM HR13 - WHICH IS ALREADY ACTIVE
+      *    PERFORM 1000-SEARCH-HRDEPBEN.
+      *    IF (WS-HDB-ACTIVITY)
+      *        IF (PTB-PARTICIPNT > ZEROES)
+      *            MOVE "BN71"             TO WB10F3-BTN-BN71 (I1)
+      *        ELSE
+      *            MOVE "BN72"             TO WB10F3-BTN-BN72 (I1).
+      
+       640-END.
+
+      ******************************************************************
+       650-MOVE-COBRA-TO-SCREEN.
+      ******************************************************************
+      
+           PERFORM 1200-SEARCH-PARTBEN.
+           IF (WS-PTB-ACTIVITY)
+               IF (PTB-PARTICIPNT > ZEROES)
+                   MOVE "BN71"             TO WB10F3-BTN-BN71 (I1)
+               ELSE
+                   MOVE "BN72"             TO WB10F3-BTN-BN72 (I1).
+      
+       650-END.
+      
+      ******************************************************************
+       1000-SEARCH-HRDEPBEN.
+      ******************************************************************
+      
+           MOVE WB10F3-EMP-COMPANY         TO DB-COMPANY.
+           MOVE WB10F3-EMP-EMPLOYEE        TO DB-EMPLOYEE.
+           MOVE WB10F3-EMD-SEQ-NBR (I1)    TO DB-DEPENDENT.
+           INITIALIZE DB-PLAN-TYPE.
+           INITIALIZE DB-PLAN-CODE.
+           MOVE WS-HIGH-VALUES             TO DB-EMP-START.
+           MOVE WS-HIGH-VALUES             TO DB-START-DATE.
+           MOVE HDBSET1-DEPENDENT          TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-HDBSET1.
+      
+           SET WS-NO-ACTIVITY-FOUND        TO TRUE.
+           PERFORM
+               UNTIL (HRDEPBEN-NOTFOUND)
+               OR    (WS-ANY-ACTIVITY-FOUND)
+               IF (HDB-START-DATE NOT = HDB-STOP-DATE)
+                   IF  ((HDB-START-DATE <= WS-SYSTEM-DATE-YMD)
+                   AND ((HDB-STOP-DATE  = ZEROES)
+                    OR  (HDB-STOP-DATE  >= WS-SYSTEM-DATE-YMD)))
+                       SET WS-HDB-ACTIVITY TO TRUE
+                   END-IF
+               END-IF
+               PERFORM 860-FIND-NXTRNG-HDBSET1
+           END-PERFORM.
+
+      ******************************************************************
+       1200-SEARCH-PARTBEN.
+      ******************************************************************
+      
+           MOVE WB10F3-EMP-COMPANY         TO DB-COMPANY.
+           IF (WB10F3-PART-NBR = ZEROES)      
+               MOVE WB10F3-EMP-EMPLOYEE    TO DB-EMPLOYEE
+               MOVE ZEROES                 TO DB-PARTICIPNT
+           ELSE
+               MOVE ZEROES                 TO DB-EMPLOYEE
+               MOVE WB10F3-PART-NBR        TO DB-PARTICIPNT.
+           INITIALIZE DB-PLAN-TYPE.
+           INITIALIZE DB-PLAN-CODE.
+           MOVE WS-HIGH-VALUES             TO DB-START-DATE.
+           MOVE PTBSET4-EMPLOYEE           TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-PTBSET4.
+      
+           SET WS-NO-ACTIVITY-FOUND        TO TRUE.
+           PERFORM
+               UNTIL (PARTBEN-NOTFOUND)
+               OR    (WS-ANY-ACTIVITY-FOUND)
+               IF (PTB-START-DATE NOT = PTB-STOP-DATE)
+                   IF  ((PTB-START-DATE <= WS-SYSTEM-DATE-YMD)
+                   AND  ((PTB-STOP-DATE =  ZEROES)
+                   OR    (PTB-STOP-DATE >= WS-SYSTEM-DATE-YMD)))
+                       SET WS-PTB-ACTIVITY TO TRUE
+                   END-IF
+               END-IF
+               PERFORM 860-FIND-NXTRNG-PTBSET4
+           END-PERFORM.
+      
+      ******************************************************************
+       WB10S3-TRANSACTION-END.
+      ******************************************************************
+      
+      

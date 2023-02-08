@@ -1,0 +1,42 @@
+< prod/hrsrc/HR04PD
+> vnla/hrsrc/HR04PD
+2,10d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by MARK GLISSEN - MG0706                             *
+<       ******************************************************************
+<       *  07/06/04  - MODIFIED SCREEN TO ALLOWING USERS POSITIONING     *
+<       *              TO RECORDS NEEDED INSTEAD OF SCROLLING            *
+<       ******************************************************************
+< 
+1714,1723c1705,1714
+< MG0706
+< MG0706     IF (HR04F7-FC = "I")
+< MG0706     OR (HR04F7-PT-PCO-TYPE NOT = HR04F7-PCO-TYPE)
+< MG0706         IF (HR04F7-PS-PCO-CODE = SPACES)
+< MG0706             MOVE SPACES              TO DB-CODE
+< MG0706         ELSE
+< MG0706             MOVE HR04F7-PS-PCO-CODE  TO DB-CODE
+< MG0706             MOVE SPACES              TO HR04F7-PS-PCO-CODE
+< MG0706         END-IF
+< MG0706     ELSE
+---
+> 153100
+> 153200     IF (HR04F7-FC          = "I")
+> 153300     OR (HR04F7-PT-PCO-TYPE NOT = HR04F7-PCO-TYPE)
+> 153400         MOVE SPACES              TO DB-CODE
+> 153500     ELSE
+> 153600     IF (HR04F7-FC = "+")
+> 153700         MOVE HR04F7-PT-PCO-CODE  TO DB-CODE
+> 153800     ELSE
+> 153900         MOVE HR04F7-PCO-CODE (1) TO DB-CODE.
+> 154000
+1724,1730d1714
+< MG0706         IF (HR04F7-FC = "+")
+< MG0706             MOVE HR04F7-PT-PCO-CODE  TO DB-CODE
+< MG0706         ELSE
+< MG0706             MOVE HR04F7-PCO-CODE (1) TO DB-CODE
+< MG0706         END-IF
+< MG0706     END-IF.
+< MG0706

@@ -1,0 +1,14 @@
+< prod\apsrc\AP155.scr
+> vnla\apsrc\AP155.scr
+45c45
+< |               Print Comments:;Y;        ;   ;
+---
+> |               Print Comments:[ ]        ;   ;
+111d110
+<    3   *CPY-VENDOR-SEQ        A     01          SB    A50
+130c129
+<   PRINT-COMMENTS        Y                     Y=Yes
+---
+>   PRINT-COMMENTS        N                     N=No
+130a130
+>                                               Y=Yes

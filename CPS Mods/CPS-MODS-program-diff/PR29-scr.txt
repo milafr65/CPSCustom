@@ -1,0 +1,50 @@
+< prod/prsrc/PR29.scr
+> vnla/prsrc/PR29.scr
+37c37
+< |                                      
+---
+> |
+40c40
+< |      W9 Received Date: ;      ;     Benefit Start Date: &      ]
+---
+> |
+42c42
+< |               R-PPPT#: ;          ;        Review Date: &      ]
+---
+> |
+45c45
+< |      Addl Federal Tax: &           ]     Review Reason: [   ] ;              ;
+---
+> |      Addl Federal Tax: &           ]
+47,48c47,48
+< |         Process Group: [ ]               Roster Status: ;          ;
+< |    Percent Total Dist: &   ]      A-QDRO-CRP Indicator: ;          ;
+---
+> |         Process Group: [ ]
+> |    Percent Total Dist: &   ]
+49d48
+< |           Check Group: ; ;         Benefit Stop Reason: [   ] ;              ;
+92c91
+< |           Misc Fields: [      ] [      ]  Seq Nbr ;    ;
+---
+> |           Misc Fields: [      ] [      ]
+136,137d134
+<   2     HEU-D-FIELD-W9        F     08          SB
+<   2     WPN-BEN-START-DATE    F     08          SB
+140,141d136
+<   2     HEU-A-FIELD-R-PPPT    A     10          SB
+<   2     WPN-REVIEW-DATE       F     08          SB
+147,148d141
+<   2     WPN-REVIEW-REASON     A     03          SB   *wb2
+<   2     WPN-REVIEW-DESC       A     14          SB   *wb2
+152d144
+<   2     HEU-A-FIELD-ROSTER    A     10          SB
+154,157d145
+<   2     HEU-A-FIELD-QDRO      A     10          SB
+<   2     STM-CHECK-GRP         A     01          SB
+<   2     WPN-BEN-STOP-RSN      A     03          SB   *wb1 
+<   2     WPN-STOP-DESC         A     14          SB   *wb1 
+203d190
+<   2     PNP-PENS-SEQ-NBR-DISP N     04          SB       
+216d202
+< *

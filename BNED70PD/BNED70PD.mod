@@ -1,0 +1,874 @@
+******* BNED70PD 3.1.4.1.9 <1649065516>
+000100******************************************************************
+000200*                         (BNED70PD)                   NOV 16-95 *
+000300*                                                                *
+000400*       E L I G I B I L I T Y   D A T E   C A L C   R T N        *
+000500*                                                                *
+000600******************************************************************
+000700*                                                                *
+000800* RECORDS REQUIRED IN MEMORY : EMPLOYEE, PAEMPLOYEE, PLAN        *
+000900*                                                                *
+001000* INPUT PARAMETERS        :                                      *
+001100*                                                                *
+001200* BNEDWS-COMPANY          : Company                   (REQUIRED) *
+001300* BNEDWS-PLAN-TYPE        : Plan Type                 (REQUIRED) *
+001400* BNEDWS-PLAN-CODE        : Plan Code                 (REQUIRED) *
+001500* BNEDWS-EMPLOYEE         : Employee                  (REQUIRED) *
+001600* BNEDWS-AS-OF-DATE       : As of Date                (REQUIRED) *
+001700* BNEDWS-START-DATE       : Start Date                (NOT-REQ)  *
+001800* BNEDWS-FROM-MAGIC-SW    : From Magic Switch         (NOT-REQ)  *
+001900* Valid values            : "Y"es, Spaces                        *
+002000*                                                                *
+002100******************************************************************
+002200*                                                                *
+002300* OUTPUT                  : BNEDWS-ELIGIBILITY-DATE              *
+002400*                           BNEDWS-HOURS-SW                      *
+002500*                             0 = HOURS-NOT-COMPLETED (88-LEVEL) *
+002600*                             1 = HOURS-COMPLETED     (88-LEVEL) *
+002700*                           BNEDWS-INIT-ENT-POINT                *
+002800*                           BNEDWS-ENTRY-MMDD         (TABLE)    *
+002900*                           BNEDWS-LAST-EP-INDEX                 *
+003000*                           BNEDWS-ERROR-NBR                     *
+003100*                           BNEDWS-ERR-VAR1                      *
+003200*                           BNEDWS-ERR-VAR2                      *
+003300*                           BNEDWS-ERR-VAR3                      *
+003400*                                                                *
+003500******************************************************************
+      *  JT#      TAG      DESCRIPTION                                 *
+      *  ------   ------   ------------------------------------------  *
+      *  319616 | J19616 | CHANGED A KFIND TO A FIND TO PSGRELATE      *
+      *         |        | SINCE IT RETREIVES FIELD VALUES FROM THE    *
+      *         |        | TABLE TO VALIDATE. KFIND COULD ONLY RETURN  *
+      *         |        | A FOUND AND NOT-FOUND VALUE AND NOT THE     *
+      *         |        | ACTUAL RECORD VALUE.                        *
+      *  ------   ------   ------------------------------------------  *
+      *  ------   ------   ------------------------------------------  *
+      *  HERWECK| HERWECK| CHANGES DUE TO UPGRADEX; TAKEN FROM         *
+      *         |        | CPSPRD9 VERSION; SEE 5100-FIND-BENEFITS     *
+      *  ------   ------   ------------------------------------------  *
+            *  717193 | J17193 | ACA REGULATORY REPORTING                    *
+      *  ------   ------   ------------------------------------------- *
+      *  841123 | J41123 | BN100 using Entry rules insted of add rules *
+      * -------   ------   ------------------------------------------- *
+      * 1031132 | 031132 | INCLUDED PLAN-CODE WHEN FINDING BENEFITS    *
+      * -------   ------  -------------------------------------------- *
+      * 1036190 | 036190 | REVERT CHANGES MADE FOR JT-1031132          *
+      * -------   ------  -------------------------------------------- *
+003600******************************************************************
+003700 5000-ELIGIBILITY-DATE-CALC      SECTION.
+003800******************************************************************
+003900 5000-START.
+004000
+004100     PERFORM 5105-INIT-OUTPUT
+004200     THRU    5105-END.
+004300
+004400     IF (BNEDWS-PLAN-TYPE        NOT = "FL")
+004500         IF (PLN-START-DATE      > BNEDWS-AS-OF-DATE)
+004600             MOVE PLN-START-DATE TO BNEDWS-AS-OF-DATE.
+004700
+J41123     IF (BNEDWS-FROM-MAGIC-SW    NOT = SPACES)
+004900         SET INIT-ENROLLMENT     TO TRUE
+005000     ELSE
+005100         PERFORM 5100-FIND-BENEFITS
+J17193         THRU    5100-END.
+005300
+J41123     IF (BNEDWS-FROM-MAGIC-SW NOT = "Y")
+J17193         PERFORM 5200-FIND-BNWAIT-BY-EMP-GROUP
+J17193         THRU    5200-END
+J17193         IF (ERROR-FOUND)
+J17193             GO TO 5000-END
+J41123         END-IF
+J41123     END-IF.
+005800
+005900     PERFORM 6000-CALC-WAIT-PERIOD-DATE.
+006000     IF (HOURS-NOT-COMPLETED)
+P80725     OR (BNED-ERROR-FOUND)
+006100         GO TO 5000-END.
+006200
+006300     IF (BNEDWS-INIT-ENT-POINT   = "0")
+006400         MOVE BNEDWS-WAIT-PERIOD-DATE
+006500                                 TO BNEDWS-ELIGIBILITY-DATE
+006600     ELSE
+P77635         PERFORM 7000-CALC-FROM-ENTRY-POINTS
+P77635         IF (BNED-ERROR-FOUND)
+P77635             GO TO 5000-END
+P77635         END-IF.
+006800
+006900     IF  (BNEDWS-PLAN-TYPE        NOT = "FL")
+007000     AND (BNEDWS-ELIGIBILITY-DATE < PLN-START-DATE)
+007100         MOVE PLN-START-DATE      TO BNEDWS-ELIGIBILITY-DATE.
+007200
+007300     GO TO 5000-END.
+007400
+007500******************************************************************
+007600 5105-INIT-OUTPUT.
+007700******************************************************************
+007800
+007900     INITIALIZE BNEDWS-ELIGIBILITY-DATE
+008000                BNEDWS-EMP-PLAN-CODE 
+008100                BNEDWS-HOURS-SW
+008200                BNEDWS-QUIT-LOOP-SW
+008300                BNEDWS-INIT-ENT-POINT
+008400                BNEDWS-LAST-EP-INDEX.
+008500
+008600     PERFORM
+008700         VARYING BNEDWS-I1 FROM 1 BY 1
+008800         UNTIL  (BNEDWS-I1 > 12)
+008900
+009000         INITIALIZE BNEDWS-ENTRY-MMDD (BNEDWS-I1)
+009100     END-PERFORM.
+009200
+009300 5105-END.
+009400
+009500******************************************************************
+009600 5100-FIND-BENEFITS.
+009700******************************************************************
+009800
+009900     SET INIT-ENROLLMENT         TO TRUE.
+010000
+010100     MOVE BNEDWS-COMPANY         TO DB-COMPANY.
+010200     MOVE BNEDWS-EMPLOYEE        TO DB-EMPLOYEE.
+010300     MOVE BNEDWS-PLAN-TYPE       TO DB-PLAN-TYPE.
+P84745     IF (CRT-PROGRAM-CODE = "BS15")
+036190        MOVE BENSET3-PLAN-TYPE   TO WS-DB-BEG-RNG
+P84745        PERFORM 850-FIND-BEGRNG-BENSET3
+P84745     ELSE
+      *  Begin CHG -  Herweck              
+               MOVE BNEDWS-PLAN-CODE    TO DB-PLAN-CODE
+               MOVE BENSET4-PLAN-CODE   TO WS-DB-BEG-RNG
+               PERFORM 850-FIND-BEGRNG-BENSET4
+010500*        MOVE BENSET4-PLAN-TYPE   TO WS-DB-BEG-RNG
+010600*        PERFORM 850-FIND-BEGRNG-BENSET4
+      *  End CHG -  Herweck              
+P84745     END-IF.
+P84745
+010700     IF (BENEFIT-FOUND)
+010800         SET RE-ENROLLMENT       TO TRUE.
+010900
+011000 5100-END.
+011100
+011200******************************************************************
+011300 5200-FIND-BNWAIT-BY-EMP-GROUP.
+011400******************************************************************
+011500
+011600     MOVE BNEDWS-COMPANY         TO BNREWS-COMPANY.
+011700     MOVE BNEDWS-PLAN-TYPE       TO BNREWS-PLAN-TYPE.
+011800     MOVE BNEDWS-PLAN-CODE       TO BNREWS-PLAN-CODE.
+011900     MOVE BNEDWS-EMPLOYEE        TO BNREWS-EMPLOYEE.
+012000     MOVE BNEDWS-AS-OF-DATE      TO BNREWS-AS-OF-DATE.
+012100     MOVE "BWT"                  TO BNREWS-FILE-PREFIX.
+012200     INITIALIZE BNREWS-RULE-TYPE.
+012300     PERFORM 5000-FIND-RECS-BY-EMP-GROUP-70.
+012400     IF (ERROR-FOUND)
+012500         GO TO 5200-END.
+012600
+012700     MOVE BWT-START-DATE         TO BNEDWS-BWT-START-DATE.
+012800     MOVE BWT-GROUP-NAME         TO BNEDWS-BWT-GROUP-NAME.
+012900
+013000 5200-END.
+013100
+013200******************************************************************
+013300 5000-END.
+013400******************************************************************
+013500
+013600******************************************************************
+013700 6000-CALC-WAIT-PERIOD-DATE      SECTION.
+013800******************************************************************
+013900 6000-START.
+014000
+014100     PERFORM 6050-SET-ENROLLMENT-VARS
+014200     THRU    6050-END.
+014300
+014400     PERFORM 6100-INITIALIZE-DATES
+014500     THRU    6100-END.
+014600
+014700     PERFORM 6200-SET-FROM-DATE
+014800     THRU    6200-END.
+           IF (BNED-ERROR-FOUND)
+               GO TO 6000-END.
+014900
+015000     IF (BWT-ENTRY-AGE           NOT = ZEROES)
+015100         PERFORM 6300-CALC-WPD-FROM-BD
+015200         THRU    6300-END.
+015300
+015400     IF (BNEDWS-QUAL-PERIOD      NOT = ZEROES)
+015500         PERFORM 6400-CALC-WPD-FROM-DAYS
+015600         THRU    6400-END.
+015700
+015800     IF (BNEDWS-MNTHS-SERV       NOT = ZEROES)
+015900         PERFORM 6500-CALC-WPD-FROM-MNTHS
+016000         THRU    6500-END.
+016100
+016200     IF (BNEDWS-HOURS-SERV       NOT = ZEROES)
+016300         PERFORM 6600-CALC-WPD-FROM-HOURS
+016400         THRU    6600-END
+016500         IF (HOURS-NOT-COMPLETED)
+016600************ Plan requires \ hours; \ completed by employee
+016700             MOVE 109                TO BNEDWS-ERROR-NBR
+016800             MOVE BNEDWS-HOURS-SERV  TO BNEDWS-HOURS-RED
+016900             MOVE BNEDWS-HOURS-RED   TO BNEDWS-ERR-VAR1
+017000             MOVE BNEDWS-HOURS       TO BNEDWS-HOURS-RED
+017100             MOVE BNEDWS-HOURS-RED   TO BNEDWS-ERR-VAR2
+017200             GO TO 6000-END
+017300         ELSE    
+017400             IF  (BNEDWS-HOURS-DATE  > BNEDWS-START-DATE)
+017500             AND (BNEDWS-START-DATE  NOT = ZEROES)
+017600**************** Emp has not completed hours on start date entered
+017700                 MOVE 110            TO BNEDWS-ERROR-NBR
+017800                 GO TO 6000-END.
+017900
+018000     PERFORM 6700-SET-WAIT-PERIOD-DATE
+018100     THRU    6700-END.
+018200
+018300     GO TO 6000-END.
+018400
+018500******************************************************************
+018600 6050-SET-ENROLLMENT-VARS.
+018700******************************************************************
+018800
+018900     INITIALIZE BNEDWS-I1.
+019000
+019100     IF (RE-ENROLLMENT)
+019200         MOVE BWT-SUB-FROM       TO BNEDWS-FROM-DATE-SW
+019300         MOVE BWT-SUB-DAYS       TO BNEDWS-QUAL-PERIOD
+019400         MOVE BWT-SUB-MOS        TO BNEDWS-MNTHS-SERV
+019500         MOVE BWT-SUB-HOURS      TO BNEDWS-HOURS-SERV
+019600         MOVE BWT-SUB-ENT-POINT  TO BNEDWS-INIT-ENT-POINT
+019700         PERFORM
+019800             VARYING BNEDWS-I1 FROM 1 BY 1
+019900             UNTIL   (BNEDWS-I1                  > 12)
+020000             OR      (BWT-SUB-POINTS (BNEDWS-I1) = ZEROES)
+020100
+020200             MOVE BWT-SUB-POINTS (BNEDWS-I1)
+020300                                 TO BNEDWS-ENTRY-MMDD (BNEDWS-I1)
+020400             MOVE BNEDWS-I1      TO BNEDWS-LAST-EP-INDEX
+020500         END-PERFORM
+020600     ELSE
+020700         MOVE BWT-FROM-DATE      TO BNEDWS-FROM-DATE-SW
+020800         MOVE BWT-QUAL-PERIOD    TO BNEDWS-QUAL-PERIOD
+020900         MOVE BWT-MNTHS-SERV     TO BNEDWS-MNTHS-SERV
+021000         MOVE BWT-HOURS-SERV     TO BNEDWS-HOURS-SERV
+021100         MOVE BWT-INIT-ENT-POINT TO BNEDWS-INIT-ENT-POINT
+021200         PERFORM
+021300             VARYING BNEDWS-I1 FROM 1 BY 1
+021400             UNTIL   (BNEDWS-I1                  > 12)
+021500             OR      (BWT-ENTRY-MMDD (BNEDWS-I1) = ZEROES)
+021600
+021700             MOVE BWT-ENTRY-MMDD (BNEDWS-I1)
+021800                                 TO BNEDWS-ENTRY-MMDD (BNEDWS-I1)
+021900             MOVE BNEDWS-I1      TO BNEDWS-LAST-EP-INDEX
+022000         END-PERFORM.
+022100
+022200 6050-END.
+022300
+022400******************************************************************
+022500 6100-INITIALIZE-DATES.
+022600******************************************************************
+022700
+022800     INITIALIZE BNEDWS-MIN-AGE-DATE
+022900                BNEDWS-DAYS-DATE
+023000                BNEDWS-MONTHS-DATE
+023100                BNEDWS-HOURS-DATE.
+023200
+023300 6100-END.
+023400
+023500******************************************************************
+023600 6200-SET-FROM-DATE.
+023700******************************************************************
+023800
+023900*
+024000**** AS OF DATE IS PERSONNEL ACTION EFFECTIVE DATE, USED FROM BN100
+024100**** TO CALCULATE ADD DATE
+024200*
+024300
+024400     IF (BNEDWS-FROM-DATE-SW       = "PA")
+024500         MOVE BNEDWS-AS-OF-DATE    TO BNEDWS-FROM-DATE
+024600     ELSE
+024700     IF (BNEDWS-FROM-DATE-SW       = "HI")
+024800         MOVE EMP-DATE-HIRED       TO BNEDWS-FROM-DATE
+024900     ELSE
+025000     IF (BNEDWS-FROM-DATE-SW       = "AJ")
+025100         MOVE EMP-ADJ-HIRE-DATE    TO BNEDWS-FROM-DATE
+025200     ELSE
+025300     IF (BNEDWS-FROM-DATE-SW       = "AN")
+025400         MOVE EMP-ANNIVERS-DATE    TO BNEDWS-FROM-DATE
+025500     ELSE
+025600     IF (BNEDWS-FROM-DATE-SW       = "SN")
+025700         MOVE PEM-SENIOR-DATE      TO BNEDWS-FROM-DATE
+025800     ELSE
+025900     IF (BNEDWS-FROM-DATE-SW       = "B1")
+026000         MOVE PEM-BEN-DATE-1       TO BNEDWS-FROM-DATE
+026100     ELSE
+026200     IF (BNEDWS-FROM-DATE-SW       = "B2")
+026300         MOVE PEM-BEN-DATE-2       TO BNEDWS-FROM-DATE
+026400     ELSE
+026500     IF (BNEDWS-FROM-DATE-SW       = "B3")
+026600         MOVE PEM-BEN-DATE-3       TO BNEDWS-FROM-DATE
+026700     ELSE
+026800     IF (BNEDWS-FROM-DATE-SW       = "B4")
+026900         MOVE PEM-BEN-DATE-4       TO BNEDWS-FROM-DATE
+027000     ELSE
+027100     IF (BNEDWS-FROM-DATE-SW       = "B5")
+027200         MOVE PEM-BEN-DATE-5       TO BNEDWS-FROM-DATE
+027300     ELSE
+027400     IF (BNEDWS-FROM-DATE-SW       = "X")
+      *------- BNUXWS-FROM-DATE may be set in BNUX70PD routine
+027500         PERFORM 5000-DO-UX-FROM-DATE-70
+               MOVE BNUXWS-FROM-DATE     TO BNEDWS-FROM-DATE.
+027600
+           IF   (BNEDWS-FROM-DATE        = ZEROES)
+           AND ((BNEDWS-FROM-DATE-SW     = "B1" OR "B2" OR "B3")
+           OR   (BNEDWS-FROM-DATE-SW     = "B4" OR "B5"))
+                MOVE 111                 TO BNEDWS-ERROR-NBR
+                MOVE BNEDWS-FROM-DATE-SW TO BNEDWS-ERR-VAR1
+                GO TO 6200-END.
+
+027700 6200-END.
+027800
+027900******************************************************************
+028000 6300-CALC-WPD-FROM-BD.
+028100******************************************************************
+028200
+           IF (PEM-BIRTHDATE             = ZEROES)
+      ******** Employee birthdate not defined
+               MOVE 112                  TO BNEDWS-ERROR-NBR
+               GO TO 6300-END.
+
+028300     MOVE PEM-BIRTHDATE            TO BNEDWS-BIRTH-DATE.
+028400     ADD BWT-ENTRY-AGE             TO BNEDWS-BD-YEAR.
+028500
+028600     IF (BNEDWS-BD-MONTH           = 2)
+028700         PERFORM 6310-CHECK-LEAP-YEAR
+028800         THRU    6310-END.
+028900
+029000*
+029100**** ADD MINIMUM AGE TO BIRTH-DATE TO CALCULATE DATE ON WHICH
+029200**** EMPLOYEE BECOMES ELIGIBLE (MINIMUM AGE DATE)
+029300*
+029400     MOVE BNEDWS-BIRTH-DATE        TO BNEDWS-MIN-AGE-DATE.
+029500
+029600 6300-END.
+029700
+029800******************************************************************
+029900 6310-CHECK-LEAP-YEAR.
+030000******************************************************************
+030100
+030200     DIVIDE BNEDWS-BD-YEAR         BY 4
+030300                                   GIVING BNEDWS-DUMMY
+030400                                   REMAINDER BNEDWS-REMAINDER.
+030500
+030600     IF  (BNEDWS-REMAINDER         NOT = ZEROES)
+030700     AND (BNEDWS-BD-DAY            = 29)
+030800         MOVE 1                    TO BNEDWS-BD-DAY
+030900         ADD 1                     TO BNEDWS-BD-MONTH.
+031000
+031100 6310-END.
+031200
+031300******************************************************************
+031400 6400-CALC-WPD-FROM-DAYS.
+031500******************************************************************
+031600
+031700*
+031800**** ADD DAYS TO FROM DATE TO CALCULATE WAIT PERIOD DATE
+031900*
+032000     MOVE BNEDWS-FROM-DATE       TO WSDR-FR-DATE.
+032100     PERFORM 900-DATE-TO-JULIAN.
+032200     ADD BNEDWS-QUAL-PERIOD      TO WSDR-JULIAN-DAYS.
+032300     PERFORM 900-JULIAN-TO-DATE.
+032400     MOVE WSDR-FR-DATE           TO BNEDWS-DAYS-DATE.
+032500
+032600 6400-END.
+032700
+032800******************************************************************
+032900 6500-CALC-WPD-FROM-MNTHS.
+033000******************************************************************
+033100
+033200*
+033300**** ADD MONTHS TO FROM DATE TO CALCULATE WAIT PERIOD DATE
+033400*
+033500     MOVE BNEDWS-FROM-DATE       TO HRDTWS-FROM-DATE.
+033600     MOVE "M"                    TO HRDTWS-ADD-WHAT.
+033700     MOVE BNEDWS-MNTHS-SERV      TO HRDTWS-NUMBER.
+033800     PERFORM 5000-DO-ADD-TO-DATE-70.
+033900
+034000     MOVE HRDTWS-TARGET-DATE     TO BNEDWS-MONTHS-DATE.
+034100
+034200 6500-END.
+034300
+034400
+034500******************************************************************
+034600 6600-CALC-WPD-FROM-HOURS.
+034700******************************************************************
+034800
+034900*
+035000**** ADD HOURS (USING PRTIME) TO FROM DATE TO CALCULATE WAIT
+035100**** PERIOD DATE
+035200*
+035300     INITIALIZE BNEDWS-HOURS.
+035400
+035500     SET HOURS-NOT-COMPLETED     TO TRUE.
+035600
+035700     MOVE BNEDWS-COMPANY         TO DB-COMPANY.
+035800     MOVE BNEDWS-EMPLOYEE        TO DB-EMPLOYEE.
+035900     MOVE BNEDWS-FROM-DATE       TO DB-TR-DATE.
+           INITIALIZE BNEDWS-ACCUM-DATE.
+036000     INITIALIZE DB-CHECK-ID 
+P74754                DB-TIME-SEQ.
+P74754*               DB-SEQ-NBR. 
+036200
+036300     PERFORM 850-FIND-NLT-PRTSET4. 
+036400     PERFORM 6630-ADD-HOURS
+036500     THRU    6630-END
+036600         UNTIL (PRTIME-NOTFOUND)   
+036700         OR    (PRT-COMPANY    NOT = DB-COMPANY)
+036800         OR    (PRT-EMPLOYEE   NOT = DB-EMPLOYEE)
+036900         OR    (BNEDWS-HOURS   >= BNEDWS-HOURS-SERV)
+               OR   ((PRT-TR-DATE    > BNEDWS-AS-OF-DATE)
+               AND   (BNEDWS-AS-OF-DATE NOT = ZEROES)).
+037000
+037100     IF (BNEDWS-HOURS            >= BNEDWS-HOURS-SERV)
+               MOVE BNEDWS-ACCUM-DATE  TO BNEDWS-HOURS-DATE
+037300         SET HOURS-COMPLETED     TO TRUE.
+037400
+037500 6600-END.
+037600
+037700******************************************************************
+037800 6630-ADD-HOURS.
+037900******************************************************************
+038000
+038100     IF ((INIT-ENROLLMENT)
+038200     AND (BWT-PAY-CLASS NOT = SPACES))
+038300         MOVE PRT-COMPANY        TO DB-COMPANY
+038400         MOVE BWT-PAY-CLASS      TO DB-PAY-CLASS
+038500         MOVE PRT-PAY-SUM-GRP    TO DB-PAY-SUM-GRP
+J19616         PERFORM 840-FIND-PSRSET1  
+J19616         IF (PSGRELATE-FOUND)
+038800             IF (PSR-HOURS-FLAG = "S")
+038900                 SUBTRACT PRT-HOURS  FROM BNEDWS-HOURS
+039000             ELSE
+039100             IF (PSR-HOURS-FLAG NOT = "E")
+039200                 ADD PRT-HOURS       TO BNEDWS-HOURS
+                       MOVE PRT-TR-DATE    TO BNEDWS-ACCUM-DATE
+039300             END-IF
+039400             END-IF
+039500         ELSE        
+039600             GO TO 6630-NEXT-PRTIME
+039700         END-IF
+039800     ELSE    
+039900
+040000     IF ((RE-ENROLLMENT)
+040100     AND (BWT-SUB-CLASS NOT = SPACES))
+040200         MOVE PRT-COMPANY        TO DB-COMPANY
+040300         MOVE BWT-SUB-CLASS      TO DB-PAY-CLASS
+040400         MOVE PRT-PAY-SUM-GRP    TO DB-PAY-SUM-GRP
+J19616         PERFORM 840-FIND-PSRSET1    
+J19616         IF (PSGRELATE-FOUND)
+040700             IF (PSR-HOURS-FLAG = "S")
+040800                 SUBTRACT PRT-HOURS  FROM BNEDWS-HOURS
+040900             ELSE
+041000             IF (PSR-HOURS-FLAG NOT = "E")
+041100                 ADD PRT-HOURS       TO BNEDWS-HOURS
+                       MOVE PRT-TR-DATE    TO BNEDWS-ACCUM-DATE
+041200             END-IF
+041300             END-IF
+041400         ELSE        
+041500             GO TO 6630-NEXT-PRTIME
+041600         END-IF
+041700     ELSE    
+041800
+041900     IF (PRT-OT-RECORD NOT = "Y")
+042000         ADD PRT-HOURS       TO BNEDWS-HOURS 
+               MOVE PRT-TR-DATE    TO BNEDWS-ACCUM-DATE
+042100     END-IF
+042200     END-IF.
+042300
+042400 6630-NEXT-PRTIME.
+042500
+042600     PERFORM 860-FIND-NEXT-PRTSET4.
+042700
+042800 6630-END.
+042900
+043000******************************************************************
+043100 6700-SET-WAIT-PERIOD-DATE.
+043200******************************************************************
+043300
+043400     IF  (BNEDWS-MIN-AGE-DATE    >= BNEDWS-DAYS-DATE)
+043500     AND (BNEDWS-MIN-AGE-DATE    >= BNEDWS-MONTHS-DATE)
+043600     AND (BNEDWS-MIN-AGE-DATE    >= BNEDWS-HOURS-DATE)
+043700         MOVE BNEDWS-MIN-AGE-DATE
+043800                                 TO BNEDWS-WAIT-PERIOD-DATE
+043900     ELSE
+044000     IF  (BNEDWS-DAYS-DATE       >= BNEDWS-MIN-AGE-DATE)
+044100     AND (BNEDWS-DAYS-DATE       >= BNEDWS-MONTHS-DATE)
+044200     AND (BNEDWS-DAYS-DATE       >= BNEDWS-HOURS-DATE)
+044300         MOVE BNEDWS-DAYS-DATE   TO BNEDWS-WAIT-PERIOD-DATE
+044400     ELSE
+044500     IF  (BNEDWS-MONTHS-DATE     >= BNEDWS-MIN-AGE-DATE)
+044600     AND (BNEDWS-MONTHS-DATE     >= BNEDWS-DAYS-DATE)
+044700     AND (BNEDWS-MONTHS-DATE     >= BNEDWS-HOURS-DATE)
+044800         MOVE BNEDWS-MONTHS-DATE TO BNEDWS-WAIT-PERIOD-DATE
+044900     ELSE
+045000         MOVE BNEDWS-HOURS-DATE  TO BNEDWS-WAIT-PERIOD-DATE.
+045100
+045200     IF (BNEDWS-FROM-DATE        > BNEDWS-WAIT-PERIOD-DATE)
+045300         MOVE BNEDWS-FROM-DATE   TO BNEDWS-WAIT-PERIOD-DATE.
+045400
+045500 6700-END.
+045600
+045700******************************************************************
+045800 6000-END.
+045900******************************************************************
+046000
+046100******************************************************************
+046200 7000-CALC-FROM-ENTRY-POINTS     SECTION.
+046300******************************************************************
+046400 7000-START.
+046500
+046600     IF (BNEDWS-INIT-ENT-POINT   = "1" OR "2")
+046700         PERFORM 7100-USE-PLAN-ENTRY-POINTS
+046800         THRU    7100-END
+046900     ELSE
+047000     IF (BNEDWS-INIT-ENT-POINT   = "3" OR "4")
+047100         PERFORM 7200-USE-PAY-PERIOD-DATES
+047200         THRU    7200-END
+047300     ELSE
+047400     IF (BNEDWS-INIT-ENT-POINT   = "5" OR "6")
+047500         PERFORM 7300-USE-WORK-PERIOD-DATES
+047600         THRU    7300-END.
+047700
+047800     GO TO 7000-END.
+047900
+048000******************************************************************
+048100 7100-USE-PLAN-ENTRY-POINTS.
+048200******************************************************************
+048300
+048400*
+048500**** IF PRIOR ENTRY POINT AND FIRST PERIOD IS GREATER THAN WAIT PERIOD
+048600**** DATE (MMDD), USE LAST ENTRY POINT AND SUBTRACT 1 FROM WAIT PERIOD
+048700**** YEAR
+048800*
+048900     IF  (BNEDWS-INIT-ENT-POINT  = "1")
+049000     AND (BNEDWS-ENTRY-MMDD (1)  > BNEDWS-WD-MMDD)
+049100         MOVE BNEDWS-ENTRY-MMDD (BNEDWS-LAST-EP-INDEX)
+049200                                 TO BNEDWS-WD-MMDD
+049300         COMPUTE BNEDWS-WD-YEAR   = BNEDWS-WD-YEAR
+049400                                  - 1.
+049500
+049600     PERFORM
+049700         VARYING BNEDWS-I1 FROM 1 BY 1
+049800         UNTIL   (BNEDWS-I1      > BNEDWS-LAST-EP-INDEX)
+049900         OR      (BNEDWS-ENTRY-MMDD (BNEDWS-I1)
+050000                                 >= BNEDWS-WD-MMDD)
+050100
+050200         CONTINUE
+050300     END-PERFORM.
+050400
+050500*
+050600**** IF NEXT ENTRY POINT AND LAST PERIOD IS GREATER THAN WAIT PERIOD
+050700**** DATE (MMDD), USE FIRST ENTRY POINT AND ADD 1 TO WAIT PERIOD YEAR
+050800*
+050900     IF (BNEDWS-I1                   > BNEDWS-LAST-EP-INDEX)
+051000         IF (BNEDWS-INIT-ENT-POINT   = "1")
+051100             MOVE BNEDWS-ENTRY-MMDD (BNEDWS-LAST-EP-INDEX)
+051200                                     TO BNEDWS-ED-MMDD
+051300             MOVE BNEDWS-WD-YEAR     TO BNEDWS-ED-YEAR
+051400         ELSE
+051500             MOVE BNEDWS-ENTRY-MMDD (1)
+051600                                     TO BNEDWS-ED-MMDD
+051700             COMPUTE BNEDWS-ED-YEAR  = BNEDWS-WD-YEAR
+051800                                     + 1
+051900         END-IF
+052000         GO TO 7100-END.
+052100
+052200     IF (BNEDWS-ENTRY-MMDD (BNEDWS-I1) = BNEDWS-WD-MMDD)
+052300         MOVE BNEDWS-ENTRY-MMDD (BNEDWS-I1)
+052400                                       TO BNEDWS-ED-MMDD
+052500         MOVE BNEDWS-WD-YEAR           TO BNEDWS-ED-YEAR
+052600         GO TO 7100-END.
+052700
+052800     IF  (BNEDWS-INIT-ENT-POINT       = "1")
+J63486     AND (BNEDWS-I1                   > 1)
+052900         MOVE BNEDWS-ENTRY-MMDD (BNEDWS-I1 - 1)
+053000                                     TO BNEDWS-ED-MMDD
+053100         MOVE BNEDWS-WD-YEAR         TO BNEDWS-ED-YEAR
+053200     ELSE
+053300         MOVE BNEDWS-ENTRY-MMDD (BNEDWS-I1)
+053400                                     TO BNEDWS-ED-MMDD
+053500         MOVE BNEDWS-WD-YEAR         TO BNEDWS-ED-YEAR.
+053600
+053700 7100-END.
+053800
+053900******************************************************************
+054000 7200-USE-PAY-PERIOD-DATES.
+054100******************************************************************
+054200
+054300     PERFORM 7900-EDIT-PAY-PLAN
+054400     THRU    7900-END.
+054500     IF (BNED-ERROR-FOUND)
+054600         GO TO 7200-END.
+054700
+054800     SET BNED-NO-QUIT-LOOP         TO TRUE.
+054900
+055000     MOVE BNEDWS-COMPANY           TO DB-COMPANY.
+055100     MOVE BNEDWS-EMP-PLAN-CODE     TO DB-PLAN-CODE.
+055200     MOVE BNEDWS-WAIT-PERIOD-DATE  TO DB-EFFECT-DATE.
+055300     PERFORM 850-FIND-NLT-PROSET2.
+055400
+055500     PERFORM 
+055600         UNTIL (PROVERTIME-NOTFOUND)
+               OR    (PRO-COMPANY        NOT = DB-COMPANY)
+               OR    (PRO-PLAN-CODE      NOT = DB-PLAN-CODE)
+055700         OR    (BNED-QUIT-LOOP)       
+055800
+055900         MOVE PRO-COMPANY            TO DB-COMPANY   
+056000         MOVE PRO-PLAN-CODE          TO DB-PLAN-CODE 
+056100         MOVE PRO-EFFECT-DATE        TO DB-EFFECT-DATE 
+056200         MOVE PRYSET1-EFFECT-DATE    TO WS-DB-BEG-RNG 
+056300         PERFORM 850-FIND-BEGRNG-PRYSET1
+056400
+056500         IF (PRY-PAY-START-DATE > BNEDWS-WAIT-PERIOD-DATE)  
+056600             PERFORM 860-FIND-NEXT-PROSET2 
+056700         ELSE
+056800             SET BNED-QUIT-LOOP      TO TRUE 
+056900         END-IF
+057000
+057100     END-PERFORM.
+057200         
+057300     IF (PROVERTIME-NOTFOUND)
+           OR (PRO-COMPANY                NOT = DB-COMPANY)
+           OR (PRO-PLAN-CODE              NOT = DB-PLAN-CODE)
+057400******** Pay plan does not exist
+057500         MOVE 102                   TO BNEDWS-ERROR-NBR
+057600         MOVE BNEDWS-EMPLOYEE       TO BNEDWS-ERR-VAR2
+057700         GO TO 7200-END.
+057800
+057900     PERFORM
+058000         UNTIL (PROTPAYPRD-NOTFOUND)
+058100         OR    (PRY-PAY-END-DATE    >= BNEDWS-WAIT-PERIOD-DATE)
+058200
+058300         PERFORM 860-FIND-NXTRNG-PRYSET1
+058400     END-PERFORM.
+058500
+058600*
+058700**** IF PRIOR ENTRY POINT AND FIRST PAY PERIOD IS GREATER THAN
+058800**** WAIT PERIOD DATE, PRIOR CONDITION CANNOT BE SATISFIED
+058900*
+059000
+059100     IF (BNEDWS-INIT-ENT-POINT    = "3")
+059200         IF (PROTPAYPRD-NOTFOUND)
+059300         OR (BNEDWS-WAIT-PERIOD-DATE  < PRY-PAY-START-DATE)
+059400************ Prior entry point is less than waiting period
+059500             MOVE 103                  TO BNEDWS-ERROR-NBR
+059600             MOVE BNEDWS-AS-OF-DATE    TO HRWS-DATE-FIELD
+                   INITIALIZE                   HRWS-DATE-8-FIELD
+059700             PERFORM 781-HR-FORMAT-DATE-FIELD
+059800             MOVE HRWS-VALUE           TO BNEDWS-ERR-VAR1
+059900             GO TO 7200-END.
+060000 
+060100**** IF NEXT ENTRY POINT AND NO PAY PERIOD IS GREATER THAN WAIT PERIOD
+060200**** DATE, NEXT CONDITION CANNOT BE SATISFIED
+060300*
+060400     IF (BNEDWS-INIT-ENT-POINT   = "4")
+060500         IF (PROTPAYPRD-NOTFOUND)
+P77635             MOVE 113            TO BNEDWS-ERROR-NBR
+P77635             MOVE BNEDWS-WAIT-PERIOD-DATE
+P77635                                 TO HRWS-DATE-FIELD
+P77635             INITIALIZE             HRWS-DATE-8-FIELD
+P77635             PERFORM 781-HR-FORMAT-DATE-FIELD
+P77635             MOVE HRWS-VALUE     TO BNEDWS-ERR-VAR1
+P77635             MOVE ZEROES         TO BNEDWS-ELIGIBILITY-DATE
+P77635             GO TO 7200-END
+P77635         ELSE
+P77635         IF  (PROTPAYPRD-FOUND)
+P77635         AND (PRY-PAY-END-DATE    < BNEDWS-WAIT-PERIOD-DATE)
+060700************ Next entry point is greater than waiting period
+060800             MOVE 104            TO BNEDWS-ERROR-NBR
+060900             MOVE BNEDWS-WAIT-PERIOD-DATE
+061000                                 TO HRWS-DATE-FIELD
+                   INITIALIZE             HRWS-DATE-8-FIELD
+061100             PERFORM 781-HR-FORMAT-DATE-FIELD
+061200             MOVE HRWS-VALUE     TO BNEDWS-ERR-VAR1
+061400             GO TO 7200-END.
+061500
+061600     IF (BNEDWS-INIT-ENT-POINT   = "3")
+061700         MOVE PRY-PAY-START-DATE TO BNEDWS-ELIGIBILITY-DATE
+061800     ELSE
+061900         PERFORM 860-FIND-NXTRNG-PRYSET1
+062000         IF (PROTPAYPRD-NOTFOUND)
+062100************ Next entry point is greater than waiting period
+062200             MOVE 104            TO BNEDWS-ERROR-NBR
+062300             MOVE BNEDWS-WAIT-PERIOD-DATE
+062400                                 TO HRWS-DATE-FIELD
+                   INITIALIZE             HRWS-DATE-8-FIELD
+062500             PERFORM 781-HR-FORMAT-DATE-FIELD
+062600             MOVE HRWS-VALUE     TO BNEDWS-ERR-VAR1
+062800             GO TO 7200-END
+062900         END-IF
+063000         MOVE PRY-PAY-START-DATE TO BNEDWS-ELIGIBILITY-DATE.
+063100
+063200 7200-END.
+063300
+063400******************************************************************
+063500 7300-USE-WORK-PERIOD-DATES.
+063600******************************************************************
+063700
+063800     PERFORM 7900-EDIT-PAY-PLAN
+063900     THRU    7900-END.
+064000     IF (BNED-ERROR-FOUND)
+064100         GO TO 7300-END.
+064200
+064300     SET BNED-NO-QUIT-LOOP         TO TRUE.
+064400
+064500     MOVE BNEDWS-COMPANY           TO DB-COMPANY.
+064600     MOVE BNEDWS-EMP-PLAN-CODE     TO DB-PLAN-CODE.
+064700     MOVE BNEDWS-WAIT-PERIOD-DATE  TO DB-EFFECT-DATE.
+064800     PERFORM 850-FIND-NLT-PROSET2.
+064900
+065000     PERFORM 
+065100         UNTIL (PROVERTIME-NOTFOUND)
+               OR    (PRO-COMPANY        NOT = DB-COMPANY)
+               OR    (PRO-PLAN-CODE      NOT = DB-PLAN-CODE)
+065200         OR    (BNED-QUIT-LOOP)       
+065300
+065400         MOVE PRO-COMPANY            TO DB-COMPANY   
+065500         MOVE PRO-PLAN-CODE          TO DB-PLAN-CODE 
+065600         MOVE PRO-EFFECT-DATE        TO DB-EFFECT-DATE 
+065700         MOVE PRWSET1-EFFECT-DATE    TO WS-DB-BEG-RNG 
+065800         PERFORM 850-FIND-BEGRNG-PRWSET1
+065900
+066000         IF (PRW-WRK-START-DATE > BNEDWS-WAIT-PERIOD-DATE)  
+066100             PERFORM 860-FIND-NEXT-PROSET2 
+066200         ELSE
+066300             SET BNED-QUIT-LOOP      TO TRUE 
+066400         END-IF
+066500
+066600     END-PERFORM.
+066700         
+066800     IF (PROVERTIME-NOTFOUND)
+           OR (PRO-COMPANY               NOT = DB-COMPANY)
+           OR (PRO-PLAN-CODE             NOT = DB-PLAN-CODE)
+066900******** Pay plan does not exist
+067000         MOVE 102                  TO BNEDWS-ERROR-NBR
+067100         MOVE BNEDWS-EMPLOYEE      TO BNEDWS-ERR-VAR2
+067200         GO TO 7300-END.
+067300
+067400     PERFORM
+067500         UNTIL (PROTWRKPRD-NOTFOUND)
+067600         OR    (PRW-WRK-END-DATE >= BNEDWS-WAIT-PERIOD-DATE)
+067700
+067800         PERFORM 860-FIND-NXTRNG-PRWSET1
+067900     END-PERFORM.
+068000
+068100*
+068200**** IF PRIOR ENTRY POINT AND FIRST WORK PERIOD IS GREATER THAN
+068300**** WAIT PERIOD DATE, PRIOR CONDITION CANNOT BE SATISFIED
+068400*
+068500     IF (BNEDWS-INIT-ENT-POINT    = "5")
+068600         IF (PROTWRKPRD-NOTFOUND)
+068700         OR (BNEDWS-WAIT-PERIOD-DATE  < PRW-WRK-START-DATE)
+068800************ Prior entry point is less than waiting period
+068900             MOVE 103                  TO BNEDWS-ERROR-NBR
+069000             MOVE BNEDWS-WAIT-PERIOD-DATE
+069100                                       TO HRWS-DATE-FIELD
+                   INITIALIZE                   HRWS-DATE-8-FIELD
+069200             PERFORM 781-HR-FORMAT-DATE-FIELD
+069300             MOVE HRWS-VALUE           TO BNEDWS-ERR-VAR1
+069500             GO TO 7300-END.
+069600
+069700*
+069800**** IF NEXT ENTRY POINT AND NO WORK PERIOD IS GREATER THAN WAIT
+069900**** PERIOD DATE, NEXT CONDITION CANNOT BE SATISFIED
+070000*
+070100     IF (BNEDWS-INIT-ENT-POINT   = "6")
+070200         IF (PROTWRKPRD-NOTFOUND)
+070300         OR (PRW-WRK-END-DATE    < BNEDWS-WAIT-PERIOD-DATE)
+070400************ Next entry point is greater than waiting period
+070500             MOVE 104            TO BNEDWS-ERROR-NBR
+070600             MOVE BNEDWS-WAIT-PERIOD-DATE
+070700                                 TO HRWS-DATE-FIELD
+                   INITIALIZE             HRWS-DATE-8-FIELD
+070800             PERFORM 781-HR-FORMAT-DATE-FIELD
+070900             MOVE HRWS-VALUE     TO BNEDWS-ERR-VAR1
+071100             GO TO 7300-END.
+071200
+071300     IF (BNEDWS-INIT-ENT-POINT   = "5")
+071400         MOVE PRW-WRK-START-DATE TO BNEDWS-ELIGIBILITY-DATE
+071500     ELSE
+071600         PERFORM 860-FIND-NXTRNG-PRWSET1
+071700         IF (PROTWRKPRD-NOTFOUND)
+071800************ Next entry point is greater than waiting period
+071900             MOVE 104            TO BNEDWS-ERROR-NBR
+072000             MOVE BNEDWS-WAIT-PERIOD-DATE
+072100                                 TO HRWS-DATE-FIELD
+                   INITIALIZE             HRWS-DATE-8-FIELD
+072200             PERFORM 781-HR-FORMAT-DATE-FIELD
+072300             MOVE HRWS-VALUE     TO BNEDWS-ERR-VAR1
+072500             GO TO 7300-END
+072600         END-IF
+072700         MOVE PRW-WRK-START-DATE TO BNEDWS-ELIGIBILITY-DATE.
+072800
+072900 7300-END.
+073000
+073100******************************************************************
+073200 7900-EDIT-PAY-PLAN.
+073300******************************************************************
+073400
+073500      INITIALIZE BNEDWS-EMP-PLAN-CODE.
+073600
+           IF (EMP-PAY-FREQUENCY       = ZEROES)
+               MOVE 106                TO BNEDWS-ERROR-NBR
+               MOVE BNEDWS-EMPLOYEE    TO BNEDWS-ERR-VAR1
+               GO TO 7900-END.
+
+073700*     IF (EMP-OT-PLAN-CODE        = SPACES)
+073800*         MOVE 101                  TO BNEDWS-ERROR-NBR
+073900*         MOVE EMP-OT-PLAN-CODE     TO BNEDWS-ERR-VAR1
+074000*         MOVE BNEDWS-EMPLOYEE      TO BNEDWS-ERR-VAR2
+074100*         GO TO 7900-END.
+074200
+074300     IF (EMP-OT-PLAN-CODE        = SPACES)
+074400         MOVE BNEDWS-COMPANY         TO DB-COMPANY 
+074500         MOVE EMP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL
+074600         PERFORM 840-FIND-PRSSET1
+074700         IF (PRS-OT-PLAN-CODE (EMP-PAY-FREQUENCY) NOT = SPACES)
+074800             MOVE PRS-OT-PLAN-CODE (EMP-PAY-FREQUENCY)
+074900                                     TO BNEDWS-EMP-PLAN-CODE
+075000         ELSE                             
+075100             MOVE SPACES             TO DB-PROCESS-LEVEL
+075200             PERFORM 840-FIND-PRSSET1
+075300             IF (PRS-OT-PLAN-CODE (EMP-PAY-FREQUENCY) = SPACES)
+075400**************** Employee \ requires a pay plan code
+075500                 MOVE 105                  TO BNEDWS-ERROR-NBR
+075600                 MOVE BNEDWS-EMPLOYEE      TO BNEDWS-BWZ-EMP-NBR
+075700                 MOVE BNEDWS-BWZ-EMP-NBR   TO BNEDWS-ERR-VAR1
+075800                 GO TO 7900-END
+075900             ELSE
+076000                 MOVE PRS-OT-PLAN-CODE (EMP-PAY-FREQUENCY) 
+076100                                     TO BNEDWS-EMP-PLAN-CODE
+076200     ELSE                                      
+076300         MOVE EMP-OT-PLAN-CODE       TO BNEDWS-EMP-PLAN-CODE.
+076400          
+076500*     MOVE BNEDWS-COMPANY           TO DB-COMPANY.
+076600*     MOVE EMP-OT-PLAN-CODE         TO DB-PLAN-CODE.
+076700*     MOVE PROSET2-PLAN-CODE        TO WS-DB-BEG-RNG.
+076800*     PERFORM 850-FIND-BEGRNG-PROSET2.
+076900*     PERFORM
+077000*         UNTIL (PROVERTIME-NOTFOUND)
+077100*         OR    (PRO-EFFECT-DATE    <= BNEDWS-WAIT-PERIOD-DATE)
+077200*
+077300*         PERFORM 860-FIND-NXTRNG-PROSET2
+077400*     END-PERFORM.
+077500
+077600*     IF (PROVERTIME-NOTFOUND)
+077700*         MOVE 102                  TO BNEDWS-ERROR-NBR
+077800*         MOVE BNEDWS-EMPLOYEE      TO BNEDWS-ERR-VAR2
+077900*         GO TO 7900-END.
+078000
+078100 7900-END.
+078200
+078300******************************************************************
+078400 7000-END.
+078500******************************************************************
+078600
+078700
+078800*--- End BNED70PD (FEB 22-96)

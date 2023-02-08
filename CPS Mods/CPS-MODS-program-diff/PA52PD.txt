@@ -1,0 +1,80 @@
+< prod/pasrc/PA52PD
+> vnla/pasrc/PA52PD
+3,8d2
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by MARK GLISSEN - MG0301                             *
+<       ******************************************************************
+<       *  03/01/05  - MODIFIED PA52 TO PASS ADDITIONAL FIELDS TO PFLOW  *
+14,15d7
+<            PERFORM 1000-OPEN-WORKFLOW-DB.
+< 
+1842c1834
+< ANGIE**    IF (PAT-WORKFLOW-FLAG       = "Y")
+---
+>            IF (PAT-WORKFLOW-FLAG       = "Y")
+1843d1834
+< ANGIE      IF (PAT-WORKFLOW-FLAG       = "N")
+1951c1942
+< ANGIE**    IF (PAT-WORKFLOW-FLAG       = "Y")
+---
+>            IF (PAT-WORKFLOW-FLAG       = "Y")
+1952d1942
+< ANGIE      IF (PAT-WORKFLOW-FLAG       = "N")
+2429c2419
+< MG0301                PA52WS-JOB-CODE
+---
+>                       PA52WS-JOB-CODE.
+2430d2419
+< MG0301                PA52WS-ZIP.
+2592,2608d2580
+< MG0301**** CHECK ZIP CODE
+< MG0301     MOVE HREMP-ZIP-DN           TO PA52WS-FLD-NBR.
+< MG0301     PERFORM 431-CHECK-IF-CHANGED
+< MG0301     THRU    431-END.
+< MG0301     IF (FIELD-CHANGED)
+< MG0301         IF (I1 >= 1) AND (I1 <= 12)
+< MG0301             MOVE PA52F1-PCT-NEW-VALUE-1 (I1)
+< MG0301                                 TO PA52WS-ZIP
+< MG0301         ELSE
+< MG0301         IF (I1 >= 13) AND (I1 <= 24)
+< MG0301             MOVE PA52F1-PCT-NEW-VALUE-2 (I1 - 12)
+< MG0301                                 TO PA52WS-ZIP
+< MG0301         ELSE
+< MG0301         IF (I1 >= 25) AND (I1 <= 36)
+< MG0301             MOVE PA52F1-PCT-NEW-VALUE-3 (I1 - 24)
+< MG0301                                 TO PA52WS-ZIP.
+< MG0301
+2617d2588
+< MG0301     OR (PA52WS-ZIP              NOT = SPACES)
+2641c2612
+< MG0301                   MOVE EMP-JOB-CODE   TO PA52WS-JOB-CODE
+---
+>                    MOVE EMP-JOB-CODE   TO PA52WS-JOB-CODE.
+2642,2644d2612
+< MG0301         END-IF
+< MG0301         IF (PA52WS-ZIP          = SPACES)
+< MG0301             MOVE EMP-ZIP        TO PA52WS-ZIP.
+2815,2835d2782
+< MG0301**** IMMEDIATE ACTION
+< MG0301     MOVE 900                     TO CRT-MSG-NBR.
+< MG0301     PERFORM 790-GET-MSG.
+< MG0301     MOVE CRT-MESSAGE             TO WFAPI-I-VARIABLE-NAME (4).
+< MG0301     MOVE "S"                     TO WFAPI-I-VARIABLE-TYPE (4).
+< MG0301     MOVE PA52F1-IMMEDIATE-ACTION TO WFAPI-I-VARIABLE-VAL  (4).
+< MG0301
+< MG0301**** OLD EMPLOYEE ZIP
+< MG0301     MOVE 901                    TO CRT-MSG-NBR.
+< MG0301     PERFORM 790-GET-MSG.
+< MG0301     MOVE CRT-MESSAGE            TO WFAPI-I-VARIABLE-NAME (5).
+< MG0301     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (5).
+< MG0301     MOVE EMP-ZIP                TO WFAPI-I-VARIABLE-VAL (5).
+< MG0301
+< MG0301**** NEW EMPLOYEE ZIP
+< MG0301     MOVE 902                    TO CRT-MSG-NBR.
+< MG0301     PERFORM 790-GET-MSG.
+< MG0301     MOVE CRT-MESSAGE            TO WFAPI-I-VARIABLE-NAME (6).
+< MG0301     MOVE "S"                    TO WFAPI-I-VARIABLE-TYPE (6).
+< MG0301     MOVE PA52WS-ZIP             TO WFAPI-I-VARIABLE-VAL (6).
+< MG0301

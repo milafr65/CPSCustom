@@ -1,0 +1,83 @@
+$RELEASE   08.0
+*
+*
+*
+*******************************************************************************
+*                            SCREEN   ZN72  (1)
+*******************************************************************************
+$FORM      ZN721    S
+$KEYFCS    CD
+$DATAFCS   AC
+$NEXTFCS   NP
+$ADDFCS    A
+$DELFCS    D
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZN721    S
+[ZN72[ ]                        ?Update Partben
+                                        +      ]
+ |Company        &    ]         |Participnt &         ]
+ |Employee       &         ]
+ |Cov Option     &  ]
+ |Create User Id [          ]
+ |Creation Date  &      ]
+ |Emp Aft Cont   &             ]
+ |Mo Emp Aft
+ |Plan Code      [    ]
+ |Plan Type      [  ]
+ |Start Date     &      ]
+ |Stop Date      &      ]
+ |Upd Date       &      ]
+ |User Id        [          ]
+
+
+
+
+
+
+
+
+$END-SCR   ZN721    S
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZN721    S
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     ORIGINATOR            P     06          RO 
+  2     PTB-COMPANY           N     04          SL    01c 
+  2     PTB-PARTICIPNT        N     09          SL 
+  2     PTB-EMPLOYEE          N     09          SL    H07 
+  2     PTB-COV-OPTION        N     02          SB    Hop 
+  2     PTB-CREATE-USER-ID    AL    10          SB 
+  2     PTB-CREATION-DATE     F     08          SB 
+  2     PTB-EMP-AFT-CONT      S     13        2 SB 
+  2     PTB-PLAN-CODE         A     04          SL    HTM 
+  2     PTB-PLAN-TYPE         A     02          SL    HTL 
+  2     PTB-START-DATE        F     08          SL    H08 
+  2     PTB-STOP-DATE         F     08          SB    GZ3 
+  2     PTB-UPD-DATE          F     08          SB 
+  2     PTB-USER-ID           AL    10          SB    OUI 
+$END-TRANS ZN721    S
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  ------------------------
+$EDITS     ZN721    S
+  FC                                          I=Inquire
+                                              N=Next
+                                              P=Previous
+                                              A=Add
+                                              C=Change
+                                              D=Delete
+  PTB-PLAN-TYPE                               DB=Defined Benefit
+                                              DC=Defined Contribution
+                                              DI=Disability
+                                              DL=Dependent Life
+                                              DN=Dental
+                                              EL=Employee Life
+                                              HL=Health
+                                              RS=Reserve Account
+                                              SB=Savings Bond
+                                              SP=Stock Purchase
+                                              VA=Vacation
+$END-EDITS ZN721    S

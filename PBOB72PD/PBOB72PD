@@ -1,0 +1,37 @@
+******* PBOB72PD 1 <2658340849>
+000010*************************************************************
+000020*                                                           *
+000030*    OBTAIN PB-OBJECT-ID      (PBOB72PD)                    *
+000040*                                                           *
+000050*    INPUTS: PBOBWS-OBJ-TYPE     (required)                 *
+000060*                                                           *
+000070*    OUTPUT: PBOBWS-OBJ-ID                                  *
+000080*************************************************************
+000090 610-ASSIGN-PB-OBJ-ID-72         SECTION 99.
+000100*************************************************************
+000110 610-START.
+000120
+000130     PERFORM 910-BEGIN-SUB-TRANSACTION.
+000140
+000150     MOVE PBOBWS-OBJ-TYPE            TO DB-OBJ-TYPE.
+000160     PERFORM 840-MODIFY-ZB5SET1.
+000170     IF (PBINVOBJ-NOTFOUND)
+000180         PERFORM 800-CREATE-PBINVOBJ
+000190         MOVE PBOBWS-OBJ-TYPE        TO ZB5-OBJ-TYPE.
+000200
+000210     ADD 1                           TO ZB5-PB-OBJ-ID.
+000220
+000230     IF  (PBOBWS-OBJ-TYPE = "INVID")
+000240     AND (ZB5-PB-OBJ-ID > 99999999)
+000250         MOVE 1                      TO ZB5-PB-OBJ-ID.
+000260
+000270     MOVE ZB5-PB-OBJ-ID             TO PBOBWS-OBJ-ID.
+000280
+000290     PERFORM 820-STORE-PBINVOBJ.
+000300
+000310     PERFORM 920-END-SUB-TRANSACTION.
+000320
+000330 610-END.
+000340     EXIT.
+000350
+000360*************************************************************

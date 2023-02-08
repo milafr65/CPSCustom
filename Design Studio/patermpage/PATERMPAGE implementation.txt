@@ -1,0 +1,70 @@
+1. back up file in tst9
+/cps/tst9/law/persistdata/lawson/portal/content/pages
+copy patermpage.xml to patermpage.xml.20131108
+
+2. copy file from tst9 to prd9
+/cps/prd9/law/persistdata/lawson/portal/content/pages/patermpage.xml
+
+3. Sign into production Design Studio
+https://cpsprd.wbp.org/lawson/studio/
+
+4. Click Existing tab, go into Portal Page Designer folder
+   patermpage.xml is in there (at the bottom)
+   double click it
+
+5. Go into Source View 
+
+6. (may want to use Notepad)
+   change CPSTST9 references to CPSPRD9
+   saved
+
+7. View/Preview called up page but nothing happened
+   It's supposed to ask for parameters
+
+8. Production doesn't show the TermPA box, which seems to be the prompt?
+
+9. Going through the patermpage.xml, we found that
+   dme/termpa.xml also needed to be moved over
+
+10. Make backup copy of termpa.xml in test
+/cps/tst9/law/persistdata/lawson/portal/content/pages/dme
+copy termpa.xml to termpa.xml.20131108
+
+11. Download termpa.xml to PC 
+    Edit in notepad and change CPSTST9 references to CPSPRD9
+    (vi does not seem to work on the dme xml)
+    (lashow/lx had security issues)
+
+12. Upload termpa.xml to production
+/cps/prd9/law/persistdata/lawson/portal/content/pages/dme/termpa.xml
+
+13. Back in Production Design Studio:  
+    
+    File
+    Import
+    drill down to DME, select termpa.xml
+
+    Checked out successfully in production
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

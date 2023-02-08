@@ -1,0 +1,17 @@
+< PROD\WSLIB\BNPTBWS
+> VNLA\WSLIB\BNPTBWS
+2,7d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+< AI0095******************************************************************
+< AI0095*  AI0095  03/24/03  RETROACTIVE BENEFIT CHANGE MODIFICATION     *
+12d5
+< AI0095     02  BNPTB-PROCESSED-DATE            PIC 9(08)  VALUE ZERO.
+298,302d290
+< 
+< RAY            02  WS-BNPTB-START-DATE         PIC 9(8)   VALUE ZERO.
+< GW             02  WS-BNPTB-STOP-DATE          PIC 9(8)   VALUE ZERO.
+< RAY            02  WS-BNPTB-NOTFND-SW-SAVE     PIC 9(01) VALUE ZERO.
+< 

@@ -1,0 +1,302 @@
+******************************************************************
+$PROGRAM   ZH510
+******************************************************************
+
+****************************************************
+$REPORT    ZH510-R1
+****************************************************
+
+**************************************
+$GROUP     GN1H-COMPANY-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     A
+$FORMAT
+ZH510 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                  Part Time Employee Load Error Report
+      |  ; E1                                     |                                  ;   
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1S-EMPLOYEE-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+   Position     FICA Nbr       Last Name       First Name      Field Data                           Error Message
+   |      ;     |      ;       |       ;       |        ;      |        ;                           |           ;
+   ----------   -------------  --------------- --------------- ----------------------               --------------------------------------------------
+   |        ;   |           ;  |             ; |             ; |                              ;     |                                                ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN1D-EMPLOYEE-ERR
+**************************************
+$PREFIX    G1-
+$LEVEL     C
+$FORMAT                    1
+   XXXXXXXXXX    XXXXXXXXXXX   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+   A             B             C               D               E                                    F
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-POSITION
+ B     DTL-FICA-NBR
+ C     DTL-LAST-NAME
+ D     DTL-FIRST-NAME
+ E     DTL-EMP-FIELD
+ F     DTL-ERROR-MSG
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+****************************************************
+$REPORT    ZH510-R2
+****************************************************
+$PRINTFILE INDIVFNDPT
+$PAGESIZE  53        
+
+**************************************
+$GROUP     GN2H-COMPANY
+**************************************
+$PREFIX    G2-
+$LEVEL     A
+$FORMAT
+ZH510 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                        Part Time Employee Load 
+      |  ; E1                                           |                     ;   
+                                                       Individual Found Part-Time
+                                                       |                        ;  
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN2S-EMPLOYEE-HDR
+**************************************
+$PREFIX    G2-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+                                                              HR11 Emp   HR11
+                                                              |      ;   |  ;
+   Lawson ID    FICA Nbr       Last Name       First Name      Status  Position  Employer ID
+   |      ;     |      ;       |       ;       |        ;      |    ;  |      ;  |         ;
+   ----------   -------------  --------------- --------------- ------  --------  -----------
+   |        ;   |           ;  |             ; |             ;   | ;    |   ;    |                  ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN2D-EMPLOYEE-DTL
+**************************************
+$PREFIX    G2-
+$LEVEL     C
+$FORMAT                    1
+   XXXXXXXXXX    XXXXXXXXXXX   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX   XX     XXXXX    XXXXXXXXXXXXXXXXXXXX
+   A             B             C               D                 E      F        G
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-EMPLOYEE
+ B     DTL-FICA-NBR
+ C     DTL-LAST-NAME
+ D     DTL-FIRST-NAME
+ E     DTL-EMP-STATUS
+ F     DTL-EMP-POSITION
+ G     DTL-POSITION
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+****************************************************
+$REPORT    ZH510-R3
+****************************************************
+$PRINTFILE ACTIVEMPPT
+$PAGESIZE  53        
+
+**************************************
+$GROUP     GN3H-COMPANY
+**************************************
+$PREFIX    G3-
+$LEVEL     A
+$FORMAT
+ZH510 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                        Part Time Employee Load
+      |  ; E1                                           |                     ;   
+                                                  Active Employee Reported As Part-Time
+                                                  |                                   ;                                             
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN3S-EMPLOYEE-HDR
+**************************************
+$PREFIX    G3-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+                                                              HR11 Emp   HR11
+                                                              |      ;   |  ;
+   Lawson ID    FICA Nbr       Last Name       First Name      Status  Position  Employer ID
+   |      ;     |      ;       |       ;       |        ;      |    ;  |      ;  |         ;
+   ----------   -------------  --------------- --------------- ------  --------  -----------
+   |        ;   |           ;  |             ; |             ;   | ;    |   ;    |                  ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN3D-EMPLOYEE-DTL
+**************************************
+$PREFIX    G3-
+$LEVEL     C
+$FORMAT                    1  
+   XXXXXXXXXX    XXXXXXXXXXX   XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX   XX     XXXXX    XXXXXXXXXXXXXXXXXXXX
+   A             B             C               D                 E      F        G
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-EMPLOYEE
+ B     DTL-FICA-NBR
+ C     DTL-LAST-NAME
+ D     DTL-FIRST-NAME
+ E     DTL-EMP-STATUS
+ F     DTL-EMP-POSITION
+ G     DTL-POSITION
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+****************************************************
+$REPORT    ZH510-R4
+****************************************************
+$PRINTFILE EMPLOAD
+$PAGESIZE  53        
+
+**************************************
+$GROUP     GN4H-COMPANY
+**************************************
+$PREFIX    G4-
+$LEVEL     A
+$FORMAT
+ZH510 Date Z9/99/99                           Company ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                               Page ZZZZ
+      |  ; A1                                 |     ; B1   C1                                                           |  ; D1
+      Time 99.99                                        Part Time Employee Load
+      |  ; E1                                           |                     ;   
+                                                   New Employees To Be Added (HR511)
+                                                  |                                   ;                                             
+$ENDFMT                            
+$FIELDS                            
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    COMPANY                        
+ C1    PRS-NAME                        
+ D1    PAGE                                   PN    
+ E1    TIME                                   CT    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN4S-EMPLOYEE-HDR
+**************************************
+$PREFIX    G4-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+   FICA Nbr       Last Name       First Name      Employer ID
+   |      ;       |       ;       |        ;      |         ;
+   -------------  --------------- --------------- -----------
+   |           ;  |             ; |             ; |                  ;
+$ENDFMT               
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     GN4D-EMPLOYEE-DTL
+**************************************
+$PREFIX    G4-
+$LEVEL     C
+$FORMAT                    1  
+   XXXXXXXXXXX    XXXXXXXXXXXXXXX XXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXX
+   A              B               C                D
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DTL-FICA-NBR
+ B     DTL-LAST-NAME
+ C     DTL-FIRST-NAME
+ D     DTL-POSITION
+$ENDFLDS
+$ENDGRP
+
+****************************************************
+$ENDRPT
+****************************************************
+
+
+$ENDPGM

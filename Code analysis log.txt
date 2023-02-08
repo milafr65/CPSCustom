@@ -1,0 +1,1106 @@
+I have scanned all the *src folders in production and 
+the *pdlib and *wslib subfolders for each
+
+Logging here what I do with each program I picked out as
+possible for custom code...
+
+WH
+===========================================================
+WH.sr has Lawson updates that WH.sr.bkp does not have
+.bkp is strictly a backup file with no custom code
+Will not catalog
+
+FB20
+===========================================================
+I don't know what FB20 is
+It's under GL, says it's budget maintenance
+Won't come up, looks like I don't have permissions for it
+
+FB20_ORIG.scr dated 3/2014
+FB20.scr.mod dated 2/2015
+FB20.scr same date as FB20.scr.mod
+
+.scr matches .scr.mod
+is customized compared to FB20_ORIG.scr
+
+PD/WS do not have custom changes or versions
+
+Cataloging FB20.scr.mod
+
+
+AP
+===========================================================
+There is
+AP.or
+AP.or.orig
+AP.or_5162019
+
+orig has a "Return Reference Nbr" line that _5162019 does not have
+AP.or has that field
+
+orig has a reference to PCARD-NBR that may need to be merged
+everything else is superseded in AP.or
+
+I will merge that and maintain it as AP.or.mod
+I am not really sure how important is is
+
+Cataloging AP.or.mod
+
+
+AP155
+===========================================================
+AP155 = "Payment Forms Creation"
+I don't have access
+
+Sharon made a copy of the rpt file
+
+There are several TOTOFGRP's replaced in Sharon's copy
+by LEVEL's in the Lawson copy
+
+This is a hard one to know when there isn't an old Lawson version
+or a .mod file and I don't have access. Also, it changed in January and hasn't
+registered as an issue for anyone
+
+My original decision was not to merge any code here and I'll stay
+with that decision
+
+
+AR137
+===========================================================
+"Finance Charge Late Payment"
+
+rpt, PD and WS all have .mod versions
+WS - the Lawson update adds a field and makes another field bigger
+Will not merge
+
+The rpt and the rpt.mod do not show any difference
+Will not merge
+
+Differences in PD_ORIG and Lawson base PD all appear to originate
+from Lawson, so PD_ORIG isn't relevant
+
+base PD vs. PD.mod doesn't make the customized code very clear
+comparing .mod to ORIG next
+OK, that makes the customized code pop
+is it in the base PD? look for Ray Herweck's name in cols 1-6
+
+I think I need to pull the base changes into the .mod
+then copy the .mod to the base PD
+
+AR137 would appear to have been missing these changes since 10/2020
+so I doubt it is used
+
+I will merge the code but I do not plan to compile it
+
+Cataloging AR137PD.mod (only)
+
+
+AR190
+===========================================================
+"Application Closing"
+
+There is a PD_ORIG but no mod
+I see no documentation in PD_ORIG or PD indicating customization
+AR190PD is a newer Lawson rev than PD_ORIG and all the differences
+appear to be Lawson code changes
+
+Ugh, there isn't but NOW I see a ZR190 in arsrc
+Big fun
+
+I guess compare the ZR190 in zrscr to the base AR190PD
+Big big fun
+
+OK, I am not touching this. Lawson clearly would not have
+overwritten any of ZR190. I assume we use that instead of AR190.
+That is worth pulling over and cataloging on its own but
+AR190 and ZR190 are way too different to worry about
+merging Lawson code.
+
+Cataloging ZR190 components
+
+
+
+BN
+===========================================================
+There is BN_orig.sr, BN.sr_5162019, BN.sr.mod - looks like same date,
+and the base BN.sr dated 10/10/2020
+
+OK, don't worry about 5162019, it matches .mod
+
+sr.mod adds fields compared to _orig, so compare .mod to base
+
+It looks like these need to be merged
+
+Cataloging BN.sr.mod
+
+
+
+
+BN11
+===========================================================
+PD_orig, PD.mod, PD base
+PD.mod matches base
+When comparing mod to base, all the additional code in the base
+is commented out in the mod
+Catalog the mod
+
+_orig.scr, scr.mod, scr base
+For screen, mod matches base
+mod does not match base
+
+
+Cataloging BN11.scr.mod
+Cataloging BN11PD.mod
+
+
+
+BN47
+===========================================================
+Beneficiary Maintenance
+
+PD_orig, .mod, base
+scr_orig, scr_5162019, scr.mod, base
+
+PD mod matches base
+compare to orig
+mod is golden
+
+scr - I merged base to mod
+mod is on newer version than 5162019 and base
+looks like 5162019 and base match anyway
+
+Cataloging BN47PD.mod
+Cataloging BN47.scr.mod
+
+
+BN65
+===========================================================
+PD and .mod match
+
+Cataloging BN65PD.mod
+
+
+BN70
+===========================================================
+PD, PD.base, PD.mod, PD_new
+
+.mod matches _new, disregard _new
+.mod needs to be merged with PD
+PD matched base
+
+It looks like BN70 was recompiled without the Process Flow call
+Do we not use it?
+
+Cataloging BN70PD.mod
+
+
+CB185
+===========================================================
+PD, disp, orig
+orig = PD
+disp just has displays in it
+
+No customizations in this program, disregard it
+
+
+BN232
+===========================================================
+PD and .mod are the same
+Catalog BN232PD.mod
+
+
+BN245
+===========================================================
+PD and .mod are the same
+scr and .mod are the same
+Catalog BN245.scr.mod, BN245PD.mod
+
+
+BN247
+===========================================================
+There are .mod's for scr and PD but I do not see anything
+in either that is a custom change. I do not see any reason
+not to use the version 12 PD and scr, which are compiled in
+production now anyway, instead of the version 10 mods.
+
+I find it weird that there are DISPLAYs in the version 12 PD,
+but based on the time stamp on the file, they're Lawson's, never
+anything of ours. Time stamp is 10-10-2020.
+
+This also makes me wonder if there is really any custom code
+in BN232 or 245. The mods are also the same as the bases and
+there isn't any documented code I see that is identifiable as
+custom code.
+
+I'll just stick a readme in those two folders that I don't suspect
+they really have custom code. Same thing with this, where I'll
+keep the v12 editions.
+
+
+
+GL190
+===========================================================
+PD, Copy, orig
+
+Copy just has extra displays in it, disregard it
+There's no custom code here, disregard the program
+
+
+IF10
+===========================================================
+PD, 20101025
+PD has IF1/IF2 in the LUPTBLDTL/LUPTBLHDR indexes
+20101025 has LUD/LUH
+
+PD is right
+Would be best to keep both around because future Lawson
+versions will have the old prefixes and will be harder to compare
+
+Cataloging both, with a readme
+
+
+BNED70PD
+===========================================================
+There are FOUR versions of this besides the base version
+.mod has changes by Ray that are not in _ORIG
+Copy matches mod, so I don't care about Copy
+
+.mod is v1.5 20190626 ver is v1.7 and has updates not in .mod
+
+The current base PD is v1.9
+I would say 1.9 needs to be merged into the current .mod
+and then catalog it.
+
+Done
+
+
+BNPE70CP
+===========================================================
+base, .mod and ORIG CP
+
+mod and base match
+
+This does have clear custom code, catalog the .mod
+
+
+BNPE70WS
+===========================================================
+base, -ORIG, .mod and _ORIG
+both ORIG's have the same timestamp
+ORIG's are the same, delete one
+.mod = base WS
+confirmed custom code in the .mod, catalog it
+
+
+PBOB72PD
+===========================================================
+There's a PD and a PD-1
+This is another example of an index prefix fix
+It would be best to keep both to make code comparison easier
+Cataloging both with readme
+
+
+IFEOPD
+===========================================================
+There's a 20140307 copy but it's identical to the base PD
+Will not catalog
+
+
+PRPRDWS
+===========================================================
+There is a copy of the base WS but it is 9 versions behind
+No custom code, probably just a backup copy
+Will not catalog
+
+
+HRLTWWS
+===========================================================
+There is a copy, a 20062018 bkup and a _cpsdevx version
+
+copy and devx match
+bkup has patches that are not in copy
+copy also has a modification by Sharon but that seems accounted
+for in bkup, though not documented
+
+base WS has additional updates, Sharon's mod still looks accounted for.
+Will not catalog
+
+
+HRCOMWS
+===========================================================
+_ORIG looks like an old copy
+I see no custom code
+Will not catalog
+
+
+WB10
+===========================================================
+bkup is an old copy of the PD source
+PD has updates after the backup
+Will catalog the current PD
+
+
+PA102
+===========================================================
+WS matches the backup copy
+PD should be cataloged
+
+
+PA02
+===========================================================
+A number of different PDs
+base, .mod, _orig, -20210201, -merged
+
+base PD = -merged
+-20210201 does not have the trigger code so throw it out
+_orig does not have the trigger code
+neither does .mod
+
+-merged really serves as the .mod here
+Will catalog -merged as the new .mod
+
+
+HRCRPPD
+===========================================================
+This module was entirely written by AIC
+It's for CRP Automation
+Definitely need to save it
+Last update was a 1-liner by me to add ITP action
+Cataloging HRCRPPD
+
+
+PREDMUPD
+===========================================================
+I don't know what PREDMPD is. (no U) It is dated 1/30/2020.
+It looks like I pulled that in by mistake and it has no
+custom code.
+
+The PREDMUPD versions are only different because of displays
+I put in for CRPAO troubleshooting.
+
+No custom code here that needs to be cataloged.
+
+
+HRHDBPD
+===========================================================
+PD has _ORIG, .mod, -Copy, -20190626
+
+base has a patch that 0626 does not have so disregard 0626
+.mod and -Copy are equal so disregard -Copy
+
+.mod has custom changes that are not in _ORIG
+I do not believe these changes are necessary because
+they involve benefit plan codes CPS no longer uses
+
+Still would be best to merge the latest base into the .mod
+so there isn't any patching left out
+
+Merging/cataloging .mod
+
+
+
+HRDEPPD
+===========================================================
+Well, this is a mess
+There are two custom versions that are NEWER than the base PD,
+which is dated 3/19/2015
+
+There is -orig, -20190626, base, -Copy, .mod, _upd_20150305 and _orig
+mod and Copy match so disregard Copy
+
+The .mod and the base PD also match
+_orig is the oldest file
+.mod has several patches and custom changes compared to _orig
+
+.mod has AIC changes that are not in _upd_20150305
+.mod has precedence there, disregard _upd_20150305
+
+And disregard _orig
+_upd_20150305 is a newer version and .mod is merged from that
+
+.mod is 8.1.26.1.10 plus AIC custom code
+-20190626 is 8.1.26.1.11
+-20190626 matches -orig
+
+Merge the .11 patch into the .mod and catalog the .mod
+
+
+BNENTWS
+===========================================================
+There are a lot of copies of this in Lawson, but the main
+thing here is that it needs to match the merged copy on
+the Desktop on my old laptop. That code has previously been
+merged and reviewed.
+
+BNENTWS base = copy from my old laptop, which is good.
+It doesn't match the .mod at all, but the merged copy
+from my laptop should actually be the .mod.
+
+Cataloging that as the .mod.
+
+
+
+BNENTPD
+===========================================================
+Should be same story as above.
+
+Cataloging merged copy from my old laptop as the new .mod.
+
+
+BN72
+===========================================================
+Like BNENTWS and BNENTPD, as long as the merged versions
+from my old laptop match the base code, they can be
+cataloged as the .mods
+
+I only show that I modified the .scr and PD
+
+Unsure why there is more than one WS file tho
+
+merged PD is good, catalog it as .mod
+merged .scr is good catalog it as .mod
+BN72WS is merged code, catalog that as .mod
+(doubt it is critical but it could cause compile to fail)
+
+
+BN100
+===========================================================
+Last of the group from the last upgrade where I have the
+golden version of the merged code on my laptop
+
+WS and PS should match current base versions
+
+Merged versions are good - catalog as .mod
+
+
+BNPTBPD
+===========================================================
+This has ELEVEN copies to work through
+I will compare them in reverse chronological order
+
+Good news, the base may have all the custom code
+BNPTBPD_20210414 has no custom code, looks like the Lawson base. Disregard it
+It is revision 33 so I am confident it is up to date on Lawson patches
+
+mlf_merged matches the base so it can be disregarded
+
+-1 is Lawson revision 30 (base is revision 33)
+it also has PBKSET index refs i/o ZB4
+I do not see that -1 needs to be considered
+
+-mod is -1 without Sharon mods
+base has the Sharon mods so forget -mod
+
+-diff is a diff file, not a code version
+
+.12022018 is basically the same as -mod, disregard it
+-mod2 matches .12022018 so disregard that too
+2017-Orig is revision 30 without AIC customizations, disregard it
+
+_ORIG is original Lawson base revision 26
+the .mod is the AIC custom version of that
+Those are both outdated
+
+After all that, catalog the current base as the .mod
+
+
+
+BNPTBWS
+===========================================================
+Probably same story as the PD
+
+Base is customized Lawson revision 2.1.9
+.mod is 2.1.7
+Looks like the base should also be the .mod now
+_ORIG is uncustomized 2.1.7
+
+OK, -mod matches the base and is newer than .mod
+Catalog that as the new .mod
+
+
+HR105
+===========================================================
+rpt has base and .mod and _orig
+mod matches base
+mod is customized
+
+
+PD has base, Copy, .mod, _orig, -20190624
+base is customized revision 9
+mod is customized revision 7
+base should be the golden version here
+
+Copy matches .mod, disregard it
+orig is noncustomized revision 7
+-20190624 is noncustomized revision 9
+
+Catalog rpt.mod and the base PD
+
+
+BN101
+===========================================================
+
+PD has base, -20190624, .mod, _5162019, _orig
+
+It's just a one-liner but base is a customized revision 40
+-20190624 looks like the base revision 40
+base is the keeper here, the others are all based on revision 38
+
+Catalog the base version
+
+
+
+PA
+===========================================================
+Multiple copies of .sr
+
+.sr, Copy.sr, .bak.20160215, .mod, -201605, .bak.20150323 and .base
+
+
+.sr does not have AIC custom code in it
+.sr is revision 116
+Copy is revision 115
+.20160215 comments out the AIC code
+
+.mod matches, -201605, disregard -201605
+.mod is revision 115 with AIC code
+.20150323 is base revision 115, disregard it
+.20150323 matches .base, so also disregard .base
+
+The current .sr is the only one that is revision 116
+but it does not have any AIC modifications
+
+
+Ugh
+Lets try to evolve it
+compare -201605 to .base
+
+both are rev115 
+-201605 has Martin mod, .base does not
+
+compare .mod to -201605
+they match
+so .mod seems to be golden so far
+
+compare .mod to .bak.20160215
+both are still rev115
+.bak comments out Martin's mod
+no documentation why
+
+compare .mod to .bak.20160615
+.bak comments out all of Martin's mod
+
+Copy reinstates Martin's mod but changes the index to PCOSET1 from PCOSETWB1
+This does not match what the documentation says
+.bak.20162015 looks intermediate and disregardable
+
+.mod vs Copy, Copy changes the index to PCOSET1 from PCOSETWB1
+Copy is 6/1/16, .mod is 3/23/15
+
+PA.sr is 5/15/2019
+PCOSET1 is the index used in the base code
+
+After all that I am not cataloging PA.sr at all
+Basically it looks like a customized change was backed out
+
+
+PR
+===========================================================
+PR_orig2.sr is a copy of PR_ORIG.sr, delete it
+PR.sr.mod adds custom code so delete PR_ORIG
+PR.sr.mod and PR.sr.bkp match so delete bkp
+
+
+It looks to me like PR.sr needs to be merged, so I will
+do that and catalog the .mod
+
+The difference dates back to May 2019 so I would question
+if it's had any impact on operations
+
+
+BS12
+===========================================================
+"New Plan Inquiry"
+
+PD has base, Copy, bak09152015
+
+Copy adds a Sharon mod ESS915 to bak
+BS12PD overlaid this change 5/15/2019
+
+These May and June 2019 changes are probably part of the SQL Server 2012 upgrade
+
+Merged/cataloged BS12.mod
+
+
+HR01
+===========================================================
+All the changes are in PD
+
+base, -20180925, 1011_ORIG, -20170314, .mod, _ORIG
+
+Guess I'll try to evolve through this again
+
+
+.mod is customized _ORIG, revision 29. Disregard _ORIG
+-20170314 is revision 30, which is not reflected in .mod
+1011 matches 0314, disregard 1011
+-20180925 is customized revision 30. shouldn't need 0314
+0925 has the .mod customizations, so 0925 is now golden
+even better, 0925 matches the current base
+
+Catalog the current base as .mod
+
+
+HR04
+===========================================================
+Has scr and PD changes
+
+Scr - Base, .mod, _orig
+screen is customized, and .mod matches base
+
+PD - Base, Copy, .mod, _orig, -20190624
+
+_orig is Lawson revision 24
+-20190624 is Lawson revision 25
+I don't see custom code in either
+
+.mod is a customized revision 24
+Mark Glissen has some Lawson base code specifically commented out
+
+Copy matches .mod so disregard Copy
+
+Oddly enough the base PD looks like customized revision 25
+The code Mark commented out is still commented out
+PD looks golden then
+
+
+Catalog HR04.scr.mod
+Catalog HR04PD as golden .mod
+
+
+HR11
+===========================================================
+All changes are to PD
+
+base, -20190624, Copy, .mod, _ORIG
+
+_ORIG looks like Lawson base revision 13
+.mod has customization to kick off Process Flow, ORIG can be disregarded
+
+Copy is dupe of .mod, Copy can be disregarded
+
+-0624 has significant patching
+jumps from revision 97.1.13 to 97.1.15.1.3
+It does not have the custom code for PF
+
+The base PD jumps to 97.1.15.11
+I DO NOT SEE THE CODE TO KICK OFF PROCESS FLOW
+
+This is really starting to bother me
+No one's noticed this since 10/2020?
+
+I will merge the custom code back into the current PD
+and catalog it
+
+
+
+HR13
+===========================================================
+PD
+_orig, .mod, -20201011, base
+
+.mod has a lot of customization not in orig. Both are Lawson revision 34.1.8
+1011 matches .mod
+Excellent, base also matches .mod
+
+scr
+_orig, .mod, Copy, scr-o, -20201011, base
+mod is customized, adds HIC Number, approval fields, etc.
+Copy matches mod
+mod is 32.1.5
+-o is 32.1.7, not customized
+-20201011 and -o are the same
+base matches .mod in 32.1.5 except I have "test" on the base screen
+
+So the question is what to do between .mod and -o
+.mod HAS to be the golden version here
+This is the instance where the Lawson mod doesn't leave us any room
+to keep our fields on the screen
+We can't readily support past revision 32.1.5 of the screen
+
+
+WS
+_orig, .mod, -20201011, base
+.mod adds smoker fields to orig
+mod matches 1011
+mod matches base
+
+
+Catalog HR13PD.mod
+Catalog HR13WS.mod
+Catalog HR13.scr.mod
+Add a readme explaining the scr 32.1.5 issue
+
+
+PA52
+===========================================================
+chris paul george michael jackson browne
+
+WS
+ORIG, backup, .mod, lawson, base
+Working WS in reverse chron order
+base is customized revision 33. -lawson is base revision 33, disregard.
+.mod is revision 32, disregard
+backup = .mod, disregard
+base is golden
+
+
+PD 
+ORIG, backup, .mod, Copy, 20190624, lawson, 20210824, base
+0824 can be disregarded, base has a correction to that code for CRPAO
+Catalog the base, nothing older than 20210824 is going to have
+the CRPAO mods in it
+Base is golden
+
+Catalog base PD & WS
+
+
+PA100
+===========================================================
+PD
+orig, .mod, Copy, -20190624, lawson, base
+
+lawson is the revision 44 base
+base has custom code added to that and is probably golden
+20190624 looks like base lawson revision -39-, that doesn't do anybody any good
+Copy is revision -31-
+.mod is customized -31-, without the CRPAO mods
+
+WS
+lawson, base
+lawson is just a backup
+does not appear to have any custom code
+
+Catalog base PD
+
+
+PR14
+===========================================================
+All changes are to PD
+
+.base, _new, .mod, Copy, -20190625, current base
+0625 is lawson base revision 25, current base PD has custom code
+Copy is customized revision 23, so is the .mod
+
+Catalog base PD
+
+
+PR29
+===========================================================
+.scr
+old, Copy, orig, lawson, base
+
+base is a heavily customized Lawson revision 27
+-lawson is 27.2.7
+orig is 27.2.3
+Copy matches base
+old looks like the base Lawson rev 27
+
+I figure we must be freezing PR29 at version 27 of the screen
+I will look at base vs. lawson again
+
+Yes, this is like HR13. Lawson added a bunch of additional fields
+that would crowd out CPS's custom fields without a lot of painstaking revision
+
+Catalog the base scr, note the freeze in a readme
+
+
+PD
+old, mod, Copy, orig, lawson, base
+
+After seeing the screen mods I am not going deep into this
+Base is off of Lawson rev 29, the -lawson is rev 33
+
+Catalog base PD and scr and create a readme
+
+
+ZN31
+===========================================================
+It's a completely custom program, I think just save off the components
+
+ZN32
+===========================================================
+See ZN31
+
+ZN72
+===========================================================
+The PD is different from the -20190717 PD because of
+differences in index names. This is another instance where
+it probably doesn't hurt to keep both copies. I'll save
+all components and add a readme
+
+
+WB101
+===========================================================
+mainly there's a base and a -20101026
+The PD has a lot of additional code so obsolete 20101026
+
+It's a custom copy of PA512 so save all components
+
+
+WB120
+===========================================================
+This is the pay-to-bill program
+
+There is a PILE of PD versions in this folder
+
+I do not expect to dive very deep
+PD matches _test
+
+-1 has custom index name changes and a DISC/DISCW
+related change I put in
+
+The current PD is golden, save it with all other components
+
+
+PR529
+===========================================================
+Oddly this one has a ton of WS files and not many PD's
+
+WS
+orig, copy, -1, .mod, lawson-20201011, mod.20201011, base
+base is Lawson rev 5.1.3 and my guess is that will be the golden version
+
+mod.20201011 is 5.1.1
+lawson-20201011 is non-customized 5.1.3
+the just .mod file matches the base WS
+-1 looks like the Lawson base 5.1.2
+
+not going to look any further
+base is on the most recent Lawson ver and has the custom code
+
+
+PD
+orig, .mod, base
+base=.mod
+custom code present in each
+
+Catalog PR529PD.mod
+Catalog PR529WS.mod
+
+
+PR197
+===========================================================
+Payroll Close
+
+This is the last one I haven't tried to figure out yet, so
+it's all uphill from here
+
+WS
+ORIG, .mod, .10.mod, Copy, -orig, lawson-20201011, base
+
+base is a customized 20201011, and it expands a table size,
+ so the program will bomb without the custom code
+-orig is missing Lawson updates
+The .mod is well behind on Lawson updates
+
+Catalog the base WS as the .mod
+I expect the same thing with the PD
+
+
+PD
+ORIG, .BASE, .mod, Copy, -orig, base, lawson-20201011
+
+base PD and 20201011 match?
+.mod is missing a ton of Lawson updates
+Oh! The last update was WS only. Only the WS has to be updated
+to change internal table sizes. That's why PD and 20201011 match,
+and it's OK that they do.
+
+Catalog the base PD and WS
+everything else is too far behind on Lawson updates
+
+
+BN531 2nd try
+===========================================================
+Batch Benefit Enrollment
+
+all changes are PD
+
+.07212015, Copy, base
+
+base PD is NONcustomized Lawson rev 46
+Copy is a customized Lawson rev 39
+
+Custom code is just a few lines of Sharon's
+So custom code was never merged into the base
+
+I will merge and catalog
+I have to assume this was supposed to be in production
+
+
+BNPE070PD 2nd try
+===========================================================
+_ORIG, .mod, .bak06172015, .07212015, base
+Nothing here is dated later than 2015 so it's not from any upgrade I ever worked on
+
+Based strictly on that fact I'm only going to catalog the base version of the code
+I suspect some of this never worked as intended and was backed out
+And again, it's been that way since 2015
+
+If you compare the base to the _ORIG you probably get the
+best picture of what went on. _ORIG = Lawson rev 7
+and the base is customized rev 7.
+
+Keep the PD
+
+
+
+BN71 2nd try
+===========================================================
+
+scr
+ORIG, .mod, base (10/10/2020)
+.mod adds fields to ORIG
+both are based on Lawson rev 14
+
+mod vs base - base is Lawson rev 14.1.2
+It adds proc lvl to screen but takes out CPS custom fields
+
+I think mod and base can and should be merged
+This another one I don't know how it hasn't been noticed for 14 mos
+
+PD
+ORIG, .mod, base (10/10/2020)
+
+It looks to me like PD 1.1.14 was upgraded to 1.1.17
+and the custom code didn't come along
+
+I will also merge this code
+
+WS
+ORIG, .mod, base (3/3/15)
+Catalog the .mod. Pretty straightforward
+
+scr - merge and catalog
+PD - merge and catalog
+WS - catalog current .mod
+
+
+PR30 2nd try
+===========================================================
+scr
+_orig, .mod, Copy, base, newWmods, 20190626
+
+orig is base ver 22
+.mod has small customizations
+Copy = .mod
+current PD is ver 23, I do not see customizations
+Wmods is v23, looks like it adds customizations back in
+20190626 = the current Pd
+
+
+PD
+_orig, .mod, Copy, 20190626, newWmods, base
+
+base is 32.1.9 and it looks like the base Lawson ver
+NewWmods is 32.1.6
+has custom code involving an index called STMSETW1
+does that even exist? ok, it does
+
+
+.mod is customized 32.1.2
+this is dated 2/20/15, and has all the custom code in it,
+which seems to confirm the custom code belongs in there
+
+_orig is Lawson base 32.1.2
+Copy = mod
+
+-20190626 is uncustomized 32.1.6
+newWmods is customized 32.1.6
+
+More custom code that didn't get merged in an upgrade
+
+I will merge NewWmods and the base PD to get the golden PD
+This will include a readme because of my concern that one of the Lawson patches
+will interfere with existing ACS custom code. The J85777 code from Lawson
+will be commented out.
+
+For the scr, Wmods is the golden version since it is latest Lawson rev and customized
+
+
+PR134 2nd try
+===========================================================
+scr
+orig, mod, base
+mod and base match, customizations confirmed
+
+*** Should be able to just catalog the .mod
+
+
+WS
+orig, mod, base
+base is 9.1.3, mod is 9.1.2
+base is missing custom code that's in the mod
+I assume this has also been running in prod without customizations
+
+The code involves the ability to do a special run, maybe we
+don't do the special run any more
+
+*** Merge/upgrade the .mod and catalog it
+
+
+PD
+orig, mod, copy,-06252019, base
+
+copy matches the mod, disregard it
+orig does not have custom code in the mod, disregard it
+mod/copy/orig were all Lawson rev 56
+
+The 06252019 file is Lawson rev 63
+The base PD is Lawson rev 69
+Nice
+
+The mod is on a rev so far behind the current base, it's best
+to update the base with custom changes from the mod and catalog that.
+MG0325, ACS001, ASC002
+
+===========================================================
+ALSO BROUGHT OVER:
+===========================================================
+ZH510, ZH515 - newhire interfaces
+
+ZN550, ZN555 - term interfaces
+
+ZH211 - Fidelity/EBSO indicative files
+
+ZN420 - ZN424 - Willis Towers Watson files
+
+ZA600 - CRPAO batch processing
+
+I have saved off WB10, WB101, WB120 but it would probably
+be best to save the rest of the WB programs. So:
+
+WB103, WB122, WB720, WBIP
+I don't know how/if these are used.
+
+PA102
+
+Design Studio forms/pages:
+BN70
+BN72
+HR13
+HR30
+PR12
+patermpage
+
+patermpage is the only custom page, the others are custom forms
+
+
+All as of 12/21/2021
+MLF
+-$-
+
+
+
+

@@ -1,0 +1,3924 @@
+000010******************************************************************
+000020*           PB  INVOICE PRINT PROGRAM                            *
+000030*                                                                *
+000040*                                                                *
+000050*   This API produces reports for billing purposes               *
+000060*                                                                *
+000070*   Inputs:                                                      *
+000080*                                                                *
+000090*       WBIPF1-PROGRAM          Required                         *
+000100*       WBIPF1-COMPANY          Required                         *
+000140*       WBIPF1-UPDATE           Y/N                              *
+000160*       WBIPF1-INV-REGISTER     Y/N                              *
+000170*                                                                *
+000180*       WBIPF1-PBHSTTEMP-NAME   Required                         *
+000190*       WBIPF1-POSTING-DATE     Required                         *
+000200*       WBIPF1-INVOICE-DATE     Required                         *
+000210*       WBIPF1-DATE-STAMP       Required                         *
+000220*                                                                *
+000300*   Outputs:                                                     *
+000310*                                                                *
+000320*       Invoice Report                                           *
+000320*       Create PBHSTHDR, PBHSTDTL, AR Interface records          *
+000330*                                                                *
+000340******************************************************************
+******** GW 2/2005 
+*******  THE BALANCE DUE SHOWING ON THE INVOICES NOT CORRECT ***********
+*******   BECAUSE REFUND CHECKS/DEBIT MEMOS TO CUSTOMERS (AR48) TO CLEAR
+*******   CREDIT MEMOS ARE BEING MISSED. THESE ALSO DO NOT APPEAR ON ***
+*******   AR90 DETAIL LINES BUT ARE IN ARCUSTOMER CURR-BAL AT TOP ******
+*******   ALSO, ENDING BALANCE WILL NOW BE CALCULATED BASED ON THE *****
+*******   BAL IN ARCUSTOMER ON AR90, WITH ADJUSTMENTS, WITH ANY ********
+********  BEING FORCED INTO "MANUAL ADJUSTMENTS" ***********************
+000350******************************************************************
+      *   Date     Pgmr        Description                             *
+      * 09/05      GW   ZB3-REASON-CODE HAS BEEN CHANGED FROM 10 POS TO*
+      *  4.  HAD TO CHANGE HARD-CODING IN WB120 AND WBIP TO ACCOMMODATE*
+      *  ALSO HAD TO CHANGE PBHSTTEMP WORK FILE                        *
+      ****************************************************************
+      * 12/05      GW       CHANGES TO ACCOMODATE COMPANY 2000
+      *                     SEE 201-GL-DEBIT
+      ****************************************************************
+ACS01 * 01/10      KShields Removed TOT-LATE-ENR from invoice. Also
+      *                     fixed calculation of totals to include
+      *                     Finance Charges.
+      ****************************************************************
+ACS015* 05/14/13   MHUNTER - ADDED CODE TO MOVE SPACES TO 
+      *                           ARCIWS-EDI-NBR JUST BEFORE THE 
+      *                           700-INQUIRE-ARCUSTOMER-70 PARAGRAPH
+      *                           IS EXECUTED (ARCI70PD) TO CORRECT A 
+      *                           BUG WHEN EDI-NBR IS ENTERED ON AR10.
+      *================================================================
+      * 04/08/2015 S. BOWIE - SR 826 ADDED AN ER PIN # TO THE INVOICE
+      *                        ACM-VAT-REG-NBR       TO IH-PAYMENT-PIN
+AIC001* 10/30/2018 S.Calvin - On Individual invoice, do not include the
+AIC001*                       Plan Code in the Current Charges detail 
+AIC001*                       printed by EE-INV-MISC-DTL group. 
+AIC001*                     - On Employer invoice, remove Employee Sts,
+AIC001*                       Retirement and CDSP Salary from ER-GN2-EMP
+AIC001*                       LOYEE group in WBIP.rpt.  Do not print
+AIC001*                       employee codes (ER-GN3-EMPLOYEE-CODES).
+AIC001*                     - Remove corresponding fields from csv files
+AIC001*                     - Alter heading of EMPLOYEE to EMPLOYEE ID
+AIC001*                     - Chg number format on detail lines and sub
+AIC001*                       totals so that zeros would print on report
+AIC001*                       lines instead of blanks.
+AIC001*                     - initialize report total fields 7 - 10
+      ******************************************************************
+000360 WBIPS1-TRANSACTION              SECTION 10.
+000370******************************************************************
+000380 WBIPS1-START.
+000390
+           PERFORM 100-SETUP-AND-EDITS
+           THRU    100-END.
+           IF  (ERROR-FOUND)
+               GO TO WBIPS1-TRANSACTION-END.
+           
+      *--- Open files and process Invoices
+
+RAY        MOVE INVOICES-NAME          TO WBIPWS-INVOICES-FILENAME.
+RAY                                         
+000580     OPEN OUTPUT INVOICES-FILE.
+           MOVE "N"                    TO WS-COLD-INPUT-FILE-SW.
+           PERFORM 
+            VARYING I4 FROM 1 BY 1
+            UNTIL (I4 > 99)
+               OR (WS-COLD-INPUT-FILE-SW = "Y")
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) NOT > SPACES)
+                     MOVE INVOICES-NAME TO WS-PRT-INPUT-COLD-FILE (I4)
+*********            UNSTRING INVOICES-NAME DELIMITED BY "   "
+**********                             INTO WS-INVOICES-NAME
+                     DISPLAY "INVOICES NAME " INVOICES-NAME
+                                  " " WS-PRT-INPUT-COLD-FILE (I4)
+
+                     MOVE "Y"           TO WS-COLD-INPUT-FILE-SW
+                  END-IF
+           END-PERFORM.
+
+QQQQQQ*QQ ALSO NAME COLD FILE BASED ON INVOICES-NAME (INVOICES1)
+      *--- Del old Invoice print files. If this run produces fewer files
+      *--- the user would still see the ones that were not overwritten.
+      *--- This script will delete all invoices* files EXCEPT   
+      *--- invoices1*, which was just opened.
+      *--- UNSTRING INVOICES-NAME      DELIMITED BY "/invoices1"
+      *---                             INTO WBIPWS-PRINT-DIR.
+           CALL "system" USING WS-SCRIPT-NAME, INVOICES-NAME   
+                         GIVING WBIPWS-CMD-RETURN-CODE.
+
+      *-----------------------------------------------------------------
+
+RAY        OPEN OUTPUT EE-INVOICE-FILE.
+           MOVE "N"                    TO WS-COLD-INPUT-FILE-SW.
+           PERFORM 
+            VARYING I4 FROM 1 BY 1
+            UNTIL (I4 > 99)
+               OR (WS-COLD-INPUT-FILE-SW = "Y")
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) NOT > SPACES)
+                     MOVE EE-INVOICE-NAME
+                                        TO WS-PRT-INPUT-COLD-FILE (I4)
+*******              UNSTRING EE-INVOICE-NAME DELIMITED BY "  "
+*******                                INTO WS-PRT-INPUT-COLD-FILE (I4)
+                     DISPLAY "EE-INVOICE NAME " EE-INVOICE-NAME
+                                   " " WS-PRT-INPUT-COLD-FILE (I4)
+
+                     MOVE "Y"           TO WS-COLD-INPUT-FILE-SW
+                  END-IF
+           END-PERFORM.
+            
+QQQQQQ*QQQQQQ NAME CORRESPONDING COLD FILES ABOVE
+000590     OPEN OUTPUT REGISTER-FILE.
+GW1/05     OPEN OUTPUT OUTOFBAL-FILE.
+
+GW9/07**** BELOW UPDATE=Y COMMENTED OUT FOR TESTING ONY !!!!!!!!!!!!
+GW4/05     IF (WBIPF1-UPDATE = "Y")
+RAY           PERFORM 800-OPENOUTPUTCSV-ICINVOICE 
+RAY           PERFORM 800-ALLUSEDCSV-ICINVOICE.
+           MOVE WBIPF1-GT70DISK-NAME   TO IFGTWS-FILENAME.
+           PERFORM 9810-OPEN-IO-GT70DISK.
+
+000610     IF (WBIPF1-INV-REGISTER = "Y")
+000620         MOVE WBIPF1-PROGRAM         TO RH-PROGRAM
+000630         MOVE REGISTER-PAGE-HDR      TO RPT-GROUP-REQUEST
+000640         PERFORM 700-PRINT-RPT-GRP.
+000650
+GW1/05     MOVE WBIPF1-PROGRAM             TO EX-PROGRAM.
+GW1/05     MOVE OUTOFBAL-PAGE-HDR          TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+000670     MOVE WBIPF1-PBHSTTEMP-NAME  TO PB1-TEMPFILE-NAME.
+000680     PERFORM 9820-OPEN-INPUT-PBHSTTEMP.
+000690
+000700     INITIALIZE                         WBIPWS-PRINT-COUNT.
+
+RAY        PERFORM 900-BUILD-TMP-FILE-NAME.
+RAY        MOVE WS-TMP-FILE                TO WBWRK1-FILENAME.
+RAY        PERFORM 900-BUILD-TMP-FILE-NAME.
+RAY        MOVE WS-TMP-FILE                TO WBWRK2-FILENAME.
+RAY    
+000700*--- Create Invoices  
+ACS002     IF (WBIPF1-UPDATE = "Y")
+ACS002         PERFORM 910-BEGIN-SUB-TRANSACTION.
+000710
+000720     PERFORM 1000-PRINT-PB-INVOICE
+000730     THRU    1000-END.
+
+
+000730 
+000730     PERFORM
+000070         VARYING I1 FROM 1 BY 1
+000070         UNTIL  (I1 > 9)
+000070  
+000730         PERFORM 200-GL-CREDITS
+000730         THRU    200-END
+000730 
+000730     END-PERFORM. 
+
+000730 
+**********  GW12/05
+000730     PERFORM
+000070         VARYING I1 FROM 1 BY 1
+000070         UNTIL  (I1 > 9)
+
+000730         PERFORM 201-GL-DEBIT
+000730         THRU    201-END
+
+000730     END-PERFORM.
+
+000730 
+000730*--- Print Totals  
+000740
+000750     IF (WBIPF1-INV-REGISTER = "Y")
+000760         MOVE WBIPWS-RT-TOTAL-DUE    TO RT-TOTAL-DUE
+000770         MOVE WBIPWS-RT-TOTAL-TAX    TO RT-TOTAL-TAX
+000780         MOVE WBIPWS-PRINT-COUNT     TO RT-TOTAL-COUNT 
+000790         MOVE IFCCWS-CURRENCY-ND     TO RT-TOTAL-DUE-ND
+000800                                        RT-TOTAL-TAX-ND
+000810         MOVE REGISTER-TOTALS        TO RPT-GROUP-REQUEST
+000820         PERFORM 700-PRINT-RPT-GRP.
+000830
+           MOVE WS-MAN-ADJ-DIFF-TOT        TO E3-TTL-DIFF.
+           MOVE OUTOFBAL-TTL               TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+000840     IF (WBIPWS-PRINT-COUNT = ZEROS)
+000850         MOVE 120                TO CRT-MSG-NBR
+000860         MOVE "WBIP"             TO CRT-ERROR-CAT
+000870         PERFORM 790-GET-MSG
+000880         MOVE CRT-MESSAGE        TO MSG-MESSAGE
+000890         MOVE MESSAGE-LINE       TO RPT-GROUP-REQUEST
+000900         PERFORM 700-PRINT-RPT-GRP.
+
+ACS002     IF (WBIPF1-UPDATE = "Y")
+ACS002         PERFORM 920-END-SUB-TRANSACTION.
+000910
+000920     CLOSE INVOICES-FILE.
+RAY        CLOSE EE-INVOICE-FILE.
+000930     CLOSE REGISTER-FILE.
+GW1/05     CLOSE OUTOFBAL-FILE.
+
+********** BELOW UPDATE=Y COMMENTED OUT FOR TESTING ONY !!!!!!!!!!!!
+GW4/05     IF (WBIPF1-UPDATE = "Y")
+RAY           PERFORM 800-CLOSECSV-ICINVOICE
+GW9/07        IF (ERCINFO-FILE-OPEN NOT = "N")
+GW9/07           PERFORM 800-CLOSECSV-ERCUSTINV.
+000940
+000990     PERFORM 9900-CLOSE-PBHSTTEMP.
+001200     PERFORM 9900-CLOSE-GT70DISK.
+RAY
+RAY        MOVE WBWRK1-FILENAME            TO WS-TMP-FILE.
+RAY        PERFORM 901-REMOVE-TMP-FILE.
+RAY        MOVE WBWRK2-FILENAME            TO WS-TMP-FILE.
+RAY        PERFORM 901-REMOVE-TMP-FILE.
+001000
+           IF (WBIPF1-COLD-FILE-REQ = "Y")
+              PERFORM
+               VARYING I4 FROM 1 BY 1
+SDB            UNTIL (I4 > 99)
+                  OR (WS-PRT-INPUT-COLD-FILE (I4) NOT > SPACES)
+                     MOVE WS-PRT-INPUT-COLD-FILE (I4)
+                        TO WS-PRT-INPUT-FILE
+                     PERFORM 2000-CREATE-COLDING
+                        THRU 2000-END
+
+              END-PERFORM.
+      *       OPEN EACH INVOICE PRINT FILE AND CORRESPONDING COLD FILE 
+      *       AND WRITE INVOICE FILE TO COLD FILE BASED ON TONYS 
+      *       INSTRUCTIONS. BORROW CODE FROM WB720.
+              
+001240     GO TO WBIPS1-TRANSACTION-END.
+001250
+000350******************************************************************
+000360 100-SETUP-AND-EDITS.
+000370******************************************************************
+000390
+           MOVE "WBIP"                 TO CRT-PROGRAM-CODE
+                                          CRT-ERROR-CAT
+                                          WBIPF1-ERROR-CAT.
+
+           INITIALIZE                     CRT-ERROR-NBR
+                                          WBIPF1-ERROR-NBR.
+
+      *--- Invoice Date and Posting Date must be passed from called 
+      *    program
+
+001310     IF (WBIPF1-INVOICE-DATE   = ZEROS)
+001320         MOVE 110                    TO CRT-ERROR-NBR
+001340         GO TO 100-END.
+001390 
+001390     IF (WBIPF1-POSTING-DATE   = ZEROS)
+001400         MOVE 114                    TO CRT-ERROR-NBR
+001420         GO TO 100-END.
+001470
+      *--- Load AR accounts by plan group from IF10 table
+           
+           MOVE 1                      TO I1.
+           INITIALIZE                     I-OTHER.
+           MOVE WBIPF1-COMPANY         TO DB-LVL-1-KEY.
+           MOVE "BN-PLAN-GROUP"        TO DB-LVL-2-KEY.
+           INITIALIZE                     DB-LVL-3-KEY.
+           MOVE IF1SET1-LVL-3-KEY      TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-IF1SET1.
+           PERFORM
+               UNTIL (LUPTBLDTL-NOTFOUND)
+   
+               MOVE IF1-DTL-KEY        TO WBIPWS-PLAN-KEY (I1)
+               MOVE IF1-DTL-VALUE      TO WBIPWS-WBP-PLAN-GROUP (I1)
+               
+               IF  (WBIPWS-COLUMN-N (I1) > I-OTHER)
+                   MOVE WBIPWS-COLUMN-N (I1) TO I-OTHER
+               END-IF
+
+               ADD 1 TO I1
+               
+               PERFORM 860-FIND-NXTRNG-IF1SET1
+           END-PERFORM.      
+
+           ADD 1 TO I-OTHER.
+           INITIALIZE                  WBIPWS-PLN-GRP-CR-COMP (I1)
+                                       WBIPWS-PLN-GRP-CR-AU   (I1)
+                                       WBIPWS-PLN-GRP-CR-ACCT (I1)
+                                       WBIPWS-PLN-GRP-CR-SUB  (I1)
+                                       WBIPWS-PLN-GRP-DB-COMP (I1)
+                                       WBIPWS-PLN-GRP-DB-AU   (I1)
+                                       WBIPWS-PLN-GRP-DB-ACCT (I1)
+                                       WBIPWS-PLN-GRP-DB-SUB  (I1).
+                                      
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > I-PLGRP)
+               OR     (WBIPWS-PLAN-KEY (I1) = SPACES)
+               
+               MOVE WBIPF1-COMPANY             TO DB-LVL-1-KEY
+               MOVE "PLAN-GROUP"               TO DB-LVL-2-KEY
+               MOVE "CREDIT"                   TO DB-LVL-3-KEY
+               MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               MOVE IF1-DTL-VALUE         TO WBIPWS-ACCT-INFO  
+               MOVE WBIPWS-COMP-N         TO WBIPWS-PLN-GRP-CR-COMP (I1)
+               MOVE WBIPWS-ACCT-UNIT      TO WBIPWS-PLN-GRP-CR-AU   (I1)
+               MOVE WBIPWS-ACCOUNT-N      TO WBIPWS-PLN-GRP-CR-ACCT (I1)
+               MOVE WBIPWS-SUB-ACCT-N     TO WBIPWS-PLN-GRP-CR-SUB  (I1)
+   
+               MOVE WBIPF1-COMPANY             TO DB-LVL-1-KEY
+               MOVE "PLAN-GROUP"               TO DB-LVL-2-KEY
+               MOVE "DEBIT"                    TO DB-LVL-3-KEY
+               MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               MOVE IF1-DTL-VALUE         TO WBIPWS-ACCT-INFO
+               MOVE WBIPWS-COMP-N         TO WBIPWS-PLN-GRP-DB-COMP (I1)
+               MOVE WBIPWS-ACCT-UNIT      TO WBIPWS-PLN-GRP-DB-AU   (I1)
+               MOVE WBIPWS-ACCOUNT-N      TO WBIPWS-PLN-GRP-DB-ACCT (I1)
+               MOVE WBIPWS-SUB-ACCT-N     TO WBIPWS-PLN-GRP-DB-SUB  (I1)
+           END-PERFORM.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 10)
+
+               INITIALIZE WS-GLSUM-PLAN-GROUP (I1)
+               INITIALIZE WS-GLSUM-TOT-AMOUNT (I1)
+           END-PERFORM.
+
+
+001250 100-END.
+016880******************************************************************
+016890 200-GL-CREDITS.
+016900******************************************************************
+016920
+009980     IF  (WS-GLSUM-PLAN-GROUP (I1) = SPACES)
+009980         GO TO 200-END. 
+009980 
+009980     PERFORM
+009980         VARYING I2 FROM 1 BY 1
+009980         UNTIL  (I2 > I-PLGRP)
+009980         OR     (WBIPWS-WBP-PLAN-GROUP (I2) 
+009980                                 = WS-GLSUM-PLAN-GROUP (I1))
+009980 
+009980         CONTINUE
+009980 
+009980     END-PERFORM.  
+
+           IF  (WBIPWS-PLN-GRP-CR-COMP (I2) = ZEROES)
+               MOVE WBIPF1-COMPANY       TO DB-COMPANY
+               MOVE SPACES               TO DB-PROCESS-LEVEL
+               PERFORM 840-FIND-PRSSET1
+               MOVE PRS-ES-DIST-CO       TO WBIPWS-PLN-GRP-DB-COMP (I2)
+               MOVE PRS-ES-ACCT-UNIT     TO WBIPWS-PLN-GRP-DB-AU   (I2)
+               MOVE PRS-ES-ACCOUNT       TO WBIPWS-PLN-GRP-DB-ACCT (I2)
+               MOVE PRS-ES-SUB-ACCT      TO WBIPWS-PLN-GRP-DB-SUB  (I2).
+       
+      *--- Credit Accounts Receivable
+013640
+147700     PERFORM 8000-CREATE-GT70DISK.
+147800     MOVE WBIPF1-COMPANY              TO GT7-COMPANY.
+147900     MOVE WBIPF1-POSTING-DATE         TO GT7-POSTING-DATE
+147900                                         GT7-DATE.
+010210     MOVE WBIPWS-PLN-GRP-CR-COMP (I2) TO GT7-TO-COMPANY.
+010220     MOVE WBIPWS-PLN-GRP-CR-AU   (I2) TO GT7-ACCT-UNIT.
+010230     MOVE WBIPWS-PLN-GRP-CR-ACCT (I2) TO GT7-ACCOUNT.    
+010240     MOVE WBIPWS-PLN-GRP-CR-SUB  (I2) TO GT7-SUB-ACCOUNT.
+
+           COMPUTE GT7-TRAN-AMOUNT           = WS-GLSUM-TOT-AMOUNT(I1)
+                                             * NEGATIVE-ONE.
+           MOVE GT7-TRAN-AMOUNT             TO GT7-BASE-AMOUNT.
+                                 
+149700     MOVE 2                           TO GT7-BASE-ND
+149800                                         GT7-TRAN-ND
+149900                                         GT7-TO-BASE-ND.
+           MOVE SPACES                      TO GT7-CURRENCY-CODE.
+150100     MOVE ZEROES                      TO GT7-UNITS-AMOUNT.
+150300     MOVE "N"                         TO GT7-AUTO-REV.
+150400     MOVE SPACES                      TO GT7-ACTIVITY
+013590                                         GT7-ACCT-CATEGORY.
+150600
+148300     MOVE "PB120"                     TO GT7-REFERENCE.
+           MOVE "PV"                        TO GT7-SOURCE-CODE.
+           MOVE "WBP Contributions"         TO GT7-DESCRIPTION.
+163800     MOVE SPACES                      TO GT7-SUMMARY-CONTROL.
+164800     MOVE WS-GLSUM-PLAN-GROUP(I1)     TO GT7-PROGRAM-INFO.
+164800  
+165500     PERFORM 8200-STORE-GT70DISK.
+017260
+018480 200-END.
+254400
+016880******************************************************************
+016890 201-GL-DEBIT.
+016900******************************************************************
+
+GW1105** PER ROYCE DAHL 11/16/05  **************************************
+*******  TO ACCOMODATE COMP 2000, PLUG THE BELOW OR READ IF10 ENTRY ****
+********  SIMILAR TO THE CREDIT SIDE IE 1ST 4 POS OF DETAIL-VALUE = 2000
+*******   KEY 1 = 1000, KEY 2 = PLAN-GROUP, KEY 3 = DEBIT *************
+
+010210     MOVE ZERO TO WBIPWS-DB-COMP-HOLD (I1)
+010230                  WBIPWS-DB-ACCT-HOLD (I1)   
+010240                  WBIPWS-DB-SUB-HOLD  (I1).
+            
+009980     IF  (WS-GLSUM-PLAN-GROUP (I1) = SPACES)
+009980         GO TO 201-CONT. 
+009980 
+009980     PERFORM
+009980         VARYING I2 FROM 1 BY 1
+009980         UNTIL  (I2 > I-PLGRP)
+009980         OR     (WBIPWS-WBP-PLAN-GROUP (I2) 
+009980                                 = WS-GLSUM-PLAN-GROUP (I1))
+009980 
+009980         CONTINUE
+009980 
+009980     END-PERFORM.  
+
+      *--- DEBIT Accounts Receivable
+
+147700     PERFORM 8000-CREATE-GT70DISK.
+147800     MOVE WBIPF1-COMPANY              TO GT7-COMPANY.
+147900     MOVE WBIPF1-POSTING-DATE         TO GT7-POSTING-DATE
+147900                                         GT7-DATE.
+010210     MOVE WBIPWS-PLN-GRP-DB-COMP (I2) TO WBIPWS-DB-COMP-HOLD (I1).
+010220     MOVE WBIPWS-PLN-GRP-DB-AU   (I2) TO WBIPWS-DB-AU-HOLD (I1).
+010230     MOVE WBIPWS-PLN-GRP-DB-ACCT (I2) TO WBIPWS-DB-ACCT-HOLD (I1).    
+010240     MOVE WBIPWS-PLN-GRP-DB-SUB  (I2) TO WBIPWS-DB-SUB-HOLD (I1).
+          
+149700     MOVE 2                           TO GT7-BASE-ND
+149800                                         GT7-TRAN-ND
+149900                                         GT7-TO-BASE-ND.
+           MOVE SPACES                      TO GT7-CURRENCY-CODE.
+150100     MOVE ZEROES                      TO GT7-UNITS-AMOUNT.
+150300     MOVE "N"                         TO GT7-AUTO-REV.
+150400     MOVE SPACES                      TO GT7-ACTIVITY
+013590                                         GT7-ACCT-CATEGORY.
+150600
+148300     MOVE "PB120"                     TO GT7-REFERENCE.
+           MOVE "PV"                        TO GT7-SOURCE-CODE.
+           MOVE "WBP Contributions"         TO GT7-DESCRIPTION.
+163800     MOVE SPACES                      TO GT7-SUMMARY-CONTROL.
+164800     MOVE WS-GLSUM-PLAN-GROUP (I1)     TO GT7-PROGRAM-INFO.
+164800  
+        201-CONT.
+
+           IF (I1 > 1)
+********   OR (WS-GLSUM-PLAN-GROUP (I1) = SPACES)
+013640        IF ((WBIPWS-DB-COMP-HOLD (I1)
+013640           NOT = WBIPWS-DB-COMP-HOLD (I1 - 1))
+010220        OR (WBIPWS-DB-AU-HOLD (I1)
+                 NOT = WBIPWS-DB-AU-HOLD (I1 - 1))
+010230        OR (WBIPWS-DB-ACCT-HOLD (I1)
+                 NOT =  WBIPWS-DB-ACCT-HOLD (I1 - 1))
+010240        OR (WBIPWS-DB-SUB-HOLD (I1)
+                  NOT = WBIPWS-DB-SUB-HOLD (I1 - 1)))
+              AND  (WS-DEBIT-PRINT-FLAG = "Y")
+010210            MOVE WBIPWS-DB-COMP-HOLD-N (I1 - 1) TO GT7-TO-COMPANY
+                  MOVE WBIPWS-DB-AU-HOLD     (I1 - 1) TO GT7-ACCT-UNIT
+010230            MOVE WBIPWS-DB-ACCT-HOLD-N (I1 - 1) TO GT7-ACCOUNT    
+010240            MOVE WBIPWS-DB-SUB-HOLD-N  (I1 - 1) TO GT7-SUB-ACCOUNT
+
+                  MOVE WS-GLSUM-DEBIT-AMOUNT TO GT7-TRAN-AMOUNT
+                                                GT7-BASE-AMOUNT
+165500            PERFORM 8200-STORE-GT70DISK
+                  MOVE ZERO     TO WS-GLSUM-DEBIT-AMOUNT  
+165500            MOVE "N"      TO WS-DEBIT-PRINT-FLAG
+              ELSE
+                  MOVE "Y" TO WS-DEBIT-PRINT-FLAG
+                  ADD  WS-GLSUM-TOT-AMOUNT (I1) TO WS-GLSUM-DEBIT-AMOUNT
+           ELSE
+               MOVE "Y" TO WS-DEBIT-PRINT-FLAG
+               MOVE WS-GLSUM-TOT-AMOUNT (I1) TO WS-GLSUM-DEBIT-AMOUNT.
+
+016920
+018480 201-END.
+254400
+001260****************************************************************
+001270 1000-PRINT-PB-INVOICE.
+001280****************************************************************
+
+           MOVE WBIPF1-COMPANY             TO WBIPWS-POST-COMPANY.
+001290
+001480*--- Default Company currency
+001480 
+001480     MOVE WBIPF1-COMPANY             TO DB-COMPANY.
+002060     MOVE SPACES                     TO DB-PROCESS-LEVEL.
+001490     PERFORM 840-FIND-PRSSET1.
+002090     IF  (PRSYSTEM-NOTFOUND)
+002160         INITIALIZE                     WBIPWS-CURRENCY-CODE
+002160     ELSE
+002160         MOVE PRS-CURRENCY-CODE      TO WBIPWS-CURRENCY-CODE.
+002160 
+002160*--- Read first invoice line  
+002620 
+003340     MOVE WBIPF1-COMPANY             TO PB1-COMPANY.
+003350     INITIALIZE                         PB1-PROCESS-LEVEL.
+003360     INITIALIZE                         PB1-PER-END-DATE
+003370                                        PB1-CUSTOMER
+003380                                        PB1-LINE-NBR.
+003390     PERFORM 8500-FIND-NLT-PBHSTTEMP.
+003390  
+003390*--- Process individual employees          
+003390*
+003390 1000-EMPLOYEE-INVOICES. 
+003390  
+           IF  (PB1-PROCESS-LEVEL NOT = SPACES)
+               GO TO 1000-CLIENT-INVOICES.
+                 
+           MOVE 2 TO WBIPF1-INV-TYPE. 
+003400     PERFORM 1040-DO-INVOICE
+003410     THRU    1040-END
+003400         UNTIL (PBHSTTEMP-NOTFOUND)
+003430         OR    (PB1-COMPANY       NOT = WBIPF1-COMPANY)
+003430         OR    (PB1-PROCESS-LEVEL NOT = SPACES). 
+003430 
+003430*--- Process Clients (i.e. Process Levels) 
+003430 
+003430 1000-CLIENT-INVOICES. 
+RAY
+RAY        MOVE PB1-PRINT-GROUP        TO WBIPWS-PRT-GROUP.
+003430 
+003430     MOVE 1 TO WBIPF1-INV-TYPE. 
+003410  
+001740     PERFORM 1020-DO-PROCESS-LEVEL
+001750     THRU    1020-END
+001750         UNTIL (PBHSTTEMP-NOTFOUND)
+001750         OR    (PB1-COMPANY NOT = WBIPF1-COMPANY).   
+001870
+003120 1000-END.
+003130
+003140****************************************************************
+003150 1020-DO-PROCESS-LEVEL.
+003160****************************************************************
+003170                                            
+001710*--- If PB Client record not found, skip to next invoice 
+RAY   *
+RAY   *    MOVE PB1-COMPANY            TO DB-COMPANY.
+RAY   *    MOVE PB1-PROCESS-LEVEL      TO DB-PROCESS-LEVEL.
+RAY   *    PERFORM 840-FIND-PCCSET1.
+RAY   *    IF (PBCLIENT-NOTFOUND)
+RAY   *        MOVE PB1-PROCESS-LEVEL      TO CRT-ERR-VAR1
+RAY   *        MOVE 191                    TO CRT-ERROR-NBR
+RAY   *        MOVE "WBIP"                 TO CRT-ERROR-CAT
+RAY   *        PERFORM 790-GET-ERROR-MSG
+RAY   *        MOVE CRT-ERROR-MSG          TO MSG-MESSAGE
+RAY   *        MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+RAY   *        PERFORM 700-PRINT-RPT-GRP
+RAY   *        PERFORM 8600-FIND-NEXT-PBHSTTEMP
+RAY   *            UNTIL (PBHSTTEMP-NOTFOUND)
+RAY   *            OR    (PB1-COMPANY       NOT = DB-COMPANY)
+RAY   *            OR    (PB1-PROCESS-LEVEL NOT = DB-PROCESS-LEVEL)
+RAY   *        GO TO 1020-END.
+RAY   * 
+RAY   *    MOVE PCC-POST-COMPANY           TO WBIPWS-POST-COMPANY.
+RAY   *    MOVE PCC-PROCESS-LEVEL          TO WBIPWS-PROCESS-LEVEL.
+RAY   *    MOVE PCC-AR-PROCESS-LVL         TO WBIPWS-AR-PROCESS-LVL. 
+RAY   *    MOVE PCC-CUSTOMER               TO WBIPWS-CUSTOMER. 
+RAY   *    MOVE PCC-BILL-TO                TO WBIPWS-BILL-TO. 
+RAY   *    MOVE PCC-CONTRACT               TO WBIPWS-CONTRACT. 
+RAY    
+RAY   *--- START A NEW PRINT FILE FOR INVOICES ON PRT GROUP CHANGE
+RAY   *--- EACH NEW FILE WILL HAVE A SEQUENCE NUMBER APPENDED TO IT
+RAY        IF (PB1-PRINT-GROUP NOT = WBIPWS-PRT-GROUP)
+KS0914         IF (WBIPF1-UPDATE = "Y")
+                  PERFORM 920-END-SUB-TRANSACTION
+KS0914         END-IF
+RAY            CLOSE INVOICES-FILE
+RAY            MOVE "INVOICES"             TO INVOICES-NAME
+RAY            OPEN OUTPUT INVOICES-FILE
+KS0914         IF (WBIPF1-UPDATE = "Y")
+                  PERFORM 910-BEGIN-SUB-TRANSACTION
+KS0914         END-IF
+RAY            MOVE PB1-PRINT-GROUP        TO WBIPWS-PRT-GROUP
+QQQQQQ*
+               MOVE "N"                    TO WS-COLD-INPUT-FILE-SW
+               PERFORM 
+                VARYING I4 FROM 1 BY 1
+                UNTIL (I4 > 99)
+                   OR (WS-COLD-INPUT-FILE-SW = "Y")
+                      IF (WS-PRT-INPUT-COLD-FILE (I4) NOT > SPACES)
+                         MOVE INVOICES-NAME TO
+                                     WS-PRT-INPUT-COLD-FILE (I4)
+*******                  UNSTRING INVOICES-NAME DELIMITED BY "  "
+*******                                INTO WS-PRT-INPUTCOLD-FILE (I4)
+                         DISPLAY "INVOICES NAME " INVOICES-NAME
+                                  " " WS-PRT-INPUT-COLD-FILE (I4)
+
+                         MOVE "Y"           TO WS-COLD-INPUT-FILE-SW
+                      END-IF
+               END-PERFORM.
+
+RAY   *--- SEE IF PROCESS LEVEL SHOULD BE INCLUDED ON THE IC FLAT FILE 
+      *--- COULD BE HANDLED LIKE PRT-GROUP ABOVE FOR MULTIPLE FLAT FILES
+RAY        PERFORM 1600-GET-IC-INVOICE-GROUP.
+
+GW9/07*** BELOW IS FOR INDIV FLAT FILES SET UP ON IF10 *****************
+           IF (WBIPF1-UPDATE = "Y")
+            IF (PB1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+              PERFORM 1610-GET-CUS-INVOICE-GROUP 
+              IF (WBIPWS-CUS-INV-GROUP  NOT = SPACES)
+                 IF (ERCINFO-FILE-OPEN NOT = "N")
+                    PERFORM 800-CLOSECSV-ERCUSTINV
+                 END-IF
+                 PERFORM 900-BUILD-TMP-FILE-NAME
+
+GW9/07* BEGIN WORK FILE NAME WILL CONTAIN THE PROC-LEVEL *****
+                 UNSTRING WS-TMP-FILE DELIMITED BY "/work"
+                                       INTO WS-WORK-DIR
+       
+                 STRING WS-WORK-DIR            DELIMITED BY SPACE
+                        "/work/cusinvce/ER"    DELIMITED BY SIZE
+                        PB1-PROCESS-LEVEL      DELIMITED BY SPACE
+                        ".CSV"                 DELIMITED BY SIZE
+                                               INTO WS-CUST-FILE-NAME
+                 PERFORM 800-OPENOUTPUTCSV-ERCUSTINV
+                 PERFORM 800-CLOSECSV-ERCUSTINV
+                 PERFORM 800-OPENAPPENDCSV-ERCUSTINV.
+GW9/07***** END
+RAY        MOVE WBIPF1-COMPANY             TO WBIPWS-POST-COMPANY.
+RAY        MOVE PB1-PROCESS-LEVEL          TO WBIPWS-PROCESS-LEVEL.
+RAY        MOVE "1"                        TO WBIPWS-AR-PROCESS-LVL. 
+RAY
+RAY        MOVE PB1-PROCESS-LEVEL          TO JSTWS-STR.
+RAY        MOVE 09                         TO JSTWS-STR-LEN.
+RAY        MOVE 09                         TO JSTWS-STR-OUT-LEN.
+RAY        SET JSTWS-RIGHT                 TO TRUE.
+RAY        SET JSTWS-ZERO-FILL             TO TRUE.
+RAY        PERFORM 2000-JUSTIFY-OBJECT.
+RAY        MOVE JSTWS-STR-OUT              TO WBIPWS-CUSTOMER.
+RAY        MOVE "  ER"                     TO WBIPWS-CUSTOMER(1:4).
+RAY
+RAY        MOVE ZEROES                     TO WBIPWS-BILL-TO.
+RAY        MOVE SPACES                     TO WBIPWS-CONTRACT. 
+RAY
+RAY   *    MOVE WBIPF1-COMPANY             TO DB-COMPANY.
+RAY   *    MOVE WBIPWS-PROCESS-LEVEL       TO DB-PROCESS-LEVEL.  
+RAY   *    PERFORM 840-FIND-PBBSET1.
+RAY   *    IF  (PBBILL-FOUND)
+RAY   *        MOVE PBB-INVOICE-PREFIX     TO WBIPWS-INVOICE-PFX
+RAY   *        MOVE PBB-CR-MEMO-PREFIX     TO WBIPWS-CR-MEMO-PFX
+RAY   *    ELSE
+RAY   *        MOVE "PB"                   TO WBIPWS-INVOICE-PFX
+RAY   *                                       WBIPWS-CR-MEMO-PFX.
+RAY   *
+RAY        MOVE "IN"                       TO WBIPWS-INVOICE-PFX.
+RAY        MOVE "CM"                       TO WBIPWS-CR-MEMO-PFX.
+RAY   *--- ??? IS THERE EVER A NOTFOUND THAT CAUSES IT TO USE THE PB ---
+RAY   *    MOVE "PB"                       TO WBIPWS-INVOICE-PFX
+RAY   *                                       WBIPWS-CR-MEMO-PFX.
+RAY   *-----------------------------------------------------------------
+003350 
+003400     PERFORM 1040-DO-INVOICE
+003410     THRU    1040-END
+003420        UNTIL (PBHSTTEMP-NOTFOUND)
+003430        OR    (PB1-COMPANY       NOT = WBIPF1-COMPANY)
+003430        OR    (PB1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL).
+003430 
+003120 1020-END.
+003130
+003140****************************************************************
+003150 1040-DO-INVOICE.
+003160****************************************************************
+003170
+003170     INITIALIZE CRT-ERROR-NBR.
+
+000450*--- Work File 1 is for breaking invoice amounts into
+000450*    Plan Groups  
+000450 
+000470     PERFORM 9800-OPEN-OUTPUT-WBWRK1.
+000480     PERFORM 9900-CLOSE-WBWRK1.
+000490     PERFORM 9810-OPEN-IO-WBWRK1.
+000500
+000450*--- Work File 2 is for keeping track of plan codes, amts
+000450 
+000470     PERFORM 9800-OPEN-OUTPUT-WBWRK2.
+000480     PERFORM 9900-CLOSE-WBWRK2.
+000490     PERFORM 9810-OPEN-IO-WBWRK2.
+000500
+           IF  (WBIPF1-INV-TYPE = 2)
+      *------- Default fields for employee invoice
+               MOVE PB1-COMPANY            TO DB-COMPANY
+               MOVE PB1-EMPLOYEE           TO DB-EMPLOYEE
+               PERFORM 840-FIND-EMPSET1
+               IF (PB1-PARTICIPNT > 0)
+                   MOVE PB1-COMPANY        TO DB-COMPANY
+                   MOVE PB1-PARTICIPNT     TO DB-PARTICIPNT
+                   PERFORM 840-FIND-PARSET1
+               END-IF
+RAY   *------- USE THE CUSTOMER PASSED FROM WB120, WHICH WAS CHANGED TO
+RAY   *------- USE PARTICIPANT FOR COBRA BILL  
+RAY   *        STRING "D"                     DELIMITED BY SIZE
+RAY   *               EMP-EMPLOYEE (4:6)      DELIMITED BY SIZE
+RAY   *               "00"                    DELIMITED BY SIZE
+RAY   *                                  INTO WBIPWS-CUSTOMER
+RAY            MOVE PB1-CUSTOMER           TO WBIPWS-CUSTOMER
+               MOVE SPACES                 TO WBIPWS-PROCESS-LEVEL
+               MOVE "1    "                TO WBIPWS-AR-PROCESS-LVL
+               INITIALIZE                     WBIPWS-BILL-TO
+                                              WBIPWS-CONTRACT
+               MOVE "PB"                   TO WBIPWS-INVOICE-PFX
+                                              WBIPWS-CR-MEMO-PFX.
+              
+003230*--- Get AR Company Info  
+003260
+003270     MOVE WBIPWS-POST-COMPANY       TO ARCOWS-COMPANY.
+003280     MOVE WBIPWS-AR-PROCESS-LVL     TO ARCOWS-PROCESS-LEVEL.
+003290     PERFORM 700-EDIT-ARCOMPANY-60.
+003290     IF  (ERROR-FOUND)
+003290         INITIALIZE                     CRT-ERROR-NBR
+               MOVE WBIPWS-AR-PROCESS-LVL  TO CRT-ERR-VAR1
+               MOVE WBIPWS-CUSTOMER        TO CRT-ERR-VAR2
+               MOVE 192                    TO CRT-ERROR-NBR
+               MOVE "WBIP"                 TO CRT-ERROR-CAT
+               PERFORM 790-GET-ERROR-MSG
+               MOVE CRT-ERROR-MSG          TO MSG-MESSAGE
+               MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP.
+003310
+003170*--- Get AR Customer Info 
+003170  
+002470     MOVE WBIPWS-POST-COMPANY        TO ARCIWS-COMPANY.
+002500     MOVE WBIPWS-CUSTOMER            TO ARCIWS-CUSTOMER.
+002530     MOVE "I"                        TO ARCIWS-ACTION-CODE.
+ACS015     MOVE SPACES                     TO ARCIWS-EDI-NBR.
+002540     PERFORM 700-INQUIRE-ARCUSTOMER-70.
+           IF  (ERROR-FOUND)
+RAY   *---     FOR A DIRECT BILL CUSTOMER OR EMPLOYER, JUST PUT 
+RAY   *---     OUT WARNING MESSAGE
+RAY            IF  (PB1-PROCESS-LEVEL = SPACES)
+RAY            OR  (PB1-PROCESS-LEVEL IS NUMERIC)
+                   INITIALIZE                     CRT-ERROR-NBR 
+                   MOVE "** No AR Customer **" TO ARCIWS-NAME    
+                                                  ARBTWS-NAME   
+                   MOVE ARCIWS-CUSTOMER        TO CRT-ERR-VAR1
+                   MOVE PB1-EMPLOYEE           TO CRT-ERR-VAR2
+                   MOVE 190                    TO CRT-ERROR-NBR
+                   MOVE "WBIP"                 TO CRT-ERROR-CAT
+                   PERFORM 790-GET-ERROR-MSG
+                   MOVE CRT-ERROR-MSG          TO MSG-MESSAGE
+                   MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+                   PERFORM 700-PRINT-RPT-GRP
+               ELSE
+RAY   *---     If AN ALPHA PROCESS LEVEL, skip to next invoice 
+RAY                MOVE PB1-PROCESS-LEVEL      TO CRT-ERR-VAR1
+RAY                MOVE 191                    TO CRT-ERROR-NBR
+RAY                MOVE "WBIP"                 TO CRT-ERROR-CAT
+RAY                PERFORM 790-GET-ERROR-MSG
+RAY                MOVE CRT-ERROR-MSG          TO MSG-MESSAGE
+RAY                MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+RAY                PERFORM 700-PRINT-RPT-GRP
+RAY                PERFORM 8600-FIND-NEXT-PBHSTTEMP
+RAY                    UNTIL (PBHSTTEMP-NOTFOUND)
+RAY                    OR (PB1-COMPANY       NOT = DB-COMPANY)
+RAY                    OR (PB1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+RAY                GO TO 1040-CLOSE.
+       
+        
+002470     IF  (WBIPWS-BILL-TO NOT = ZEROES)   
+               MOVE "N"                    TO ARBTWS-CUSTOMER-ADDR
+           ELSE
+               MOVE "Y"                    TO ARBTWS-CUSTOMER-ADDR.
+002470 
+002470     MOVE WBIPWS-POST-COMPANY        TO ARBTWS-COMPANY.
+002470     MOVE WBIPWS-CUSTOMER            TO ARBTWS-CUSTOMER. 
+002570     MOVE WBIPWS-BILL-TO             TO ARBTWS-BILL-TO.
+002580     MOVE "I"                        TO ARBTWS-FC.
+002590     PERFORM 520-EDIT-BILL-TO-70.
+002590     IF  (ERROR-FOUND)
+002590         MOVE ZEROES                 TO CRT-ERROR-NBR.  
+002600
+002210*--- Process Level currency code 
+002210 
+002210     MOVE WBIPF1-COMPANY             TO DB-COMPANY.
+002240     MOVE WBIPWS-PROCESS-LEVEL       TO DB-PROCESS-LEVEL.
+002240     IF  (WBIPF1-INV-TYPE = 2)
+002240         MOVE EMP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL. 
+002240     PERFORM 840-FIND-PRSSET1.
+002240   
+002370     IF  (PRSYSTEM-FOUND)
+002380          MOVE PRS-CURRENCY-CODE     TO IFCCWS-CURRENCY-CODE  
+002380                                        WBIPWS-CURRENCY-CODE
+002390     ELSE
+002400          MOVE WBIPWS-CURRENCY-CODE  TO IFCCWS-CURRENCY-CODE.
+002410
+002420     PERFORM 605-EDIT-CURRENCY-CODE-60.
+002430     IF (ERROR-FOUND)
+               INITIALIZE                     CRT-ERROR-NBR
+               MOVE 2                      TO IFCCWS-CURRENCY-ND.
+002460
+004210*--- Invoice Header
+004210 
+004210     PERFORM 1060-CREATE-PBHSTHDR
+004220     THRU    1060-END.
+004220 
+004220 1040-CONTINUE. 
+004240
+003330*--- Process Invoice Lines
+003330 
+003330     MOVE WS-TRUE                   TO WS-RETRO-FLAG.
+
+           INITIALIZE                        WBIPWS-COLUMN-HDR-TBL.
+003330 
+003230     INITIALIZE                        WBIPWS-INVOICE-AMT
+003230                                       WBIPWS-TOT-CURR-CHARGES
+003230                                       WBIPWS-TOT-ADJUSTMENTS 
+003230                                       WBIPWS-TOT-LATE-FEES
+003230                                       WBIPWS-AMOUNT-DUE.
+003330     IF  (WBIPF1-INV-TYPE = 1)
+003400         PERFORM 1050-DO-INVOICE-DETAIL
+003410         THRU    1050-END
+003420            UNTIL (PBHSTTEMP-NOTFOUND)
+003430              OR  (PB1-COMPANY       NOT = WBIPF1-COMPANY)
+003440              OR  (PB1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+003440     ELSE   
+003330         MOVE PB1-PER-END-DATE          TO WBIPWS-SV-PER-END-DATE
+003330         MOVE PB1-CUSTOMER              TO WBIPWS-SV-CUSTOMER 
+003330         MOVE PB1-EMPLOYEE              TO WBIPWS-EMPLOYEE
+003400         PERFORM 1050-DO-INVOICE-DETAIL
+003410         THRU    1050-END
+003420            UNTIL (PBHSTTEMP-NOTFOUND)
+003430              OR  (PB1-COMPANY       NOT = WBIPF1-COMPANY)
+003440              OR  (PB1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+003440              OR  (PB1-PER-END-DATE  NOT = WBIPWS-SV-PER-END-DATE)
+003440              OR  (PB1-CUSTOMER      NOT = WBIPWS-SV-CUSTOMER).
+003600     
+003650*--- Store total on Invoice Header
+003650*
+003650*--- If amount less than zero, reset invoices using credit prefix 
+003650 
+003650     IF  (WBIPF1-UPDATE = "Y")
+003660         IF (WBIPWS-INVOICE-AMT  < ZEROS)
+003670             PERFORM 1070-CM-INVOICE 
+003680             THRU    1070-END
+003690         ELSE
+ACS003             PERFORM 910-BEGIN-SUB-TRANSACTION
+003700             MOVE WBIPF1-COMPANY        TO DB-COMPANY
+003710             MOVE WBIPWS-PROCESS-LEVEL  TO DB-PROCESS-LEVEL
+003720             MOVE WBIPWS-INVOICE        TO DB-INVOICE
+003730             MOVE ZB4-PER-END-DATE      TO DB-PER-END-DATE
+003740             PERFORM 840-MODIFY-ZB4SET3
+003750             MOVE WBIPWS-INVOICE-AMT    TO ZB4-BILLABLE-AMT 
+003800             PERFORM 820-STORE-PBHSTHDR 
+ACS003             PERFORM 920-END-SUB-TRANSACTION.
+003890 
+003330*--- Print Invoice 
+003330 
+003330     MOVE ZEROES                     TO RPT-PAGE-COUNT (WBIP-R1).
+003330     MOVE ZEROES                     TO RPT-PAGE-COUNT (WBIP-R2).
+003330
+AATEST**** DISPLAY "AA WBIP 1040-DO-INVOICE".
+AATEST**** DISPLAY "ARCIWS-COMPANY : " ARCIWS-COMPANY.
+AATEST**** DISPLAY "ARCIWS-CUSTOMER: " ARCIWS-CUSTOMER.
+AATEST**** DISPLAY "ARCIWS-TERMS-CD: " ARCIWS-TERMS-CD.
+ 
+003330     IF  (WBIPF1-INV-TYPE = 1)
+003610         PERFORM 1100-PRINT-CLIENT-INVOICE
+003620         THRU    1100-END
+003440     ELSE   
+003610         PERFORM 1200-PRINT-EMPLOYEE-INVOICE
+003620         THRU    1200-END.
+
+003890 1040-CLOSE. 
+003910
+000950     PERFORM 9900-CLOSE-WBWRK1.
+000950     PERFORM 9900-CLOSE-WBWRK2.
+000970
+004070 1040-END.
+004080
+004090****************************************************************
+004100 1050-DO-INVOICE-DETAIL.
+004110****************************************************************
+004120
+003440*--- If any invoice lines found that are not RETRO, then
+003440*    this is not "just" a retro invoice 
+003440 
+GW9/05*    IF  (PB1-REASON-CODE NOT = "RETRO BILL" AND "LATE FEE")
+GW9/05     IF  (PB1-REASON-CODE NOT = "RETR" AND "LATE")
+003440         MOVE WS-FALSE           TO WS-RETRO-FLAG.  
+003440  
+004250*---   
+004250 
+004250     IF (WBIPF1-UPDATE = "Y")
+ACS003         PERFORM 910-BEGIN-SUB-TRANSACTION
+004260         PERFORM 800-CREATE-PBHSTDTL
+004320     ELSE
+004340         INITIALIZE                    PBHSTDTL.
+004370
+004380     MOVE PB1-COMPANY            TO ZB3-COMPANY.
+004390     MOVE PB1-PROCESS-LEVEL      TO ZB3-PROCESS-LEVEL.
+004270     MOVE WBIPWS-INVOICE         TO ZB3-INVOICE.
+004280     MOVE WBIPWS-INVOICE-PREFIX  TO ZB3-INVOICE-PREFIX.
+004300     MOVE WBIPWS-INVOICE-NBR     TO ZB3-INVOICE-NBR.
+004400     MOVE PB1-LINE-NBR           TO ZB3-LINE-NBR.
+004410     MOVE PB1-RECORD-TYPE        TO ZB3-RECORD-TYPE.
+004420     MOVE PB1-EMPLOYEE           TO ZB3-EMPLOYEE.
+004420     MOVE PB1-EFF-BILL-DT        TO ZB3-EFF-BILL-DT. 
+004430     MOVE PB1-CHECK-ID           TO ZB3-CHECK-ID.
+004440     MOVE PB1-DEDUCT-FEE-CD      TO ZB3-DEDUCT-FEE-CD.
+004450     MOVE PB1-CODE-TYPE          TO ZB3-CODE-TYPE.
+004460     MOVE PB1-PROGRAM            TO ZB3-PROGRAM.
+004470     MOVE PB1-DESCRIPTION        TO ZB3-DESCRIPTION.
+004480     MOVE PB1-TAX-CATEGORY       TO ZB3-TAX-CATEGORY.
+004490     MOVE PB1-TAX-AUTH-TYPE      TO ZB3-TAX-AUTH-TYPE.
+004500     MOVE PB1-ADJUST-PAY         TO ZB3-ADJUST-PAY.
+004510     MOVE PB1-WC-STATE           TO ZB3-WC-STATE.
+004520     MOVE PB1-WC-CODE            TO ZB3-WC-CODE.
+004530     MOVE PB1-WC-CLASS           TO ZB3-WC-CLASS.
+004540     MOVE PB1-WC-RATE            TO ZB3-WC-RATE.
+004550     MOVE PB1-REG-HOURS          TO ZB3-REG-HOURS.
+004560     MOVE PB1-OT-HOURS           TO ZB3-OT-HOURS.
+004570     MOVE PB1-OTH-HOURS          TO ZB3-OTH-HOURS.
+004580     MOVE PB1-REG-RATE           TO ZB3-REG-RATE.
+004590     MOVE PB1-OT-RATE            TO ZB3-OT-RATE.
+004600     MOVE PB1-OTH-RATE           TO ZB3-OTH-RATE.
+004610     MOVE PB1-REG-PAY            TO ZB3-REG-PAY.
+004620     MOVE PB1-OT-PAY             TO ZB3-OT-PAY.
+004630     MOVE PB1-OTH-PAY            TO ZB3-OTH-PAY.
+004640     MOVE PB1-TIPS-PAY           TO ZB3-TIPS-PAY.
+004650     MOVE PB1-GROSS-PAY          TO ZB3-GROSS-PAY.
+004660     MOVE PB1-EMPLOYEE-CAFE      TO ZB3-EMPLOYEE-CAFE.
+004670     MOVE PB1-CREDITS            TO ZB3-CREDITS.
+004680     MOVE PB1-BILLABLE-AMT       TO ZB3-BILLABLE-AMT.
+004690     MOVE PB1-BILLABLE-UNIT      TO ZB3-BILLABLE-UNIT.
+004700     MOVE PB1-TAXABLE-AMT        TO ZB3-TAXABLE-AMT.
+004710     MOVE PB1-CHECK-ID           TO ZB3-CHECK-ID.
+004790     MOVE PB1-DEPARTMENT         TO ZB3-DEPARTMENT.
+004800     MOVE PB1-JOB-CODE           TO ZB3-JOB-CODE.
+004810     MOVE PB1-POSITION           TO ZB3-POSITION.
+004820     MOVE PB1-PCD-SEQ-NBR        TO ZB3-PCD-SEQ-NBR.
+004830     MOVE PB1-PRD-REC-TYPE       TO ZB3-PRD-REC-TYPE.
+004840     MOVE PB1-PLAN-TYPE          TO ZB3-PLAN-TYPE.
+004850     MOVE PB1-PLAN-CODE          TO ZB3-PLAN-CODE.
+           MOVE PB1-REPORT-ENTITY      TO ZB3-REPORT-ENTITY.
+           MOVE PB1-BUS-NBR-GRP        TO ZB3-BUS-NBR-GRP.
+           MOVE PB1-QC-ENT-NBR-GRP     TO ZB3-QC-ENT-NBR-GRP.
+           MOVE PB1-CURRENCY-CODE      TO ZB3-CURRENCY-CODE.
+           MOVE PB1-CURR-ND            TO ZB3-CURR-ND.
+004860     MOVE PB1-CALC-TYPE          TO ZB3-CALC-TYPE.
+004870     MOVE PB1-PAY-SUM-GRP        TO ZB3-PAY-SUM-GRP.
+004880     MOVE PB1-TR-DATE            TO ZB3-TR-DATE.
+004890     MOVE PB1-TIME-SEQ           TO ZB3-TIME-SEQ.
+           MOVE PB1-CLIENT-JOBID       TO ZB3-CLIENT-JOBID.
+           MOVE PB1-EDM-SEQ-NBR        TO ZB3-EDM-SEQ-NBR.
+           MOVE PB1-REASON-CODE        TO ZB3-REASON-CODE.
+   
+           IF  (ZB3-DEDUCT-FEE-CD NOT = SPACES)
+               MOVE ZB3-COMPANY        TO DB-COMPANY
+               MOVE ZB3-DEDUCT-FEE-CD  TO DB-DED-CODE
+               PERFORM 840-FIND-DDCSET1
+               IF  (DEDCODE-FOUND)
+               AND (DDC-WC-TABLE-FLAG = "Y")
+                   MOVE ZB3-DEDUCT-FEE-CD       TO ZB3-WC-CODE
+               ELSE
+                   INITIALIZE                      ZB3-WC-CODE.
+004970
+004980     IF (WBIPF1-UPDATE = "Y")
+004990         PERFORM 820-STORE-PBHSTDTL
+ACS003         PERFORM 920-END-SUB-TRANSACTION.
+005090
+005260     IF  (ZB3-RECORD-TYPE   = "B")
+005270         ADD ZB3-BILLABLE-AMT        TO WBIPWS-INVOICE-AMT
+005270 
+GW9/05*        IF  (ZB3-REASON-CODE = "RETRO BILL")
+GW9/05         IF  (ZB3-REASON-CODE = "RETR")
+005270             ADD ZB3-BILLABLE-AMT    TO WBIPWS-TOT-ADJUSTMENTS
+005270         ELSE  
+GW9/05*        IF  (ZB3-REASON-CODE = "LATE FEE")
+GW9/05         IF  (ZB3-REASON-CODE = "LATE")
+005270             ADD ZB3-BILLABLE-AMT    TO WBIPWS-TOT-LATE-FEES
+005270         ELSE  
+005270             ADD ZB3-BILLABLE-AMT    TO WBIPWS-TOT-CURR-CHARGES.
+005270 
+005280
+AATEST*****    DISPLAY "AA WBIP 1050 DISPLAY".
+AATEST*****    DISPLAY "ZB3-COMPANY         : " ZB3-COMPANY.
+AATEST*****    DISPLAY "ZB3-PROCESS-LEVEL      : " ZB3-PROCESS-LEVEL.
+AATEST*****    DISPLAY "ZB3-INVOICE            : " ZB3-INVOICE.
+AATEST*****    DISPLAY "ZB3-RECORD-TYPE        : " ZB3-RECORD-TYPE.
+AATEST*****    DISPLAY "ZB3-REASON-CODE        : " ZB3-REASON-CODE.
+AATEST*****    DISPLAY "ZB3-BILLABLE-AMT       : " ZB3-BILLABLE-AMT.
+AATEST*****    DISPLAY "WBIPWS-TOT-LATE-FEES   : " WBIPWS-TOT-LATE-FEES.
+AATEST*****    DISPLAY "WBIPWS-TOT-CURR-CHARGES: " 
+AATEST*****             WBIPWS-TOT-CURR-CHARGES.
+
+           PERFORM 1055-WRITE-TO-WORKFILES
+           THRU    1055-END.
+
+       1050-NEXT.
+         
+007000     PERFORM 8600-FIND-NEXT-PBHSTTEMP.
+007030 
+007040 1050-END.
+007050
+      ******************************************************************
+       1055-WRITE-TO-WORKFILES.
+      ******************************************************************
+      
+           IF  (ZB3-PLAN-TYPE = SPACES) 
+           OR  (ZB3-PLAN-CODE = SPACES)
+               GO TO 1055-END. 
+   
+      *--- Set key for Work File 1 (Plan Group breakdown)
+
+RAY   *--- DETAIL PRINTS OUT OF ORDER WHEN NO CURRENT BEN OR PTB
+RAY   *--- WAS FOUND FOR INDIVIDUAL BILL. SORT ORDER IS NOT NEEDED
+RAY   *--- SO JUST BLANK OUT THE SORT FIELD. 
+RAY        IF (WBIPWS-PROCESS-LEVEL = SPACES)
+RAY            MOVE SPACES                 TO PB1-EMP-SORT-TYPE
+RAY        END-IF.
+
+           MOVE PB1-COMPANY            TO DB-COMPANY .
+           MOVE PB1-EMPLOYEE           TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           IF (PB1-PARTICIPNT > 0)
+               MOVE PB1-COMPANY        TO DB-COMPANY
+               MOVE PB1-PARTICIPNT     TO DB-PARTICIPNT
+               PERFORM 840-FIND-PARSET1.
+           
+           MOVE WBIPF1-COMPANY             TO WW1-COMPANY.
+           MOVE WBIPWS-PROCESS-LEVEL       TO WW1-PROCESS-LEVEL.
+           MOVE WBIPWS-INVOICE             TO WW1-INVOICE. 
+           MOVE WBIPWS-CUSTOMER            TO WW1-CUSTOMER.
+           MOVE PB1-EMPLOYEE               TO WW1-EMPLOYEE.
+           MOVE EMP-LAST-NAME              TO WW1-LAST-NAME.
+           MOVE EMP-FIRST-NAME             TO WW1-FIRST-NAME.
+           MOVE SPACES                     TO WW1-DEPARTMENT. 
+           MOVE PB1-EMP-SORT-TYPE          TO WW1-EMP-SORT-TYPE.
+           IF  (PB1-EMP-SORT-TYPE = SPACES)
+               MOVE EMP-DEPARTMENT         TO WW1-DEPARTMENT.
+
+           MOVE SPACES                     TO WW1-RECORD-TYPE.
+RAY        MOVE PB1-PARTICIPNT             TO WW1-PARTICIPNT.
+AI1028     MOVE ZEROES                     TO WW1-RETRO-DT.
+AI1028     MOVE SPACES                     TO WW1-RETRO-FLAG.
+GW9/05*    IF  (PB1-REASON-CODE = "RETRO BILL")
+GW9/05     IF  (PB1-REASON-CODE = "RETR")
+               MOVE "A"                    TO WW1-RECORD-TYPE
+AI1028         MOVE PB1-EFF-BILL-DT        TO WW1-RETRO-DT
+AI1028         MOVE PB1-RETRO-FLAG         TO WW1-RETRO-FLAG 
+           ELSE
+GW9/05*    IF  (PB1-REASON-CODE = "LATE FEE")
+GW9/05     IF  (PB1-REASON-CODE = "LATE")
+               MOVE "L"                    TO WW1-RECORD-TYPE
+AI1028         MOVE PB1-EFF-BILL-DT        TO WW1-RETRO-DT.
+           
+ACS003     IF (WBIPF1-UPDATE = "Y")
+ACS003         PERFORM 910-BEGIN-SUB-TRANSACTION.
+
+           PERFORM 8400-FIND-WBWRK1.
+           IF  (WBWRK1-NOTFOUND)
+               PERFORM 8000-CREATE-WBWRK1
+               MOVE WBIPF1-COMPANY             TO WW1-COMPANY
+               MOVE WBIPWS-PROCESS-LEVEL       TO WW1-PROCESS-LEVEL
+               MOVE WBIPWS-INVOICE             TO WW1-INVOICE 
+               MOVE WBIPWS-CUSTOMER            TO WW1-CUSTOMER
+               MOVE ZB3-EMPLOYEE               TO WW1-EMPLOYEE
+               MOVE EMP-EMP-STATUS             TO WW1-EMP-STATUS 
+               MOVE PB1-EFF-BILL-DT            TO WW1-EFF-BILL-DT
+               MOVE SPACES                     TO WW1-DEPARTMENT
+               MOVE EMP-LAST-NAME              TO WW1-LAST-NAME
+               MOVE EMP-FIRST-NAME             TO WW1-FIRST-NAME
+               MOVE EMP-LAST-NAME              TO HRWS-LAST-NAME
+               MOVE EMP-FIRST-NAME             TO HRWS-FIRST-NAME
+               MOVE EMP-MIDDLE-NAME            TO HRWS-MIDDLE-INIT
+               MOVE EMP-NAME-SUFFIX            TO HRWS-NAME-SUFFIX
+               MOVE EMP-LAST-NAME-PRE          TO HRWS-LAST-NAME-PRE
+               PERFORM 750-HR-FORMAT-NAME
+               MOVE HRWS-FORMAT-NAME           TO WW1-FULL-NAME
+               MOVE PB1-EMP-SORT-TYPE          TO WW1-EMP-SORT-TYPE 
+AI1028         MOVE PB1-PARTICIPNT             TO WW1-PARTICIPNT
+               IF  (PB1-EMP-SORT-TYPE = SPACES)
+                   MOVE EMP-DEPARTMENT         TO WW1-DEPARTMENT
+               END-IF    
+               MOVE SPACES                     TO WW1-RECORD-TYPE
+AI1028         MOVE ZEROES                     TO WW1-RETRO-DT
+AI1028         MOVE SPACES                     TO WW1-RETRO-FLAG 
+GW9/05*        IF  (PB1-REASON-CODE = "RETRO BILL")
+GW9/05         IF  (PB1-REASON-CODE = "RETR")
+                   MOVE "A"                    TO WW1-RECORD-TYPE
+AI1028             MOVE PB1-EFF-BILL-DT        TO WW1-RETRO-DT
+AI1028             MOVE PB1-RETRO-FLAG         TO WW1-RETRO-FLAG 
+               ELSE
+GW9/05*        IF  (PB1-REASON-CODE = "LATE FEE")
+GW9/05         IF  (PB1-REASON-CODE = "LATE")
+                   MOVE "L"                    TO WW1-RECORD-TYPE
+AI1028             MOVE PB1-EFF-BILL-DT        TO WW1-RETRO-DT.
+       
+      *--- Search IF10 table for Plan Group, Report Column
+           
+           INITIALIZE WBIPWS-TYPE-CODE-LOOKUP.
+           STRING               ZB3-PLAN-TYPE
+                                ZB3-PLAN-CODE DELIMITED BY SIZE
+                                         INTO WBIPWS-TYPE-CODE-LOOKUP. 
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (WBIPWS-TYPE-CODE (I1) = WBIPWS-TYPE-CODE-LOOKUP)
+               OR     (WBIPWS-TYPE-CODE (I1) = SPACES)   
+       
+               CONTINUE 
+           END-PERFORM.
+       
+           IF  (WBIPWS-TYPE-CODE (I1) = SPACES)
+               MOVE "OTHER"                TO WBIPWS-WBP-PLAN-GROUP(I1)
+               MOVE I-OTHER                TO WBIPWS-COLUMN-N(I1).
+
+           MOVE WBIPWS-COLUMN-N (I1)       TO I2. 
+           MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO WBIPWS-COL-HDR(I2).
+       
+           MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO WW1-WBP-PLAN-GROUP(I2). 
+           ADD ZB3-BILLABLE-AMT            TO WW1-TOT-AMOUNT(I2).
+       
+      *--- CRP Salary
+
+           IF  (WBIPF1-INV-TYPE = 1)
+           AND (WW1-CRP-SALARY            = ZEROES)
+           AND (WBIPWS-WBP-PLAN-GROUP(I1) = "CRP")
+               MOVE ZB3-COMPANY                TO DB-COMPANY
+               MOVE ZB3-EMPLOYEE               TO DB-EMPLOYEE
+               MOVE ZB3-PLAN-TYPE              TO DB-PLAN-TYPE
+               MOVE ZB3-PLAN-CODE              TO DB-PLAN-CODE
+               MOVE ZB3-EFF-BILL-DT            TO DB-START-DATE
+               IF  (ZB3-EFF-BILL-DT = ZEROES)
+                   MOVE WS-HIGH-VALUES         TO DB-START-DATE
+               END-IF     
+               PERFORM 850-FIND-NLT-BENSET3
+               IF  (BENEFIT-FOUND)
+               AND (BEN-COMPANY     = DB-COMPANY)
+               AND (BEN-EMPLOYEE    = DB-EMPLOYEE)
+               AND (BEN-PLAN-TYPE   = DB-PLAN-TYPE)
+               AND (BEN-PLAN-CODE   = DB-PLAN-CODE)
+                   MOVE BEN-COVER-AMT          TO WW1-CRP-SALARY.
+            
+      *--- CDSP Salary
+
+           IF  (WBIPF1-INV-TYPE = 1)
+           AND (WW1-CDSP-SALARY           = ZEROES)
+           AND (WBIPWS-WBP-PLAN-GROUP(I1) = "CDSP") 
+               MOVE ZB3-COMPANY                TO DB-COMPANY
+               MOVE ZB3-EMPLOYEE               TO DB-EMPLOYEE
+               MOVE ZB3-PLAN-TYPE              TO DB-PLAN-TYPE
+               MOVE ZB3-PLAN-CODE              TO DB-PLAN-CODE
+               MOVE ZB3-EFF-BILL-DT            TO DB-START-DATE
+               IF  (ZB3-EFF-BILL-DT = ZEROES)
+                   MOVE WS-HIGH-VALUES         TO DB-START-DATE
+               END-IF     
+               PERFORM 850-FIND-NLT-BENSET3
+               IF  (BENEFIT-FOUND)
+               AND (BEN-COMPANY     = DB-COMPANY)
+               AND (BEN-EMPLOYEE    = DB-EMPLOYEE)
+               AND (BEN-PLAN-TYPE   = DB-PLAN-TYPE)
+               AND (BEN-PLAN-CODE   = DB-PLAN-CODE)
+                   MOVE BEN-COVER-AMT          TO WW1-CDSP-SALARY.
+
+           PERFORM 8200-STORE-WBWRK1.
+           
+      *--- List plan codes that belong to each plan group 
+
+           MOVE WBIPF1-COMPANY             TO WW2-COMPANY.
+           MOVE ZB3-EMPLOYEE               TO WW2-EMPLOYEE.
+           MOVE SPACES                     TO WW2-WBP-PLAN-GROUP.     
+           IF  (WBIPF1-INV-TYPE = 1)
+               MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO WW2-WBP-PLAN-GROUP.
+AI1028     MOVE ZEROES                     TO WW2-RETRO-DT.
+AI1028     MOVE SPACES                     TO WW2-RETRO-FLAG. 
+           IF  (WW1-RECORD-TYPE NOT = SPACES)
+AI1028         MOVE WW1-RETRO-DT           TO WW2-RETRO-DT
+AI1028         MOVE WW1-RETRO-FLAG         TO WW2-RETRO-FLAG. 
+           MOVE ZB3-PLAN-TYPE              TO WW2-PLAN-TYPE.
+           MOVE ZB3-PLAN-CODE              TO WW2-PLAN-CODE.
+           PERFORM 8400-FIND-WBWRK2.
+           IF  (WBWRK2-NOTFOUND)
+               PERFORM 8000-CREATE-WBWRK2
+               MOVE WBIPF1-COMPANY             TO WW2-COMPANY
+               MOVE ZB3-EMPLOYEE               TO WW2-EMPLOYEE
+               MOVE SPACES                     TO WW2-WBP-PLAN-GROUP 
+               IF  (WBIPF1-INV-TYPE = 1)
+                   MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO WW2-WBP-PLAN-GROUP
+               END-IF
+AI1028         MOVE ZEROES                     TO WW2-RETRO-DT
+AI1028         MOVE SPACES                     TO WW2-RETRO-FLAG 
+               IF  (WW1-RECORD-TYPE NOT = SPACES)
+AI1028             MOVE WW1-RETRO-DT           TO WW2-RETRO-DT
+AI1028             MOVE WW1-RETRO-FLAG         TO WW2-RETRO-FLAG 
+               END-IF      
+               MOVE ZB3-PLAN-TYPE              TO WW2-PLAN-TYPE
+               MOVE ZB3-PLAN-CODE              TO WW2-PLAN-CODE
+               MOVE PB1-COV-OPTION             TO WW2-COV-OPTION.
+
+           ADD  ZB3-BILLABLE-AMT           TO WW2-BILLABLE-AMT. 
+
+           MOVE SPACES                     TO WW2-OTD-FLAG.
+GW9/05*    IF  (PB1-REASON-CODE = "ONETMDED")
+GW9/05     IF  (PB1-REASON-CODE = "ONET")
+               MOVE "Y"                    TO WW2-OTD-FLAG.
+
+           IF  (WBIPF1-INV-TYPE = 2)
+           AND (WW1-RECORD-TYPE NOT = SPACES)
+               MOVE ZB3-EFF-BILL-DT        TO WW2-EFF-BILL-DT.
+
+           IF  (WBIPF1-INV-TYPE = 1)
+           AND ((WW2-COVER-AMT             = ZEROES)
+           OR   (WW2-REASON                = SPACES))
+               MOVE ZB3-COMPANY                TO DB-COMPANY
+               MOVE ZB3-EMPLOYEE               TO DB-EMPLOYEE
+               MOVE ZB3-PLAN-TYPE              TO DB-PLAN-TYPE
+               MOVE ZB3-PLAN-CODE              TO DB-PLAN-CODE
+               MOVE ZB3-EFF-BILL-DT            TO DB-START-DATE
+               IF  (ZB3-EFF-BILL-DT = ZEROES)
+                   MOVE WS-HIGH-VALUES         TO DB-START-DATE
+               END-IF     
+               PERFORM 850-FIND-NLT-BENSET3
+               IF  (BENEFIT-FOUND)
+               AND (BEN-COMPANY     = DB-COMPANY)
+               AND (BEN-EMPLOYEE    = DB-EMPLOYEE)
+               AND (BEN-PLAN-TYPE   = DB-PLAN-TYPE)
+               AND (BEN-PLAN-CODE   = DB-PLAN-CODE)
+                   COMPUTE WW2-COVER-AMT ROUNDED = BEN-COVER-AMT / 1000
+                   
+                   MOVE BEN-COMPANY            TO DB-COMPANY
+                   MOVE BEN-EMPLOYEE           TO DB-EMPLOYEE
+                   MOVE BEN-START-DATE         TO DB-EFFECT-DATE
+                   MOVE PAHSET1-EFFECT-DATE    TO WS-DB-BEG-RNG
+                   PERFORM 850-FIND-BEGRNG-PAHSET1
+                   IF  (PERSACTHST-FOUND)
+                       MOVE PAH-REASON (1)     TO WW2-REASON.   
+                   
+           PERFORM 8200-STORE-WBWRK2.
+
+       1055-CONTINUE.
+
+           IF  (WBIPF1-INV-TYPE = 2)
+ACS003         IF (WBIPF1-UPDATE = "Y")
+ACS003             PERFORM 920-END-SUB-TRANSACTION 
+               END-IF
+               GO TO 1055-END 
+           END-IF.
+               
+       1055-EMPLOYER-SUMMARY-RECORD.         
+        
+           MOVE WBIPF1-COMPANY             TO WW1-COMPANY.
+           MOVE WBIPWS-PROCESS-LEVEL       TO WW1-PROCESS-LEVEL.
+           MOVE WBIPWS-INVOICE             TO WW1-INVOICE. 
+           MOVE WBIPWS-CUSTOMER            TO WW1-CUSTOMER.
+           MOVE SPACES                     TO WW1-EMP-SORT-TYPE.
+           MOVE SPACES                     TO WW1-DEPARTMENT. 
+           MOVE SPACES                     TO WW1-RECORD-TYPE.
+           MOVE ZEROES                     TO WW1-EMPLOYEE.
+RAY        MOVE ZEROES                     TO WW1-PARTICIPNT.
+           MOVE SPACES                     TO WW1-LAST-NAME.
+           MOVE SPACES                     TO WW1-FIRST-NAME.
+AI1028     MOVE ZEROES                     TO WW1-RETRO-DT.
+AI1028     MOVE SPACES                     TO WW1-RETRO-FLAG. 
+           PERFORM 8400-FIND-WBWRK1.
+           IF  (WBWRK1-NOTFOUND)
+               PERFORM 8000-CREATE-WBWRK1
+               MOVE WBIPF1-COMPANY             TO WW1-COMPANY
+               MOVE WBIPWS-PROCESS-LEVEL       TO WW1-PROCESS-LEVEL
+               MOVE WBIPWS-INVOICE             TO WW1-INVOICE 
+               MOVE WBIPWS-CUSTOMER            TO WW1-CUSTOMER
+               MOVE SPACES                     TO WW1-EMP-SORT-TYPE
+               MOVE SPACES                     TO WW1-DEPARTMENT
+               MOVE SPACES                     TO WW1-RECORD-TYPE
+               MOVE ZEROES                     TO WW1-EMPLOYEE
+               MOVE ZEROES                     TO WW1-PARTICIPNT
+               MOVE SPACES                     TO WW1-LAST-NAME
+               MOVE SPACES                     TO WW1-FIRST-NAME
+AI1028         MOVE ZEROES                     TO WW1-RETRO-DT
+AI1028         MOVE SPACES                     TO WW1-RETRO-FLAG. 
+       
+           MOVE WBIPWS-WBP-PLAN-GROUP (I1) TO WW1-WBP-PLAN-GROUP(I2). 
+           ADD ZB3-BILLABLE-AMT            TO WW1-TOT-AMOUNT(I2).
+       
+           PERFORM 8200-STORE-WBWRK1.
+           
+ACS003     IF (WBIPF1-UPDATE = "Y")
+ACS003         PERFORM 920-END-SUB-TRANSACTION.
+
+       1055-END.
+      
+007650******************************************************************
+007660 1060-CREATE-PBHSTHDR.
+007670******************************************************************
+007680
+GW4/05     PERFORM 1530-GET-LAST-BILLING-RUN.
+
+007690     IF (WBIPF1-UPDATE = "Y")
+007690         INITIALIZE                     WBIPWS-INVOICE 
+ACS003         PERFORM 910-BEGIN-SUB-TRANSACTION
+007700         PERFORM 800-CREATE-PBHSTHDR
+007720         MOVE WBIPWS-INVOICE-PFX     TO WBIPWS-INVOICE-PREFIX 
+007730         MOVE "INVID"                TO PBOBWS-OBJ-TYPE
+007740         PERFORM 610-ASSIGN-PB-OBJ-ID
+007770         MOVE PBOBWS-OBJ-ID          TO WBIPWS-INVOICE-NBR
+007770  
+007780         MOVE WBIPWS-INVOICE         TO ZB4-INVOICE
+007790         MOVE WBIPWS-INVOICE-PREFIX  TO ZB4-INVOICE-PREFIX
+007800         MOVE WBIPWS-INVOICE-NBR     TO ZB4-INVOICE-NBR
+007810     ELSE
+007820         INITIALIZE                     PBHSTHDR
+007820                                        WBIPWS-INVOICE
+007830                                        WBIPWS-INVOICE-NBR
+007830         MOVE WBIPWS-INVOICE-PFX     TO WBIPWS-INVOICE-PREFIX.
+007850            
+007710     MOVE PB1-COMPANY                TO ZB4-COMPANY.
+007720     MOVE PB1-PROCESS-LEVEL          TO ZB4-PROCESS-LEVEL.
+007860     MOVE WBIPWS-CUSTOMER            TO ZB4-CUSTOMER.
+007870     MOVE WBIPWS-AR-PROCESS-LVL      TO ZB4-AR-PROCESS-LVL.
+007880     MOVE WBIPWS-BILL-TO             TO ZB4-BILL-TO.
+007890     INITIALIZE                         ZB4-CONTACT.
+007900     MOVE WBIPF1-POSTING-DATE        TO ZB4-POSTING-DATE.
+007910     MOVE WBIPF1-PER-END-DATE        TO ZB4-INVOICE-DATE.
+007920     MOVE PB1-PER-END-DATE           TO ZB4-PER-END-DATE.   
+007930     MOVE PB1-CHECK-DATE             TO ZB4-CHECK-DATE.
+007940     MOVE WBIPF1-DATE-STAMP          TO ZB4-DATE-STAMP.
+007950     MOVE WBIPF1-TIME-STAMP          TO ZB4-TIME-STAMP.
+007960     INITIALIZE                         ZB4-BILLABLE-AMT.
+007970
+007980     IF (WBIPF1-UPDATE = "Y")
+007990         PERFORM 820-STORE-PBHSTHDR                
+ACS003         PERFORM 920-END-SUB-TRANSACTION.
+008000          
+008010 1060-END.
+008020
+008030******************************************************************
+008040 1070-CM-INVOICE.
+008050******************************************************************
+008060
+ACS003     PERFORM 910-BEGIN-SUB-TRANSACTION.
+ACS003           
+RAY   *    MOVE WBIPWS-CR-MEMO-PFX         TO WBIPWS-INVOICE-PREFIX.
+008070 
+008070     MOVE ZB4-INVOICE                TO DB-INVOICE.
+008080     MOVE ZB3SET1-INVOICE            TO WS-DB-BEG-RNG.
+008090
+008100     PERFORM 850-MODIFY-BEGRNG-ZB3SET1.
+008110
+008120     PERFORM 
+008130         UNTIL (PBHSTDTL-NOTFOUND)
+008140               PERFORM 830-DELETE-PBHSTDTL
+008150               PERFORM 810-RECREATE-PBHSTDTL
+008160               MOVE WBIPWS-CR-MEMO-PFX   TO ZB3-INVOICE-PREFIX
+008180               MOVE WBIPWS-INVOICE       TO ZB3-INVOICE
+008190               PERFORM 820-STORE-PBHSTDTL
+008200               PERFORM 860-MODIFY-NXTRNG-ZB3SET1
+008210         END-PERFORM.
+008220
+008230     MOVE WBIPF1-COMPANY         TO DB-COMPANY.
+008240     MOVE WBIPWS-PROCESS-LEVEL   TO DB-PROCESS-LEVEL.
+008250     MOVE ZB4-INVOICE            TO DB-INVOICE.
+008260     MOVE ZB4-PER-END-DATE       TO DB-PER-END-DATE.
+008270     PERFORM 840-MODIFY-ZB4SET3.
+008280     PERFORM 830-DELETE-PBHSTHDR .
+008290     PERFORM 810-RECREATE-PBHSTHDR.
+008300     MOVE WBIPWS-CR-MEMO-PFX     TO ZB4-INVOICE-PREFIX.
+008310     MOVE WBIPWS-INVOICE         TO ZB4-INVOICE.
+008320     MOVE WBIPWS-INVOICE-AMT     TO ZB4-BILLABLE-AMT.
+008360     PERFORM 820-STORE-PBHSTHDR.
+ACS003                                 
+ACS003     PERFORM 920-END-SUB-TRANSACTION.
+008370
+008380 1070-END.
+008390
+010330******************************************************************
+010340 1100-PRINT-CLIENT-INVOICE.
+010350******************************************************************
+010360
+010420     ADD 1                           TO WBIPWS-PRINT-COUNT.
+010430  
+      *--- Get summary record 
+           
+           MOVE WBIPF1-COMPANY             TO WW1-COMPANY.
+           MOVE WBIPWS-PROCESS-LEVEL       TO WW1-PROCESS-LEVEL.
+           MOVE WBIPWS-INVOICE             TO WW1-INVOICE.
+           MOVE WBIPWS-CUSTOMER            TO WW1-CUSTOMER.
+           MOVE SPACES                     TO WW1-EMP-SORT-TYPE.
+           INITIALIZE                         WW1-DEPARTMENT
+                                              WW1-RECORD-TYPE
+                                              WW1-EMPLOYEE
+RAY                                           WW1-PARTICIPNT
+                                              WW1-LAST-NAME
+                                              WW1-FIRST-NAME
+AI1028                                        WW1-RETRO-DT
+AI1028                                        WW1-RETRO-FLAG.
+       
+           PERFORM 8400-FIND-WBWRK1.
+           IF (WBWRK1-NOTFOUND)
+               INITIALIZE WBWRK1-REC
+               MOVE WBIPF1-COMPANY         TO WW1-COMPANY
+               MOVE WBIPWS-PROCESS-LEVEL   TO WW1-PROCESS-LEVEL
+               MOVE WBIPWS-INVOICE         TO WW1-INVOICE
+               MOVE WBIPWS-CUSTOMER        TO WW1-CUSTOMER.
+
+      *--- Get Statement Amounts 
+
+           INITIALIZE WBIPWS-TOT-PAYMENTS.
+           INITIALIZE WBIPWS-TOT-MAN-ADJUSTS.
+           INITIALIZE WBIPWS-TOT-FIN-CHGS.
+                   
+           PERFORM 1300-AR-CHANGES
+           THRU    1300-END.
+                   
+      *--- GL/AR Interface     
+           
+           MOVE WBIPWS-INVOICE TO WBIPWS-AR-INVOICE.
+           INITIALIZE             WBIPWS-AR-INVC-SFX.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 9)
+
+               IF  (WW1-TOT-AMOUNT (I1) NOT = ZEROES)
+                   IF  (WBIPF1-UPDATE = "Y")
+                       PERFORM 910-BEGIN-SUB-TRANSACTION
+                       PERFORM 1400-CREATE-ARITRANS
+                       THRU    1400-END
+                       PERFORM 1410-CREATE-ARIDISTRIB
+                       THRU    1410-END
+                       PERFORM 920-END-SUB-TRANSACTION
+                   END-IF
+
+                   PERFORM 910-BEGIN-SUB-TRANSACTION
+                   PERFORM 1420-GL-TRANS
+                   THRU    1420-END
+                   PERFORM 920-END-SUB-TRANSACTION
+
+               END-IF
+           END-PERFORM.
+           
+      *--- Create Invoice
+
+           PERFORM 1500-PRINT-INVOICE-HEADER
+           THRU    1500-END.
+
+           MOVE WBIPWS-CUSTOMER            TO IA-CUSTOMER.
+           MOVE ER-INV-ACCOUNT             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+           MOVE ER-INV-EMAIL               TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+           PERFORM 1520-PRINT-ACCOUNT-SUMMARY
+           THRU    1520-END.
+           
+           PERFORM 1540-PRINT-LAST-PAYMENT
+           THRU    1540-END.  
+           
+           PERFORM 1560-PRINT-COMMENTS
+           THRU    1560-END.
+           
+           PERFORM 1580-PRINT-STUB
+           THRU    1580-END.
+           
+           PERFORM 1500-PRINT-INVOICE-HEADER
+           THRU    1500-END.     
+           
+           MOVE ER-INV-ACCOUNT             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+      *--- This logic will set all column headers on the report so 
+      *    there are no gaps between columns.
+      *
+      *    The column was determined by the value in the IF10 table.
+      *   
+      *    
+      *    INITIALIZE I2.
+      *
+      *    PERFORM
+      *        VARYING I1 FROM 1 BY 1
+      *        UNTIL  (I1 > 9)
+      *        OR     (I2 > 9) 
+      *
+      *        IF  (WBIPWS-COL-HDR (I1) = SPACES)
+      *  
+      *            COMPUTE I2 = I1 + 1
+      *            PERFORM
+      *                UNTIL  (I2 > 10)  
+      *                OR     (WBIPWS-COL-HDR (I2) NOT = SPACES)
+      *
+      *                ADD 1 TO I2
+      *
+      *            END-PERFORM 
+      *   
+      *            IF  (I2 NOT > 10)
+      *                MOVE WBIPWS-COL-HDR (I2) TO WBIPWS-COL-HDR (I1)
+      *                MOVE SPACES              TO WBIPWS-COL-HDR (I2)
+      *            END-IF
+      *
+      *        END-IF
+      *    END-PERFORM.
+      *
+      *--- Set the "TOTAL" column
+
+           PERFORM
+               VARYING I1 FROM 10 BY NEGATIVE-ONE
+               UNTIL  (I1 < 1)
+               OR     (WBIPWS-COL-HDR (I1) NOT = SPACES)
+               
+               CONTINUE
+               
+           END-PERFORM.       
+
+           COMPUTE I-TOT = I1 + 1.
+
+           MOVE "TOTAL"                      TO WBIPWS-COL-HDR (I-TOT).
+
+      *--- if the heading is blank attempt to find it in the Plan Group
+      *--- ws table based on the column number assigned. 
+           MOVE WBIPWS-COL-HDR (1)              TO ISH-HDG1.    
+AIC001     IF (WBIPWS-COL-HDR(1) = SPACES)
+AIC001         MOVE 1                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG1
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (2)              TO ISH-HDG2.    
+AIC001     IF (WBIPWS-COL-HDR(2) = SPACES)
+AIC001         MOVE 2                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG2
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (3)              TO ISH-HDG3.    
+AIC001     IF (WBIPWS-COL-HDR(3) = SPACES)
+AIC001         MOVE 3                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG3
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (4)              TO ISH-HDG4.    
+AIC001     IF (WBIPWS-COL-HDR(4) = SPACES)
+AIC001         MOVE 4                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG4
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (5)              TO ISH-HDG5.    
+AIC001     IF (WBIPWS-COL-HDR(5) = SPACES)
+AIC001         MOVE 5                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG5
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (6)              TO ISH-HDG6.    
+AIC001     IF (WBIPWS-COL-HDR(6) = SPACES)
+AIC001         MOVE 6                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG6
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (7)              TO ISH-HDG7.    
+AIC001     IF (WBIPWS-COL-HDR(7) = SPACES)
+AIC001         MOVE 7                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG7
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (8)              TO ISH-HDG8.    
+AIC001     IF (WBIPWS-COL-HDR(8) = SPACES)
+AIC001         MOVE 8                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG8
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (9)              TO ISH-HDG9.    
+AIC001     IF (WBIPWS-COL-HDR(9) = SPACES)
+AIC001         MOVE 9                           TO WBIPWS-SRCH-COL-NBR
+AIC001         PERFORM 1105-DEFAULT-COLM-HEADER
+AIC001            THRU 1105-END
+AIC001         MOVE WBIPWS-SRCH-COL-HDR         TO ISH-HDG9
+AIC001     END-IF.
+           MOVE WBIPWS-COL-HDR (10)             TO ISH-HDG10.   
+
+      *--- override heading of CRP with RETMT (retirement).
+GW1205     IF (ISH-HDG1 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG1.
+GW1205     IF (ISH-HDG2 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG2.
+GW1205     IF (ISH-HDG3 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG3.
+GW1205     IF (ISH-HDG4 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG4.
+GW1205     IF (ISH-HDG5 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG5.
+GW1205     IF (ISH-HDG6 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG6.
+GW1205     IF (ISH-HDG7 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG7.
+GW1205     IF (ISH-HDG8 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG8.
+GW1205     IF (ISH-HDG9 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG9.
+GW1205     IF (ISH-HDG10 = "CRP")
+              MOVE "RETMT"                      TO ISH-HDG10.
+
+           IF (WBWRK1-FOUND)
+               PERFORM 1120-PRINT-INVOICE-LINES
+               THRU    1120-END.
+           
+           PERFORM 1599-PRINT-TOTALS
+           THRU    1599-END.           
+
+010680 1100-END.
+010690
+      ******************************************************************
+       1105-DEFAULT-COLM-HEADER.
+      ******************************************************************
+
+      *    DISPLAY "Colm Nbr: " WBIPWS-SRCH-COL-NBR.
+           INITIALIZE                          WBIPWS-SRCH-COL-HDR.
+           IF (WBIPWS-SRCH-COL-NBR NOT < I-TOT)
+               GO TO 1105-END.
+
+           PERFORM
+              VARYING I8 FROM 1 BY 1
+                UNTIL (I8 > I-PLGRP)
+                   OR (WBIPWS-COLUMN-N (I8) = WBIPWS-SRCH-COL-NBR)
+              CONTINUE
+           END-PERFORM.
+           IF (I8 NOT > I-PLGRP)
+               MOVE WBIPWS-WBP-PLAN-GROUP(I8) TO WBIPWS-SRCH-COL-HDR.
+
+       1105-END.
+
+      ******************************************************************
+       1120-PRINT-INVOICE-LINES.
+      ******************************************************************
+
+           INITIALIZE GT0-TOT-CURR-CHG-1 GT0-TOT-FIN-CHG-1 GT0-TOT-ADJ-1
+                      GT0-TOT-CURR-CHG-2 GT0-TOT-FIN-CHG-2 GT0-TOT-ADJ-2
+                      GT0-TOT-CURR-CHG-3 GT0-TOT-FIN-CHG-3 GT0-TOT-ADJ-3
+                      GT0-TOT-CURR-CHG-4 GT0-TOT-FIN-CHG-4 GT0-TOT-ADJ-4
+                      GT0-TOT-CURR-CHG-5 GT0-TOT-FIN-CHG-5 GT0-TOT-ADJ-5
+                      GT0-TOT-CURR-CHG-6 GT0-TOT-FIN-CHG-6 GT0-TOT-ADJ-6
+AIC001                GT0-TOT-CURR-CHG-7 GT0-TOT-FIN-CHG-7 GT0-TOT-ADJ-7
+AIC001                GT0-TOT-CURR-CHG-8 GT0-TOT-FIN-CHG-8 GT0-TOT-ADJ-8
+AIC001                GT0-TOT-CURR-CHG-9 GT0-TOT-FIN-CHG-9 GT0-TOT-ADJ-9
+AIC001                                   GT0-TOT-CURR-CHG-10
+AIC001                                   GT0-TOT-FIN-CHG-10
+AIC001                                   GT0-TOT-ADJ-10
+ACS01                                    GT0-TOT-INVOICE-1
+ACS01                                    GT0-TOT-INVOICE-2
+ACS01                                    GT0-TOT-INVOICE-3
+ACS01                                    GT0-TOT-INVOICE-4
+ACS01                                    GT0-TOT-INVOICE-5
+ACS01                                    GT0-TOT-INVOICE-6
+AIC001                                   GT0-TOT-INVOICE-7
+AIC001                                   GT0-TOT-INVOICE-8
+AIC001                                   GT0-TOT-INVOICE-9
+AIC001                                   GT0-TOT-INVOICE-10.
+           
+      * START MOD - R HERWECK
+RAY        INITIALIZE G1-HEADING.
+RAY        INITIALIZE WBIPWS-LINE-TYPE.
+      * END MOD 
+           
+           PERFORM 8600-FIND-NEXT-WBWRK1.
+
+      *--- Regular Employees 
+         
+       1120-REGULAR.
+
+           IF  (WW1-EMP-SORT-TYPE NOT = " ")
+               GO TO 1120-RETIRED.
+        
+           MOVE ER-INV-SUB-HEADING         TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           PERFORM 1130-DEPARTMENT
+           THRU    1130-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = SPACES).
+       
+      *--- Retired Employees 
+
+       1120-RETIRED.
+
+           IF  (WW1-EMP-SORT-TYPE NOT = "1")
+               GO TO 1120-COBRA.
+        
+           MOVE ER-INV-SUB-HEADING         TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           PERFORM 1140-RETIREE  
+           THRU    1140-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = "1").
+       
+      *--- COBRA Employees 
+        
+       1120-COBRA.
+
+           IF  (WW1-EMP-SORT-TYPE NOT = "2")
+               GO TO 1120-TOTALS.
+        
+           MOVE ER-INV-SUB-HEADING         TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           PERFORM 1150-COBRA  
+           THRU    1150-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = "2").
+       
+       1120-TOTALS.     
+       
+           IF  (I-TOT = 1)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-1
+               ADD GT0-TOT-FIN-CHG-1       TO GT0-TOT-INVOICE-1
+           ELSE     
+           IF  (I-TOT = 2)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-2
+               ADD GT0-TOT-FIN-CHG-2       TO GT0-TOT-INVOICE-2
+           ELSE     
+           IF  (I-TOT = 3)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-3
+               ADD GT0-TOT-FIN-CHG-3       TO GT0-TOT-INVOICE-3
+           ELSE     
+           IF  (I-TOT = 4)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-4
+               ADD GT0-TOT-FIN-CHG-4       TO GT0-TOT-INVOICE-4
+           ELSE     
+           IF  (I-TOT = 5)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-5
+               ADD GT0-TOT-FIN-CHG-5       TO GT0-TOT-INVOICE-5
+           ELSE     
+           IF  (I-TOT = 6)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-6
+               ADD GT0-TOT-FIN-CHG-6       TO GT0-TOT-INVOICE-6
+           ELSE     
+           IF  (I-TOT = 7)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-7
+               ADD GT0-TOT-FIN-CHG-7       TO GT0-TOT-INVOICE-7
+           ELSE     
+           IF  (I-TOT = 8)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-8
+               ADD GT0-TOT-FIN-CHG-8       TO GT0-TOT-INVOICE-8
+           ELSE     
+           IF  (I-TOT = 9)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-9
+               ADD GT0-TOT-FIN-CHG-9       TO GT0-TOT-INVOICE-9
+           ELSE     
+           IF  (I-TOT = 10)
+               MOVE WBIPWS-TOT-FIN-CHGS    TO GT0-TOT-FIN-CHG-10 
+               ADD GT0-TOT-FIN-CHG-10      TO GT0-TOT-INVOICE-10.
+
+           MOVE ER-TN0-INV-TOTALS          TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1120-END.
+      
+      ******************************************************************
+       1130-DEPARTMENT.
+      ******************************************************************
+      
+           INITIALIZE                         T1-TOT-AMOUNT-1
+                                              T1-TOT-AMOUNT-2
+                                              T1-TOT-AMOUNT-3
+                                              T1-TOT-AMOUNT-4
+                                              T1-TOT-AMOUNT-5
+                                              T1-TOT-AMOUNT-6
+AIC001                                        T1-TOT-AMOUNT-7
+AIC001                                        T1-TOT-AMOUNT-8
+AIC001                                        T1-TOT-AMOUNT-9
+AIC001                                        T1-TOT-AMOUNT-10.
+           
+           
+           MOVE WW1-COMPANY                TO DB-COMPANY.
+           MOVE WW1-PROCESS-LEVEL          TO DB-PROCESS-LEVEL.
+           MOVE WW1-DEPARTMENT             TO DB-DEPARTMENT
+                                              WBIPWS-SV-DEPARTMENT
+                                              CRT-ERR-VAR1.
+
+           IF  (WW1-DEPARTMENT NOT = SPACES)
+               PERFORM 840-FIND-DPTSET1
+               MOVE DPT-NAME                   TO CRT-ERR-VAR2
+               IF  (DEPTCODE-NOTFOUND)
+                   MOVE "** Not Populated **"  TO CRT-ERR-VAR2
+               END-IF
+               MOVE 200                        TO CRT-MSG-NBR
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE                TO G1-HEADING 
+RAY            MOVE "D"                        TO WBIPWS-LINE-TYPE
+               MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP.
+      
+       1130-CURRENT-CHARGES.
+           
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = SPACES)
+           OR  (WW1-DEPARTMENT    NOT = WBIPWS-SV-DEPARTMENT)
+           OR  (WW1-RECORD-TYPE   NOT = SPACES)
+               GO TO 1130-ADJUSTMENTS.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+
+           MOVE "C"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = SPACES)
+               OR    (WW1-DEPARTMENT    NOT = WBIPWS-SV-DEPARTMENT)
+               OR    (WW1-RECORD-TYPE   NOT = SPACES).
+
+           MOVE WBIPWS-SV-DEPARTMENT       TO CRT-ERR-VAR1.
+           MOVE 210                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1130-ADJUSTMENTS.
+
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = SPACES)
+           OR  (WW1-DEPARTMENT    NOT = WBIPWS-SV-DEPARTMENT)
+           OR  (WW1-RECORD-TYPE   NOT = "A")
+               GO TO 1130-LATE-ENROLLMENT.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+           
+           MOVE 203                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO G1-HEADING. 
+RAY        MOVE "A"                        TO WBIPWS-LINE-TYPE.
+           MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           MOVE "A"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = SPACES)
+               OR    (WW1-DEPARTMENT    NOT = WBIPWS-SV-DEPARTMENT)
+               OR    (WW1-RECORD-TYPE   NOT = "A").
+
+           MOVE WBIPWS-SV-DEPARTMENT       TO CRT-ERR-VAR1.
+           MOVE 208                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1130-LATE-ENROLLMENT.
+
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = SPACES)
+           OR  (WW1-DEPARTMENT    NOT = WBIPWS-SV-DEPARTMENT)
+               GO TO 1130-TOTALS.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+           
+           MOVE 204                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO G1-HEADING. 
+RAY        MOVE "L"                        TO WBIPWS-LINE-TYPE.
+           MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           MOVE "L"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = SPACES)
+               OR    (WW1-DEPARTMENT    NOT = WBIPWS-SV-DEPARTMENT).
+
+           MOVE WBIPWS-SV-DEPARTMENT       TO CRT-ERR-VAR1.
+           MOVE 209                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1130-TOTALS.
+           
+           MOVE WBIPWS-SV-DEPARTMENT       TO CRT-ERR-VAR1.
+           MOVE 205                        TO CRT-MSG-NBR.
+           IF  (WBIPWS-SV-DEPARTMENT = SPACES)
+               MOVE 211                    TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T1-HDG.      
+
+           MOVE ER-TN1-GRP-TOTALS          TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+       1130-END.
+      ******************************************************************
+       1140-RETIREE.
+      ******************************************************************
+      
+           INITIALIZE                         T1-TOT-AMOUNT-1
+                                              T1-TOT-AMOUNT-2
+                                              T1-TOT-AMOUNT-3
+                                              T1-TOT-AMOUNT-4
+                                              T1-TOT-AMOUNT-5
+                                              T1-TOT-AMOUNT-6
+AIC001                                        T1-TOT-AMOUNT-7
+AIC001                                        T1-TOT-AMOUNT-8
+AIC001                                        T1-TOT-AMOUNT-9
+AIC001                                        T1-TOT-AMOUNT-10.
+           
+           
+           MOVE 201                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO G1-HEADING. 
+RAY        MOVE "R"                        TO WBIPWS-LINE-TYPE.
+           MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+       1140-CURRENT-CHARGES.
+           
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = "1")
+           OR  (WW1-DEPARTMENT    NOT = SPACES)
+           OR  (WW1-RECORD-TYPE   NOT = SPACES)
+               GO TO 1140-ADJUSTMENTS.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+           
+           MOVE "C"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = "1")
+               OR    (WW1-DEPARTMENT    NOT = SPACES)
+               OR    (WW1-RECORD-TYPE   NOT = SPACES).
+
+           MOVE 210                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1140-ADJUSTMENTS.
+      
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = "1")
+           OR  (WW1-DEPARTMENT    NOT = SPACES)
+               GO TO 1140-TOTALS.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+           
+           MOVE 203                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO G1-HEADING. 
+RAY        MOVE "A"                        TO WBIPWS-LINE-TYPE.
+           MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           MOVE "A"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = "1")
+               OR    (WW1-DEPARTMENT    NOT = SPACES).
+
+           MOVE 208                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1140-TOTALS.
+           
+           MOVE 206                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T1-HDG.      
+
+           MOVE ER-TN1-GRP-TOTALS          TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+       1140-END.
+      ******************************************************************
+       1150-COBRA.
+      ******************************************************************
+      
+           INITIALIZE                         T1-TOT-AMOUNT-1
+                                              T1-TOT-AMOUNT-2
+                                              T1-TOT-AMOUNT-3
+                                              T1-TOT-AMOUNT-4
+                                              T1-TOT-AMOUNT-5
+                                              T1-TOT-AMOUNT-6
+AIC001                                        T1-TOT-AMOUNT-7
+AIC001                                        T1-TOT-AMOUNT-8
+AIC001                                        T1-TOT-AMOUNT-9
+AIC001                                        T1-TOT-AMOUNT-10.
+           
+           
+           MOVE 202                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO G1-HEADING. 
+RAY        MOVE "E"                        TO WBIPWS-LINE-TYPE.
+           MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+       1150-CURRENT-CHARGES.
+           
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = "2")
+           OR  (WW1-DEPARTMENT    NOT = SPACES)
+           OR  (WW1-RECORD-TYPE   NOT = SPACES)
+               GO TO 1150-ADJUSTMENTS.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+           
+           MOVE "C"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = "2")
+               OR    (WW1-DEPARTMENT    NOT = SPACES)
+               OR    (WW1-RECORD-TYPE   NOT = SPACES).
+
+           MOVE 210                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1150-ADJUSTMENTS.
+      
+           IF  (WBWRK1-NOTFOUND) 
+           OR  (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+           OR  (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+           OR  (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+           OR  (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+           OR  (WW1-EMP-SORT-TYPE NOT = "2")
+           OR  (WW1-DEPARTMENT    NOT = SPACES)
+               GO TO 1150-TOTALS.
+
+           INITIALIZE                         T2-TOT-AMOUNT-1
+                                              T2-TOT-AMOUNT-2
+                                              T2-TOT-AMOUNT-3
+                                              T2-TOT-AMOUNT-4
+                                              T2-TOT-AMOUNT-5
+                                              T2-TOT-AMOUNT-6
+AIC001                                        T2-TOT-AMOUNT-7
+AIC001                                        T2-TOT-AMOUNT-8
+AIC001                                        T2-TOT-AMOUNT-9
+AIC001                                        T2-TOT-AMOUNT-10.
+           
+           MOVE 203                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO G1-HEADING. 
+RAY        MOVE "A"                        TO WBIPWS-LINE-TYPE.
+           MOVE ER-GN1-DTL-HDG             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+      
+           MOVE "A"                     TO WBIPWS-AMT-TYPE-FLAG.
+           
+           PERFORM 1160-EMPLOYEE  
+           THRU    1160-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER)
+               OR    (WW1-EMP-SORT-TYPE NOT = "2")
+               OR    (WW1-DEPARTMENT    NOT = SPACES).
+
+           MOVE 208                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T2-HDG.      
+
+           MOVE ER-TN2-SUB-GRP-TOTALS      TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+       1150-TOTALS.
+           
+           MOVE 207                        TO CRT-MSG-NBR.
+           PERFORM 790-GET-MSG.
+           MOVE CRT-MESSAGE                TO T1-HDG.      
+
+           MOVE ER-TN1-GRP-TOTALS          TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+       1150-END.
+      ******************************************************************
+       1160-EMPLOYEE.
+      ******************************************************************
+      
+           IF  (RPT-LINE-COUNT (WBIP-R1) > 55)
+               MOVE ER-INVOICE-HEADER       TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+
+               MOVE ER-INV-ACCOUNT          TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+
+               MOVE ER-INV-SUB-HEADING      TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+
+               MOVE ER-GN1-DTL-HDG          TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 10)     
+   
+               INITIALIZE                      WBIPWS-TOTAL-COL(I1)
+           END-PERFORM.
+       
+           MOVE WW1-FULL-NAME               TO G2-FULL-NAME.
+AIC001*    MOVE WW1-EMP-STATUS              TO G2-EMP-STATUS.
+           MOVE WW1-EMPLOYEE                TO G2-EMPLOYEE.
+
+           IF  (WW1-EFF-BILL-DT NOT = ZEROES)
+               MOVE WW1-EFF-BILL-DT         TO WS-BILL-DT
+               STRING WS-BILL-DT-MM
+                      "/"
+                      WS-BILL-DT-CCYY          DELIMITED BY SIZE
+                                          INTO G2-BILL-PD
+           ELSE
+               STRING WBIPF1-BILL-PERIOD
+                      "/"
+                      WBIPF1-BILL-YEAR         DELIMITED BY SIZE
+                                          INTO G2-BILL-PD.
+       
+AIC001*    MOVE WW1-CRP-SALARY              TO G2-CRP-SALARY.
+AIC001*    MOVE WW1-CDSP-SALARY             TO G2-CDSP-SALARY.
+       
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL (I1 > 9)
+       
+               IF  (WW1-WBP-PLAN-GROUP (I1) NOT = SPACES)
+                   PERFORM
+                       VARYING I2 FROM 1 BY 1
+                       UNTIL  (WW1-WBP-PLAN-GROUP (I1) 
+                                            = WBIPWS-COL-HDR(I2))
+       
+                       CONTINUE
+                   END-PERFORM
+       
+                   MOVE WW1-TOT-AMOUNT (I1) TO WBIPWS-TOTAL-COL (I2)
+                   ADD  WW1-TOT-AMOUNT (I1) TO WBIPWS-TOTAL-COL (I-TOT) 
+               END-IF
+       
+           END-PERFORM.
+       
+           MOVE WBIPWS-TOTAL-COL (1)        TO G2-TOT-AMOUNT-1.         
+           MOVE WBIPWS-TOTAL-COL (2)        TO G2-TOT-AMOUNT-2.         
+           MOVE WBIPWS-TOTAL-COL (3)        TO G2-TOT-AMOUNT-3.         
+           MOVE WBIPWS-TOTAL-COL (4)        TO G2-TOT-AMOUNT-4.         
+           MOVE WBIPWS-TOTAL-COL (5)        TO G2-TOT-AMOUNT-5.         
+           MOVE WBIPWS-TOTAL-COL (6)        TO G2-TOT-AMOUNT-6.
+           MOVE WBIPWS-TOTAL-COL (7)        TO G2-TOT-AMOUNT-7.
+           MOVE WBIPWS-TOTAL-COL (8)        TO G2-TOT-AMOUNT-8.
+           MOVE WBIPWS-TOTAL-COL (9)        TO G2-TOT-AMOUNT-9.
+           MOVE WBIPWS-TOTAL-COL (10)       TO G2-TOT-AMOUNT-10.
+       
+       
+           ADD  WBIPWS-TOTAL-COL (1)        TO T1-TOT-AMOUNT-1
+                                               T2-TOT-AMOUNT-1
+                                               GT0-TOT-INVOICE-1.
+           ADD  WBIPWS-TOTAL-COL (2)        TO T1-TOT-AMOUNT-2          
+                                               T2-TOT-AMOUNT-2
+                                               GT0-TOT-INVOICE-2.
+           ADD  WBIPWS-TOTAL-COL (3)        TO T1-TOT-AMOUNT-3          
+                                               T2-TOT-AMOUNT-3
+                                               GT0-TOT-INVOICE-3.
+           ADD  WBIPWS-TOTAL-COL (4)        TO T1-TOT-AMOUNT-4          
+                                               T2-TOT-AMOUNT-4
+                                               GT0-TOT-INVOICE-4.
+           ADD  WBIPWS-TOTAL-COL (5)        TO T1-TOT-AMOUNT-5          
+                                               T2-TOT-AMOUNT-5
+                                               GT0-TOT-INVOICE-5.
+           ADD  WBIPWS-TOTAL-COL (6)        TO T1-TOT-AMOUNT-6 
+                                               T2-TOT-AMOUNT-6
+                                               GT0-TOT-INVOICE-6.
+           ADD  WBIPWS-TOTAL-COL (7)        TO T1-TOT-AMOUNT-7 
+                                               T2-TOT-AMOUNT-7
+                                               GT0-TOT-INVOICE-7.
+           ADD  WBIPWS-TOTAL-COL (8)        TO T1-TOT-AMOUNT-8 
+                                               T2-TOT-AMOUNT-8
+                                               GT0-TOT-INVOICE-8.
+           ADD  WBIPWS-TOTAL-COL (9)        TO T1-TOT-AMOUNT-9 
+                                               T2-TOT-AMOUNT-9
+                                               GT0-TOT-INVOICE-9.
+           ADD  WBIPWS-TOTAL-COL (10)       TO T1-TOT-AMOUNT-10
+                                               T2-TOT-AMOUNT-10
+                                               GT0-TOT-INVOICE-10.
+       
+           IF  (CURRENT-CHARGES)
+               ADD  WBIPWS-TOTAL-COL (1)    TO GT0-TOT-CURR-CHG-1
+               ADD  WBIPWS-TOTAL-COL (2)    TO GT0-TOT-CURR-CHG-2
+               ADD  WBIPWS-TOTAL-COL (3)    TO GT0-TOT-CURR-CHG-3
+               ADD  WBIPWS-TOTAL-COL (4)    TO GT0-TOT-CURR-CHG-4
+               ADD  WBIPWS-TOTAL-COL (5)    TO GT0-TOT-CURR-CHG-5
+               ADD  WBIPWS-TOTAL-COL (6)    TO GT0-TOT-CURR-CHG-6
+               ADD  WBIPWS-TOTAL-COL (7)    TO GT0-TOT-CURR-CHG-7
+               ADD  WBIPWS-TOTAL-COL (8)    TO GT0-TOT-CURR-CHG-8
+               ADD  WBIPWS-TOTAL-COL (9)    TO GT0-TOT-CURR-CHG-9
+               ADD  WBIPWS-TOTAL-COL (10)   TO GT0-TOT-CURR-CHG-10
+           ELSE
+           IF  (ADJUSTMENTS)
+               ADD  WBIPWS-TOTAL-COL (1)    TO GT0-TOT-ADJ-1
+               ADD  WBIPWS-TOTAL-COL (2)    TO GT0-TOT-ADJ-2
+               ADD  WBIPWS-TOTAL-COL (3)    TO GT0-TOT-ADJ-3
+               ADD  WBIPWS-TOTAL-COL (4)    TO GT0-TOT-ADJ-4
+               ADD  WBIPWS-TOTAL-COL (5)    TO GT0-TOT-ADJ-5
+               ADD  WBIPWS-TOTAL-COL (6)    TO GT0-TOT-ADJ-6
+               ADD  WBIPWS-TOTAL-COL (7)    TO GT0-TOT-ADJ-7
+               ADD  WBIPWS-TOTAL-COL (8)    TO GT0-TOT-ADJ-8
+               ADD  WBIPWS-TOTAL-COL (9)    TO GT0-TOT-ADJ-9
+               ADD  WBIPWS-TOTAL-COL (10)   TO GT0-TOT-ADJ-10
+           ELSE
+           IF  (LATE-ENROLLMENT)
+ACS01 *        ADD  WBIPWS-TOTAL-COL (1)    TO GT0-TOT-LATE-ENR-1
+ACS01 *        ADD  WBIPWS-TOTAL-COL (2)    TO GT0-TOT-LATE-ENR-2
+ACS01 *        ADD  WBIPWS-TOTAL-COL (3)    TO GT0-TOT-LATE-ENR-3
+ACS01 *        ADD  WBIPWS-TOTAL-COL (4)    TO GT0-TOT-LATE-ENR-4
+ACS01 *        ADD  WBIPWS-TOTAL-COL (5)    TO GT0-TOT-LATE-ENR-5
+ACS01 *        ADD  WBIPWS-TOTAL-COL (6)    TO GT0-TOT-LATE-ENR-6
+ACS01 *        ADD  WBIPWS-TOTAL-COL (7)    TO GT0-TOT-LATE-ENR-7
+ACS01 *        ADD  WBIPWS-TOTAL-COL (8)    TO GT0-TOT-LATE-ENR-8
+ACS01 *        ADD  WBIPWS-TOTAL-COL (9)    TO GT0-TOT-LATE-ENR-9
+ACS01 *        ADD  WBIPWS-TOTAL-COL (10)   TO GT0-TOT-LATE-ENR-10.
+ACS01          CONTINUE
+ACS01      END-IF
+ACS01      END-IF.
+       
+           MOVE ER-GN2-EMPLOYEE             TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP. 
+
+
+      *--- Read work file 2 in order to list the plan codes that belong
+      *    to each plan group in the correct column 
+
+           INITIALIZE WBIPWS-CODE-TBL.
+
+           PERFORM
+               VARYING I-COL FROM 1 BY 1
+               UNTIL  (I-COL > 9)
+       
+               PERFORM 1145-GET-CODES
+               THRU    1145-END
+
+           END-PERFORM.
+       
+AIC001*    PERFORM
+AIC001*        VARYING I-ROW FROM 1 BY 1
+AIC001*        UNTIL (I-ROW > 5)
+AIC001*        OR    ((WBIPWS-CODE (1 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (2 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (3 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (4 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (5 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (6 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (7 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (8 I-ROW) = SPACES)
+AIC001*        AND    (WBIPWS-CODE (9 I-ROW) = SPACES))
+AIC001*
+AIC001*        MOVE WBIPWS-CODE (1 I-ROW)     TO G3-CODE1
+AIC001*        MOVE WBIPWS-CODE (2 I-ROW)     TO G3-CODE2
+AIC001*        MOVE WBIPWS-CODE (3 I-ROW)     TO G3-CODE3
+AIC001*        MOVE WBIPWS-CODE (4 I-ROW)     TO G3-CODE4
+AIC001*        MOVE WBIPWS-CODE (5 I-ROW)     TO G3-CODE5
+AIC001*        MOVE WBIPWS-CODE (6 I-ROW)     TO G3-CODE6
+AIC001*        MOVE WBIPWS-CODE (7 I-ROW)     TO G3-CODE6
+AIC001*        MOVE WBIPWS-CODE (8 I-ROW)     TO G3-CODE6
+AIC001*        MOVE WBIPWS-CODE (9 I-ROW)     TO G3-CODE6
+AIC001*        
+AIC001*        MOVE SPACES                    TO G3-REASON
+AIC001*
+AIC001*--- Personal Action History Reason Code
+AIC001*
+AIC001*        IF  (ADJUSTMENTS)
+AIC001*        AND (I-ROW = 1)
+AIC001*            MOVE WW2-REASON            TO G3-REASON
+AIC001*            IF  (WW2-REASON = SPACES)
+AIC001*                MOVE "N/A"             TO G3-REASON
+AIC001*            END-IF     
+AIC001*        END-IF
+AIC001*             
+AIC001*        MOVE ER-GN3-EMPLOYEE-CODES     TO RPT-GROUP-REQUEST
+AIC001*        PERFORM 700-PRINT-RPT-GRP
+AIC001*
+AIC001*    END-PERFORM.
+       
+RAY        IF (WBIPWS-IC-INV-GROUP NOT = SPACES)
+GW9/07**** BELOW UPDATE=Y COMMENTED OUT FOR TESTING ONLY !!!!!!!!!!!
+GW4/05        IF (WBIPF1-UPDATE = "Y")
+RAY               PERFORM 1620-WRITE-IC-FLAT-FILE.
+
+GW9/07     IF (WBIPWS-CUS-INV-GROUP NOT = SPACES)
+GW9/07**** BELOW UPDATE=Y COMMENTED OUT FOR TESTING ONLY !!!!!!!!!!!
+GW9/05        IF (WBIPF1-UPDATE = "Y")
+GW9/07            PERFORM 1630-WRITE-CUS-FLAT-FILE.
+                     
+GW9/07****** END
+
+           PERFORM 8600-FIND-NEXT-WBWRK1.
+       
+
+       1160-END.
+      
+010330******************************************************************
+010340 1145-GET-CODES.
+010350******************************************************************
+010360
+           MOVE WW1-COMPANY                 TO WW2-COMPANY.
+           MOVE WW1-EMPLOYEE                TO WW2-EMPLOYEE.
+           MOVE WBIPWS-COL-HDR (I-COL)      TO WW2-WBP-PLAN-GROUP.
+AI1028     MOVE WW1-RETRO-DT                TO WW2-RETRO-DT.
+AI1028     MOVE WW1-RETRO-FLAG              TO WW2-RETRO-FLAG. 
+           INITIALIZE                          WW2-PLAN-TYPE
+                                               WW2-PLAN-CODE.
+
+           INITIALIZE I-ROW.
+
+           PERFORM 8500-FIND-NLT-WBWRK2.
+           
+           PERFORM
+               UNTIL (WBWRK2-NOTFOUND)
+               OR    (WW2-COMPANY        NOT = WW1-COMPANY)
+               OR    (WW2-EMPLOYEE       NOT = WW1-EMPLOYEE)
+               OR    (WW2-WBP-PLAN-GROUP NOT = WBIPWS-COL-HDR (I-COL))
+AI1028         OR    (WW2-RETRO-DT       NOT = WW1-RETRO-DT)
+AI1028         OR    (WW2-RETRO-FLAG     NOT = WW1-RETRO-FLAG)
+               OR    (I-ROW = 5)
+
+               ADD 1 TO I-ROW
+               MOVE WW2-PLAN-CODE         TO WBIPWS-CODE (I-COL I-ROW)
+
+               IF  (WW2-WBP-PLAN-GROUP = "CHP") 
+                   STRING WW2-PLAN-CODE      DELIMITED BY SPACES
+                          " "                DELIMITED BY SIZE
+                          WW2-COV-OPTION     DELIMITED BY SIZE
+                                        INTO WBIPWS-CODE (I-COL I-ROW)
+               END-IF                          
+               
+               IF  (WW2-WBP-PLAN-GROUP = "AIP") 
+                   STRING WW2-COVER-AMT      DELIMITED BY SIZE
+                          "K"                DELIMITED BY SIZE
+                                        INTO WBIPWS-CODE (I-COL I-ROW)
+                   INSPECT WBIPWS-CODE (I-COL I-ROW)
+                       REPLACING LEADING ZEROES BY SPACES
+               END-IF                          
+               
+               PERFORM 8600-FIND-NEXT-WBWRK2 
+
+           END-PERFORM.
+       
+       1145-END.
+      
+010330******************************************************************
+010340 1200-PRINT-EMPLOYEE-INVOICE.
+010350******************************************************************
+010360
+010420     ADD 1                           TO WBIPWS-PRINT-COUNT.
+010430  
+      *--- Get Statement Amounts 
+
+           INITIALIZE WBIPWS-TOT-PAYMENTS.
+           INITIALIZE WBIPWS-TOT-MAN-ADJUSTS.
+           INITIALIZE WBIPWS-TOT-FIN-CHGS.
+                   
+           PERFORM 1300-AR-CHANGES
+           THRU    1300-END.
+
+           PERFORM 1500-PRINT-INVOICE-HEADER
+           THRU    1500-END.
+                   
+RAY        MOVE WBIPWS-CUSTOMER            TO IA-CUSTOMER.
+RAY        MOVE EE-INV-ACCOUNT             TO RPT-GROUP-REQUEST.
+RAY        PERFORM 700-PRINT-RPT-GRP.
+           
+           MOVE EE-INV-EMAIL               TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+           MOVE WW1-FULL-NAME              TO IE-NAME.
+           MOVE WW1-EMPLOYEE               TO IE-EMPLOYEE.
+           MOVE WW1-EMP-STATUS             TO IE-EMP-STATUS.
+           IF (WW1-EMP-SORT-TYPE = "2")
+               MOVE "EX"                   TO IE-EMP-STATUS.
+
+           MOVE EE-INV-EMPLOYEE            TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+       
+           PERFORM 1220-PRINT-INVOICE-LINES
+           THRU    1220-END.
+           
+           PERFORM 1520-PRINT-ACCOUNT-SUMMARY
+           THRU    1520-END.
+           
+           PERFORM 1540-PRINT-LAST-PAYMENT
+           THRU    1540-END.  
+           
+           PERFORM 1560-PRINT-COMMENTS
+           THRU    1560-END.
+           
+           PERFORM 1580-PRINT-STUB
+           THRU    1580-END.
+           
+           PERFORM 1599-PRINT-TOTALS
+           THRU    1599-END.           
+
+010680 1200-END.
+010690
+      ******************************************************************
+       1220-PRINT-INVOICE-LINES.
+      ******************************************************************
+      
+           MOVE "CURRENT CHARGES"          TO IMH-HDG1.
+           MOVE SPACES                     TO IMH-HDG2.
+           MOVE SPACES                     TO IMH-HDG3.
+           MOVE SPACES                     TO IMH-HDG4.
+           MOVE EE-INV-MISC-HDG            TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+       
+           MOVE "PLAN"                     TO IMH-HDG1.
+           MOVE "COVERAGE"                 TO IMH-HDG2.
+           MOVE "        AMOUNT"           TO IMH-HDG3.
+           MOVE SPACES                     TO IMH-HDG4.
+           MOVE EE-INV-MISC-HDG            TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+       
+           MOVE WBIPF1-COMPANY             TO WW1-COMPANY.
+           MOVE WBIPWS-PROCESS-LEVEL       TO WW1-PROCESS-LEVEL.
+           MOVE WBIPWS-INVOICE             TO WW1-INVOICE.
+           MOVE WBIPWS-CUSTOMER            TO WW1-CUSTOMER.
+           INITIALIZE                         WW1-EMP-SORT-TYPE
+                                              WW1-DEPARTMENT
+                                              WW1-RECORD-TYPE.
+           MOVE WBIPWS-EMPLOYEE            TO WW1-EMPLOYEE.
+RAY        INITIALIZE                         WW1-PARTICIPNT.
+AI1028     INITIALIZE                         WW1-RETRO-DT
+AI1028                                        WW1-RETRO-FLAG.
+       
+RAY        PERFORM 8500-FIND-NLT-WBWRK1.
+       
+      *--- List various plan codes and amounts
+           
+           MOVE WW1-COMPANY                 TO WW2-COMPANY.
+           MOVE WW1-EMPLOYEE                TO WW2-EMPLOYEE.
+           INITIALIZE                          WW2-WBP-PLAN-GROUP
+AI1028                                         WW2-RETRO-DT
+AI1028                                         WW2-RETRO-FLAG
+                                               WW2-PLAN-TYPE
+                                               WW2-PLAN-CODE.
+           PERFORM 8500-FIND-NLT-WBWRK2.
+
+      *--- Current Billing
+
+       1220-CURRENT.
+
+           INITIALIZE                          IMT-AMOUNT
+                                               WBIPWS-PLAN-COUNT.
+
+           PERFORM 
+               UNTIL  (WBWRK2-NOTFOUND)
+               OR     (WW2-COMPANY    NOT = WW1-COMPANY)
+               OR     (WW2-EMPLOYEE   NOT = WW1-EMPLOYEE)
+AI1028         OR     (WW2-RETRO-DT   NOT = ZEROES)
+AI1028         OR     (WW2-RETRO-FLAG NOT = SPACES)
+RAY            OR     ((WBWRK1-NOTFOUND)
+RAY            OR      (WW1-RECORD-TYPE NOT = SPACES))
+
+               ADD 1 TO WBIPWS-PLAN-COUNT
+       
+               MOVE WW2-PLAN-TYPE               TO DB-PLAN-TYPE
+               MOVE WW2-PLAN-CODE               TO DB-PLAN-CODE
+               PERFORM 840-FIND-PLNSET1
+               INITIALIZE                          IMD-BILL-PD
+               INITIALIZE                          IMD-INFO1
+AIC001*        STRING WW2-PLAN-CODE
+AIC001*               " "
+AIC001         STRING "     "                      DELIMITED BY SIZE
+                      PLN-DESC                     DELIMITED BY SIZE
+                                              INTO IMD-INFO1
+               MOVE SPACES                      TO IMD-INFO2
+               MOVE WW2-COV-OPTION              TO DB-COVERAGE-OPT
+               PERFORM 840-FIND-COPSET1
+               IF  (BNCOVOPT-FOUND)
+                   MOVE COP-COV-DESC            TO IMD-INFO2
+               END-IF
+
+               IF  (WW2-OTD-FLAG = "Y")
+                   PERFORM 1222-PTB-AMOUNT
+                   THRU    1222-END
+                   MOVE WS-PTB-AMOUNT           TO IMD-AMOUNT
+               ELSE
+                   MOVE WW2-BILLABLE-AMT        TO IMD-AMOUNT     
+               END-IF
+               MOVE EE-INV-MISC-DTL             TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+
+               IF  (WW2-OTD-FLAG = "Y")
+                   COMPUTE IMP-AMOUNT            = (WS-PTB-AMOUNT
+                                                 -  WW2-BILLABLE-AMT)
+                                                 * NEGATIVE-ONE
+                   MOVE EE-INV-MISC-PYD          TO RPT-GROUP-REQUEST
+                   PERFORM 700-PRINT-RPT-GRP
+
+                   MOVE "Total Amount"          TO IMS-INFO2
+                   MOVE WW2-BILLABLE-AMT        TO IMS-AMOUNT
+                   MOVE EE-INV-MISC-SUB-TTL     TO RPT-GROUP-REQUEST
+                   PERFORM 700-PRINT-RPT-GRP
+               END-IF
+
+               ADD WW2-BILLABLE-AMT             TO IMT-AMOUNT
+
+               PERFORM 8600-FIND-NEXT-WBWRK2
+       
+           END-PERFORM. 
+       
+           IF  (WBIPWS-PLAN-COUNT > 2)
+               MOVE 193                TO CRT-MSG-NBR
+               MOVE "WBIP"             TO CRT-ERROR-CAT
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE        TO MSG-MESSAGE
+               MOVE MESSAGE-LINE       TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP.
+       
+           MOVE "Total Current Charges Due"   TO IMT-INFO1.
+           MOVE EE-INV-MISC-TTL               TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+      *--- Adjustments
+           
+
+       1220-ADJUSTMENTS.
+
+           IF  (WBWRK2-NOTFOUND)
+           OR  (WW2-COMPANY  NOT = WW1-COMPANY)
+           OR  (WW2-EMPLOYEE NOT = WW1-EMPLOYEE)
+RAY        OR  (WBWRK1-NOTFOUND)
+               GO TO 1220-AR-INTERFACE.
+
+           INITIALIZE                          IMS-AMOUNT
+                                               IMT-AMOUNT.
+
+           MOVE "ADJUSTMENTS"              TO IMH-HDG1.
+           MOVE SPACES                     TO IMH-HDG2.
+           MOVE SPACES                     TO IMH-HDG3.
+           MOVE SPACES                     TO IMH-HDG4.
+           MOVE EE-INV-MISC-HDG            TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+       
+           MOVE "PLAN"                     TO IMH-HDG1.
+           MOVE "COVERAGE"                 TO IMH-HDG2.
+           MOVE "        AMOUNT"           TO IMH-HDG3.
+           MOVE "BILLING PERIOD"           TO IMH-HDG4.
+           MOVE EE-INV-MISC-HDG            TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+       
+           MOVE WW2-EFF-BILL-DT            TO WS-SV-EFF-BILL-DT.
+
+           INITIALIZE I9.
+
+           PERFORM 
+               UNTIL  (WBWRK2-NOTFOUND)
+               OR     (WW2-COMPANY  NOT = WW1-COMPANY)
+               OR     (WW2-EMPLOYEE NOT = WW1-EMPLOYEE)
+       
+               MOVE WW2-PLAN-TYPE               TO DB-PLAN-TYPE
+               MOVE WW2-PLAN-CODE               TO DB-PLAN-CODE
+               PERFORM 840-FIND-PLNSET1
+               INITIALIZE                          IMD-INFO1
+AIC001*        STRING WW2-PLAN-CODE
+AIC001*               " "
+AIC001         STRING "     "                      DELIMITED BY SIZE
+                      PLN-DESC                     DELIMITED BY SIZE
+                                              INTO IMD-INFO1
+               MOVE SPACES                      TO IMD-INFO2
+               MOVE WW2-COV-OPTION              TO DB-COVERAGE-OPT
+               PERFORM 840-FIND-COPSET1
+               IF  (BNCOVOPT-FOUND)
+                   MOVE COP-COV-DESC            TO IMD-INFO2
+               END-IF
+               MOVE WW2-BILLABLE-AMT            TO IMD-AMOUNT     
+
+               MOVE WW2-EFF-BILL-DT             TO WS-BILL-DT
+               STRING WS-BILL-DT-MM
+                      "/"
+                      WS-BILL-DT-CCYY              DELIMITED BY SIZE
+                                              INTO IMD-BILL-PD
+
+               MOVE EE-INV-MISC-DTL             TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP
+
+               ADD WW2-BILLABLE-AMT             TO IMS-AMOUNT
+                                                   IMT-AMOUNT
+
+               PERFORM 8600-FIND-NEXT-WBWRK2
+
+               ADD 1 TO I9
+       
+               IF  (WBWRK2-NOTFOUND)
+               OR  (WW2-COMPANY     NOT = WW1-COMPANY)
+               OR  (WW2-EMPLOYEE    NOT = WW1-EMPLOYEE)
+               OR  (WW2-EFF-BILL-DT NOT = WS-SV-EFF-BILL-DT) 
+                   IF  (I9 > 1)
+                       INITIALIZE                  IMS-INFO2
+                       STRING "  Total "           DELIMITED BY SIZE
+                              IMD-BILL-PD          DELIMITED BY SPACES
+                                              INTO IMS-INFO2
+                       MOVE EE-INV-MISC-SUB-TTL TO RPT-GROUP-REQUEST
+                       PERFORM 700-PRINT-RPT-GRP
+                   END-IF
+                   MOVE WW2-EFF-BILL-DT         TO WS-SV-EFF-BILL-DT
+                   INITIALIZE IMS-AMOUNT
+                   INITIALIZE I9
+               END-IF
+                                              
+           END-PERFORM. 
+       
+           MOVE "Total Adjustments "          TO IMT-INFO1.
+           MOVE EE-INV-MISC-TTL               TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+      *--- AR Interface
+       
+       1220-AR-INTERFACE.    
+
+           MOVE WBIPWS-INVOICE TO WBIPWS-AR-INVOICE.
+           INITIALIZE             WBIPWS-AR-INVC-SFX.
+
+RAY   *--- LOOP THRU THE WORK1 RECORDS AND CREATE AR AND GL TRANSACTIONS
+           MOVE WW1-COMPANY            TO WBIPF1-COMPANY.
+           MOVE WW1-PROCESS-LEVEL      TO WBIPWS-PROCESS-LEVEL.
+           MOVE WW1-INVOICE            TO WBIPWS-INVOICE.
+           MOVE WW1-CUSTOMER           TO WBIPWS-CUSTOMER.
+                                   
+           PERFORM 1221-CREATE-AR-GL 
+           THRU    1221-END
+               UNTIL (WBWRK1-NOTFOUND) 
+               OR    (WW1-COMPANY       NOT = WBIPF1-COMPANY)
+               OR    (WW1-PROCESS-LEVEL NOT = WBIPWS-PROCESS-LEVEL)
+               OR    (WW1-INVOICE       NOT = WBIPWS-INVOICE)
+               OR    (WW1-CUSTOMER      NOT = WBIPWS-CUSTOMER).
+               
+       1220-END.
+
+      ******************************************************************
+       1221-CREATE-AR-GL.
+      ******************************************************************
+
+           PERFORM
+               VARYING I1 FROM 1 BY 1
+               UNTIL  (I1 > 9)
+
+               IF  (WW1-TOT-AMOUNT (I1) NOT = ZEROES)
+    
+                   IF  (WBIPF1-UPDATE = "Y")
+                       PERFORM 1400-CREATE-ARITRANS
+                       THRU    1400-END
+                       PERFORM 1410-CREATE-ARIDISTRIB
+                       THRU    1410-END
+                   END-IF
+
+                   PERFORM 1420-GL-TRANS
+                   THRU    1420-END
+               END-IF
+
+           END-PERFORM.
+               
+           PERFORM 8600-FIND-NEXT-WBWRK1.
+
+       1221-END.
+      
+      ******************************************************************
+       1222-PTB-AMOUNT.
+      ******************************************************************
+
+           INITIALIZE WS-PTB-AMOUNT.
+
+013300     MOVE WW2-COMPANY                TO DB-COMPANY.
+012930     MOVE WW2-EMPLOYEE               TO DB-EMPLOYEE.
+012930     MOVE ZERO                       TO DB-DEPENDENT.
+012930     MOVE PARSET20-DEPENDENT         TO WS-DB-BEG-RNG.        
+012930     PERFORM 850-FIND-BEGRNG-PARSET20. 
+012930 
+012930     MOVE WW2-COMPANY            TO DB-COMPANY.
+012950     MOVE WW2-PLAN-TYPE          TO DB-PLAN-TYPE.
+012960     MOVE WW2-PLAN-CODE          TO DB-PLAN-CODE.
+012960     IF  (PARTICIPNT-FOUND)
+012960         MOVE PAR-PARTICIPNT     TO DB-PARTICIPNT
+012960         MOVE ZEROES             TO DB-EMPLOYEE
+012960     ELSE
+012980         MOVE WW2-EMPLOYEE       TO DB-EMPLOYEE
+012980         MOVE ZEROES             TO DB-PARTICIPNT.
+012980   
+012990     MOVE WBIPF1-PER-END-DATE    TO WS-TMP-DATE.
+012990     MOVE 1                      TO WS-TMP-DD.
+012990     MOVE WS-TMP-DATE            TO DB-START-DATE.
+013020     PERFORM 850-FIND-NLT-PTBSET2.
+013060     IF  (PARTBEN-FOUND)
+013060     AND (PTB-COMPANY    = DB-COMPANY)
+013060     AND (PTB-PLAN-TYPE  = DB-PLAN-TYPE)
+013060     AND (PTB-PLAN-CODE  = DB-PLAN-CODE)
+013060     AND (PTB-EMPLOYEE   = DB-EMPLOYEE)
+013060     AND (PTB-PARTICIPNT = DB-PARTICIPNT) 
+013060     AND ((PTB-STOP-DATE = ZEROES)
+013060     OR   (PTB-STOP-DATE > DB-START-DATE))  
+013360         COMPUTE WS-PTB-AMOUNT ROUNDED = PTB-EMP-AFT-CONT / 12.
+
+       1222-END.
+      ******************************************************************
+       1300-AR-CHANGES.
+      ******************************************************************
+
+           IF (WBIPF1-UPDATE = "Y")
+ACS002         PERFORM 910-BEGIN-SUB-TRANSACTION.
+
+           MOVE WBIPF1-COMPANY           TO DB-COMPANY.
+           MOVE WBIPWS-CUSTOMER          TO DB-CUSTOMER.
+           PERFORM 840-FIND-WBCSET1.
+           IF  (WBPCUSTBAL-NOTFOUND)
+               MOVE ZEROES               TO WBC-PB-LST-STA-DT
+                                            WBC-PB-LST-STA-BAL.
+           
+      *--- Process AROITEMS
+
+           MOVE AROSET6-CUSTOMER         TO WS-DB-BEG-RNG.
+           IF  (WBIPF1-UPDATE = "Y")
+               PERFORM 850-MODIFY-BEGRNG-AROSET6
+           ELSE
+               PERFORM 850-FIND-BEGRNG-AROSET6.
+
+           PERFORM 1320-NEW-ITEMS    
+           THRU    1320-END
+               UNTIL (AROITEMS-NOTFOUND).
+
+      *--- Process Payments
+                   
+           MOVE APMSET8-CUSTOMER         TO WS-DB-BEG-RNG.
+           IF  (WBIPF1-UPDATE = "Y")
+               PERFORM 850-MODIFY-BEGRNG-APMSET8
+           ELSE
+               PERFORM 850-FIND-BEGRNG-APMSET8.
+
+           PERFORM 1340-NEW-PAYMENTS
+           THRU    1340-END
+               UNTIL (ARPAYMENT-NOTFOUND).
+
+      *--- Process Adjustments             
+
+           MOVE ADJSET1-COMPANY          TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-ADJSET1.
+           PERFORM 1360-NEW-ADJUSTMENTS
+           THRU    1360-END
+               UNTIL (ARADJUST-NOTFOUND).
+
+           IF (WBIPF1-UPDATE = "Y")
+ACS002         PERFORM 920-END-SUB-TRANSACTION.
+                   
+       1300-END.
+      ******************************************************************
+       1320-NEW-ITEMS.
+      ******************************************************************
+
+           MOVE ARO-COMPANY              TO DB-COMPANY.
+           MOVE ARO-CUSTOMER             TO DB-CUSTOMER.
+           MOVE ARO-ALT-TYPE             TO DB-TRANS-TYPE.
+           MOVE ARO-INVOICE              TO DB-INVOICE.
+           PERFORM 840-FIND-ARHSET4.
+
+           IF (ARO-LAST-STA-DATE      NOT = ZEROS)
+           OR (ARH-GL-DATE                > WBIPF1-PER-END-DATE)
+           OR (ARO-DUE-DATE           NOT < WBIPF1-PER-END-DATE)
+           OR (ARO-STATUS                 = 8)
+               GO TO 1320-NEXT.
+
+           IF (ARH-CANCEL-FLAG            = "Y")
+               MOVE ARO-PAYMENT-SEQ      TO DB-PAYMENT-SEQ
+               PERFORM 840-FIND-ARZSET1
+               IF (ARITEMAUD-FOUND)
+                   IF (ARZ-CANCEL-DATE > WBIPF1-PER-END-DATE)
+                       GO TO 1320-NEXT.
+
+      *--- If Invoice was created in PB - Last Status Date was stored
+      *    in User Field 3.  Move to LAST-STA-DATE, and exit.
+           
+           IF  (ARH-TRANS-USER3 NOT = ZEROES)
+               IF  (WBIPF1-UPDATE = "Y")  
+                   MOVE WBIPF1-PER-END-DATE  TO ARO-LAST-STA-DATE
+                   PERFORM 820-STORE-AROITEMS
+               END-IF
+               GO TO 1320-NEXT.
+
+           IF  (ARH-ORIG-CODE = "F")
+           AND (ARO-INVOICE(1:3) = "FC-")
+               ADD ARO-TRAN-AMT          TO WBIPWS-TOT-FIN-CHGS
+           ELSE     
+           IF  (ARO-TRANS-TYPE = "C")
+               SUBTRACT ARO-TRAN-AMT   FROM WBIPWS-TOT-MAN-ADJUSTS
+           ELSE
+               ADD ARO-TRAN-AMT          TO WBIPWS-TOT-MAN-ADJUSTS.   
+
+           IF (ARO-INVOICE(1:3) NOT = "FC-")
+               DISPLAY "MAN ADJ 1320 CUST/INV " ARO-CUSTOMER " "
+                  ARO-INVOICE " " ARO-TRANS-TYPE " " ARO-TRAN-AMT.
+
+       1320-CONTINUE.
+
+           IF  (WBIPF1-UPDATE = "Y")
+               MOVE WBIPF1-PER-END-DATE  TO ARO-LAST-STA-DATE
+               PERFORM 820-STORE-AROITEMS.
+       
+       1320-NEXT.
+          
+           IF  (WBIPF1-UPDATE = "Y")
+               PERFORM 860-MODIFY-NXTRNG-AROSET6
+           ELSE
+               PERFORM 860-FIND-NXTRNG-AROSET6.
+
+       1320-END.
+
+      ******************************************************************
+       1340-NEW-PAYMENTS.
+      ******************************************************************
+
+           IF (APM-STATUS                  = 9)
+               GO TO 1340-NEXT.
+
+           IF  (APM-LAST-STA-DATE      NOT = ZEROS)
+               GO TO 1340-NEXT.
+
+           IF  (APM-CANCEL-DATE        NOT = ZEROS)
+           AND (APM-CUSTOMER               = APM-TRNS-CUST)
+               IF (APM-CANCEL-DATE         > WBIPF1-PER-END-DATE)
+                   GO TO 1340-NEXT.
+
+           IF  (APM-CANCEL-DATE        NOT = ZEROS)
+           AND (APM-CUSTOMER           NOT = APM-TRNS-CUST)
+               GO TO 1340-NEXT.
+
+           MOVE APM-COMPANY                TO DB-COMPANY.
+           MOVE APM-BATCH-NBR              TO DB-BATCH-NBR.
+           PERFORM 840-FIND-APHSET1.
+           IF (APH-DEPOSIT-DATE            > WBIPF1-PER-END-DATE)
+               GO TO 1340-NEXT.
+
+GW5/04     IF  (APM-CANCEL-DATE        NOT = ZEROS)
+GW5/04         ADD APM-APPLD-AMT           TO WBIPWS-TOT-PAYMENTS
+GW5/04     ELSE
+               ADD APM-TRAN-AMT            TO WBIPWS-TOT-PAYMENTS.
+           
+           IF  (WBIPF1-UPDATE = "Y")
+               MOVE WBIPF1-PER-END-DATE    TO APM-LAST-STA-DATE
+               PERFORM 820-STORE-ARPAYMENT.
+       
+       1340-NEXT.
+          
+           IF  (WBIPF1-UPDATE = "Y")
+               PERFORM 860-MODIFY-NXTRNG-APMSET8
+           ELSE
+               PERFORM 860-FIND-NXTRNG-APMSET8.
+
+       1340-END.
+      ******************************************************************
+       1360-NEW-ADJUSTMENTS.
+      ******************************************************************
+
+           IF  (ADJ-CREATE-DATE        NOT  > WBC-PB-LST-STA-DT)
+           OR  (ADJ-CREATE-DATE             > WBIPF1-PER-END-DATE)
+               GO TO 1360-NEXT.
+
+           MOVE ADJ-COMPANY                TO DB-COMPANY.
+           MOVE ADJ-TRANS-TYPE             TO DB-TRANS-TYPE.
+           MOVE ADJ-INVOICE                TO DB-INVOICE.
+           MOVE ADJ-PAYMENT-SEQ            TO DB-PAYMENT-SEQ.
+           PERFORM 840-FIND-AROSET1.
+           IF  (ARO-CUSTOMER NOT = WBIPWS-CUSTOMER)
+               GO TO 1360-NEXT.
+
+           DISPLAY "MAN-ADJ 1360 CUST/INV " ARO-CUSTOMER " " ADJ-INVOICE
+                   " " ADJ-TRANS-TYPE.
+
+           IF  (ADJ-TRANS-TYPE = "I" OR "D")
+               SUBTRACT  ADJ-ADJ-AMT     FROM WBIPWS-TOT-MAN-ADJUSTS
+           ELSE
+               ADD ADJ-ADJ-AMT             TO WBIPWS-TOT-MAN-ADJUSTS.
+       
+       1360-NEXT.    
+
+           PERFORM 860-FIND-NXTRNG-ADJSET1.
+
+       1360-END.
+008400******************************************************************
+008410 1400-CREATE-ARITRANS.
+008420******************************************************************
+008430
+008440     ADD 1                           TO WBIPWS-AR-SEQ.
+008440 
+008440     MOVE WBIPWS-POST-COMPANY        TO ARCOWS-COMPANY.
+008450     MOVE WBIPWS-AR-PROCESS-LVL      TO ARCOWS-PROCESS-LEVEL.
+008460                                        
+008470     PERFORM 700-EDIT-ARCOMPANY-60.
+008480
+008490     MOVE WBIPWS-POST-COMPANY        TO ARTRWS-COMPANY.
+008500     MOVE WBIPWS-AR-PROCESS-LVL      TO ARTRWS-PROCESS-LEVEL.
+008510     MOVE ARCOWS-AR-CODE             TO ARTRWS-AR-CODE.
+           MOVE "PB"                       TO ARTRWS-SYSTEM.
+008520     MOVE WBIPWS-CUSTOMER            TO ARTRWS-CUSTOMER.
+008530
+008540
+008550     MOVE WBIPWS-AR-INVOICE          TO ARTRWS-TRANS-NBR.
+008560   
+008570     MOVE 1                          TO ARTRWS-STATUS.
+008580     MOVE 9                          TO ARTRWS-GL-STATUS.
+008590     MOVE WBIPF1-INVOICE-DATE        TO ARTRWS-TRANS-DATE.
+008600     MOVE WBIPF1-POSTING-DATE        TO ARTRWS-GL-DATE.
+008610     INITIALIZE                         ARTRWS-CUST-PO-NBR.
+008620     MOVE WW1-WBP-PLAN-GROUP (I1)    TO ARTRWS-DESC.
+008630     MOVE WBIPWS-CURRENCY-CODE       TO ARTRWS-ORIG-CURRENCY.
+008640     MOVE IFCCWS-CURRENCY-ND         TO ARTRWS-ORIG-ND.
+008650     MOVE WBIPWS-CONTRACT            TO ARTRWS-TRANS-USER1.
+
+      *--- Store Date in User field 3.  Will be moved to 
+      *    LAST-STA-DATE 
+
+           MOVE WBIPF1-PER-END-DATE        TO ARTRWS-TRANS-USER3.
+
+008660     MOVE WBIPWS-BILL-TO             TO ARTRWS-BILL-TO.
+008670     MOVE SPACES                     TO ARTRWS-ACTIVITY.
+008680     MOVE 1                          TO ARTRWS-BATCH-NBR.
+008690          
+008700     IF (WW1-TOT-AMOUNT (I1) < ZEROS)
+008710         MOVE "C"                    TO ARTRWS-TRANS-TYPE
+008760         COMPUTE ARTRWS-ORIG-AMT
+008770               = WW1-TOT-AMOUNT(I1)
+008780               * NEGATIVE-ONE
+008720     ELSE
+008730         MOVE "I"                    TO ARTRWS-TRANS-TYPE
+008800         MOVE WW1-TOT-AMOUNT(I1)     TO ARTRWS-ORIG-AMT.
+008740
+008830     PERFORM 700-EDIT-TRANSACTION-70.
+008840
+008870 1400-END.
+008880
+009140******************************************************************
+009150 1410-CREATE-ARIDISTRIB.
+009160******************************************************************
+009170 
+009980     PERFORM
+009980         VARYING I2 FROM 1 BY 1
+009980         UNTIL  (I2 > I-PLGRP)
+009980         OR     (WBIPWS-WBP-PLAN-GROUP (I2) 
+009980                                 = WW1-WBP-PLAN-GROUP (I1))
+009980         CONTINUE
+009980     END-PERFORM.  
+009980 
+           IF  (WBIPWS-PLN-GRP-CR-COMP (I2) = ZEROES)
+               MOVE WW1-COMPANY          TO DB-COMPANY
+               MOVE SPACES               TO DB-PROCESS-LEVEL
+               PERFORM 840-FIND-PRSSET1
+               MOVE PRS-ES-DIST-CO       TO WBIPWS-PLN-GRP-CR-COMP (I2)
+               MOVE PRS-ES-ACCT-UNIT     TO WBIPWS-PLN-GRP-CR-AU   (I2)
+               MOVE PRS-ES-ACCOUNT       TO WBIPWS-PLN-GRP-CR-ACCT (I2)
+               MOVE PRS-ES-SUB-ACCT      TO WBIPWS-PLN-GRP-CR-SUB  (I2).
+       
+009980 
+009980 1410-CREDIT.
+009980 
+009980     MOVE WBIPWS-POST-COMPANY           TO ARDIWS-COMPANY.
+008550     MOVE WBIPWS-AR-INVOICE             TO ARDIWS-INVOICE.
+009990     MOVE WBIPWS-CUSTOMER               TO ARDIWS-CUSTOMER.
+008700     IF (WW1-TOT-AMOUNT (I1) > ZEROS)
+010010         MOVE "I"                       TO ARDIWS-TRANS-TYPE
+010110         COMPUTE ARDIWS-ORIG-AMT         = WW1-TOT-AMOUNT (I1)
+010130                                         * NEGATIVE-ONE
+010080     ELSE
+010090         MOVE "C"                       TO ARDIWS-TRANS-TYPE
+010020         MOVE WW1-TOT-AMOUNT (I1)       TO ARDIWS-ORIG-AMT.
+
+010040     MOVE ZEROES                        TO ARDIWS-ORIG-TAXABLE.
+010060     MOVE ZEROES                        TO ARDIWS-UNITS.
+010200     
+010210     MOVE WBIPWS-PLN-GRP-CR-COMP (I2)   TO ARDIWS-GL-COMPANY.
+010220     MOVE WBIPWS-PLN-GRP-CR-AU   (I2)   TO ARDIWS-ACCT-UNIT.
+010230     MOVE WBIPWS-PLN-GRP-CR-ACCT (I2)   TO ARDIWS-ACCOUNT.    
+010240     MOVE WBIPWS-PLN-GRP-CR-SUB  (I2)   TO ARDIWS-SUB-ACCT. 
+010250     MOVE SPACES                        TO ARDIWS-ACTIVITY.
+010260     MOVE SPACES                        TO ARDIWS-ACCT-CATEGORY.
+010270     MOVE SPACES                        TO ARDIWS-TAX-CODE.
+010280     ADD 1                              TO ARDIWS-PROG-SEQ-NBR.
+010290     PERFORM 700-CREATE-ARIDISTRIB-70.
+010290  
+010310 1410-END.
+010320
+016880******************************************************************
+016890 1420-GL-TRANS.
+016900******************************************************************
+016920
+009980     PERFORM
+009980         VARYING I2 FROM 1 BY 1
+009980         UNTIL  (I2 > I-PLGRP)
+009980         OR     (WBIPWS-WBP-PLAN-GROUP (I2) 
+009980                                 = WW1-WBP-PLAN-GROUP (I1))
+009980 
+009980         CONTINUE
+009980 
+009980     END-PERFORM.  
+
+           IF  (WBIPWS-PLN-GRP-CR-COMP (I2) = ZEROES)
+               MOVE WW1-COMPANY          TO DB-COMPANY
+               MOVE SPACES               TO DB-PROCESS-LEVEL
+               PERFORM 840-FIND-PRSSET1
+               MOVE PRS-ES-DIST-CO       TO WBIPWS-PLN-GRP-CR-COMP (I2)
+               MOVE PRS-ES-ACCT-UNIT     TO WBIPWS-PLN-GRP-CR-AU   (I2)
+               MOVE PRS-ES-ACCOUNT       TO WBIPWS-PLN-GRP-CR-ACCT (I2)
+               MOVE PRS-ES-SUB-ACCT      TO WBIPWS-PLN-GRP-CR-SUB  (I2).
+       
+      *--- Sum Debit Revenue Entries
+
+009980     PERFORM
+009980         VARYING I3 FROM 1 BY 1
+009980         UNTIL  (I3 > 9)
+009980         OR     (WS-GLSUM-PLAN-GROUP (I3) = SPACES)
+009980         OR     (WS-GLSUM-PLAN-GROUP (I3) 
+009980                         = WW1-WBP-PLAN-GROUP (I1))
+009980 
+009980         CONTINUE
+009980 
+009980     END-PERFORM.  
+
+           MOVE WW1-WBP-PLAN-GROUP(I1)      TO WS-GLSUM-PLAN-GROUP(I3).
+           ADD WW1-TOT-AMOUNT (I1)          TO WS-GLSUM-TOT-AMOUNT(I3).
+                                 
+
+018480 1420-END.
+254400
+015830******************************************************************
+015840 1500-PRINT-INVOICE-HEADER.
+015850******************************************************************
+015860
+016070     MOVE WBIPF1-COMPANY             TO IH-COMPANY.
+016060     MOVE WBIPWS-CUSTOMER            TO IH-CUSTOMER.
+016090     MOVE WBIPWS-INVOICE             TO IH-INVOICE.
+016100     MOVE WBIPF1-INVOICE-DATE        TO IH-INVOICE-DATE.
+016110     MOVE WBIPWS-BILL-TO             TO IH-BILL-TO.
+016120     MOVE WBIPWS-PROCESS-LEVEL       TO IH-PROCESS-LEVEL.
+016190     
+016200     IF (WBIPWS-BILL-TO NOT = ZEROES)
+016210         MOVE ARBTWS-NAME            TO IH-BILL-TO-NAME
+016220         MOVE ARBTWS-ADDR1           TO BLADR-ADDR1
+016230         MOVE ARBTWS-ADDR2           TO BLADR-ADDR2
+016240         MOVE ARBTWS-ADDR3           TO BLADR-ADDR3
+016250         MOVE ARBTWS-ADDR4           TO BLADR-ADDR4
+016260         MOVE ARBTWS-CITY            TO BLADR-CITY
+016270         MOVE ARBTWS-STATE           TO BLADR-STATE
+016280         MOVE ARBTWS-ZIP             TO BLADR-ZIP-CODE
+016290         MOVE ARBTWS-COUNTRY         TO BLADR-COUNTRY
+016300     ELSE
+016310         MOVE ARCIWS-NAME            TO IH-BILL-TO-NAME
+016320         MOVE ARCIWS-ADDR1           TO BLADR-ADDR1
+016330         MOVE ARCIWS-ADDR2           TO BLADR-ADDR2
+016340         MOVE ARCIWS-ADDR3           TO BLADR-ADDR3
+016350         MOVE ARCIWS-ADDR4           TO BLADR-ADDR4
+016360         MOVE ARCIWS-CITY            TO BLADR-CITY
+016370         MOVE ARCIWS-STATE           TO BLADR-STATE
+016380         MOVE ARCIWS-POSTAL-CODE     TO BLADR-ZIP-CODE
+016390         MOVE ARCIWS-COUNTRY         TO BLADR-COUNTRY.
+016400
+016410     PERFORM 6000-FORMAT-PRT-ADDRESS.
+016420     MOVE BLADR-ADDR1                TO IH-BILL-TO-ADDR1.
+016430     MOVE BLADR-ADDR2                TO IH-BILL-TO-ADDR2.
+016440     MOVE BLADR-ADDR3                TO IH-BILL-TO-ADDR3.
+016450     MOVE BLADR-ADDR4                TO IH-BILL-TO-ADDR4.
+016460     MOVE BLADR-ADDR5                TO IH-BILL-TO-ADDR5.
+016470     MOVE BLADR-ADDR6                TO IH-BILL-TO-ADDR6.
+016480
+016490     IF (ARCIWS-ARL-NAME NOT = SPACES)
+016500         MOVE ARCIWS-ARL-NAME        TO IH-REMIT-TO-NAME
+016510         MOVE ARCIWS-ARL-REMIT-ADDR1 TO BLADR-ADDR1
+016520         MOVE ARCIWS-ARL-REMIT-ADDR2 TO BLADR-ADDR2
+016530         MOVE ARCIWS-ARL-REMIT-ADDR3 TO BLADR-ADDR3
+016540         MOVE ARCIWS-ARL-REMIT-ADDR4 TO BLADR-ADDR4
+016550         MOVE ARCIWS-ARL-CITY        TO BLADR-CITY
+016560         MOVE ARCIWS-ARL-STATE       TO BLADR-STATE
+016570         MOVE ARCIWS-ARL-ZIP         TO BLADR-ZIP-CODE
+016580         MOVE ARCIWS-ARL-COUNTRY     TO BLADR-COUNTRY
+016590         MOVE ARCIWS-CONTACT         TO IH-REMIT-TO-CONTACT
+016600     ELSE
+016610         MOVE ARCOWS-NAME            TO IH-REMIT-TO-NAME
+016620         MOVE ARCOWS-ADDR1           TO BLADR-ADDR1
+016630         MOVE ARCOWS-ADDR2           TO BLADR-ADDR2
+016640         MOVE ARCOWS-ADDR3           TO BLADR-ADDR3
+016650         MOVE ARCOWS-ADDR4           TO BLADR-ADDR4
+016660         MOVE ARCOWS-CITY            TO BLADR-CITY
+016670         MOVE ARCOWS-STATE           TO BLADR-STATE
+016680         MOVE ARCOWS-POSTAL-CODE     TO BLADR-ZIP-CODE
+016690         MOVE ARCOWS-COUNTRY         TO BLADR-COUNTRY
+016700         INITIALIZE                     IH-REMIT-TO-CONTACT.
+016710
+016720     PERFORM 6000-FORMAT-PRT-ADDRESS.
+016730     MOVE BLADR-ADDR1                TO IH-REMIT-TO-ADDR1.
+016740     MOVE BLADR-ADDR2                TO IH-REMIT-TO-ADDR2.
+016750     MOVE BLADR-ADDR3                TO IH-REMIT-TO-ADDR3.
+016760     MOVE BLADR-ADDR4                TO IH-REMIT-TO-ADDR4.
+016770     MOVE BLADR-ADDR5                TO IH-REMIT-TO-ADDR5.
+016780     MOVE BLADR-ADDR6                TO IH-REMIT-TO-ADDR6.
+016790
+016800     IF (ARCIWS-TERMS-CD NOT = SPACES)
+016810         MOVE ARCIWS-TERMS-CD        TO TETEWS-TERMS-CD
+016820         MOVE WBIPF1-INVOICE-DATE    TO TETEWS-TRANS-DATE
+016830         MOVE 100                    TO TETEWS-TRANS-AMT
+016840         PERFORM 700-EDIT-TERMS-60
+016850         MOVE TETEWS-DUE-DATE (1)    TO IH-DUE-DATE
+016870     ELSE
+016880         MOVE WBIPF1-INVOICE-DATE    TO IH-DUE-DATE.
+016900
+AATEST*****DISPLAY "AA WBIP 1500 DISPLAY".
+AATEST*****DISPLAY "ARCIWS-TERMS-CD    : " ARCIWS-TERMS-CD.
+AATEST*****DISPLAY "TETEWS-DUE-DATE    : " TETEWS-DUE-DATE (1).
+AATEST*****DISPLAY "WBIPF1-INVOICE-DATE: " WBIPF1-INVOICE-DATE.
+AATEST*****DISPLAY "IH-DUE-DATE        : " IH-DUE-DATE.
+
+           STRING WBIPF1-BILL-PERIOD
+                  "/"
+                  WBIPF1-BILL-YEAR            DELIMITED BY SIZE
+                                         INTO IH-BILLING-PD.
+016920 
+           MOVE WBIPF1-COMPANY             TO DB-COMPANY.
+           MOVE WBIPWS-CUSTOMER            TO DB-CUSTOMER.
+           PERFORM 840-FIND-ACMSET1.     
+           IF (ARCUSTOMER-FOUND)
+              MOVE ACM-VAT-REG-NBR       TO IH-PAYMENT-PIN
+           ELSE     
+              MOVE "???????????"         TO IH-PAYMENT-PIN
+016920     END-IF.
+
+RAY        IF  (WBIPF1-INV-TYPE = 1)
+RAY            MOVE ER-INVOICE-HEADER    TO RPT-GROUP-REQUEST
+RAY        ELSE
+RAY            MOVE EE-INVOICE-HEADER    TO RPT-GROUP-REQUEST.
+016930     PERFORM 700-PRINT-RPT-GRP.
+016940
+017080 1500-END.
+017090
+015830******************************************************************
+015840 1520-PRINT-ACCOUNT-SUMMARY.
+015850******************************************************************
+015860
+           MOVE WBIPF1-COMPANY             TO DB-COMPANY.
+           MOVE WBIPWS-CUSTOMER            TO DB-CUSTOMER.
+           PERFORM 840-FIND-ACMSET1.     
+           PERFORM 840-FIND-WBCSET1. 
+           IF  (WBPCUSTBAL-NOTFOUND)
+               MOVE ZEROES                 TO WBC-PB-LST-STA-DT
+                                              WBC-PB-LST-STA-BAL.
+           MOVE WBC-PB-LST-STA-BAL         TO IS-PREV-BALANCE.
+           COMPUTE IS-PAYMENTS              = WBIPWS-TOT-PAYMENTS
+                                            * NEGATIVE-ONE.
+           MOVE WBIPWS-TOT-CURR-CHARGES    TO IS-CURR-CHARGES.
+           MOVE WBIPWS-TOT-ADJUSTMENTS     TO IS-ADJUSTMENTS.
+           MOVE WBIPWS-TOT-MAN-ADJUSTS     TO IS-MANUAL-ADJUSTMENTS.
+           MOVE WBIPWS-TOT-LATE-FEES       TO IS-LATE-FEES.
+           MOVE WBIPWS-TOT-FIN-CHGS        TO IS-FINANCE-CHARGES.
+GW1204     MOVE ZERO                       TO IS-REFUNDS.
+GW1204     MOVE ZERO                       TO WBIPWS-TOT-REFUNDS.
+GW ********12/2004 BEGIN
+******** READ ARAPPLIED TO FIND THE ADJ AMOUNT CREATED ON AR48 WHEN **
+********   REFUND CHECKS ARE ISSUED AND WHICH IS ALSO POSTED BY AR48 *
+*********   TO ARCUSTOMER-CURR-BAL    ******************************** 
+
+           MOVE WBIPF1-COMPANY             TO DB-CR-COMPANY.
+           MOVE WBIPWS-CUSTOMER            TO DB-CR-CUSTOMER. 
+           MOVE ARASET3-CR-CUSTOMER        TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-ARASET3.
+
+GW4/05*    IF (ARAPPLIED-FOUND)
+GW4/05*       PERFORM 1530-GET-LAST-BILLING-RUN
+GW4/05*          THRU 1530-END.
+
+           PERFORM 
+           UNTIL  (ARAPPLIED-NOTFOUND)
+*******       IF  (ARA-TRANS-TYPE = "P")
+              IF  (ARA-GL-DATE     NOT > WBIPF1-PER-END-DATE)
+              AND (ARA-GL-DATE        >= WS-LAST-BILL-DATE)
+
+                  MOVE ARA-TRANS-TYPE    TO DB-TRANS-TYPE
+                  MOVE ARA-INVOICE       TO DB-INVOICE
+                  MOVE ARA-PAYMENT-SEQ   TO DB-PAYMENT-SEQ
+                  MOVE ARA-BATCH-NBR     TO DB-BATCH-NBR
+                  MOVE ARA-APP-SEQ       TO DB-APP-SEQ
+                  MOVE ZERO              TO DB-ADJ-SEQ
+                  
+                  MOVE ADJSET1-APP-SEQ   TO WS-DB-BEG-RNG
+                  PERFORM 850-FIND-BEGRNG-ADJSET1
+                  PERFORM
+                  UNTIL (ARADJUST-NOTFOUND)
+                     IF (ADJ-TRANS-TYPE = "I" OR "D")
+                        SUBTRACT ADJ-ADJ-AMT  FROM WBIPWS-TOT-REFUNDS
+                     ELSE
+                        ADD ADJ-ADJ-AMT   TO WBIPWS-TOT-REFUNDS
+                     END-IF
+                     DISPLAY "REFUND FOUND " WBIPWS-CUSTOMER
+                     PERFORM 860-FIND-NXTRNG-ADJSET1
+                  END-PERFORM
+              END-IF
+              PERFORM 860-FIND-NXTRNG-ARASET3.
+
+******** COMPUTE THE CORRECT ENDING BALANCE BASED ON ACM-CURR-BAL **
+********   AND FORCE THE DIFFERENCE INTO "MANUAL ADJUSTMENT" ***********
+
+           IF (ARCUSTOMER-FOUND)
+              MOVE ACM-CURR-BAL               TO WBIPWS-AMOUNT-DUE
+
+******** IF UPDATE = "Y" THEN ZB4 HAS BEEN UPDATED WITH CURR CHARGES *
+*********  AND WE'LL PICK IT UP BELOW. (AIT COULD BE USED INSTED OF ZB4)
+
+              IF (WBIPF1-UPDATE NOT = "Y")
+                 ADD WBIPWS-TOT-CURR-CHARGES TO WBIPWS-AMOUNT-DUE
+                 ADD WBIPWS-TOT-ADJUSTMENTS  TO WBIPWS-AMOUNT-DUE
+                 ADD WBIPWS-TOT-FIN-CHGS     TO WBIPWS-AMOUNT-DUE
+              END-IF
+              MOVE ACM-CUSTOMER               TO DB-CUSTOMER
+              MOVE SPACES                     TO DB-TRANS-TYPE
+                                                 DB-INVOICE
+              MOVE ZEROS                      TO DB-PROCESS-LEVEL
+              MOVE AITSET1-CUSTOMER           TO WS-DB-BEG-RNG
+              PERFORM 850-FIND-BEGRNG-AITSET1
+              PERFORM
+              UNTIL (ARITRANS-NOTFOUND)
+                  IF (AIT-TRANS-TYPE  = "C")
+                     SUBTRACT AIT-ORIG-AMT FROM WBIPWS-AMOUNT-DUE
+                  ELSE
+                     ADD AIT-ORIG-AMT      TO WBIPWS-AMOUNT-DUE
+                  END-IF
+                  PERFORM 860-FIND-NXTRNG-AITSET1
+              END-PERFORM
+              COMPUTE WBIPWS-TOT-MAN-ADJUSTS = (WBC-PB-LST-STA-BAL
+                                             - WBIPWS-TOT-PAYMENTS
+                                             + WBIPWS-TOT-CURR-CHARGES
+                                             + WBIPWS-TOT-ADJUSTMENTS
+                                             + WBIPWS-TOT-LATE-FEES
+                                             + WBIPWS-TOT-FIN-CHGS
+                                             + WBIPWS-TOT-REFUNDS
+                                             - WBIPWS-AMOUNT-DUE) 
+                                             * (-1)
+           ELSE
+              COMPUTE WBIPWS-AMOUNT-DUE    = WBC-PB-LST-STA-BAL
+                                           - WBIPWS-TOT-PAYMENTS
+                                           + WBIPWS-TOT-CURR-CHARGES
+                                           + WBIPWS-TOT-ADJUSTMENTS
+                                           + WBIPWS-TOT-MAN-ADJUSTS
+                                           + WBIPWS-TOT-LATE-FEES
+                                           + WBIPWS-TOT-FIN-CHGS
+                                           + WBIPWS-TOT-REFUNDS.
+           
+           IF (WBIPWS-TOT-MAN-ADJUSTS  NOT = IS-MANUAL-ADJUSTMENTS)
+              COMPUTE WS-MAN-ADJ-DIFF = (WBIPWS-TOT-MAN-ADJUSTS
+                                      - IS-MANUAL-ADJUSTMENTS)
+              MOVE "UNIDENTIFIED TRANS IN MANUAL ADJ "
+                                           TO E2-EXCEPT-MSG
+              MOVE WBIPWS-CUSTOMER         TO E2-CUSTOMER
+              MOVE WS-MAN-ADJ-DIFF         TO E2-AMT-DIFF
+              MOVE OUTOFBAL-LINE           TO RPT-GROUP-REQUEST
+              PERFORM 700-PRINT-RPT-GRP
+
+              ADD WS-MAN-ADJ-DIFF TO WS-MAN-ADJ-DIFF-TOT.
+
+           MOVE WBIPWS-TOT-MAN-ADJUSTS     TO IS-MANUAL-ADJUSTMENTS.
+           MOVE WBIPWS-TOT-REFUNDS         TO IS-REFUNDS.
+GW*****12/2004 END
+
+           MOVE WBIPWS-AMOUNT-DUE          TO IS-TOTAL-AMT-DUE.
+     
+RAY        IF  (WBIPF1-INV-TYPE = 1)
+RAY            MOVE ER-INV-ACCOUNT-SUMMARY TO RPT-GROUP-REQUEST
+RAY        ELSE
+RAY            MOVE EE-INV-ACCOUNT-SUMMARY TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+           
+           IF  (WBIPF1-UPDATE = "Y") 
+ACS003         PERFORM 910-BEGIN-SUB-TRANSACTION 
+               MOVE WBIPF1-COMPANY         TO DB-COMPANY
+               MOVE WBIPWS-CUSTOMER        TO DB-CUSTOMER
+               PERFORM 840-MODIFY-WBCSET1     
+               IF  (WBPCUSTBAL-NOTFOUND)
+                   PERFORM 800-CREATE-WBPCUSTBAL
+                   MOVE WBIPF1-COMPANY     TO WBC-COMPANY
+                   MOVE WBIPWS-CUSTOMER    TO WBC-CUSTOMER
+               END-IF      
+               MOVE WBIPWS-AMOUNT-DUE      TO WBC-PB-LST-STA-BAL
+               MOVE WBIPF1-PER-END-DATE    TO WBC-PB-LST-STA-DT
+               PERFORM 820-STORE-WBPCUSTBAL    
+ACS003         PERFORM 920-END-SUB-TRANSACTION.
+          
+       
+       1520-END.  
+
+015830******************************************************************       
+        1530-GET-LAST-BILLING-RUN.  
+015830******************************************************************
+
+           MOVE WBIPF1-COMPANY         TO DB-COMPANY.
+           MOVE WBIPWS-CUSTOMER        TO DB-CUSTOMER.
+           MOVE WS-HIGH-VALUES         TO DB-PER-END-DATE.
+           MOVE SPACES                 TO DB-INVOICE
+                                          DB-PROCESS-LEVEL.
+           MOVE ZB4SETW1-CUSTOMER      TO WS-DB-BEG-RNG.
+           PERFORM 850-FIND-BEGRNG-ZB4SETW1.
+
+           IF (PBHSTHDR-FOUND)
+              MOVE ZB4-DATE-STAMP      TO WS-LAST-BILL-DATE
+           ELSE
+              MOVE ZERO                TO WS-LAST-BILL-DATE.
+
+        1530-END.
+015830******************************************************************
+015840 1540-PRINT-LAST-PAYMENT.
+015850******************************************************************
+015860
+           MOVE WBIPF1-COMPANY             TO DB-COMPANY.
+           MOVE WBIPWS-CUSTOMER            TO DB-CUSTOMER.
+           MOVE WS-HIGH-VALUES             TO DB-GL-DATE.
+           PERFORM 850-FIND-NLT-APMSET8.   
+           PERFORM 870-FIND-PREV-APMSET8.
+           PERFORM 870-FIND-PREV-APMSET8
+               UNTIL (ARPAYMENT-NOTFOUND)
+               OR    (APM-CANCEL-DATE = ZEROES).
+                
+           IF  (ARPAYMENT-FOUND)
+           AND (APM-COMPANY   = DB-COMPANY)
+           AND (APM-CUSTOMER  = DB-CUSTOMER) 
+               MOVE APM-GL-DATE            TO ILP-POST-DATE
+               MOVE APM-TRAN-AMT           TO ILP-PAYMENT-AMT
+               MOVE APM-TRANS-NBR          TO ILP-CHECK-NBR.
+           
+RAY        IF  (WBIPF1-INV-TYPE = 1)
+RAY            MOVE ER-INV-LAST-PAYMENT    TO RPT-GROUP-REQUEST
+RAY        ELSE
+RAY            MOVE EE-INV-LAST-PAYMENT    TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+       
+           INITIALIZE                         ILP-POST-DATE
+                                              ILP-PAYMENT-AMT
+                                              ILP-CHECK-NBR.
+       1540-END.  
+          
+015830******************************************************************
+015840 1560-PRINT-COMMENTS.
+015850******************************************************************
+015860
+           PERFORM
+               VARYING I2 FROM 10 BY NEGATIVE-ONE
+               UNTIL  (I2 < 1)
+               OR     (WBIPF1-COMMENT (I2) NOT = SPACES)
+               
+               CONTINUE
+           END-PERFORM.
+
+           IF  (I2 < 10)
+               ADD 1 TO I2.
+           
+           PERFORM
+               VARYING I1 FROM 1 BY 1 
+               UNTIL  (I1 > I2)
+
+               MOVE WBIPF1-COMMENT (I1)    TO IC-COMMENT
+RAY            IF (WBIPF1-INV-TYPE = 1)
+RAY                MOVE ER-INV-COMMENTS    TO RPT-GROUP-REQUEST
+RAY            ELSE
+RAY                MOVE EE-INV-COMMENTS    TO RPT-GROUP-REQUEST
+RAY            END-IF
+               PERFORM 700-PRINT-RPT-GRP
+
+           END-PERFORM.
+       
+       1560-END.  
+          
+015830******************************************************************
+015840 1580-PRINT-STUB.
+015850******************************************************************
+015860
+RAY   *--- 2003-10-31 - ALWAYS PRINT THE ACCOUNT (CUSTOMER) NUMBER -----
+RAY   *    IF  (WBIPF1-INV-TYPE = 1)
+RAY   *        MOVE "ACCOUNT #"            TO IST-ACCT-HDG
+RAY   *        MOVE IH-BILL-TO-NAME        TO IST-NAME
+RAY   *        MOVE WBIPWS-CUSTOMER        TO IST-ACCOUNT 
+RAY   *    ELSE 
+RAY   *        MOVE "EMPLOYEE#"            TO IST-ACCT-HDG 
+RAY   *        MOVE IH-BILL-TO-NAME        TO IST-NAME  
+RAY   *        MOVE WBIPWS-EMPLOYEE        TO IST-ACCOUNT.
+RAY
+RAY        MOVE "ACCOUNT #"                TO IST-ACCT-HDG.
+RAY        MOVE IH-BILL-TO-NAME            TO IST-NAME.
+RAY        MOVE WBIPWS-CUSTOMER            TO IST-ACCOUNT.
+RAY   *--- 2003-10-31 --------------------------------------------------
+016060  
+016090     MOVE WBIPWS-INVOICE             TO IST-INVOICE.
+016110     IF  (WBIPWS-AMOUNT-DUE < ZEROES)
+016110         MOVE ZEROES                 TO IST-AMOUNT-DUE
+016110     ELSE  
+016110         MOVE WBIPWS-AMOUNT-DUE      TO IST-AMOUNT-DUE.
+016190     
+RAY   *--- NOT USING BILL-TO - NO PBCLIENT (PCC) RECORD ----------------
+RAY   *    IF (PCC-BILL-TO NOT = ZEROES)
+RAY   *        MOVE ARBTWS-NAME            TO IST-BILL-TO-NAME
+RAY   *        MOVE ARBTWS-ADDR1           TO BLADR-ADDR1
+RAY   *        MOVE ARBTWS-ADDR2           TO BLADR-ADDR2
+RAY   *        MOVE ARBTWS-ADDR3           TO BLADR-ADDR3
+RAY   *        MOVE ARBTWS-ADDR4           TO BLADR-ADDR4
+RAY   *        MOVE ARBTWS-CITY            TO BLADR-CITY
+RAY   *        MOVE ARBTWS-STATE           TO BLADR-STATE
+RAY   *        MOVE ARBTWS-ZIP             TO BLADR-ZIP-CODE
+RAY   *        MOVE ARBTWS-COUNTRY         TO BLADR-COUNTRY
+RAY   *    ELSE
+RAY   *-----------------------------------------------------------------
+016310     MOVE ARCIWS-NAME                TO IST-BILL-TO-NAME.
+016320     MOVE ARCIWS-ADDR1               TO BLADR-ADDR1.
+016330     MOVE ARCIWS-ADDR2               TO BLADR-ADDR2.
+016340     MOVE ARCIWS-ADDR3               TO BLADR-ADDR3.
+016350     MOVE ARCIWS-ADDR4               TO BLADR-ADDR4.
+016360     MOVE ARCIWS-CITY                TO BLADR-CITY.
+016370     MOVE ARCIWS-STATE               TO BLADR-STATE.
+016380     MOVE ARCIWS-POSTAL-CODE         TO BLADR-ZIP-CODE.
+016390     MOVE ARCIWS-COUNTRY             TO BLADR-COUNTRY.
+016400
+016410     PERFORM 6000-FORMAT-PRT-ADDRESS.
+016420     MOVE BLADR-ADDR1                TO IST-BILL-TO-ADDR1.
+016430     MOVE BLADR-ADDR2                TO IST-BILL-TO-ADDR2.
+016440     MOVE BLADR-ADDR3                TO IST-BILL-TO-ADDR3.
+016450     MOVE BLADR-ADDR4                TO IST-BILL-TO-ADDR4.
+016460     MOVE BLADR-ADDR5                TO IST-BILL-TO-ADDR5.
+016470     MOVE BLADR-ADDR6                TO IST-BILL-TO-ADDR6.
+016480
+016490     IF (ARCIWS-ARL-NAME NOT = SPACES)
+016500         MOVE ARCIWS-ARL-NAME        TO IST-REMIT-TO-NAME
+016510         MOVE ARCIWS-ARL-REMIT-ADDR1 TO BLADR-ADDR1
+016520         MOVE ARCIWS-ARL-REMIT-ADDR2 TO BLADR-ADDR2
+016530         MOVE ARCIWS-ARL-REMIT-ADDR3 TO BLADR-ADDR3
+016540         MOVE ARCIWS-ARL-REMIT-ADDR4 TO BLADR-ADDR4
+016550         MOVE ARCIWS-ARL-CITY        TO BLADR-CITY
+016560         MOVE ARCIWS-ARL-STATE       TO BLADR-STATE
+016570         MOVE ARCIWS-ARL-ZIP         TO BLADR-ZIP-CODE
+016580         MOVE ARCIWS-ARL-COUNTRY     TO BLADR-COUNTRY
+016590         MOVE ARCIWS-CONTACT         TO IST-REMIT-TO-CONTACT
+016600     ELSE
+016610         MOVE ARCOWS-NAME            TO IST-REMIT-TO-NAME
+016620         MOVE ARCOWS-ADDR1           TO BLADR-ADDR1
+016630         MOVE ARCOWS-ADDR2           TO BLADR-ADDR2
+016640         MOVE ARCOWS-ADDR3           TO BLADR-ADDR3
+016650         MOVE ARCOWS-ADDR4           TO BLADR-ADDR4
+016660         MOVE ARCOWS-CITY            TO BLADR-CITY
+016670         MOVE ARCOWS-STATE           TO BLADR-STATE
+016680         MOVE ARCOWS-POSTAL-CODE     TO BLADR-ZIP-CODE
+016690         MOVE ARCOWS-COUNTRY         TO BLADR-COUNTRY
+016700         INITIALIZE                     IST-REMIT-TO-CONTACT.
+016710
+016720     PERFORM 6000-FORMAT-PRT-ADDRESS.
+016730     MOVE BLADR-ADDR1                TO IST-REMIT-TO-ADDR1.
+016740     MOVE BLADR-ADDR2                TO IST-REMIT-TO-ADDR2.
+016750     MOVE BLADR-ADDR3                TO IST-REMIT-TO-ADDR3.
+016760     MOVE BLADR-ADDR4                TO IST-REMIT-TO-ADDR4.
+016770     MOVE BLADR-ADDR5                TO IST-REMIT-TO-ADDR5.
+016780     MOVE BLADR-ADDR6                TO IST-REMIT-TO-ADDR6.
+016790
+016800     IF (ARCIWS-TERMS-CD NOT = SPACES)
+016810         MOVE ARCIWS-TERMS-CD        TO TETEWS-TERMS-CD
+016820         MOVE WBIPF1-INVOICE-DATE    TO TETEWS-TRANS-DATE
+016830         MOVE 100                    TO TETEWS-TRANS-AMT
+016840         PERFORM 700-EDIT-TERMS-60
+016850         MOVE TETEWS-DUE-DATE (1)    TO WSDR-FR-DATE
+016870     ELSE
+016880         MOVE WBIPF1-INVOICE-DATE    TO WSDR-FR-DATE.
+016890 
+016890     PERFORM 900-GET-DATE-LIT.
+016890 
+016890     MOVE WSDR-LITERAL-DATE          TO IST-DUE-DATE.  
+016900
+RAY        IF (WBIPF1-INV-TYPE = 1)
+RAY            MOVE ER-INV-STUB            TO RPT-GROUP-REQUEST
+RAY        ELSE
+RAY            MOVE EE-INV-STUB            TO RPT-GROUP-REQUEST.
+016930     PERFORM 700-PRINT-RPT-GRP.
+016940
+017080 1580-END.
+017090
+017350******************************************************************
+017360 1599-PRINT-TOTALS.
+017370******************************************************************
+017380
+017890     IF (WBIPF1-INV-REGISTER = "Y")
+017960         MOVE WBIPWS-INVOICE         TO RD-INVOICE       
+017970         MOVE WBIPWS-CUSTOMER        TO RD-CUSTOMER
+017980         MOVE WBIPWS-BILL-TO         TO RD-BILL-TO
+017990         INITIALIZE                     RD-TAX
+018000         MOVE WBIPWS-INVOICE-AMT     TO RD-AMOUNT
+018000         ADD  WBIPWS-INVOICE-AMT     TO WBIPWS-RT-TOTAL-DUE 
+018010         MOVE IFCCWS-CURRENCY-ND     TO RD-TAX-ND
+018020                                        RD-AMOUNT-ND
+018030         MOVE REGISTER-DETAIL        TO RPT-GROUP-REQUEST
+018040         PERFORM 700-PRINT-RPT-GRP
+018040 
+018040         IF  (RETRO)
+018040             MOVE RETRO-INV-ONLY     TO RPT-GROUP-REQUEST
+018040             PERFORM 700-PRINT-RPT-GRP.
+018050
+018060 1599-END.
+
+      ****************************************************************
+       1600-GET-IC-INVOICE-GROUP.
+      ****************************************************************
+
+           MOVE SPACES                     TO WBIPWS-IC-INV-GROUP.
+           IF (PB1-PROCESS-LEVEL NOT = SPACES)
+               MOVE PB1-COMPANY            TO DB-LVL-1-KEY
+               MOVE "PROCESS-LEVEL"        TO DB-LVL-2-KEY
+               MOVE "IC-INVOICE-FILE"      TO DB-LVL-3-KEY
+               MOVE PB1-PROCESS-LEVEL      TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               IF (LUPTBLDTL-FOUND)
+                   MOVE IF1-DTL-VALUE      TO WBIPWS-IC-INV-GROUP.
+      ****************************************************************
+GW9/07* BEGIN
+       1610-GET-CUS-INVOICE-GROUP.
+      ****************************************************************
+
+           MOVE SPACES                     TO WBIPWS-CUS-INV-GROUP.
+           IF (PB1-PROCESS-LEVEL NOT = SPACES)
+               MOVE PB1-COMPANY            TO DB-LVL-1-KEY
+               MOVE "PROCESS-LEVEL"        TO DB-LVL-2-KEY
+               MOVE "CUS-INVOICE-FILE"     TO DB-LVL-3-KEY
+               MOVE PB1-PROCESS-LEVEL      TO DB-DTL-KEY
+               PERFORM 840-FIND-IF1SET1
+               IF (LUPTBLDTL-FOUND)
+                   MOVE IF1-DTL-VALUE      TO WBIPWS-CUS-INV-GROUP.
+GW9/07*END
+RAY   ******************************************************************
+RAY    1620-WRITE-IC-FLAT-FILE.
+RAY   ******************************************************************
+RAY   *-- GET THE INVOICE FIELDS USED BY THE PRINT ROUTINES
+RAY   * 
+RAY        MOVE IH-CUSTOMER                TO ICI-CUSTOMER.
+RAY        MOVE IH-INVOICE-DATE            TO ICI-INVOICE-DATE.
+RAY        MOVE IH-INVOICE                 TO ICI-INVOICE-NBR.
+RAY        MOVE IH-BILLING-PD              TO ICI-BILLING-DATE.
+RAY        MOVE IH-DUE-DATE                TO ICI-DUE-DATE.
+RAY        MOVE IS-PREV-BALANCE            TO ICI-PREV-BALANCE.
+RAY        MOVE IS-PAYMENTS                TO ICI-PAYMENTS.
+RAY        MOVE IS-CURR-CHARGES            TO ICI-CURR-CHARGE.
+RAY        MOVE IS-ADJUSTMENTS             TO ICI-ADJUSTMENTS.
+RAY        MOVE IS-MANUAL-ADJUSTMENTS      TO ICI-MANUAL-ADJ.
+RAY        MOVE IS-LATE-FEES               TO ICI-LATE-ENROLL.
+RAY        MOVE IS-FINANCE-CHARGES         TO ICI-FINANCE-CHG.
+GW1204     MOVE IS-REFUNDS                 TO ICI-REFUNDS.
+RAY        MOVE IS-TOTAL-AMT-DUE           TO ICI-AMOUNT-DUE.
+RAY        MOVE IH-BILL-TO-NAME            TO ICI-NAME.
+RAY        MOVE WBIPWS-LINE-TYPE           TO ICI-LINE-TYPE.
+RAY        MOVE G2-EMPLOYEE                TO ICI-EMPLOYEE.
+RAY        MOVE G2-FULL-NAME               TO ICI-EMP-NAME.
+AIC001*    MOVE G2-EMP-STATUS              TO ICI-EMP-STATUS.
+AIC001     MOVE WW1-EMP-STATUS             TO ICI-EMP-STATUS.
+RAY        MOVE G2-BILL-PD                 TO ICI-EFF-BILL-DATE.
+AIC001*    MOVE G2-CRP-SALARY              TO ICI-CRP-SALARY.
+AIC001*    MOVE G2-CDSP-SALARY             TO ICI-CDSP-SALARY.
+AIC001*--- these totals must correspond to the configuration of BN-PLAN-
+AIC001*--- GROUP on IF10 form for each company. These are changed with
+AIC001*--- addition of LIFE(3), AI(4) and CI(5).
+RAY        MOVE G2-TOT-AMOUNT-1            TO ICI-TAIP.
+AIC001*    MOVE G2-TOT-AMOUNT-2            TO ICI-AIP.
+AIC001*    MOVE G2-TOT-AMOUNT-3            TO ICI-CHP.
+AIC001*    MOVE G2-TOT-AMOUNT-4            TO ICI-CDSP.
+AIC001*    MOVE G2-TOT-AMOUNT-5            TO ICI-CRP.
+AIC001*    MOVE G2-TOT-AMOUNT-6            TO ICI-LINE-TOTAL.
+AIC001     MOVE G2-TOT-AMOUNT-2            TO ICI-ADD.
+AIC001     MOVE G2-TOT-AMOUNT-3            TO ICI-LIFE.
+AIC001     MOVE G2-TOT-AMOUNT-4            TO ICI-AI.
+AIC001     MOVE G2-TOT-AMOUNT-5            TO ICI-CI.
+AIC001     MOVE G2-TOT-AMOUNT-6            TO ICI-CHP.
+AIC001     MOVE G2-TOT-AMOUNT-7            TO ICI-CDSP.
+AIC001     MOVE G2-TOT-AMOUNT-8            TO ICI-CRP.
+AIC001     MOVE G2-TOT-AMOUNT-9            TO ICI-LINE-TOTAL.
+AIC001*    MOVE G3-CODE1                   TO ICI-CODE1.
+AIC001*    MOVE G3-CODE2                   TO ICI-CODE2.
+AIC001*    MOVE G3-CODE3                   TO ICI-CODE3.
+AIC001*    MOVE G3-CODE4                   TO ICI-CODE4.
+AIC001*    MOVE G3-CODE5                   TO ICI-CODE5.
+RAY   
+RAY        PERFORM 800-WRITECSV-ICINVOICE.
+RAY   
+GW9/07* BEGIN **********************************************************
+       1630-WRITE-CUS-FLAT-FILE.
+      ******************************************************************
+      *-- GET THE INVOICE FIELDS USED BY THE PRINT ROUTINES
+      * 
+           MOVE IH-CUSTOMER                TO ERC-CUSTOMER.
+           MOVE IH-INVOICE-DATE            TO ERC-INVOICE-DATE.
+           MOVE IH-INVOICE                 TO ERC-INVOICE-NBR.
+           MOVE IH-BILLING-PD              TO ERC-BILLING-DATE.
+           MOVE IH-DUE-DATE                TO ERC-DUE-DATE.
+           MOVE IS-PREV-BALANCE            TO ERC-PREV-BALANCE.
+           MOVE IS-PAYMENTS                TO ERC-PAYMENTS.
+           MOVE IS-CURR-CHARGES            TO ERC-CURR-CHARGE.
+           MOVE IS-ADJUSTMENTS             TO ERC-ADJUSTMENTS.
+           MOVE IS-MANUAL-ADJUSTMENTS      TO ERC-MANUAL-ADJ.
+           MOVE IS-LATE-FEES               TO ERC-LATE-ENROLL.
+           MOVE IS-FINANCE-CHARGES         TO ERC-FINANCE-CHG.
+           MOVE IS-REFUNDS                 TO ERC-REFUNDS.
+           MOVE IS-TOTAL-AMT-DUE           TO ERC-AMOUNT-DUE.
+           MOVE IH-BILL-TO-NAME            TO ERC-NAME.
+           MOVE WBIPWS-LINE-TYPE           TO ERC-LINE-TYPE.
+           MOVE G2-EMPLOYEE                TO ERC-EMPLOYEE.
+           MOVE G2-FULL-NAME               TO ERC-EMP-NAME.
+AIC001*    MOVE G2-EMP-STATUS              TO ERC-EMP-STATUS.
+AIC001     MOVE WW1-EMP-STATUS             TO ERC-EMP-STATUS.
+           MOVE G2-BILL-PD                 TO ERC-EFF-BILL-DATE.
+AIC001*    MOVE G2-CRP-SALARY              TO ERC-CRP-SALARY.
+AIC001*    MOVE G2-CDSP-SALARY             TO ERC-CDSP-SALARY.
+AIC001*--- these totals must correspond to the configuration of BN-PLAN-
+AIC001*--- GROUP on IF10 form for each company. These are changed with
+AIC001*--- the addition of LIFE(3), AI(4) and CI(5) thus shifting CHP,
+AIC001*--- CDSP and CRP to 6, 7 and 8 respectively.
+           MOVE G2-TOT-AMOUNT-1            TO ERC-TAIP.
+AIC001*    MOVE G2-TOT-AMOUNT-2            TO ERC-AIP.
+AIC001*    MOVE G2-TOT-AMOUNT-3            TO ERC-CHP.
+AIC001*    MOVE G2-TOT-AMOUNT-4            TO ERC-CDSP.
+AIC001*    MOVE G2-TOT-AMOUNT-5            TO ERC-CRP.
+AIC001*    MOVE G2-TOT-AMOUNT-6            TO ERC-LINE-TOTAL.
+AIC001     MOVE G2-TOT-AMOUNT-2            TO ERC-ADD.
+AIC001     MOVE G2-TOT-AMOUNT-3            TO ERC-LIFE.
+AIC001     MOVE G2-TOT-AMOUNT-4            TO ERC-AI.
+AIC001     MOVE G2-TOT-AMOUNT-5            TO ERC-CI.
+AIC001     MOVE G2-TOT-AMOUNT-6            TO ERC-CHP.
+AIC001     MOVE G2-TOT-AMOUNT-7            TO ERC-CDSP.
+AIC001     MOVE G2-TOT-AMOUNT-8            TO ERC-CRP.
+AIC001     MOVE G2-TOT-AMOUNT-9            TO ERC-LINE-TOTAL.
+AIC001*    MOVE G3-CODE1                   TO ERC-CODE1.
+AIC001*    MOVE G3-CODE2                   TO ERC-CODE2.
+AIC001*    MOVE G3-CODE3                   TO ERC-CODE3.
+AIC001*    MOVE G3-CODE4                   TO ERC-CODE4.
+AIC001*    MOVE G3-CODE5                   TO ERC-CODE5.
+      
+           PERFORM 800-WRITECSV-ERCUSTINV.
+GW9/07* END ************************************************************
+RAY    1600-END.
+RAY    
+017370******************************************************************
+       2000-CREATE-COLDING.
+017350******************************************************************
+
+           MOVE "N"                    TO WS-COLD-OUTPUT-FILE-SW.
+
+           PERFORM 
+           VARYING I1 FROM 100 BY -1
+            UNTIL (WS-COLD-OUTPUT-FILE-SW = "Y")
+              OR (I1 = 1)
+                  PERFORM 2150-GET-MONTH
+                     THRU 2150-END
+                  MOVE WBIPF1-BILL-YEAR(3:2)  TO WS-PRT-OUTPUT-FILE-YY
+                  IF (WBIPF1-UPDATE = "Y")
+                     MOVE "U" TO   WS-PRT-OUTPUT-FILE-UPD
+                  ELSE 
+                     MOVE "T" TO   WS-PRT-OUTPUT-FILE-UPD
+                  END-IF
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) (I1:1) = "1")
+                     MOVE "Y"    TO WS-COLD-OUTPUT-FILE-SW
+                     MOVE "TRK-"              TO WS-PRT-OUTPUT-FILE-TYPE
+                  END-IF
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) (I1:1) = "2")
+                     MOVE "Y"    TO WS-COLD-OUTPUT-FILE-SW
+                     MOVE "IND-"              TO WS-PRT-OUTPUT-FILE-TYPE
+                  END-IF
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) (I1:1) = "5")
+                     MOVE "Y"    TO WS-COLD-OUTPUT-FILE-SW
+                     MOVE "MIS-"              TO WS-PRT-OUTPUT-FILE-TYPE
+                  END-IF
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) (I1:1) = "6")
+                     MOVE "Y"    TO WS-COLD-OUTPUT-FILE-SW
+                     MOVE "ICT-"              TO WS-PRT-OUTPUT-FILE-TYPE
+                  END-IF
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) (I1:1) = "7")
+                     MOVE "Y"    TO WS-COLD-OUTPUT-FILE-SW
+                     MOVE "CUS-"              TO WS-PRT-OUTPUT-FILE-TYPE
+                  END-IF
+                  IF (WS-PRT-INPUT-COLD-FILE (I4) (I1:1) = "8")
+                     MOVE "Y"    TO WS-COLD-OUTPUT-FILE-SW
+                     MOVE "ALL-"              TO WS-PRT-OUTPUT-FILE-TYPE
+                  END-IF
+           END-PERFORM.
+           
+ACS001     MOVE WS-PRT-OUTPUT-DIR-EXT          TO ICLAWDWS-DIR-EXT.
+ACS001     PERFORM 1000-CREATE-LAWDIR-FILENAME-61.
+ACS001     MOVE ICLAWDWS-LAWDIR-EXT            TO WS-PRT-OUTPUT-FILE.
+ACS001     DISPLAY "WS-PRT-OUTPUT-FILE= " WS-PRT-OUTPUT-FILE.
+
+           IF (WS-COLD-OUTPUT-FILE-SW = "Y")
+              OPEN INPUT PRTINPUT-FILE
+              OPEN OUTPUT PRTOUTPUT-FILE
+              PERFORM 2100-READ-PRT-INPUT
+                 THRU 2100-END
+              CLOSE PRTINPUT-FILE
+                    PRTOUTPUT-FILE.
+                  
+           GO TO 2000-END.  
+
+      ******************************************************************
+       2100-READ-PRT-INPUT.
+      ******************************************************************
+           MOVE WS-FALSE               TO WS-PRT-EOF-SW.
+
+           PERFORM 2120-READ-PRT-INPUT
+              THRU 2120-END.
+
+           IF (WS-PRT-EOF)
+********       MOVE 052                TO CRT-MSG-NBR
+********       PERFORM 780-PRINT-MSG
+               GO TO 2100-END.
+
+           PERFORM 2110-WRITE-COLD-OUTPUT
+           THRU    2110-END
+             UNTIL (WS-PRT-EOF).
+
+           GO TO 2100-END.
+
+       2100-END.
+      ******************************************************************
+       2110-WRITE-COLD-OUTPUT.
+      ******************************************************************
+
+      *---DROP THE ESCAPE SEQUENCE REC AND ADD NEW REC WITH 1 IN COL 1
+           MOVE ZEROES                 TO WS-ESC-SEQ-FOUND-SW.
+           INSPECT IN-PRT-REC (1:40)   TALLYING WS-ESC-SEQ-FOUND-SW
+                                       FOR ALL WS-PRT-ESC-STRING.
+
+           IF (WS-ESC-SEQ-FOUND)
+               MOVE "1"                TO OUT-PRT-REC
+           ELSE
+      *        ---- SHIFT ANY OTHER LINE OVER 1 BYTE
+               MOVE SPACE              TO OUT-PRT-REC(1:1)
+               MOVE IN-PRT-REC         TO OUT-PRT-REC(2:199).
+
+           WRITE PRTOUTPUT-REC         FROM OUT-PRTOUTPUT-REC.
+
+           PERFORM 2120-READ-PRT-INPUT
+              THRU 2120-END.
+
+       2110-END.
+
+      ******************************************************************
+       2120-READ-PRT-INPUT.
+      ******************************************************************
+           READ PRTINPUT-FILE          INTO IN-PRTINPUT-REC
+               AT END 
+               MOVE WS-TRUE    TO WS-PRT-EOF-SW.
+
+       2120-END.
+017350******************************************************************
+       2150-GET-MONTH.
+017350******************************************************************
+       IF (WBIPF1-BILL-PERIOD = "01")
+           MOVE "JAN"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "02")
+           MOVE "FEB"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "03")
+           MOVE "MAR"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "04")
+           MOVE "APR"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "05")
+           MOVE "MAY"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "06")
+           MOVE "JUN"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "07")
+           MOVE "JUL"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "08")
+           MOVE "AUG"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "09")
+           MOVE "SEP"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "10")
+           MOVE "OCT"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "11")
+           MOVE "NOV"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+       IF (WBIPF1-BILL-PERIOD = "12")
+           MOVE "DEC"                  TO  WS-PRT-OUTPUT-FILE-MMM
+       ELSE
+           MOVE "???"                  TO  WS-PRT-OUTPUT-FILE-MMM.
+
+       2150-END.
+
+       2000-END.
+017350******************************************************************
+017360 WBIPS1-TRANSACTION-END.

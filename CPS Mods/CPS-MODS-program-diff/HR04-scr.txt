@@ -1,0 +1,15 @@
+< prod/hrsrc/HR04.scr
+> vnla/hrsrc/HR04.scr
+464c464
+<                   ;                    ;               Position To:[          ]
+---
+>                   ;                    ;
+486d485
+<   2     PS-PCO-CODE           A     10          SB
+
+
+
+
+Lines were added to HR04.scr   PEG   06/15/07    LAWTAPP
+
+

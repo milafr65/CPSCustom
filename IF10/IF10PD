@@ -1,0 +1,491 @@
+000100******************************************************************
+000200*                             IF10PD                             *
+000300******************************************************************
+     ***   6/2019  REPLACED PREFIX LUD WITH IF1 FOR TBL LUPTBLDTL 
+     ***   6/2019  REPLACED PREFIX LUH WITH IF2 FOR TBL LUPTBLHDR
+000400******************************************************************
+000500 IF10S1-TRANSACTION              SECTION 10.
+000600******************************************************************
+000700 IF10S1-START.
+000800
+000900     PERFORM 200-EDIT-TRAN
+001000     THRU    200-END.
+001100
+001200     IF (NO-ERROR-FOUND)
+001300         PERFORM 400-PROCESS-TRAN
+001400         THRU    400-END.
+001500
+001600     GO TO IF10S1-TRANSACTION-END.
+001700
+001800******************************************************************
+001900 200-EDIT-TRAN.
+002000******************************************************************
+002100
+002200     PERFORM 210-EDIT-ACCESS
+002300     THRU    210-END.
+002400
+002500     IF (ERROR-FOUND)
+002600         GO TO 200-END.
+002700
+002800     IF (IF10F1-FC = "A" OR "C")
+002900         PERFORM 230-EDIT-DATA
+003000         THRU    230-END
+003100         GO TO 200-END.
+003200
+003300 200-END.
+003400
+003500******************************************************************
+003600 210-EDIT-ACCESS.
+003700******************************************************************
+003800
+003900     MOVE IF10F1-LUH-LVL-1-KEY     TO DB-LVL-1-KEY.
+003900     MOVE IF10F1-LUH-LVL-2-KEY     TO DB-LVL-2-KEY.
+003900     MOVE IF10F1-LUH-LVL-3-KEY     TO DB-LVL-3-KEY.
+004300
+004400     IF (IF10F1-FC = "N")
+004500         PERFORM 850-FIND-NLT-IF2SET1
+004600         IF  (LUPTBLHDR-FOUND)
+004700         AND (IF2-LVL-1-KEY = DB-LVL-1-KEY)
+004700         AND (IF2-LVL-2-KEY = DB-LVL-2-KEY)
+004700         AND (IF2-LVL-3-KEY = DB-LVL-3-KEY)
+005100             PERFORM 860-FIND-NEXT-IF2SET1.
+005200
+005300     IF (IF10F1-FC = "P")
+005400         PERFORM 850-FIND-NLT-IF2SET1
+005500         PERFORM 870-FIND-PREV-IF2SET1.
+005600
+005700     IF (IF10F1-FC = "N" OR "P")
+005800         IF (LUPTBLHDR-NOTFOUND)
+005900             MOVE 100                         TO CRT-ERROR-NBR
+006000             MOVE IF10F1-FC-FN                TO CRT-FIELD-NBR
+006100             GO TO 210-END
+006200         ELSE
+006300             MOVE IF2-LVL-1-KEY TO IF10F1-LUH-LVL-1-KEY
+006400                                      DB-LVL-1-KEY
+006500             MOVE IF2-LVL-2-KEY    TO IF10F1-LUH-LVL-2-KEY
+006600                                      DB-LVL-2-KEY
+006700             MOVE IF2-LVL-3-KEY    TO IF10F1-LUH-LVL-3-KEY
+006800                                      DB-LVL-3-KEY.
+007100
+007200     IF (IF10F1-FC = "N" OR "P")
+007300         GO TO 210-END.
+007400
+007500     MOVE IF10F1-LUH-LVL-1-KEY     TO DB-LVL-1-KEY.
+007600     MOVE IF10F1-LUH-LVL-2-KEY     TO DB-LVL-2-KEY.
+007700     MOVE IF10F1-LUH-LVL-3-KEY     TO DB-LVL-3-KEY.
+007900     PERFORM 840-FIND-IF2SET1.
+008000
+008100     IF  (LUPTBLHDR-NOTFOUND)
+008200     AND (IF10F1-FC = "I" OR "+" OR "-" OR "C" OR "D")
+008300         MOVE 100                             TO CRT-ERROR-NBR
+006000         MOVE IF10F1-LUH-LVL-1-KEY-FN         TO CRT-FIELD-NBR
+008500         GO TO 210-END.
+008600
+008700     IF  (LUPTBLHDR-FOUND)
+008800     AND (IF10F1-FC = "A")
+008900         MOVE 101                             TO CRT-ERROR-NBR
+006000         MOVE IF10F1-LUH-LVL-1-KEY-FN         TO CRT-FIELD-NBR
+009100         GO TO 210-END.
+009200
+009300 210-END.
+009400
+009500******************************************************************
+009600 230-EDIT-DATA.
+009700******************************************************************
+009800
+009900     IF (IF10F1-FC = "A")
+010000         INITIALIZE LUPTBLHDR.
+010100
+010200     PERFORM 260-EDIT-DTL-TRAN
+010300     THRU    260-END
+010400         VARYING I1 FROM 1 BY 1
+010500         UNTIL  (I1 > 12)
+010600         OR     (ERROR-FOUND).
+010700
+010800     IF (ERROR-FOUND)
+010900         GO TO 230-END.
+011000
+011100 230-END.
+011200
+011300******************************************************************
+011400 260-EDIT-DTL-TRAN.
+011500******************************************************************
+011600
+011700     IF (IF10F1-LINE-FC (I1) = SPACES)
+011800         GO TO 260-END.
+011900
+012000     MOVE IF10F1-LUH-LVL-1-KEY        TO DB-LVL-1-KEY.
+012100     MOVE IF10F1-LUH-LVL-2-KEY        TO DB-LVL-2-KEY.
+012200     MOVE IF10F1-LUH-LVL-3-KEY        TO DB-LVL-3-KEY.
+012400     MOVE IF10F1-LUD-DTL-KEY (I1)     TO DB-DTL-KEY.
+012500
+012600     PERFORM 840-FIND-IF1SET1.
+012700
+012800     IF  (LUPTBLDTL-NOTFOUND)
+012900     AND (IF10F1-LINE-FC (I1) NOT = "A")
+013000         MOVE 102                             TO CRT-ERROR-NBR
+013100         MOVE IF10F1-LUD-DTL-KEY-FN (I1)      TO CRT-FIELD-NBR
+013200         GO TO 260-END.
+013300
+013400     IF  (LUPTBLDTL-FOUND)
+013500     AND (IF10F1-LINE-FC (I1) = "A")
+013600         MOVE 103                             TO CRT-ERROR-NBR
+013700         MOVE IF10F1-LUD-DTL-KEY-FN (I1)      TO CRT-FIELD-NBR
+013800         GO TO 260-END.
+
+014000 260-END.
+014100
+014200******************************************************************
+014300 400-PROCESS-TRAN.
+014400******************************************************************
+014500
+014600     IF (IF10F1-FC = "A")
+014700         PERFORM 410-ADD
+014800         THRU    410-END
+014900     ELSE
+015000     IF (IF10F1-FC = "C")
+015100         PERFORM 420-CHANGE
+015200         THRU    420-END
+015300     ELSE
+015400     IF (IF10F1-FC = "D")
+015500         PERFORM 440-DELETE
+015600         THRU    440-END
+015700     ELSE
+015800     IF (IF10F1-FC = "I" OR "-" OR "+" OR "N" OR "P")
+015900         PERFORM 480-INQUIRE
+016000         THRU    480-END.
+016100
+016200 400-END.
+016300
+016400******************************************************************
+016500 410-ADD.
+016600******************************************************************
+016700
+016800     PERFORM 910-AUDIT-BEGIN.
+016900     IF (DMS-ABORTED)
+017000         GO TO 410-END.
+017000 
+045800     PERFORM 800-CREATE-LUPTBLHDR.
+046500
+017200     PERFORM 500-MOVE-DATA
+017300     THRU    500-END.
+017400
+017500     PERFORM 422-PROCESS-DETAIL
+017600     THRU    422-END
+017700         VARYING I1 FROM 1 BY 1
+017800         UNTIL  (I1 > 12).
+017900
+047400     PERFORM 820-STORE-LUPTBLHDR.
+047500
+018000     PERFORM 920-AUDIT-END.
+018100
+018200     PERFORM 600-MOVE-TO-SCREEN
+018300     THRU    600-END.
+018400
+018500     MOVE CRT-ADD-COMPLETE       TO CRT-MESSAGE.
+018600
+018700 410-END.
+018800
+018900******************************************************************
+019000 420-CHANGE.
+019100******************************************************************
+019200
+019300     PERFORM 910-AUDIT-BEGIN.
+019400     IF (DMS-ABORTED)
+019500         GO TO 420-END.
+019600
+046000     MOVE IF10F1-LUH-LVL-1-KEY    TO DB-LVL-1-KEY.
+046100     MOVE IF10F1-LUH-LVL-2-KEY    TO DB-LVL-2-KEY.
+046200     MOVE IF10F1-LUH-LVL-3-KEY    TO DB-LVL-3-KEY.
+046400     PERFORM 840-MODIFY-IF2SET1.
+046500
+019700     PERFORM 500-MOVE-DATA
+019800     THRU    500-END.
+019900
+020000     PERFORM 422-PROCESS-DETAIL
+020100     THRU    422-END
+020200         VARYING I1 FROM 1 BY 1
+020300         UNTIL  (I1 > 12).
+020400
+047400     PERFORM 820-STORE-LUPTBLHDR.
+047500
+020500     PERFORM 920-AUDIT-END.
+020600
+020700     PERFORM 600-MOVE-TO-SCREEN
+020800     THRU    600-END.
+020900
+021000     MOVE CRT-CHG-COMPLETE       TO CRT-MESSAGE.
+021100
+021200 420-END.
+021300
+021400******************************************************************
+021500 422-PROCESS-DETAIL.
+021600******************************************************************
+021700
+021800     IF (IF10F1-LINE-FC (I1) = SPACES)
+021900         GO TO 422-END
+022000     ELSE
+022100     IF (IF10F1-LINE-FC (I1) = "A")
+022200         PERFORM 431-ADD-LUD
+022300         THRU    431-END
+022400     ELSE
+022500     IF (IF10F1-LINE-FC (I1) = "C")
+022600         PERFORM 432-CHANGE-LUD
+022700         THRU    432-END
+022800     ELSE
+022900     IF (IF10F1-LINE-FC (I1) = "D")
+023000         PERFORM 434-DELETE-LUD
+023100         THRU    434-END.
+023200
+023300 422-END.
+023400
+023500******************************************************************
+023600 431-ADD-LUD.
+023700******************************************************************
+023800
+023900     PERFORM 800-CREATE-LUPTBLDTL.
+024000
+024100     PERFORM 510-MOVE-DTL-DATA
+024200     THRU    510-END.
+024300
+024400     PERFORM 820-STORE-LUPTBLDTL.
+024500
+024900     INITIALIZE IF10F1-LINE-FC (I1).
+025000
+025100 431-END.
+025200
+025300******************************************************************
+025400 432-CHANGE-LUD.
+025500******************************************************************
+025600
+025700     MOVE IF10F1-LUH-LVL-1-KEY        TO DB-LVL-1-KEY.
+025800     MOVE IF10F1-LUH-LVL-2-KEY        TO DB-LVL-2-KEY.
+025900     MOVE IF10F1-LUH-LVL-3-KEY        TO DB-LVL-3-KEY.
+026100     MOVE IF10F1-LUD-DTL-KEY (I1)     TO DB-DTL-KEY.
+026200
+026300     PERFORM 840-MODIFY-IF1SET1.
+026400
+026500     PERFORM 510-MOVE-DTL-DATA
+026600     THRU    510-END.
+026700
+026800     PERFORM 820-STORE-LUPTBLDTL.
+026900
+027300     INITIALIZE IF10F1-LINE-FC (I1).
+027400
+027500 432-END.
+027600
+027700******************************************************************
+027800 434-DELETE-LUD.
+027900******************************************************************
+028000
+028100     MOVE IF2-LVL-1-KEY               TO DB-LVL-1-KEY.
+028200     MOVE IF2-LVL-2-KEY               TO DB-LVL-2-KEY.
+028300     MOVE IF2-LVL-3-KEY               TO DB-LVL-3-KEY.
+028500     MOVE IF10F1-LUD-DTL-KEY (I1)     TO DB-DTL-KEY.
+028600
+028700     PERFORM 840-MODIFY-IF1SET1.
+028800
+028900     PERFORM 830-DELETE-LUPTBLDTL.
+029000
+029100     INITIALIZE IF10F1-DETAIL-LINE (I1).
+029200
+029300 434-END.
+029400
+029500******************************************************************
+029600 440-DELETE.
+029700******************************************************************
+029800
+029900     PERFORM 910-AUDIT-BEGIN.
+030000     IF (DMS-ABORTED)
+030100         GO TO 440-END.
+030200
+030300     MOVE IF10F1-LUH-LVL-1-KEY    TO DB-LVL-1-KEY.
+030400     MOVE IF10F1-LUH-LVL-2-KEY    TO DB-LVL-2-KEY.
+030500     MOVE IF10F1-LUH-LVL-3-KEY    TO DB-LVL-3-KEY.
+030700     PERFORM 840-MODIFY-IF2SET1.
+030900     PERFORM 830-DELETE-LUPTBLHDR.
+
+           MOVE IF1SET1-LVL-3-KEY       TO WS-DB-BEG-RNG.
+           PERFORM 830-DELETERNG-IF1SET1.
+031000
+031100     MOVE CRT-RECS-DELETED        TO CRT-MESSAGE.
+031200     MOVE CRT-SEND-MESSAGE        TO CRT-REQUEST.
+031300     PERFORM 920-AUDIT-END.
+031400
+031500 440-END.
+031600
+031700******************************************************************
+031800 480-INQUIRE.
+031900******************************************************************
+032000
+032100     PERFORM 600-MOVE-TO-SCREEN
+032200     THRU    600-END.
+032300
+032400     MOVE IF10F1-LUH-LVL-1-KEY              TO DB-LVL-1-KEY.
+032500     MOVE IF10F1-LUH-LVL-2-KEY              TO DB-LVL-2-KEY.
+032600     MOVE IF10F1-LUH-LVL-3-KEY              TO DB-LVL-3-KEY.
+032800
+033200     IF (IF10F1-FC = "-")
+033300         MOVE IF10F1-LUD-DTL-KEY (1)    TO DB-DTL-KEY
+033400     ELSE
+033500     IF  (IF10F1-FC = "+" OR "I")
+033600         MOVE IF10F1-PT-LUD-DTL-KEY     TO DB-DTL-KEY
+033600     ELSE
+033000         INITIALIZE DB-DTL-KEY.
+033700
+033800     PERFORM 850-FIND-NLT-IF1SET1.
+033900     IF (IF10F1-FC = "-")
+034000         PERFORM 870-FIND-PREV-IF1SET1.
+034100
+034200     IF (IF10F1-FC = "-" OR "+")
+034300         IF  (LUPTBLDTL-NOTFOUND)
+034400         OR  (IF1-LVL-1-KEY   NOT = IF10F1-LUH-LVL-1-KEY)
+034500         OR  (IF1-LVL-2-KEY   NOT = IF10F1-LUH-LVL-2-KEY)
+034600         OR  (IF1-LVL-3-KEY   NOT = IF10F1-LUH-LVL-3-KEY)
+035300             MOVE 11                          TO CRT-ERROR-NBR
+035400             MOVE IF10F1-FC-FN                TO CRT-FIELD-NBR
+035500             GO TO 480-END.
+035600
+035700     IF (IF10F1-FC = "I")
+035800         MOVE "+"                           TO IF10F1-FC.
+035900
+036100
+036200     IF (IF10F1-FC = "-")
+034900         MOVE IF10F1-LUD-DTL-KEY (1)     TO IF10F1-PT-LUD-DTL-KEY
+036000         INITIALIZE IF10F1-DETAIL-GROUP
+036300         PERFORM 610-MOVE-DTL-TO-SCREEN
+036400         THRU    610-END
+036500             VARYING I1 FROM 12 BY NEGATIVE-ONE
+036600             UNTIL  (I1               < 1)
+036700             OR     (LUPTBLDTL-NOTFOUND)
+036800             OR     (IF1-LVL-1-KEY    NOT = IF10F1-LUH-LVL-1-KEY)
+037000             OR     (IF1-LVL-2-KEY    NOT = IF10F1-LUH-LVL-2-KEY)
+037100             OR     (IF1-LVL-3-KEY    NOT = IF10F1-LUH-LVL-3-KEY)
+037400
+037500         IF (I1 NOT < 1)
+037600             MOVE I1                        TO I9
+037700             ADD 1                          TO I9
+037800             MOVE 1                         TO I1
+037900             PERFORM
+038000                 UNTIL (I9 > 12)
+038100
+038200                 MOVE IF10F1-DETAIL-LINE (I9)
+038300                                        TO IF10F1-DETAIL-LINE (I1)
+038400                 INITIALIZE IF10F1-DETAIL-LINE (I9)
+038500                 ADD 1                      TO I1
+038600                 ADD 1                      TO I9
+038700             END-PERFORM
+038800             MOVE "+"                       TO IF10F1-FC
+038900             MOVE IF10F1-LUH-LVL-1-KEY      TO DB-LVL-1-KEY
+039000             MOVE IF10F1-LUH-LVL-2-KEY      TO DB-LVL-2-KEY
+039100             MOVE IF10F1-LUH-LVL-3-KEY      TO DB-LVL-3-KEY
+039300             MOVE IF10F1-PT-LUD-DTL-KEY     TO DB-DTL-KEY
+039400             PERFORM 850-FIND-NLT-IF1SET1
+039500             PERFORM 610-MOVE-DTL-TO-SCREEN
+039600             THRU    610-END
+039700                 VARYING I1 FROM I1 BY 1
+039800                 UNTIL  (I1               > 12)
+039900                    OR  (LUPTBLDTL-NOTFOUND)
+040000                    OR  (IF1-LVL-1-KEY NOT = IF10F1-LUH-LVL-1-KEY)
+040200                    OR  (IF1-LVL-2-KEY NOT = IF10F1-LUH-LVL-2-KEY)
+040400                    OR  (IF1-LVL-3-KEY NOT = IF10F1-LUH-LVL-3-KEY)
+040900             IF (LUPTBLDTL-NOTFOUND)
+041000             OR (IF1-LVL-1-KEY    NOT = IF10F1-LUH-LVL-1-KEY)
+041100             OR (IF1-LVL-2-KEY    NOT = IF10F1-LUH-LVL-2-KEY)
+041200             OR (IF1-LVL-3-KEY    NOT = IF10F1-LUH-LVL-3-KEY)
+041400                 INITIALIZE IF10F1-PT-LUD-DTL-KEY
+041500             ELSE
+041600                 MOVE IF1-DTL-KEY TO IF10F1-PT-LUD-DTL-KEY
+041700             END-IF
+041800         END-IF
+041900         IF (LUPTBLDTL-NOTFOUND)
+042000         OR (IF1-LVL-1-KEY NOT = IF10F1-LUH-LVL-1-KEY)
+042100         OR (IF1-LVL-2-KEY    NOT = IF10F1-LUH-LVL-2-KEY)
+042200         OR (IF1-LVL-3-KEY    NOT = IF10F1-LUH-LVL-3-KEY)
+042400             MOVE CRT-INQ-COMPLETE          TO CRT-MESSAGE
+042500         ELSE
+042600             MOVE CRT-MORE-RECS             TO CRT-MESSAGE
+               END-IF
+042700     ELSE
+036000         INITIALIZE IF10F1-DETAIL-GROUP
+042800         PERFORM 610-MOVE-DTL-TO-SCREEN
+042900         THRU    610-END
+043000             VARYING I1 FROM 1 BY 1
+043100             UNTIL  (I1               > 12)
+043200             OR     (LUPTBLDTL-NOTFOUND)
+043300             OR     (IF1-LVL-1-KEY NOT =
+043400                                          IF10F1-LUH-LVL-1-KEY)
+043500             OR     (IF1-LVL-2-KEY    NOT = IF10F1-LUH-LVL-2-KEY)
+043600             OR     (IF1-LVL-3-KEY    NOT = IF10F1-LUH-LVL-3-KEY)
+043900
+044000         IF (LUPTBLDTL-NOTFOUND)
+044100         OR (IF1-LVL-1-KEY    NOT = IF10F1-LUH-LVL-1-KEY)
+044200         OR (IF1-LVL-2-KEY    NOT = IF10F1-LUH-LVL-2-KEY)
+044300         OR (IF1-LVL-3-KEY    NOT = IF10F1-LUH-LVL-3-KEY)
+044500             INITIALIZE IF10F1-PT-LUD-DTL-KEY
+044600             MOVE CRT-INQ-COMPLETE          TO CRT-MESSAGE
+044700         ELSE
+044800             MOVE IF1-DTL-KEY     TO IF10F1-PT-LUD-DTL-KEY
+044900             MOVE CRT-MORE-RECS             TO CRT-MESSAGE.
+045000
+045100 480-END.
+045200
+045300******************************************************************
+045400 500-MOVE-DATA.
+045500******************************************************************
+045600
+046600     MOVE IF10F1-LUH-LVL-1-KEY        TO IF2-LVL-1-KEY.
+046700     MOVE IF10F1-LUH-LVL-2-KEY        TO IF2-LVL-2-KEY.
+046800     MOVE IF10F1-LUH-LVL-3-KEY        TO IF2-LVL-3-KEY.
+047000     MOVE IF10F1-LUH-LVL-1-DESC       TO IF2-LVL-1-DESC.
+047000     MOVE IF10F1-LUH-LVL-2-DESC       TO IF2-LVL-2-DESC.
+047100     MOVE IF10F1-LUH-LVL-3-DESC       TO IF2-LVL-3-DESC.
+047300
+047600 500-END.
+047700
+047800******************************************************************
+047900 510-MOVE-DTL-DATA.
+048000******************************************************************
+048100
+048200     MOVE IF10F1-LUH-LVL-1-KEY         TO IF1-LVL-1-KEY.
+048300     MOVE IF10F1-LUH-LVL-2-KEY         TO IF1-LVL-2-KEY.
+048400     MOVE IF10F1-LUH-LVL-3-KEY         TO IF1-LVL-3-KEY.
+048600     MOVE IF10F1-LUD-DTL-KEY (I1)      TO IF1-DTL-KEY.
+048700     MOVE IF10F1-LUD-DTL-VALUE (I1)    TO IF1-DTL-VALUE.
+048800
+048900 510-END.
+049000
+049100******************************************************************
+049200 600-MOVE-TO-SCREEN.
+049300******************************************************************
+049400
+049500     MOVE IF2-LVL-1-KEY          TO IF10F1-LUH-LVL-1-KEY.
+049600     MOVE IF2-LVL-2-KEY          TO IF10F1-LUH-LVL-2-KEY.
+049700     MOVE IF2-LVL-3-KEY          TO IF10F1-LUH-LVL-3-KEY.
+049900     MOVE IF2-LVL-1-DESC         TO IF10F1-LUH-LVL-1-DESC.
+049900     MOVE IF2-LVL-2-DESC         TO IF10F1-LUH-LVL-2-DESC.
+050000     MOVE IF2-LVL-3-DESC         TO IF10F1-LUH-LVL-3-DESC.
+050200
+050300 600-END.
+050400
+050500******************************************************************
+050600 610-MOVE-DTL-TO-SCREEN.
+050700******************************************************************
+050800
+050900     MOVE IF1-DTL-KEY            TO IF10F1-LUD-DTL-KEY (I1).
+051000     MOVE IF1-DTL-VALUE          TO IF10F1-LUD-DTL-VALUE (I1).
+051100
+051200     IF (IF10F1-LINE-FC (I1) NOT = SPACES)
+051300         GO TO 610-END.
+051400
+051500     IF (IF10F1-FC = "-")
+051600         PERFORM 870-FIND-PREV-IF1SET1
+051700     ELSE
+051800         PERFORM 860-FIND-NEXT-IF1SET1.
+051900
+052000 610-END.
+052100
+052200******************************************************************
+052300 IF10S1-TRANSACTION-END.
+052400******************************************************************
+052500

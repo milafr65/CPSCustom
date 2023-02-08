@@ -1,0 +1,25 @@
+< prod/prsrc/PR300PD
+> vnla/prsrc/PR300PD
+37,39c37,39
+<       *    BEGIN WBP MOD - 030811 -------------------------------------
+< 003600*    IF (PRM-PAYROLL-YEAR    NOT < WS-COMPARE-YEAR)
+< 003700*        MOVE 103                TO CRT-ERROR-NBR
+---
+> 003600     IF (PRM-PAYROLL-YEAR    NOT < WS-COMPARE-YEAR)
+> 003700         MOVE 103                TO CRT-ERROR-NBR
+> 003800         PERFORM 780-PRINT-ERROR-MSG.
+40,45d39
+< 003800*        PERFORM 780-PRINT-ERROR-MSG.
+<            IF (WS-SYSTEM-DATE-YMD > 20031031)
+<                IF (PRM-PAYROLL-YEAR    NOT < WS-COMPARE-YEAR)
+<                    MOVE 103                TO CRT-ERROR-NBR
+<                    PERFORM 780-PRINT-ERROR-MSG.
+<       *    END WBP MOD - 030811 -------------------------------------
+50,52d43
+<       *    BEGIN WBP MOD - 030811 -------------------------------------
+<            IF (WS-SYSTEM-DATE-YMD < 20030930)
+<       *    END WBP MOD - 030811 -------------------------------------
+958,960d948
+< 090300*
+< 090400     ADD 1                       TO WS-PRDISTRIB
+< 090500                                    WS-RECORD-COUNT.

@@ -1,0 +1,2113 @@
+******* ZN31PD 10.1.1 <1487053722>
+      ******************************************************************
+      *               M O D I F I C A T I O N   L O G:                 *
+      ******************************************************************
+      *  Modified by Analysts International,MN                         *
+      ******************************************************************
+      *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+      *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+      *                    END DATE FIELDS IN DETERMINATION OF THE     *
+      *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+      ******************************************************************
+     *** GW 6/2007 ADDN OF LINE REF P53566 PER MSP11 UPDATE TO BN31 ****
+000100******************************************************************
+000200*                             ZN31PD                             *
+000300******************************************************************
+000400******************************************************************
+000500 ZN31S1-TRANSACTION              SECTION 10.
+000600******************************************************************
+000700 ZN31S1-START.
+000800
+           IF (ZN31F1-FC               NOT = "A")
+               INITIALIZE ZN31F1-SAL-OVER-XMIT.
+
+000900     PERFORM 200-EDIT-TRAN
+001000     THRU    200-END.
+001100
+001200     IF (NO-ERROR-FOUND)
+001300         PERFORM 400-PROCESS-TRAN
+001400         THRU    400-END.
+001500
+001600     GO TO ZN31S1-TRANSACTION-END.
+001700
+001800******************************************************************
+001900 200-EDIT-TRAN.
+002000******************************************************************
+002100
+002200     PERFORM 210-EDIT-ACCESS
+002300     THRU    210-END.
+002400
+002500     IF (ERROR-FOUND)
+002600         GO TO 200-END.
+002700
+002800     IF (ZN31F1-FC = "A")
+002900         PERFORM 230-EDIT-DATA
+003000         THRU    230-END
+003100         GO TO 200-END.
+003200
+003300 200-END.
+003400
+003500******************************************************************
+003600 210-EDIT-ACCESS.
+003700******************************************************************
+003800
+003900     MOVE ZN31F1-BEN-COMPANY         TO DB-COMPANY.
+004000     PERFORM 840-FIND-BNCSET1.
+004100     IF (BNCOMPANY-NOTFOUND)
+004200         MOVE 100                    TO CRT-ERROR-NBR
+004300         MOVE ZN31F1-BEN-COMPANY-FN  TO CRT-FIELD-NBR
+004400         GO TO 210-END.
+004500
+004600     MOVE ZN31F1-BEN-COMPANY         TO DB-COMPANY.
+004700     INITIALIZE DB-PROCESS-LEVEL.
+004800     PERFORM 840-FIND-PRSSET1.
+004900     IF (PRSYSTEM-NOTFOUND)
+005000         MOVE 101                    TO CRT-ERROR-NBR
+005100         MOVE ZN31F1-BEN-COMPANY-FN  TO CRT-FIELD-NBR
+005200         GO TO 210-END.
+005300
+005400*     IF (ZN31F1-ENROLLMENT-DATE      = ZEROES)
+005500*         MOVE WS-SYSTEM-DATE-YMD     TO ZN31F1-ENROLLMENT-DATE.
+005600
+005700 210-END.
+005800
+005900******************************************************************
+006000 230-EDIT-DATA.
+006100******************************************************************
+006200
+006300     PERFORM 500-MOVE-BEN-SCR-TO-WS
+006400     THRU    500-END.
+006500
+006600     PERFORM 2000-BNBEN-EDIT-TRAN.
+006700
+006800     IF (ERROR-FOUND)
+012100         PERFORM
+012300             VARYING I2 FROM 1 BY 1
+012400             UNTIL  (I2 > 10)
+
+                   IF (BNBEN-LINE-FC (I2)  = "A")
+                       MOVE BNBEN-CREATE-TRANS (I2)
+                                         TO ZN31F1-HUT-CREATE-TRANS (I2)
+                   END-IF
+               END-PERFORM
+006900         GO TO 230-END.
+
+           IF (ZN31F1-SAL-OVER-XMIT    = ZEROES)
+               PERFORM
+                   VARYING I1 FROM 1 BY 1
+                   UNTIL  (I1              > BNBEN-NBR-LINES)
+                   OR     (BNBEN-COV-OVER-FLG (I1) = "Y")
+
+                   CONTINUE
+               END-PERFORM
+               IF (I1                      <= BNBEN-NBR-LINES)
+      ******** Salary will be overridden on benefit(s),Press OK to continue
+                   MOVE 109                TO CRT-ERROR-NBR
+                   MOVE 1                  TO ZN31F1-SAL-OVER-XMIT.
+
+006800     IF (ERROR-FOUND)
+006900         GO TO 230-END.
+007000
+007100 230-END.
+007200
+007300******************************************************************
+007400 400-PROCESS-TRAN.
+007500******************************************************************
+007600
+007700     IF (ZN31F1-FC               = "A")
+007800         PERFORM 410-ADD
+007900         THRU    410-END.
+008000
+           INITIALIZE ZN31F1-SAL-OVER-XMIT.
+
+           IF (BNBEN-NBR-LINES             NOT = BNBEN-ORIG-NBR-LINES)
+      ******** Add complete - Benefits history has been created
+               MOVE 108                    TO CRT-MSG-NBR
+           ELSE
+008100         MOVE CRT-ADD-COMPLETE       TO CRT-MESSAGE.
+008200
+008300 400-END.
+008400
+008500******************************************************************
+008600 410-ADD.
+008700******************************************************************
+008800
+008900     PERFORM 910-AUDIT-BEGIN.
+009000
+009100     IF (DMS-ABORTED)
+009200         GO TO 410-END.
+009300
+009400     PERFORM 4000-BNBEN-PROCESS-TRAN.
+009500
+009600     PERFORM 920-AUDIT-END.
+009700
+009800     PERFORM 530-MOVE-WS-TO-SCR
+009900     THRU    530-END.
+010000
+010100 410-END.
+010200
+010300******************************************************************
+010400 500-MOVE-BEN-SCR-TO-WS.
+010500******************************************************************
+010600
+010700     INITIALIZE BNBEN-DETAIL-GROUP
+010800                BNBEN-USE-NAVIGATE-SW.
+010900 
+011000     MOVE ZN31F1-FC                  TO BNBEN-FC.
+011100     MOVE ZN31F1-FC-FN               TO BNBEN-FC-FN.
+011200     MOVE ZN31F1-BEN-COMPANY         TO BNBEN-COMPANY.
+011300     MOVE ZN31F1-BEN-COMPANY-FN      TO BNBEN-COMPANY-FN.
+011400     MOVE ZN31F1-ENROLLMENT-DATE     TO BNBEN-ENROLLMENT-DATE.
+011500     MOVE ZN31F1-ENROLLMENT-DATE-FN  TO BNBEN-ENROLLMENT-DATE-FN.
+011600     IF (BNBEN-ENROLLMENT-DATE = ZEROES)
+011700         MOVE WS-SYSTEM-DATE-YMD     TO BNBEN-ENROLLMENT-DATE.
+011800
+011900     MOVE 10                         TO BNBEN-NBR-LINES.
+012000
+012100     PERFORM 510-MOVE-TO-BNBEN-DTL
+012200     THRU    510-END
+012300         VARYING I2 FROM 1 BY 1
+012400         UNTIL  (I2 > 10).
+012500
+012600 500-END.
+012700
+012800******************************************************************
+012900 510-MOVE-TO-BNBEN-DTL.
+013000******************************************************************
+013100
+013200     INITIALIZE ZN31F1-DEP (I2)
+013300                ZN31F1-INV (I2).
+013400
+013500     IF (ZN31F1-BEN-EMPLOYEE (I2)    NOT = ZEROES)
+013600         MOVE "A"                    TO BNBEN-LINE-FC (I2)
+013700         MOVE ZN31F1-BEN-EMPLOYEE-FN (I2)
+013800                                     TO BNBEN-LINE-FC-FN (I2).
+013900
+014000     MOVE ZN31F1-BEN-EMPLOYEE (I2)   TO BNBEN-EMPLOYEE (I2).
+014100     MOVE ZN31F1-BEN-EMPLOYEE-FN (I2)
+014200                                     TO BNBEN-EMPLOYEE-FN (I2).
+014300     MOVE ZN31F1-BEN-PLAN-TYPE (I2)  TO BNBEN-PLAN-TYPE (I2).
+014400     MOVE ZN31F1-BEN-PLAN-TYPE-FN (I2)
+014500                                     TO BNBEN-PLAN-TYPE-FN (I2).
+014600     MOVE ZN31F1-BEN-PLAN-CODE (I2)  TO BNBEN-PLAN-CODE (I2).
+014700     MOVE ZN31F1-BEN-PLAN-CODE-FN (I2)
+014800                                     TO BNBEN-PLAN-CODE-FN (I2).
+014900     MOVE ZN31F1-BEN-START-DATE (I2) TO BNBEN-START-DATE (I2).
+015000     IF  (ZN31F1-BEN-START-DATE (I2) = ZEROES)
+015100     AND (ZN31F1-ENROLLMENT-DATE     NOT = ZEROES)
+015200         MOVE ZN31F1-ENROLLMENT-DATE TO BNBEN-START-DATE (I2).
+015300     MOVE ZN31F1-BEN-START-DATE-FN (I2)
+015400                                     TO BNBEN-START-DATE-FN (I2).
+015500     MOVE ZN31F1-BEN-STOP-DATE (I2)  TO BNBEN-STOP-DATE (I2).
+015600     MOVE ZN31F1-BEN-STOP-DATE-FN (I2)
+015700                                     TO BNBEN-STOP-DATE-FN (I2).
+015800     MOVE ZN31F1-BEN-COV-OPTION (I2) TO BNBEN-COVER-OPT (I2).
+015900     MOVE ZN31F1-BEN-COV-OPTION-FN (I2)
+016000                                     TO BNBEN-COVER-OPT-FN (I2).
+016100     MOVE ZN31F1-BEN-MULTIPLE (I2)   TO BNBEN-MULT-SALARY (I2).
+016200     MOVE ZN31F1-BEN-MULTIPLE-FN (I2)
+016300                                     TO BNBEN-MULT-SALARY-FN (I2).
+016400     MOVE ZN31F1-BEN-COVER-AMT (I2)  TO BNBEN-COVER-AMT (I2).
+016500     MOVE ZN31F1-BEN-COVER-AMT-FN (I2)
+016600                                     TO BNBEN-COVER-AMT-FN (I2).
+016700     MOVE ZN31F1-BEN-PAY-RATE (I2)   TO BNBEN-PAY-RATE (I2).
+016800     MOVE ZN31F1-BEN-PAY-RATE-FN (I2) 
+016900                                     TO BNBEN-PAY-RATE-FN (I2).
+017000     MOVE ZN31F1-BEN-PCT-AMT-FLAG (I2)
+017100                                    TO BNBEN-PCT-AMT-FLAG (I2).
+017200     MOVE ZN31F1-BEN-PCT-AMT-FLAG-FN (I2)
+017300                                    TO BNBEN-PCT-AMT-FLAG-FN (I2).
+017400     MOVE ZN31F1-PRE-CONT-TAX-STS (I2)
+017500                                     TO BNBEN-PRE-AFT-FLAG (I2).
+017600     MOVE ZN31F1-PRE-CONT-TAX-STS-FN (I2)
+017700                                    TO BNBEN-PRE-AFT-FLAG-FN (I2).
+017800     MOVE ZN31F1-BEN-SMOKER (I2)    TO BNBEN-SMOKER-FLAG (I2).
+017900     MOVE ZN31F1-BEN-SMOKER-FN (I2) TO BNBEN-SMOKER-FLAG-FN (I2).
+           MOVE ZN31F1-BEN-PEND-EVIDENCE (I2)
+                                          TO BNBEN-PEND-EVIDENCE (I2).
+018000     MOVE ZN31F1-BEN-EMP-PRE-CONT (I2)
+018100                                    TO BNBEN-EMP-PRE-CONT (I2).
+018200     MOVE ZN31F1-BEN-EMP-PRE-CONT-FN (I2)
+018300                                    TO BNBEN-EMP-PRE-CONT-FN (I2).
+018400     MOVE ZN31F1-BEN-EMP-AFT-CONT (I2)
+018500                                     TO BNBEN-EMP-AFT-CONT (I2).
+018600     MOVE ZN31F1-BEN-EMP-AFT-CONT-FN (I2)
+018700                                    TO BNBEN-EMP-AFT-CONT-FN (I2).
+018800
+P53566     MOVE ZN31F1-BEN-USER-ID (I2)   TO BNBEN-USER-ID (I2).
+015500     MOVE ZN31F1-HUT-CREATE-TRANS (I2) TO BNBEN-CREATE-TRANS(I2).
+015600     MOVE ZN31F1-HUT-CREATE-TRANS-FN (I2)
+015700                                    TO BNBEN-CREATE-TRANS-FN (I2).
+015500     MOVE ZN31F1-HUT-REASON (I2)    TO BNBEN-REASON (I2).
+015600     MOVE ZN31F1-HUT-REASON-FN (I2) TO BNBEN-REASON-FN (I2).
+015500     MOVE ZN31F1-HUT-MEMBER-ID (I2) TO BNBEN-MEMBER-ID (I2).
+015600     MOVE ZN31F1-HUT-MEMBER-ID-FN (I2) TO BNBEN-MEMBER-ID-FN (I2).
+018900 510-END.
+019000
+019100******************************************************************
+019200 530-MOVE-WS-TO-SCR.
+019300******************************************************************
+019400
+019500     MOVE BNBEN-FC                   TO ZN31F1-FC.
+019600     MOVE BNBEN-COMPANY              TO ZN31F1-BEN-COMPANY.
+019700*     MOVE BNBEN-ENROLLMENT-DATE      TO ZN31F1-ENROLLMENT-DATE.
+019800
+019900     MOVE PRS-NAME                   TO ZN31F1-PRS-NAME.
+020000
+020100     PERFORM 540-BNBEN-DTL-TO-SCREEN
+020200     THRU    540-END
+020300         VARYING I2 FROM 1 BY 1
+020400         UNTIL  (I2 > 10).
+020500
+020600 530-END.
+020700
+020800******************************************************************
+020900 540-BNBEN-DTL-TO-SCREEN.
+021000******************************************************************
+021100
+021200     IF (BNBEN-EMPLOYEE (I2)     = ZEROES)
+021300         GO TO 540-END.
+021400
+021500     MOVE BNBEN-COVER-OPT (I2)   TO ZN31F1-BEN-COV-OPTION (I2).
+021600     MOVE BNBEN-COVER-OPT-FN (I2)
+021700                                 TO ZN31F1-BEN-COV-OPTION-FN (I2).
+021800     MOVE BNBEN-MULT-SALARY (I2) TO ZN31F1-BEN-MULTIPLE (I2).
+021900     MOVE BNBEN-COVER-AMT (I2)   TO ZN31F1-BEN-COVER-AMT (I2).
+022000     MOVE BNBEN-PAY-RATE (I2)    TO ZN31F1-BEN-PAY-RATE (I2).
+022100     MOVE BNBEN-PAY-RATE-FN (I2) TO ZN31F1-BEN-PAY-RATE-FN (I2).
+022200     MOVE BNBEN-PCT-AMT-FLAG (I2)
+022300                                 TO ZN31F1-BEN-PCT-AMT-FLAG (I2).
+022400     MOVE BNBEN-START-DATE (I2)  TO ZN31F1-BEN-START-DATE (I2).
+022500     MOVE BNBEN-START-DATE-FN (I2)
+022600                                 TO ZN31F1-BEN-START-DATE-FN (I2).
+022700     MOVE BNBEN-PRE-AFT-FLAG (I2)
+022800                                 TO ZN31F1-PRE-CONT-TAX-STS (I2).
+022900     MOVE BNBEN-SMOKER-FLAG (I2) TO ZN31F1-BEN-SMOKER (I2).
+023000     MOVE BNBEN-SMOKER-FLAG-FN (I2) TO ZN31F1-BEN-SMOKER-FN (I2).
+           MOVE BNBEN-PEND-EVIDENCE (I2)
+                                       TO ZN31F1-BEN-PEND-EVIDENCE (I2).
+023100     MOVE BNBEN-EMP-PRE-CONT (I2)
+023200                                 TO ZN31F1-BEN-EMP-PRE-CONT (I2).
+023300     MOVE BNBEN-EMP-PRE-CONT-FN (I2)
+023400                                 TO
+023500                                 ZN31F1-BEN-EMP-PRE-CONT-FN (I2).
+023600     MOVE BNBEN-EMP-AFT-CONT (I2)
+023700                                 TO ZN31F1-BEN-EMP-AFT-CONT (I2).
+023800     MOVE BNBEN-EMP-AFT-CONT-FN (I2)
+023900                                 TO
+024000                                 ZN31F1-BEN-EMP-AFT-CONT-FN (I2).
+024100     MOVE BNBEN-STOP-DATE (I2)   TO ZN31F1-BEN-STOP-DATE (I2).
+024200     MOVE BNBEN-STOP-DATE-FN (I2)
+024300                                 TO ZN31F1-BEN-STOP-DATE-FN (I2).
+024400
+015500     MOVE BNBEN-CREATE-TRANS (I2) TO ZN31F1-HUT-CREATE-TRANS (I2).
+015500     MOVE BNBEN-REASON (I2)       TO ZN31F1-HUT-REASON (I2).
+015500     MOVE BNBEN-MEMBER-ID (I2)    TO ZN31F1-HUT-MEMBER-ID (I2).
+
+024500     MOVE BNBEN-COMPANY          TO DB-COMPANY.
+024600     MOVE BNBEN-PLAN-TYPE (I2)   TO DB-PLAN-TYPE.
+024700     MOVE BNBEN-PLAN-CODE (I2)   TO DB-PLAN-CODE.
+024800     PERFORM 840-FIND-PLNSET1.
+024900
+025000     IF (PLN-COVERAGE-TYPE         NOT = "0")
+025100         MOVE BNBEN-COMPANY        TO DB-COMPANY
+025200         MOVE BNBEN-PLAN-TYPE (I2) TO DB-PLAN-TYPE
+025300         MOVE BNBEN-PLAN-CODE (I2) TO DB-PLAN-CODE
+025400         MOVE "E"                  TO DB-COVER-TYPE
+025500         IF (PLN-COVERAGE-TYPE   = "1")
+025600             MOVE BNBEN-COVER-OPT (I2)  TO DB-COVERAGE-OPT
+025700             PERFORM 840-FIND-COPSET1
+025800         ELSE
+025900             MOVE BNBEN-COV-UPD-DT (I2) TO DB-START-DATE
+026000             MOVE BNBEN-COV-GROUP (I2)  TO DB-GROUP-NAME
+026100             PERFORM 840-FIND-CVRSET1
+026200         END-IF
+026300         MOVE BNBEN-EMPLOYEE (I2)       TO DB-EMPLOYEE
+026400         MOVE EMDSET1-EMPLOYEE          TO WS-DB-BEG-RNG
+026500         PERFORM 850-FIND-BEGRNG-EMDSET1
+026600         IF (EMDEPEND-FOUND)
+026700             IF  ((PLN-PLAN-TYPE     = "HL")
+026800             AND  (BNC-DEP-HEALTH    = "Y"))
+026900             OR  ((PLN-PLAN-TYPE     = "DN")
+027000             AND  (BNC-DEP-DENTAL    = "Y"))
+027100             OR  ((PLN-PLAN-TYPE     = "DL")
+027200             AND  (BNC-DEP-DEP-LIFE  = "Y"))
+027300                 IF  ((PLN-COVERAGE-TYPE  = "1")
+027400                 AND  (COP-COV-DEPENDENTS = "S" OR "D" OR "B"))
+027500                 OR  ((PLN-COVERAGE-TYPE  = "2")
+027600                 AND  (CVR-LIFE-ADD-FLG   = "S" OR "D" OR "B"))
+027700                     MOVE "BNMSG"         TO CRT-ERROR-CAT
+027800                     MOVE 183             TO CRT-MSG-NBR
+027900                     PERFORM 790-GET-MSG
+028000                     MOVE CRT-MESSAGE     TO ZN31F1-DEP (I2).
+028100
+028200     IF (PLN-INV-DIST-FLG        = "Y")
+028300     OR (PLN-PLAN-OPTION         = 4 OR 5 OR 6 OR 7)
+028400         MOVE "BNMSG"            TO CRT-ERROR-CAT
+028500         MOVE 197                TO CRT-MSG-NBR
+028600         PERFORM 790-GET-MSG
+028700         MOVE CRT-MESSAGE        TO ZN31F1-INV (I2).
+028800
+           IF (BNBEN-ADDED-BENEFITS-SW (I2) = "Y")
+027700         MOVE "BNMSG"            TO CRT-ERROR-CAT
+027800         MOVE 199                TO CRT-MSG-NBR
+027900         PERFORM 790-GET-MSG
+028000         MOVE CRT-MESSAGE        TO ZN31F1-ADDED-BEN (I2).
+
+028900 540-END.
+029000
+029100******************************************************************
+029200 ZN31S1-TRANSACTION-END.
+029300******************************************************************
+029400
+029500******************************************************************
+029600 ZN31S2-TRANSACTION              SECTION 10.
+029700******************************************************************
+029800 ZN31S2-START.
+029900
+           IF (ZN31F2-FC               NOT = "A")
+               INITIALIZE ZN31F2-SAL-OVER-XMIT.
+
+030000     PERFORM 200-EDIT-TRAN
+030100     THRU    200-END.
+030200
+030300     IF (NO-ERROR-FOUND)
+030400         PERFORM 400-PROCESS-TRAN
+030500         THRU    400-END.
+030600
+030700     GO TO ZN31S2-TRANSACTION-END.
+030800
+030900******************************************************************
+031000 200-EDIT-TRAN.
+031100******************************************************************
+031200
+031300     PERFORM 210-EDIT-ACCESS
+031400     THRU    210-END.
+031500
+031600     IF (ERROR-FOUND)
+031700         GO TO 200-END.
+031800
+031900     IF (ZN31F2-FC               = "A" OR "C")
+032000         PERFORM 230-EDIT-DATA
+032100         THRU    230-END
+032200         GO TO 200-END.
+032300
+032400     IF (ZN31F2-FC               = "I" OR "N" OR "P")
+032500     OR (ZN31F2-FC               = "+" OR "-")
+032600         SET ZN31WS-NO-FILTER    TO TRUE
+032700         PERFORM 270-CHECK-FILTER
+032800         THRU    270-END
+032900         IF (ZN31WS-FILTER)
+033000             PERFORM 280-EDIT-PLAN-TYPE
+033100             THRU    280-END
+033200             IF (ERROR-FOUND)
+033300                 GO TO 200-END
+033400             END-IF
+033500
+033600             PERFORM 290-RESEQ-PLAN-TYPE
+033700             THRU    290-END.
+033800
+033900 200-END.
+034000
+034100******************************************************************
+034200 210-EDIT-ACCESS.
+034300******************************************************************
+034400
+034500     MOVE ZN31F2-BEN-COMPANY         TO DB-COMPANY.
+034600     INITIALIZE DB-PROCESS-LEVEL.
+034700     PERFORM 840-FIND-PRSSET1.
+034800     IF (PRSYSTEM-NOTFOUND)
+034900         MOVE 300                    TO CRT-ERROR-NBR
+035000         MOVE ZN31F2-BEN-COMPANY-FN  TO CRT-FIELD-NBR
+035100         GO TO 210-END.
+035200
+035300     MOVE ZN31F2-BEN-COMPANY         TO DB-COMPANY.
+035400     PERFORM 840-FIND-BNCSET1.
+035500     IF (BNCOMPANY-NOTFOUND)
+035600         MOVE 301                    TO CRT-ERROR-NBR
+035700         MOVE ZN31F2-BEN-COMPANY-FN  TO CRT-FIELD-NBR
+035800         GO TO 210-END.
+035900
+036000     MOVE ZN31F2-BEN-COMPANY         TO DB-COMPANY.
+036100     MOVE ZN31F2-BEN-EMPLOYEE        TO DB-EMPLOYEE.
+036200     PERFORM 840-FIND-EMPSET1.
+036300
+036400     IF (ZN31F2-ENROLLMENT-DATE      = ZEROES)
+036500         MOVE WS-SYSTEM-DATE-YMD     TO ZN31F2-ENROLLMENT-DATE.
+036600
+036700     IF (ZN31F2-FC                   NOT = "N" AND "P")
+036800         IF (EMPLOYEE-NOTFOUND)
+036900             MOVE 302                    TO CRT-ERROR-NBR
+037000             MOVE ZN31F2-BEN-EMPLOYEE-FN TO CRT-FIELD-NBR
+037100             GO TO 210-END
+037200         ELSE
+037300             MOVE EMP-COMPANY        TO CRT-COMPANY
+037400             MOVE EMP-PROCESS-LEVEL  TO CRT-PROCESS-LEVEL
+037500             PERFORM 700-HR-EMP-SECURITY
+037600             IF (HRWS-EMP-SECURED)
+037700                 MOVE 303                    TO CRT-ERROR-NBR
+037800                 MOVE ZN31F2-BEN-EMPLOYEE-FN TO CRT-FIELD-NBR
+037900                 GO TO 210-END.
+038000
+038100     IF (ZN31F2-FC = "N")
+038200         IF (EMPLOYEE-FOUND)
+038300             PERFORM 850-FIND-NLT-EMPSET1
+038400             PERFORM 860-FIND-NEXT-EMPSET1
+038500         ELSE
+038600             PERFORM 850-FIND-NLT-EMPSET1.
+038700
+038800     IF (ZN31F2-FC                   = "P")
+038900         PERFORM 850-FIND-NLT-EMPSET1
+039000         PERFORM 870-FIND-PREV-EMPSET1
+039100         IF  (EMPLOYEE-FOUND)
+039200         AND (EMP-COMPANY            = ZN31F2-BEN-COMPANY)
+039300             MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE
+039400             PERFORM 850-FIND-NLT-EMPSET1.
+039500
+039600     IF (ZN31F2-FC                   = "N" OR "P")
+039700         IF  (EMPLOYEE-FOUND)
+039800         AND (EMP-COMPANY            = DB-COMPANY)
+039900             MOVE EMP-COMPANY        TO CRT-COMPANY
+040000             MOVE EMP-PROCESS-LEVEL  TO CRT-PROCESS-LEVEL
+040100             PERFORM 700-HR-EMP-SECURITY
+040200             IF (HRWS-EMP-SECURED)
+040300                 PERFORM 212-GET-NEXT-EMPLOYEE
+040400                 THRU    212-END
+040500                     UNTIL (EMPLOYEE-NOTFOUND)
+040600                     OR    (EMP-COMPANY NOT = DB-COMPANY)
+040700                     OR    (HRWS-EMP-NOT-SECURED).
+040800
+040900     IF (ZN31F2-FC                   = "N" OR "P")
+041000         IF (EMPLOYEE-NOTFOUND)
+041100         OR (EMP-COMPANY             NOT = ZN31F2-BEN-COMPANY)
+041200             MOVE 12                 TO CRT-ERROR-NBR
+041300             MOVE ZN31F2-FC-FN       TO CRT-FIELD-NBR
+041400             GO TO 210-END
+041500         ELSE
+041600             MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE
+041700                                        ZN31F2-BEN-EMPLOYEE.
+041800
+041900     MOVE ZN31F2-BEN-COMPANY         TO DB-COMPANY.
+042000     MOVE ZN31F2-BEN-EMPLOYEE        TO DB-EMPLOYEE.
+042100     PERFORM 840-FIND-EMPSET1.
+042200     IF (EMPLOYEE-FOUND)
+042300         MOVE ZN31F2-BEN-EMPLOYEE-FN TO CRT-FIELD-NBR.
+042400
+042500     MOVE ZN31F2-BEN-COMPANY         TO DB-COMPANY.
+042600     MOVE ZN31F2-BEN-EMPLOYEE        TO DB-EMPLOYEE.
+042700     PERFORM 840-FIND-PEMSET1.
+042800     IF (PAEMPLOYEE-NOTFOUND)
+042900         MOVE 304                    TO CRT-ERROR-NBR
+043000         MOVE ZN31F2-BEN-EMPLOYEE-FN TO CRT-FIELD-NBR
+043100         GO TO 210-END.
+043200
+           IF (ZN31F2-BEN-COMPANY          NOT = ZN31F2-PT-COMPANY)
+           OR (ZN31F2-BEN-EMPLOYEE         NOT = ZN31F2-PT-EMPLOYEE)
+           OR (ZN31F2-ENROLLMENT-DATE      NOT = ZN31F2-PT-ENROLL-DATE)
+043600         INITIALIZE ZN31F2-DETAIL-GROUP
+043700                    ZN31WS-FLEX-PLAN
+043800         MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY
+043900         MOVE ZN31F2-BEN-EMPLOYEE    TO DB-EMPLOYEE
+044000         MOVE ZN31F2-ENROLLMENT-DATE TO DB-START-DATE
+044100         PERFORM 850-FIND-NLT-EFDSET2
+044200         IF  (EMPFLEXDOL-FOUND)
+044300         AND (EFD-COMPANY            = DB-COMPANY)
+044400         AND (EFD-EMPLOYEE           = DB-EMPLOYEE)
+044500         AND (EFD-STOP-DATE          >= ZN31F2-ENROLLMENT-DATE)
+044600             MOVE EFD-FLEX-PLAN      TO ZN31WS-FLEX-PLAN.
+044700
+044800 210-END.
+044900
+045000******************************************************************
+045100 212-GET-NEXT-EMPLOYEE.
+045200******************************************************************
+045300
+045400     IF (ZN31F2-FC                   = "N")
+045500         PERFORM 860-FIND-NEXT-EMPSET1
+045600     ELSE
+045700         PERFORM 870-FIND-PREV-EMPSET1.
+045800
+045900     IF  (EMPLOYEE-FOUND)
+046000     AND (EMP-COMPANY                = DB-COMPANY)
+046100         MOVE EMP-COMPANY            TO CRT-COMPANY
+046200         MOVE EMP-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL
+046300         PERFORM 700-HR-EMP-SECURITY.
+046400
+046500 212-END.
+046600
+046700******************************************************************
+046800 230-EDIT-DATA.
+046900******************************************************************
+047000
+047100     PERFORM 500-MOVE-BEN-SCR-TO-WS
+047200     THRU    500-END.
+047300
+047400     PERFORM 2000-BNBEN-EDIT-TRAN.
+047500
+047600     IF (ERROR-FOUND)
+012100         PERFORM
+012300             VARYING I2 FROM 1 BY 1
+012400             UNTIL  (I2 > ZN31WS-MAX-DTL2)
+
+                   IF (BNBEN-LINE-FC (I2)  = "A")
+                       MOVE BNBEN-CREATE-TRANS (I2)
+                                         TO ZN31F2-HUT-CREATE-TRANS (I2)
+                   END-IF
+               END-PERFORM
+047700         GO TO 230-END.
+
+           IF (ZN31F2-SAL-OVER-XMIT    = ZEROES)
+               PERFORM
+                   VARYING I1 FROM 1 BY 1
+                   UNTIL  (I1              > BNBEN-NBR-LINES)
+                   OR     (BNBEN-COV-OVER-FLG (I1) = "Y")
+
+                   CONTINUE
+               END-PERFORM
+               IF (I1                      <= BNBEN-NBR-LINES)
+      ******** Salary will be overridden on benefit(s),Press OK to continue
+                   MOVE 109                TO CRT-ERROR-NBR
+                   MOVE 1                  TO ZN31F2-SAL-OVER-XMIT.
+
+047600     IF (ERROR-FOUND)
+047700         GO TO 230-END.
+
+           PERFORM 260-EDIT-WEN-DETAIL
+           THRU 260-END
+            VARYING I1 FROM 1 BY 1
+            UNTIL (I1 > ZN31WS-MAX-DTL2)
+            OR (ERROR-FOUND).
+
+047800
+047900 230-END.
+017300******************************************************************
+       260-EDIT-WEN-DETAIL.
+017300******************************************************************
+           IF (ZN31F2-LINE-FC (I1) = SPACES)
+              GO TO 260-END.
+
+           IF (ZN31F2-BEN-PLAN-CODE (I1) < "PAAA")
+           OR (ZN31F2-BEN-PLAN-CODE (I1) > "PZZZ")
+              IF (ZN31F2-WEN-NONPARTIC-CD (I1)   > SPACES)
+                 MOVE 500                             TO CRT-ERROR-NBR
+                 MOVE ZN31F2-WEN-NONPARTIC-CD (I1)    TO CRT-ERR-VAR1
+                 MOVE ZN31F2-WEN-NONPARTIC-CD-FN (I1) TO CRT-FIELD-NBR
+                 GO TO 260-END
+              ELSE
+                 GO TO 260-END.
+              
+           IF (ZN31F2-WEN-NONPARTIC-CD (I1)   > SPACES)
+              MOVE "NONPARTRSN"                  TO DB-CODE-NAME
+              MOVE ZN31F2-WEN-NONPARTIC-CD (I1)  TO DB-CODE-VALUE
+              PERFORM 840-FIND-WPCSET1
+              IF (WBPCODES-NOTFOUND)
+                 MOVE 310                             TO CRT-ERROR-NBR
+                 MOVE ZN31F2-WEN-NONPARTIC-CD (I1)    TO CRT-ERR-VAR1
+                 MOVE ZN31F2-WEN-NONPARTIC-CD-FN (I1) TO CRT-FIELD-NBR
+                 GO TO 260-END
+              ELSE
+              IF (WPC-ACTIVE-FLAG NOT = "A")
+                 MOVE 307                             TO CRT-ERROR-NBR
+                 MOVE ZN31F2-WEN-NONPARTIC-CD (I1)    TO CRT-ERR-VAR1
+                 MOVE ZN31F2-WEN-NONPARTIC-CD-FN (I1) TO CRT-FIELD-NBR
+                 GO TO 260-END.
+
+********   IF (ZN31F2-WEN-CRP-VEST (I1)   > SPACES)
+********      MOVE "CRPVESTING"              TO DB-CODE-NAME
+********      MOVE ZN31F2-WEN-CRP-VEST (I1)  TO DB-CODE-VALUE
+********      PERFORM 840-FIND-WPCSET1
+********      IF (WBPCODES-NOTFOUND)
+********         MOVE 310                         TO CRT-ERROR-NBR
+********         MOVE ZN31F2-WEN-CRP-VEST (I1)    TO CRT-ERR-VAR1
+********         MOVE ZN31F2-WEN-CRP-VEST-FN (I1) TO CRT-FIELD-NBR
+********         GO TO 260-END
+********      ELSE
+********      IF (WPC-ACTIVE-FLAG NOT = "A")
+********         MOVE 307                         TO CRT-ERROR-NBR
+********         MOVE ZN31F2-WEN-CRP-VEST (I1)    TO CRT-ERR-VAR1
+********         MOVE ZN31F2-WEN-CRP-VEST-FN (I1) TO CRT-FIELD-NBR
+********         GO TO 260-END.
+
+********   IF (ZN31F2-WEN-SRA-VEST (I1)   > SPACES)
+********      MOVE "SRAVESTING"              TO DB-CODE-NAME
+********      MOVE ZN31F2-WEN-SRA-VEST (I1)  TO DB-CODE-VALUE
+********      PERFORM 840-FIND-WPCSET1
+********      IF (WBPCODES-NOTFOUND)
+********         MOVE 310                         TO CRT-ERROR-NBR
+********         MOVE ZN31F2-WEN-SRA-VEST (I1)    TO CRT-ERR-VAR1
+********         MOVE ZN31F2-WEN-SRA-VEST-FN (I1) TO CRT-FIELD-NBR
+********         GO TO 260-END
+********      ELSE
+********      IF (WPC-ACTIVE-FLAG NOT = "A")
+********         MOVE 307                         TO CRT-ERROR-NBR
+********         MOVE ZN31F2-WEN-SRA-VEST (I1)    TO CRT-ERR-VAR1
+********         MOVE ZN31F2-WEN-SRA-VEST-FN (I1) TO CRT-FIELD-NBR
+********         GO TO 260-END.
+
+       260-END.
+048000
+048100******************************************************************
+048200 270-CHECK-FILTER.
+048300******************************************************************
+048400
+048500     SET FILTER-NOT-CHANGED      TO TRUE.
+048600
+048700     PERFORM
+048800         VARYING I1 FROM 1 BY 1
+048900         UNTIL  (I1 > ZN31WS-MAX-DTL2)
+049000         OR     (FILTER-CHANGED)
+049100
+049200         IF (ZN31F2-INQ-PLAN-TYPE (I1)
+049300                                 NOT = ZN31F2-WS-PLAN-TYPE (I1))
+049400             SET FILTER-CHANGED  TO TRUE
+049500         END-IF
+049600     END-PERFORM.
+049700
+049800     PERFORM
+049900         VARYING I1 FROM 1 BY 1
+050000         UNTIL  (I1 > ZN31WS-MAX-DTL2)
+050100         OR     (ZN31F2-INQ-PLAN-TYPE (I1) NOT = SPACES)
+050200
+050300         CONTINUE
+050400     END-PERFORM.
+050500
+050600     IF (I1                      <= ZN31WS-MAX-DTL2)
+050700         SET ZN31WS-FILTER       TO TRUE
+050800     ELSE
+050900         PERFORM 292-FIND-NAVIGATE
+051000         THRU    292-END
+051100         IF (NAV-FOUND)
+051200             PERFORM 272-USE-NAVIGATE
+051300             THRU    272-END
+051400         ELSE
+051500             PERFORM 274-INIT-PLAN-TABLES
+051600             THRU    274-END.
+051700
+051800 270-END.
+051900
+052000******************************************************************
+052100 272-USE-NAVIGATE.
+052200******************************************************************
+052300
+052400     PERFORM 292-FIND-NAVIGATE
+052500     THRU    292-END.
+052600
+052700     IF (NAV-NOTFOUND)
+052800         GO TO 272-END.
+052900
+053000     PERFORM
+053100         VARYING I1 FROM 1 BY 1
+053200         UNTIL  (I1 > 11)
+053300
+053400         MOVE NAV-PLAN-TYPE (I1) TO ZN31F2-INQ-PLAN-TYPE (I1)
+053500                                    ZN31F2-WS-PLAN-TYPE (I1)
+053600     END-PERFORM.
+053700
+053800     MOVE 11                     TO ZN31WS-LAST-PLAN-NBR.
+053900
+054000 272-END.
+054100
+054200******************************************************************
+054300 274-INIT-PLAN-TABLES.
+054400******************************************************************
+054500
+054600     PERFORM
+054700         VARYING I1 FROM 1 BY 1
+054800         UNTIL  (I1 > 11)
+054900
+055000         INITIALIZE                 ZN31F2-INQ-PLAN-TYPE (I1)
+055100                                    ZN31F2-WS-PLAN-TYPE (I1)
+055200     END-PERFORM.
+055300
+055400 274-END.
+055500
+055600******************************************************************
+055700 280-EDIT-PLAN-TYPE.
+055800******************************************************************
+055900
+056000     INITIALIZE I2.
+056100
+056200*
+056300**** SHIFT LEFT ALL PLAN TYPES
+056400*
+056500     PERFORM
+056600         VARYING I1 FROM 1 BY 1
+056700         UNTIL  (I1 > 11)
+056800         OR     (I2 > 11)
+056900
+057000         PERFORM
+057100             VARYING I1 FROM I1 BY 1
+057200             UNTIL  (I1 > 11)
+057300             OR     (ZN31F2-INQ-PLAN-TYPE (I1) = SPACES)
+057400
+057500             CONTINUE
+057600         END-PERFORM
+057700
+057800         COMPUTE I2              = I1
+057900                                 + 1
+058000         PERFORM
+058100             VARYING I2 FROM I1 BY 1
+058200             UNTIL  (I2 > 11)
+058300             OR     (ZN31F2-INQ-PLAN-TYPE (I2) NOT = SPACES)
+058400
+058500             CONTINUE
+058600         END-PERFORM
+058700         IF (I2                      <= 11)
+058800             IF (ZN31F2-INQ-PLAN-TYPE (I2)
+058900                                     NOT = SPACES)
+059000                 MOVE ZN31F2-INQ-PLAN-TYPE (I2)
+059100                                     TO ZN31F2-INQ-PLAN-TYPE (I1)
+059200                 INITIALIZE ZN31F2-INQ-PLAN-TYPE (I2)
+059300             END-IF
+059400         END-IF
+059500     END-PERFORM.
+059600
+059700*
+059800**** CHECK FOR DUPS
+059900*
+060000     PERFORM
+060100         VARYING I1 FROM 1 BY 1
+060200         UNTIL  (I1 > 11)
+060300         OR     (ZN31F2-INQ-PLAN-TYPE (I1) = SPACES)
+060400         OR     (ERROR-FOUND)
+060500
+060600         COMPUTE I2              = I1
+060700                                 + 1
+060800         PERFORM
+060900             VARYING I2 FROM I2 BY 1
+061000             UNTIL  (I2 > 11)
+061100             OR     (ZN31F2-INQ-PLAN-TYPE (I2)
+061200                                 = ZN31F2-INQ-PLAN-TYPE (I1))
+061300
+061400             CONTINUE
+061500         END-PERFORM
+061600         IF (I2                  <= 11)
+061700             IF (ZN31F2-INQ-PLAN-TYPE (I2)
+061800                                 = ZN31F2-INQ-PLAN-TYPE (I1))
+061900                 MOVE 305        TO CRT-ERROR-NBR
+062000                 MOVE ZN31F2-INQ-PLAN-TYPE-FN (I1)
+062100                                 TO CRT-FIELD-NBR
+062200             END-IF
+062300         END-IF
+062400     END-PERFORM.
+062500
+062600 280-END.
+062700
+062800******************************************************************
+062900 290-RESEQ-PLAN-TYPE.
+063000******************************************************************
+063100
+063200     PERFORM 292-FIND-NAVIGATE
+063300     THRU    292-END.
+063400
+063500     IF (NAV-NOTFOUND)
+063600         INITIALIZE ZN31WS-LAST-PLAN-NBR
+063700         PERFORM
+063800             VARYING I1 FROM 1 BY 1
+063900             UNTIL  (I1 > 11)
+064000
+064100             MOVE ZN31F2-INQ-PLAN-TYPE (I1)
+064200                                       TO ZN31F2-WS-PLAN-TYPE (I1)
+064300             IF (ZN31F2-INQ-PLAN-TYPE (I1) NOT = SPACES)
+064400                 ADD 1                 TO ZN31WS-LAST-PLAN-NBR
+064500             END-IF
+064600         END-PERFORM
+064700         GO TO 290-END.
+064800
+064900     INITIALIZE ZN31F2-WS-DETAIL-GROUP
+065000                I3.
+065100
+065200*
+065300**** RESEQUENCE PLAN TYPES ENTERED
+065400*
+065500     PERFORM
+065600         VARYING I1 FROM 1 BY 1
+065700         UNTIL  (I1 > 11)
+065800         OR     (NAV-PLAN-TYPE (I1) = SPACES)
+065900
+066000         PERFORM
+066100             VARYING I2 FROM 1 BY 1
+066200             UNTIL  (I2 > 11)
+066300             OR     (NAV-PLAN-TYPE (I1) =
+066400                                    ZN31F2-INQ-PLAN-TYPE (I2))
+066500
+066600             CONTINUE
+066700         END-PERFORM
+066800         IF (I2 <= 11)
+066900             IF (NAV-PLAN-TYPE (I1) = ZN31F2-INQ-PLAN-TYPE (I2))
+067000                 ADD 1              TO I3
+067100                 MOVE NAV-PLAN-TYPE (I1)
+067200                                    TO ZN31F2-WS-PLAN-TYPE (I3)
+067300             END-IF
+067400         END-IF
+067500     END-PERFORM.
+067600
+067700     PERFORM
+067800         VARYING I1 FROM 1 BY 1
+067900         UNTIL  (I1 > 11)
+068000
+068100         MOVE ZN31F2-WS-PLAN-TYPE (I1) TO
+068200                                       ZN31F2-INQ-PLAN-TYPE (I1)
+068300     END-PERFORM.
+068400
+068500     MOVE I3                         TO ZN31WS-LAST-PLAN-NBR.
+068600
+068700 290-END.
+068800
+068900******************************************************************
+069000 292-FIND-NAVIGATE.
+069100******************************************************************
+069200
+069300     SET NAV-NOTFOUND            TO TRUE.
+069400
+069500*
+069600**** FIND NAVIGATE RECORD, IF NOT FOUND NO RESEQUENCING
+069700*
+069800     MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY.
+069900     INITIALIZE DB-PROCESS-LEVEL.
+070000     MOVE ZN31F2-BEN-EMPLOYEE    TO DB-EMPLOYEE.
+070100     PERFORM 840-FIND-NAVSET1.
+070200     IF (NAVIGATE-FOUND)
+070300         SET NAV-FOUND           TO TRUE
+070400         GO TO 292-END.
+070500
+070600     MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY.
+070700     MOVE EMP-PROCESS-LEVEL      TO DB-PROCESS-LEVEL.
+070800     INITIALIZE DB-EMPLOYEE.
+070900     PERFORM 850-FIND-NLT-NAVSET1.
+071000     IF  (NAVIGATE-FOUND)
+071100     AND (NAV-PROCESS-LEVEL      = EMP-PROCESS-LEVEL)
+071200         SET NAV-FOUND           TO TRUE
+071300         GO TO 292-END.
+071400
+071500     MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY.
+071600     INITIALIZE DB-PROCESS-LEVEL
+071700                DB-EMPLOYEE.
+071800     PERFORM 850-FIND-NLT-NAVSET1.
+071900     IF  (NAVIGATE-FOUND)
+072000     AND (NAV-COMPANY            = ZN31F2-BEN-COMPANY)
+072100         SET NAV-FOUND           TO TRUE
+072200         GO TO 292-END.
+072300
+072400 292-END.
+072500
+072600******************************************************************
+072700 400-PROCESS-TRAN.
+072800******************************************************************
+072900
+073000     IF (ZN31F2-FC               = "A")
+073100         PERFORM 410-ADD
+073200         THRU    410-END
+
+               INITIALIZE ZN31F2-SAL-OVER-XMIT
+073300     ELSE
+073400     IF (ZN31F2-FC               = "I" OR "-" OR "+")
+073500     OR (ZN31F2-FC               = "N" OR "P")
+073600         IF  (ZN31WS-NO-FILTER)
+073700         AND (NAV-NOTFOUND)
+073800             PERFORM 480-INQUIRE
+073900             THRU    480-END
+074000         ELSE
+074100             PERFORM 490-SELECT-FILTER
+074200             THRU    490-END
+               END-IF
+               MOVE ZN31F2-BEN-COMPANY     TO ZN31F2-PT-COMPANY
+               MOVE ZN31F2-BEN-EMPLOYEE    TO ZN31F2-PT-EMPLOYEE
+               MOVE ZN31F2-ENROLLMENT-DATE TO ZN31F2-PT-ENROLL-DATE
+               PERFORM 640-FIND-USER-FIELDS
+                  THRU 640-END.
+03/08**** GW THIS SECTION NO LONGER NEEDED *************************
+*******    PERFORM 
+*******    VARYING I1 FROM 1 BY 1 
+*******    UNTIL ( I1 > ZN31WS-MAX-DTL2)
+*******       MOVE ZN31F2-BEN-COMPANY           TO DB-COMPANY
+*******       MOVE ZN31F2-BEN-EMPLOYEE          TO DB-EMPLOYEE
+*******       MOVE ZN31F2-BEN-START-DATE (I1)   TO DB-START-DATE
+*******       MOVE ZN31F2-BEN-PLAN-TYPE (I1)    TO DB-PLAN-TYPE
+*******       MOVE ZN31F2-BEN-PLAN-CODE (I1)    TO DB-PLAN-CODE
+*******       PERFORM 840-FIND-WENSET1
+*******          IF  (WBPBENTAG-FOUND)
+*******             MOVE WEN-LCMS-ROSTER TO ZN31F2-WEN-LCMS-ROSTER (I1)
+*******             MOVE WEN-SS-PARTIC   TO ZN31F2-WEN-SS-PARTIC (I1)
+*******             MOVE WEN-EMP-STATUS  TO ZN31F2-WEN-EMP-STATUS (I1)
+*******             MOVE WEN-NONPARTIC-CD 
+*******                                  TO ZN31F2-WEN-NONPARTIC-CD (I1)
+*******             MOVE WEN-CRP-VEST    TO ZN31F2-WEN-CRP-VEST (I1)
+*******             MOVE WEN-PROCESS-LEVEL
+*******                                 TO ZN31F2-WEN-PROCESS-LEVEL (I1)
+*******             MOVE WEN-SRA-VEST     TO ZN31F2-WEN-SRA-VEST (I1).
+074300
+074400 400-END.
+074500
+074600******************************************************************
+074700 410-ADD.
+074800******************************************************************
+074900
+075000     PERFORM 910-AUDIT-BEGIN.
+075100
+075200     IF (DMS-ABORTED)
+075300         GO TO 410-END.
+075400
+075500     PERFORM 4000-BNBEN-PROCESS-TRAN.
+075600
+********* ONLY UPDATE WEN FILE FOR CRP PLANS, CODES PAAA-PZZZ *********
+3/08 ****** GW NO LONGER NEEDED.  UPDATES ARE PERFORMED IN BNENTPD ****
+3/08*****  PERFORM 420-MOD-WEN-FILE
+3/08*****    THRU 420-END.
+075400
+075700     PERFORM 920-AUDIT-END.
+075800
+075900     PERFORM 530-MOVE-WS-TO-SCR
+076000     THRU    530-END.
+076100
+           IF (BNBEN-NBR-LINES             NOT = BNBEN-ORIG-NBR-LINES)
+      ******** Add complete - Benefits history has been created
+               MOVE 108                    TO CRT-MSG-NBR
+           ELSE
+008100         MOVE CRT-ADD-COMPLETE       TO CRT-MESSAGE.
+076300
+076400 410-END.
+***********************************************************************
+       420-MOD-WEN-FILE.
+************************************************************************
+3/08GW*** NOT PERFORMED, NO LONGER NEEDED
+           PERFORM 
+           VARYING I1 FROM 1 BY 1 
+           UNTIL ( I1 > ZN31WS-MAX-DTL2)
+
+              IF (ZN31F2-LINE-FC (I1) = "A" OR "C")
+              AND (BNBEN-PLAN-CODE (I1) >= "PAAA")
+              AND (BNBEN-PLAN-CODE (I1) <= "PZZZ")
+
+                 MOVE ZN31F2-BEN-COMPANY           TO DB-COMPANY
+                 MOVE ZN31F2-BEN-EMPLOYEE          TO DB-EMPLOYEE
+                 MOVE BNBEN-START-DATE (I1)        TO DB-START-DATE
+                 MOVE BNBEN-PLAN-TYPE (I1)         TO DB-PLAN-TYPE
+                 MOVE BNBEN-PLAN-CODE (I1)         TO DB-PLAN-CODE
+                 PERFORM 840-MODIFY-WENSET1
+                    IF (WBPBENTAG-FOUND)
+******** THIS HAS JUST BEEN UPDATED IN BNENTPD. WE ONLY WANT TO UPDATE
+********  INPUT FIELD NONPARTIC-CD
+********               MOVE ZN31F2-WEN-LCMS-ROSTER (I1)
+*******                                            TO WEN-LCMS-ROSTER
+*******                MOVE ZN31F2-WEN-SS-PARTIC (I1)  TO WEN-SS-PARTIC
+*******                MOVE ZN31F2-WEN-EMP-STATUS (I1) TO WEN-EMP-STATUS
+                       MOVE ZN31F2-WEN-NONPARTIC-CD (I1)
+                                                    TO WEN-NONPARTIC-CD 
+*******                MOVE ZN31F2-WEN-CRP-VEST (I1)   TO WEN-CRP-VEST
+********               MOVE ZN31F2-WEN-PROCESS-LEVEL (I1)
+*******                                            TO WEN-PROCESS-LEVEL
+*******                MOVE ZN31F2-WEN-SRA-VEST (I1)   TO WEN-SRA-VEST
+                    
+********               MOVE CRT-USER-NAME              TO WEN-USER-ID
+********               MOVE HHMMSS                     TO WEN-TIME-STAMP
+                
+                       PERFORM 820-STORE-WBPBENTAG.
+********            ELSE
+********               PERFORM 800-CREATE-WBPBENTAG 
+*******                MOVE ZN31F2-BEN-COMPANY         TO WEN-COMPANY
+*******                MOVE ZN31F2-BEN-EMPLOYEE        TO WEN-EMPLOYEE
+********               MOVE BNBEN-START-DATE (I1)      TO WEN-START-DATE
+*******                MOVE BNBEN-PLAN-TYPE (I1)       TO WEN-PLAN-TYPE
+*******                MOVE BNBEN-PLAN-CODE (I1)       TO WEN-PLAN-CODE
+*******                MOVE ZN31F2-WEN-LCMS-ROSTER (I1)
+*******                                         TO WEN-LCMS-ROSTER
+********               MOVE ZN31F2-WEN-SS-PARTIC (I1)  TO WEN-SS-PARTIC
+********               MOVE ZN31F2-WEN-EMP-STATUS (I1) TO WEN-EMP-STATUS
+********               MOVE "C"                        TO WEN-CRP-VEST
+********               MOVE ZN31F2-WEN-PROCESS-LEVEL (I1)
+********                                           TO WEN-PROCESS-LEVEL
+********               MOVE "C"                        TO WEN-SRA-VEST
+********               MOVE ZN31F2-WEN-NONPARTIC-CD (I1)
+********                                           TO WEN-NONPARTIC-CD
+********               MOVE CRT-USER-NAME              TO WEN-USER-ID
+********               MOVE HHMMSS                     TO WEN-TIME-STAMP
+
+********               PERFORM 820-STORE-WBPBENTAG.
+
+       420-END.
+076500
+076600******************************************************************
+076700 480-INQUIRE.
+076800******************************************************************
+076900
+077000     IF (ZN31F2-FC = "I")
+077100         MOVE "+"                    TO ZN31F2-FC.
+077200
+077300     PERFORM 600-MOVE-TO-SCREEN
+077400     THRU    600-END.
+077500
+077600     IF (ZN31F2-FC                   = "N" OR "P")
+           OR (ZN31F2-PT-COMPANY           NOT = ZN31F2-BEN-COMPANY)
+           OR (ZN31F2-PT-EMPLOYEE          NOT = ZN31F2-BEN-EMPLOYEE)
+           OR (ZN31F2-PT-ENROLL-DATE       NOT = ZN31F2-ENROLLMENT-DATE)
+077900         INITIALIZE DB-PLAN-TYPE
+078000                    DB-PLAN-CODE
+078100         IF (ZN31F2-FC = "-")
+078200             MOVE "+"                TO ZN31F2-FC
+078300         END-IF
+078400     ELSE
+078500     IF (ZN31F2-FC                   = "-")
+078600         MOVE ZN31F2-BEN-PLAN-TYPE (1)   TO DB-PLAN-TYPE
+078700         MOVE ZN31F2-BEN-PLAN-CODE (1)   TO DB-PLAN-CODE
+078800     ELSE
+078900         MOVE ZN31F2-PT-PLAN-TYPE    TO DB-PLAN-TYPE
+079000         MOVE ZN31F2-PT-PLAN-CODE    TO DB-PLAN-CODE.
+079100
+079200     SET ZN31WS-RECORD-NOT-FOUND     TO TRUE.
+079300
+079400     PERFORM 850-FIND-NLT-PLNSET1.
+079500     PERFORM 620-FIND-NEXT-PLAN
+079600     THRU    620-END
+079700         UNTIL (PLAN-NOTFOUND)
+079800         OR    (PLN-COMPANY          NOT = ZN31F2-BEN-COMPANY)
+079900         OR    (ZN31WS-RECORD-FOUND).
+080000
+080100     IF (ZN31F2-FC                   = "-")
+080200         SET ZN31WS-RECORD-NOT-FOUND TO TRUE
+080300         PERFORM 870-FIND-PREV-PLNSET1
+080400         PERFORM 630-FIND-PREV-PLAN
+080500         THRU    630-END
+080600             UNTIL (PLAN-NOTFOUND)
+080700             OR    (PLN-COMPANY      NOT = ZN31F2-BEN-COMPANY)
+080800             OR    (ZN31WS-RECORD-FOUND).
+080900
+081000     IF (ZN31F2-FC = "-" OR "+")
+081100         IF (PLAN-NOTFOUND)
+081200         OR (PLN-COMPANY             NOT = ZN31F2-BEN-COMPANY)
+081300             INITIALIZE ZN31F2-DETAIL-GROUP
+081400             MOVE 11                 TO CRT-ERROR-NBR
+081500             MOVE ZN31F2-FC-FN       TO CRT-FIELD-NBR
+081600             GO TO 480-END.
+081700
+081800     IF (ZN31F2-FC                   = "-")
+081900         MOVE ZN31WS-MAX-DTL2                     TO I1
+082000     ELSE
+082100         MOVE 1                      TO I1.
+082200
+082300     INITIALIZE ZN31F2-PT-PLAN-TYPE
+082400                ZN31F2-PT-PLAN-CODE.
+082500
+082600     IF (ZN31F2-FC = "-")
+082700         MOVE ZN31F2-BEN-PLAN-TYPE (1)   TO ZN31F2-PT-PLAN-TYPE
+082800         MOVE ZN31F2-BEN-PLAN-CODE (1)   TO ZN31F2-PT-PLAN-CODE
+082900         INITIALIZE ZN31F2-DETAIL-GROUP
+083000         PERFORM 610-MOVE-DTL-TO-SCREEN
+083100         THRU    610-END
+083200             UNTIL  (I1              < 1)
+083300             OR     (PLAN-NOTFOUND)
+083400             OR     (PLN-COMPANY     NOT = ZN31F2-BEN-COMPANY)
+083500
+083600         IF (PLAN-NOTFOUND)
+083700         OR (PLN-COMPANY             NOT = DB-COMPANY)
+083800             MOVE CRT-INQ-COMPLETE   TO CRT-MESSAGE
+083900         ELSE
+084000             MOVE CRT-MORE-RECS      TO CRT-MESSAGE
+084100         END-IF
+084200     ELSE
+084300         INITIALIZE ZN31F2-DETAIL-GROUP
+084400         PERFORM 610-MOVE-DTL-TO-SCREEN
+084500         THRU    610-END
+084600             UNTIL  (I1              > ZN31WS-MAX-DTL2)
+084700             OR     (PLAN-NOTFOUND)
+084800             OR     (PLN-COMPANY     NOT = ZN31F2-BEN-COMPANY)
+084900
+085000         IF (PLAN-NOTFOUND)
+085100         OR (PLN-COMPANY             NOT = ZN31F2-BEN-COMPANY)
+085200             INITIALIZE ZN31F2-PT-PLAN-TYPE
+085300                        ZN31F2-PT-PLAN-CODE
+085400             MOVE CRT-INQ-COMPLETE   TO CRT-MESSAGE
+085500         ELSE
+085600             MOVE PLN-PLAN-TYPE      TO ZN31F2-PT-PLAN-TYPE
+085700             MOVE PLN-PLAN-CODE      TO ZN31F2-PT-PLAN-CODE
+085800             MOVE CRT-MORE-RECS      TO CRT-MESSAGE.
+085900
+086000 480-END.
+086100
+086200******************************************************************
+086300 490-SELECT-FILTER.
+086400******************************************************************
+086500
+086600     IF (ZN31F2-FC = "I")
+086700         MOVE "+"                    TO ZN31F2-FC.
+086800
+086900     PERFORM 600-MOVE-TO-SCREEN
+087000     THRU    600-END.
+087100
+087200     IF (ZN31F2-FC                   = "N" OR "P")
+           OR (ZN31F2-PT-COMPANY           NOT = ZN31F2-BEN-COMPANY)
+           OR (ZN31F2-PT-EMPLOYEE          NOT = ZN31F2-BEN-EMPLOYEE)
+           OR (ZN31F2-PT-ENROLL-DATE       NOT = ZN31F2-ENROLLMENT-DATE)
+087500     OR (FILTER-CHANGED)
+087600         INITIALIZE ZN31F2-DETAIL-GROUP
+087700         MOVE 1                      TO I9
+087800         MOVE ZN31F2-WS-PLAN-TYPE (I9)  TO DB-PLAN-TYPE
+087900         INITIALIZE DB-PLAN-CODE
+088000         IF (ZN31F2-FC = "-")
+088100             MOVE "+"                TO ZN31F2-FC
+088200         END-IF
+088300     ELSE
+088400     IF (ZN31F2-FC                   = "-")
+               IF (ZN31F2-BEN-PLAN-TYPE (1) = SPACES)
+                   MOVE 11 TO CRT-MSG-NBR
+                   GO TO 490-END
+               END-IF
+088500         MOVE ZN31F2-FILTER-INDEX (1)    TO I9
+088600         MOVE ZN31F2-BEN-PLAN-TYPE (1)   TO DB-PLAN-TYPE
+088700         MOVE ZN31F2-BEN-PLAN-CODE (1)   TO DB-PLAN-CODE
+088800     ELSE
+           IF  (ZN31F2-PT-I9 = ZEROES)
+           AND (ZN31F2-PT-PLAN-TYPE = SPACES)
+           AND (ZN31F2-PT-PLAN-CODE = SPACES)
+               INITIALIZE ZN31F2-DETAIL-GROUP
+               MOVE 1                      TO I9
+               MOVE ZN31F2-WS-PLAN-TYPE (I9)  TO DB-PLAN-TYPE
+               INITIALIZE DB-PLAN-CODE
+               IF (ZN31F2-FC = "-")
+                   MOVE "+"                TO ZN31F2-FC
+               END-IF
+           ELSE
+088900         MOVE ZN31F2-PT-I9           TO I9
+089000         MOVE ZN31F2-PT-PLAN-TYPE    TO DB-PLAN-TYPE
+089100         MOVE ZN31F2-PT-PLAN-CODE    TO DB-PLAN-CODE.
+089200
+089300     SET ZN31WS-RECORD-NOT-FOUND     TO TRUE.
+089400
+089500     PERFORM 850-FIND-NLT-PLNSET1.
+089600     PERFORM 620-FIND-NEXT-PLAN
+089700     THRU    620-END
+089800         UNTIL (I9                   > ZN31WS-LAST-PLAN-NBR)
+089900         OR    (ZN31WS-RECORD-FOUND).
+090000     IF (ZN31F2-FC                   = "-")
+090100         SET ZN31WS-RECORD-NOT-FOUND TO TRUE
+090200         PERFORM 870-FIND-PREV-PLNSET1
+090300         PERFORM 630-FIND-PREV-PLAN
+090400         THRU    630-END
+090500             UNTIL (I9               < 1)
+090600             OR    (ZN31WS-RECORD-FOUND).
+090700
+090800     IF (ZN31F2-FC = "-" OR "+")
+090900         IF  ((ZN31F2-FC             = "+")
+091000         AND  (I9                    > ZN31WS-LAST-PLAN-NBR))
+091100         OR  ((ZN31F2-FC             = "-")
+091200         AND  (I9                    < 1))
+091300             MOVE 1                  TO I9
+091400             MOVE 11                 TO CRT-ERROR-NBR
+091500             MOVE ZN31F2-FC-FN       TO CRT-FIELD-NBR
+091600             GO TO 490-END.
+091700
+091800     IF (ZN31F2-FC                   = "-")
+091900         MOVE ZN31WS-MAX-DTL2        TO I1
+092000     ELSE
+092100         MOVE 1                      TO I1.
+092200
+092300     INITIALIZE ZN31F2-PT-PLAN-TYPE
+092400                ZN31F2-PT-PLAN-CODE.
+092500
+092600     IF (ZN31F2-FC = "-")
+092700         MOVE ZN31F2-BEN-PLAN-TYPE (1)   TO ZN31F2-PT-PLAN-TYPE
+092800         MOVE ZN31F2-BEN-PLAN-CODE (1)   TO ZN31F2-PT-PLAN-CODE
+092900         MOVE ZN31F2-FILTER-INDEX (1)    TO ZN31F2-PT-I9
+093000         INITIALIZE ZN31F2-DETAIL-GROUP
+093100         PERFORM 610-MOVE-DTL-TO-SCREEN
+093200         THRU    610-END
+093300             UNTIL  (I1              < 1)
+093400             OR     (I9              < 1)
+093500
+093600         IF (I9                      < 1)
+093700             MOVE CRT-INQ-COMPLETE   TO CRT-MESSAGE
+093800         ELSE
+093900             MOVE CRT-MORE-RECS      TO CRT-MESSAGE
+094000         END-IF
+094100     ELSE
+094200         INITIALIZE ZN31F2-DETAIL-GROUP
+094300         PERFORM 610-MOVE-DTL-TO-SCREEN
+094400         THRU    610-END
+094500             UNTIL  (I1              > ZN31WS-MAX-DTL2)
+094600             OR     (I9              > ZN31WS-LAST-PLAN-NBR)
+094700
+094800         IF (I9                      > ZN31WS-LAST-PLAN-NBR)
+094900             MOVE ZN31F2-WS-PLAN-TYPE (1)
+095000                                     TO ZN31F2-PT-PLAN-TYPE
+095100             INITIALIZE ZN31F2-PT-PLAN-CODE
+095200             MOVE 1                  TO ZN31F2-PT-I9
+095300             MOVE CRT-INQ-COMPLETE   TO CRT-MESSAGE
+095400         ELSE
+095500             MOVE ZN31F2-FILTER-INDEX (09)
+095600                                     TO ZN31F2-PT-I9
+095700             MOVE PLN-PLAN-TYPE      TO ZN31F2-PT-PLAN-TYPE
+095800             MOVE PLN-PLAN-CODE      TO ZN31F2-PT-PLAN-CODE
+095900             MOVE CRT-MORE-RECS      TO CRT-MESSAGE.
+096000
+096100 490-END.
+096200
+096300******************************************************************
+096400 500-MOVE-BEN-SCR-TO-WS.
+096500******************************************************************
+096600
+096700     INITIALIZE BNBEN-DETAIL-GROUP.   
+096800 
+096900     MOVE ZN31F2-FC                  TO BNBEN-FC.
+097000     MOVE ZN31F2-FC-FN               TO BNBEN-FC-FN.
+097100     MOVE ZN31F2-BEN-COMPANY         TO BNBEN-COMPANY.
+097200     MOVE ZN31F2-BEN-COMPANY-FN      TO BNBEN-COMPANY-FN.
+097300     MOVE ZN31F2-ENROLLMENT-DATE     TO BNBEN-ENROLLMENT-DATE.
+097400     MOVE ZN31F2-ENROLLMENT-DATE-FN  TO BNBEN-ENROLLMENT-DATE-FN.
+097500     MOVE ZN31WS-MAX-DTL2            TO BNBEN-NBR-LINES.
+097600
+097700     MOVE "Y"                        TO BNBEN-USE-NAVIGATE-SW.
+097800
+097900     PERFORM 510-MOVE-TO-BNBEN-DTL
+098000     THRU    510-END
+098100         VARYING I2 FROM 1 BY 1
+098200         UNTIL  (I2 > ZN31WS-MAX-DTL2).
+098300 
+098400 500-END.
+098500
+098600******************************************************************
+098700 510-MOVE-TO-BNBEN-DTL.
+098800******************************************************************
+098900
+099000     MOVE ZN31F2-LINE-FC (I2)        TO BNBEN-LINE-FC (I2).
+099100     MOVE ZN31F2-LINE-FC-FN (I2)     TO BNBEN-LINE-FC-FN (I2).
+099200     MOVE ZN31F2-BEN-EMPLOYEE        TO BNBEN-EMPLOYEE (I2).
+099300     MOVE ZN31F2-BEN-EMPLOYEE-FN     TO BNBEN-EMPLOYEE-FN (I2).
+099400     MOVE ZN31F2-BEN-PLAN-TYPE (I2)  TO BNBEN-PLAN-TYPE (I2).
+099500     MOVE ZN31F2-BEN-PLAN-TYPE-FN (I2)
+099600                                     TO BNBEN-PLAN-TYPE-FN (I2).
+099700     MOVE ZN31F2-BEN-PLAN-CODE (I2)  TO BNBEN-PLAN-CODE (I2).
+099800     MOVE ZN31F2-BEN-PLAN-CODE-FN (I2)
+099900                                     TO BNBEN-PLAN-CODE-FN (I2).
+100000     MOVE ZN31F2-BEN-START-DATE (I2) TO BNBEN-START-DATE (I2).
+100100     MOVE ZN31F2-BEN-START-DATE-FN (I2)
+100200                                     TO BNBEN-START-DATE-FN (I2).
+100300     MOVE ZN31F2-BEN-STOP-DATE (I2)  TO BNBEN-STOP-DATE (I2).
+100400     MOVE ZN31F2-BEN-STOP-DATE-FN (I2)
+100500                                     TO BNBEN-STOP-DATE-FN (I2).
+100600     MOVE ZN31F2-BEN-COV-OPTION (I2) TO BNBEN-COVER-OPT (I2).
+100700     MOVE ZN31F2-BEN-COV-OPTION-FN (I2)
+100800                                     TO BNBEN-COVER-OPT-FN (I2).
+100900     MOVE ZN31F2-BEN-MULTIPLE (I2)   TO BNBEN-MULT-SALARY (I2).
+101000     MOVE ZN31F2-BEN-MULTIPLE-FN (I2)
+101100                                     TO BNBEN-MULT-SALARY-FN (I2).
+101200     MOVE ZN31F2-BEN-COVER-AMT (I2)  TO BNBEN-COVER-AMT (I2).
+101300     MOVE ZN31F2-BEN-COVER-AMT-FN (I2)
+101400                                     TO BNBEN-COVER-AMT-FN (I2).
+101500     MOVE ZN31F2-BEN-PAY-RATE (I2)   TO BNBEN-PAY-RATE (I2).
+101600     MOVE ZN31F2-BEN-PAY-RATE-FN (I2) 
+101700                                     TO BNBEN-PAY-RATE-FN (I2).
+101800     MOVE ZN31F2-BEN-PCT-AMT-FLAG (I2)
+101900                                     TO BNBEN-PCT-AMT-FLAG (I2).
+102000     MOVE ZN31F2-BEN-PCT-AMT-FLAG-FN (I2)
+102100                                    TO BNBEN-PCT-AMT-FLAG-FN (I2).
+102200     MOVE ZN31F2-PRE-CONT-TAX-STS (I2)
+102300                                     TO BNBEN-PRE-AFT-FLAG (I2).
+102400     MOVE ZN31F2-PRE-CONT-TAX-STS-FN (I2)
+102500                                    TO BNBEN-PRE-AFT-FLAG-FN (I2).
+102600     MOVE ZN31F2-BEN-SMOKER (I2)     TO BNBEN-SMOKER-FLAG (I2).
+102700     MOVE ZN31F2-BEN-SMOKER-FN (I2)  TO BNBEN-SMOKER-FLAG-FN (I2).
+           MOVE ZN31F2-BEN-PEND-EVIDENCE (I2)
+                                           TO BNBEN-PEND-EVIDENCE (I2).
+102800     MOVE ZN31F2-BEN-EMP-PRE-CONT (I2)
+102900                                     TO BNBEN-EMP-PRE-CONT (I2).
+103000     MOVE ZN31F2-BEN-EMP-PRE-CONT-FN (I2)
+103100                                   TO BNBEN-EMP-PRE-CONT-FN (I2).
+103200     MOVE ZN31F2-BEN-EMP-AFT-CONT (I2)
+103300                                     TO BNBEN-EMP-AFT-CONT (I2).
+103400     MOVE ZN31F2-BEN-EMP-AFT-CONT-FN (I2)
+103500                                   TO BNBEN-EMP-AFT-CONT-FN (I2).
+015500     MOVE ZN31F2-HUT-CREATE-TRANS (I2) TO BNBEN-CREATE-TRANS(I2).
+015600     MOVE ZN31F2-HUT-CREATE-TRANS-FN (I2)
+015700                                    TO BNBEN-CREATE-TRANS-FN (I2).
+015500     MOVE ZN31F2-HUT-REASON (I2)    TO BNBEN-REASON (I2).
+015600     MOVE ZN31F2-HUT-REASON-FN (I2) TO BNBEN-REASON-FN (I2).
+015500     MOVE ZN31F2-HUT-MEMBER-ID (I2) TO BNBEN-MEMBER-ID (I2).
+015600     MOVE ZN31F2-HUT-MEMBER-ID-FN (I2) TO BNBEN-MEMBER-ID-FN (I2).
+103600
+103700 510-END.
+103800
+103900******************************************************************
+104000 530-MOVE-WS-TO-SCR.
+104100******************************************************************
+104200
+104300     MOVE BNBEN-FC                   TO ZN31F2-FC.
+104400     MOVE BNBEN-COMPANY              TO ZN31F2-BEN-COMPANY.
+104500     MOVE BNBEN-ENROLLMENT-DATE      TO ZN31F2-ENROLLMENT-DATE.
+104600     MOVE PRS-NAME                   TO ZN31F2-PRS-NAME.
+104700
+104800     PERFORM 540-BNBEN-DTL-TO-SCREEN
+104900     THRU    540-END
+105000         VARYING I2 FROM 1 BY 1
+105100         UNTIL  (I2 > ZN31WS-MAX-DTL2).
+105200
+105300 530-END.
+105400
+105500******************************************************************
+105600 540-BNBEN-DTL-TO-SCREEN.
+105700******************************************************************
+105800
+105900     IF (BNBEN-LINE-FC (I2)      = SPACES)
+106000         GO TO 540-END.
+106100
+106200     INITIALIZE ZN31F2-LINE-FC (I2)
+106300                ZN31F2-LINE-FC-FN (I2).
+106400
+106500     MOVE BNBEN-COVER-OPT (I2)   TO ZN31F2-BEN-COV-OPTION (I2).
+106600     MOVE BNBEN-COVER-OPT-FN (I2)
+106700                                 TO ZN31F2-BEN-COV-OPTION-FN (I2).
+106800     MOVE BNBEN-MULT-SALARY (I2) TO ZN31F2-BEN-MULTIPLE (I2).
+106900     MOVE BNBEN-COVER-AMT (I2)   TO ZN31F2-BEN-COVER-AMT (I2).
+107000     MOVE BNBEN-PAY-RATE (I2)    TO ZN31F2-BEN-PAY-RATE (I2).
+107100     MOVE BNBEN-PAY-RATE-FN (I2) TO ZN31F2-BEN-PAY-RATE-FN (I2).
+107200     MOVE BNBEN-PCT-AMT-FLAG (I2)
+107300                                 TO ZN31F2-BEN-PCT-AMT-FLAG (I2).
+107400     MOVE BNBEN-START-DATE (I2)  TO ZN31F2-BEN-START-DATE (I2).
+107500     MOVE BNBEN-START-DATE-FN (I2)
+107600                                 TO ZN31F2-BEN-START-DATE-FN (I2).
+107700     MOVE BNBEN-PRE-AFT-FLAG (I2)
+107800                                 TO ZN31F2-PRE-CONT-TAX-STS (I2).
+107900     MOVE BNBEN-SMOKER-FLAG (I2) TO ZN31F2-BEN-SMOKER (I2).
+           MOVE BNBEN-PEND-EVIDENCE (I2)
+                                       TO ZN31F2-BEN-PEND-EVIDENCE (I2).
+108000     MOVE BNBEN-EMP-PRE-CONT (I2)
+108100                                 TO ZN31F2-BEN-EMP-PRE-CONT (I2).
+108200     MOVE BNBEN-EMP-PRE-CONT-FN (I2)
+108300                                 TO
+108400                                 ZN31F2-BEN-EMP-PRE-CONT-FN (I2).
+108500     MOVE BNBEN-EMP-AFT-CONT (I2)
+108600                                 TO ZN31F2-BEN-EMP-AFT-CONT (I2).
+108700     MOVE BNBEN-EMP-AFT-CONT-FN (I2)
+108800                                 TO
+108900                                 ZN31F2-BEN-EMP-AFT-CONT-FN (I2).
+109000     MOVE BNBEN-STOP-DATE (I2)   TO ZN31F2-BEN-STOP-DATE (I2).
+109100     MOVE BNBEN-STOP-DATE-FN (I2)
+109200                                 TO ZN31F2-BEN-STOP-DATE-FN (I2).
+109300
+015500     MOVE BNBEN-CREATE-TRANS (I2) TO ZN31F2-HUT-CREATE-TRANS (I2).
+015500     MOVE BNBEN-REASON (I2)       TO ZN31F2-HUT-REASON (I2).
+015500     MOVE BNBEN-MEMBER-ID (I2)    TO ZN31F2-HUT-MEMBER-ID (I2).
+
+109400     MOVE BNBEN-COMPANY          TO DB-COMPANY.
+109500     MOVE BNBEN-PLAN-TYPE (I2)   TO DB-PLAN-TYPE.
+109600     MOVE BNBEN-PLAN-CODE (I2)   TO DB-PLAN-CODE.
+109700     PERFORM 840-FIND-PLNSET1.
+109800
+109900     IF (PLN-COVERAGE-TYPE       NOT = "0")
+110300         MOVE "E"                TO DB-COVER-TYPE
+110400         IF (PLN-COVERAGE-TYPE   = "1")
+110500             MOVE BNBEN-COVER-OPT (I2)  TO DB-COVERAGE-OPT
+110600             PERFORM 840-FIND-COPSET1
+110700         ELSE
+110800             MOVE BNBEN-COV-UPD-DT (I2) TO DB-START-DATE
+110900             MOVE BNBEN-COV-GROUP  (I2) TO DB-GROUP-NAME
+111000             PERFORM 840-FIND-CVRSET1
+111100         END-IF
+111200         MOVE BNBEN-EMPLOYEE(I2) TO DB-EMPLOYEE
+111300         MOVE EMDSET1-EMPLOYEE   TO WS-DB-BEG-RNG
+111400         PERFORM 850-FIND-BEGRNG-EMDSET1
+111500         IF (EMDEPEND-FOUND)
+111600             IF  ((PLN-PLAN-TYPE     = "HL")
+111700             AND  (BNC-DEP-HEALTH    = "Y"))
+111800             OR  ((PLN-PLAN-TYPE     = "DN")
+111900             AND  (BNC-DEP-DENTAL    = "Y"))
+112000             OR  ((PLN-PLAN-TYPE     = "DL")
+112100             AND  (BNC-DEP-DEP-LIFE  = "Y"))
+112200                 IF  ((PLN-COVERAGE-TYPE  = "1")
+112300                 AND  (COP-COV-DEPENDENTS = "S" OR "D" OR "B"))
+112400                 OR  ((PLN-COVERAGE-TYPE  = "2")
+112500                 AND  (CVR-LIFE-ADD-FLG   = "S" OR "D" OR "B"))
+112600                     MOVE "BNMSG"         TO CRT-ERROR-CAT
+112700                     MOVE 183             TO CRT-MSG-NBR
+112800                     PERFORM 790-GET-MSG
+112900                     MOVE CRT-MESSAGE     TO ZN31F2-DEP (I2).
+113000
+113100     IF (PLN-INV-DIST-FLG        = "Y")
+113200     OR (PLN-PLAN-OPTION         = 4 OR 5 OR 6 OR 7)
+113300         MOVE "BNMSG"            TO CRT-ERROR-CAT
+113400         MOVE 197                TO CRT-MSG-NBR
+113500         PERFORM 790-GET-MSG
+113600         MOVE CRT-MESSAGE        TO ZN31F2-INV (I2).
+113700
+           IF (BNBEN-ADDED-BENEFITS-SW (I2) = "Y")
+027700         MOVE "BNMSG"            TO CRT-ERROR-CAT
+027800         MOVE 199                TO CRT-MSG-NBR
+027900         PERFORM 790-GET-MSG
+028000         MOVE CRT-MESSAGE        TO ZN31F2-ADDED-BEN (I2).
+
+113800 540-END.
+113900
+114000******************************************************************
+114100 600-MOVE-TO-SCREEN.
+114200******************************************************************
+114300
+114400     MOVE PRS-NAME               TO ZN31F2-PRS-NAME.
+114500
+114600     MOVE EMP-LAST-NAME          TO HRWS-LAST-NAME.
+114700     MOVE EMP-FIRST-NAME         TO HRWS-FIRST-NAME.
+114800     MOVE EMP-MIDDLE-INIT        TO HRWS-MIDDLE-INIT.
+           MOVE EMP-NAME-SUFFIX        TO HRWS-NAME-SUFFIX.
+           MOVE EMP-LAST-NAME-PRE      TO HRWS-LAST-NAME-PRE.
+114900     PERFORM 750-HR-FORMAT-NAME.
+115000     MOVE HRWS-FORMAT-NAME       TO ZN31F2-EMP-SHORT-NAME.
+115100
+           
+           MOVE PRS-COMPANY               TO DB-COMPANY.
+           MOVE SPACES                    TO DB-COUNTRY-CD-REQ.
+           MOVE HREMP-FICA-NBR-DN         TO DB-FLD-NBR.
+           PERFORM 840-FIND-PASSET1.
+           IF (PASCRTY-FOUND)
+               MOVE PAS-SEC-LEVEL         TO HRWS-SEC-LEVEL
+               PERFORM 730-HR-FIELD-SECURITY
+               IF (HRWS-FLD-SECURED)
+                   MOVE SPACES            TO ZN31F2-EMP-FICA-NBR
+               ELSE
+                   MOVE EMP-FICA-NBR      TO ZN31F2-EMP-FICA-NBR.
+
+115300
+115400 600-END.
+115500
+115600******************************************************************
+115700 610-MOVE-DTL-TO-SCREEN.
+115800******************************************************************
+115900
+116000     IF (PLN-FLEX-PLAN               NOT = SPACES)
+116100         MOVE PLN-COMPANY            TO DB-COMPANY
+116200         MOVE PLN-FLEX-PLAN          TO DB-FLEX-PLAN
+116300         PERFORM 840-FIND-FLPSET1.
+116400
+116500     SET ZN31WS-RECORD-NOT-FOUND     TO TRUE.
+116600
+116700     IF  (ZN31WS-NO-FILTER)
+116800     AND (NAV-NOTFOUND)
+116900         MOVE PLN-COMPANY            TO BNPEWS-COMPANY
+117000         MOVE PLN-PLAN-TYPE          TO BNPEWS-PLAN-TYPE
+117100         MOVE PLN-PLAN-CODE          TO BNPEWS-PLAN-CODE
+117200         MOVE ZN31F2-BEN-EMPLOYEE    TO BNPEWS-EMPLOYEE
+117300         MOVE "E"                    TO BNPEWS-COVER-TYPE
+AI0010         MOVE ZN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE
+117400         PERFORM 5000-EDIT-GROUP-N-ZIP-70
+117500         IF (ERROR-FOUND)
+117600             INITIALIZE CRT-ERROR-NBR
+117700             GO TO 610-FIND-NEXT-PLAN
+117800         END-IF
+117900         IF  (PLN-FLEX-PLAN          NOT = SPACES)
+118000         AND (ZN31WS-FLEX-PLAN       NOT = PLN-FLEX-PLAN)
+118100         AND (FLP-SPEND-ONLY         = "N")
+118200             GO TO 610-FIND-NEXT-PLAN.
+118300
+118400*
+118500**** CALCULATE ELIGIBILITY DATE
+118600*
+118700     MOVE PLN-COMPANY                TO BNEDWS-COMPANY.
+118800     MOVE PLN-PLAN-TYPE              TO BNEDWS-PLAN-TYPE.
+118900     MOVE PLN-PLAN-CODE              TO BNEDWS-PLAN-CODE.
+119000     MOVE ZN31F2-BEN-EMPLOYEE        TO BNEDWS-EMPLOYEE.
+119100     MOVE ZN31F2-ENROLLMENT-DATE     TO BNEDWS-AS-OF-DATE.
+119200     PERFORM 5000-ELIGIBILITY-DATE-CALC-70.
+119300     IF (ERROR-FOUND)
+119400         PERFORM 612-SET-ERROR-MESSAGE
+119500         THRU    612-END
+119600         GO TO 610-CONTINUE.
+119700
+119800*
+119900**** CALL PLAN ELIGIBILITY SECTION WHICH VALIDATES START DATE
+120000*
+120100     MOVE BNEDWS-ELIGIBILITY-DATE    TO BNPEWS-START-DATE.
+120200     PERFORM 5000-EDIT-PLAN-START-DATE-70.
+120300     IF (ERROR-FOUND)
+120400         IF  (PLN-STOP-DATE          NOT = ZEROES)
+120500         AND (BNPEWS-START-DATE      > PLN-STOP-DATE)
+120600             INITIALIZE                ZN31F2-ERROR-WINDOW (I1)
+120700                                       CRT-ERROR-NBR
+120800************ Eligibility date > than plan stop date
+120900             GO TO 610-FIND-NEXT-PLAN
+121000         ELSE
+121100             PERFORM 612-SET-ERROR-MESSAGE
+121200             THRU    612-END.
+121300
+121400 610-CONTINUE.
+121500     MOVE PLN-PLAN-TYPE              TO ZN31F2-BEN-PLAN-TYPE (I1).
+121600     MOVE PLN-PLAN-CODE              TO ZN31F2-BEN-PLAN-CODE (I1).
+121700     MOVE PLN-DISPLAY-DESC           TO
+121800                                     ZN31F2-PLN-DISPLAY-DESC (I1).
+121900     MOVE BNEDWS-ELIGIBILITY-DATE    TO ZN31F2-ELIGIBLE-DATE (I1).
+122000
+122100     PERFORM 618-CHECK-BENEFIT
+122200     THRU    618-END.
+122300     IF (BENEFIT-FOUND)
+122400         MOVE "*"                    TO ZN31F2-EXISTS-FLAG (I1).
+122500
+122600     MOVE "BNMSG"                    TO CRT-ERROR-CAT.
+122700     MOVE 182                        TO CRT-MSG-NBR.
+122800     PERFORM 790-GET-MSG.
+122900     MOVE CRT-MESSAGE                TO ZN31F2-MORE-TAB (I1).
+123000
+           INITIALIZE ZN31F2-HIPAA-TAB (I1).
+           IF (PLN-PLAN-TYPE               = "HL" OR "DN" OR "DI"
+                                          OR "EL" OR "DL")
+122600         MOVE "BNMSG"                TO CRT-ERROR-CAT
+122700         MOVE 206                    TO CRT-MSG-NBR
+122800         PERFORM 790-GET-MSG
+122900         MOVE CRT-MESSAGE            TO ZN31F2-HIPAA-TAB (I1).
+123000
+123100     MOVE I9                         TO ZN31F2-FILTER-INDEX (I1).
+123200
+           INITIALIZE ZN31F2-HUT-CREATE-TRANS (I1).
+
+           MOVE BNBEN-SYSTEM               TO DB-SYSTEM.
+           MOVE BNBEN-RELEASE              TO DB-RELEASE.
+           MOVE BNBEN-REL-LEVEL            TO DB-REL-LEVEL.
+           MOVE BNBEN-PLN-KEY1             TO DB-KEY1.
+           MOVE PLN-COMPANY                TO DB-KEY2.
+           MOVE PLN-PLAN-TYPE              TO DB-KEY3.
+           MOVE PLN-PLAN-CODE              TO DB-KEY4.
+           INITIALIZE DB-KEY5
+                      DB-KEY6
+                      DB-KEY7
+                      DB-KEY8
+                      DB-SEQ-NUMBER.
+           PERFORM 840-FIND-HUTSET1.
+           IF (HRUTILITY-FOUND)
+               MOVE HUT-DATA               TO BNBEN-HUT-PLN-DATA
+               MOVE BNBEN-PLN-CREATE-TRANS TO
+                                           ZN31F2-HUT-CREATE-TRANS (I1).
+
+123300     IF (ZN31F2-FC                   = "-")
+123400         SUBTRACT 1                  FROM I1
+123500     ELSE
+123600         ADD 1                       TO I1.
+123700
+123800 610-FIND-NEXT-PLAN.
+123900     IF  (ZN31WS-NO-FILTER)
+124000     AND (NAV-NOTFOUND)
+124100         PERFORM 614-NO-FILTER-NEXT-PREV
+124200         THRU    614-END
+124300     ELSE
+124400         PERFORM 616-FILTER-NEXT-PREV
+124500         THRU    616-END.
+124600
+124700 610-END.
+124800
+124900******************************************************************
+125000 612-SET-ERROR-MESSAGE.
+125100******************************************************************
+125200
+125300     PERFORM 790-GET-ERROR-MSG.
+125400     MOVE CRT-ERROR-MSG          TO ZN31F2-ERROR-MESSAGE (I1).
+125500     INITIALIZE CRT-ERROR-MSG.
+125600
+125700     MOVE "BNMSG"                TO CRT-ERROR-CAT.
+125800     MOVE 187                    TO CRT-MSG-NBR.
+125900     PERFORM 790-GET-MSG.
+126000     MOVE CRT-MESSAGE            TO ZN31F2-ERROR-WINDOW (I1).
+126100     INITIALIZE CRT-ERROR-NBR.
+126200
+126300 612-END.
+126400
+126500******************************************************************
+126600 614-NO-FILTER-NEXT-PREV.
+126700******************************************************************
+126800
+126900     IF (ZN31F2-FC = "-")
+127000         PERFORM 870-FIND-PREV-PLNSET1
+127100         PERFORM 630-FIND-PREV-PLAN
+127200         THRU    630-END
+127300             UNTIL (PLAN-NOTFOUND)
+127400             OR    (PLN-COMPANY      NOT = ZN31F2-BEN-COMPANY)
+127500             OR    (ZN31WS-RECORD-FOUND)
+127600     ELSE
+127700         PERFORM 860-FIND-NEXT-PLNSET1
+127800         PERFORM 620-FIND-NEXT-PLAN
+127900         THRU    620-END
+128000             UNTIL (PLAN-NOTFOUND)
+128100             OR    (PLN-COMPANY      NOT = ZN31F2-BEN-COMPANY)
+128200             OR    (ZN31WS-RECORD-FOUND).
+128300
+128400 614-END.
+128500
+128600******************************************************************
+128700 616-FILTER-NEXT-PREV.
+128800******************************************************************
+128900
+129000     IF (ZN31F2-FC = "-")
+129100         PERFORM 870-FIND-PREV-PLNSET1
+129200         PERFORM 630-FIND-PREV-PLAN
+129300         THRU    630-END
+129400             UNTIL (I9               < 1)
+129500             OR    (ZN31WS-RECORD-FOUND)
+129600     ELSE
+129700         PERFORM 860-FIND-NEXT-PLNSET1
+129800         PERFORM 620-FIND-NEXT-PLAN
+129900         THRU    620-END
+130000             UNTIL (I9               > ZN31WS-LAST-PLAN-NBR)
+130100             OR    (ZN31WS-RECORD-FOUND).
+130200
+130300 616-END.
+130400
+130500******************************************************************
+130600 618-CHECK-BENEFIT.
+130700******************************************************************
+130800
+130900     MOVE ZN31F2-BEN-COMPANY         TO DB-COMPANY.
+131000     MOVE ZN31F2-BEN-EMPLOYEE        TO DB-EMPLOYEE.
+131100     MOVE ZN31F2-BEN-PLAN-TYPE (I1)  TO DB-PLAN-TYPE.
+131200     MOVE ZN31F2-BEN-PLAN-CODE (I1)  TO DB-PLAN-CODE.
+131300     MOVE BENSET3-PLAN-CODE          TO WS-DB-BEG-RNG.
+131400     PERFORM 850-FIND-BEGRNG-BENSET3.
+131500     PERFORM
+131600         UNTIL (BENEFIT-NOTFOUND)
+131700         OR    ((BEN-START-DATE      <= ZN31F2-ENROLLMENT-DATE)
+131800         AND  (((BEN-STOP-DATE       >= ZN31F2-ENROLLMENT-DATE) 
+131900         AND    (BEN-STOP-DATE       NOT = ZEROES))
+132000         OR     (BEN-STOP-DATE       = ZEROES)))
+132100         OR    (BEN-START-DATE       > ZN31F2-ENROLLMENT-DATE)
+132200
+132300         PERFORM 860-FIND-NXTRNG-BENSET3
+132400     END-PERFORM.
+132500
+132600 618-END.
+132700
+132800******************************************************************
+132900 620-FIND-NEXT-PLAN.
+133000******************************************************************
+133100
+
+P96856 620-BEGIN.
+
+133200     IF (ZN31WS-FILTER)
+133300     OR (NAV-FOUND)
+133400         IF (PLAN-NOTFOUND)
+133500         OR (PLN-COMPANY         NOT = ZN31F2-BEN-COMPANY)
+133600         OR (PLN-PLAN-TYPE       NOT = ZN31F2-WS-PLAN-TYPE (I9))
+133700             ADD 1               TO I9
+133800             IF (I9              <= ZN31WS-LAST-PLAN-NBR)
+133900                 MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY
+134000                 MOVE ZN31F2-WS-PLAN-TYPE (I9)  TO DB-PLAN-TYPE
+134100                 INITIALIZE DB-PLAN-CODE
+134200                 PERFORM 850-FIND-NLT-PLNSET1
+134300                 IF (PLAN-NOTFOUND)
+134400                 OR (PLN-COMPANY   NOT = ZN31F2-BEN-COMPANY)
+134500                 OR (PLN-PLAN-TYPE NOT = ZN31F2-WS-PLAN-TYPE (I9))
+P96856*                   GO TO 620-FIND-NEXT-PLAN
+P96856                    GO TO 620-BEGIN
+134700                 END-IF
+134800             ELSE
+134900                 GO TO 620-END.
+135000
+135100     IF (PLN-FLEX-PLAN               NOT = SPACES)
+135200         MOVE PLN-COMPANY            TO DB-COMPANY
+135300         MOVE PLN-FLEX-PLAN          TO DB-FLEX-PLAN
+135400         PERFORM 840-FIND-FLPSET1.
+135500
+135600*
+135700**** CALL PLAN ELIGIBILITY SECTION WHICH VALIDATES ONLY
+135800**** GROUP & ZIP CODE
+135900*
+136000     MOVE PLN-COMPANY            TO BNPEWS-COMPANY.
+136100     MOVE PLN-PLAN-TYPE          TO BNPEWS-PLAN-TYPE.
+136200     MOVE PLN-PLAN-CODE          TO BNPEWS-PLAN-CODE.
+136300     MOVE ZN31F2-BEN-EMPLOYEE    TO BNPEWS-EMPLOYEE.
+136400     MOVE "E"                    TO BNPEWS-COVER-TYPE.
+AI0010     MOVE ZN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+136500     PERFORM 5000-EDIT-GROUP-N-ZIP-70.
+136600     IF (ERROR-FOUND)
+136700         INITIALIZE CRT-ERROR-NBR
+136800         GO TO 620-READ-NEXT-PLAN.
+136900
+137000     IF  (PLN-FLEX-PLAN          NOT = SPACES)
+137100     AND (ZN31WS-FLEX-PLAN       NOT = PLN-FLEX-PLAN)
+137200     AND (FLP-SPEND-ONLY         = "N")
+137300         GO TO 620-READ-NEXT-PLAN.
+137400
+137500*
+137600**** CALL PLAN ELIGIBILITY SECTION PASSING AS OF DATE
+137700**** WHICH WILL VALIDATE AS OF DATE VS PLAN STOP DATE
+137800*
+137900     MOVE ZN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+138000     PERFORM 5000-EDIT-PLAN-START-DATE-70.
+138100     IF (ERROR-FOUND)
+138200         INITIALIZE CRT-ERROR-NBR
+               IF  (PLN-STOP-DATE      NOT = ZEROES)
+               AND (BNPEWS-START-DATE  > PLN-STOP-DATE)
+138300             GO TO 620-READ-NEXT-PLAN.
+138400
+138500     MOVE PLN-COMPANY            TO BNEDWS-COMPANY.
+138600     MOVE PLN-PLAN-TYPE          TO BNEDWS-PLAN-TYPE.
+138700     MOVE PLN-PLAN-CODE          TO BNEDWS-PLAN-CODE.
+138800     MOVE ZN31F2-BEN-EMPLOYEE    TO BNEDWS-EMPLOYEE.
+138900     MOVE ZN31F2-ENROLLMENT-DATE TO BNEDWS-AS-OF-DATE.
+139000     PERFORM 5000-ELIGIBILITY-DATE-CALC-70.
+139100     IF (ERROR-FOUND)
+139200         INITIALIZE CRT-ERROR-NBR
+139300         GO TO 620-CONTINUE.
+139400
+139500*
+139600**** CALL PLAN ELIGIBILITY SECTION WHICH VALIDATES START DATE
+139700*
+139800     MOVE BNEDWS-ELIGIBILITY-DATE TO BNPEWS-START-DATE.
+139900     PERFORM 5000-EDIT-PLAN-START-DATE-70.
+140000     IF (ERROR-FOUND)
+140100         INITIALIZE CRT-ERROR-NBR
+140200         IF  (PLN-STOP-DATE      NOT = ZEROES)
+140300         AND (BNPEWS-START-DATE  > PLN-STOP-DATE)
+140400             GO TO 620-READ-NEXT-PLAN.
+140500
+140600 620-CONTINUE.
+140700     SET ZN31WS-RECORD-FOUND     TO TRUE.
+140800     GO TO 620-END.
+140900
+141000 620-READ-NEXT-PLAN.
+141100     PERFORM 860-FIND-NEXT-PLNSET1.
+141200
+141300 620-END.
+141400
+141500******************************************************************
+141600 630-FIND-PREV-PLAN.
+141700******************************************************************
+141800
+P96856 630-BEGIN.
+
+141900     IF (ZN31WS-FILTER)
+142000     OR (NAV-FOUND)
+142100         IF (PLAN-NOTFOUND)
+142200         OR (PLN-COMPANY         NOT = ZN31F2-BEN-COMPANY)
+142300         OR (PLN-PLAN-TYPE       NOT = ZN31F2-WS-PLAN-TYPE (I9))
+142400             SUBTRACT 1          FROM I9
+142500             IF (I9              >= 1)
+142600                 MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY
+142700                 MOVE ZN31F2-WS-PLAN-TYPE (I9)  TO DB-PLAN-TYPE
+142800                 MOVE HIGH-VALUES            TO DB-PLAN-CODE
+142900                 PERFORM 850-FIND-NLT-PLNSET1
+143000                 PERFORM 870-FIND-PREV-PLNSET1
+143100                 IF (PLAN-NOTFOUND)
+143200                 OR (PLN-COMPANY   NOT = ZN31F2-BEN-COMPANY)
+143300                 OR (PLN-PLAN-TYPE NOT = ZN31F2-WS-PLAN-TYPE (I9))
+P96856*                   GO TO 630-FIND-PREV-PLAN
+P96856                    GO TO 630-BEGIN
+143500                 END-IF
+143600             ELSE
+143700                 GO TO 630-END.
+143800
+143900     IF (PLN-FLEX-PLAN               NOT = SPACES)
+144000         MOVE PLN-COMPANY            TO DB-COMPANY
+144100         MOVE PLN-FLEX-PLAN          TO DB-FLEX-PLAN
+144200         PERFORM 840-FIND-FLPSET1.
+144300
+144400*
+144500**** CALL PLAN ELIGIBILITY SECTION WHICH VALIDATES ONLY
+144600**** GROUP & ZIP CODE
+144700*
+144800     MOVE PLN-COMPANY            TO BNPEWS-COMPANY.
+144900     MOVE PLN-PLAN-TYPE          TO BNPEWS-PLAN-TYPE.
+145000     MOVE PLN-PLAN-CODE          TO BNPEWS-PLAN-CODE.
+145100     MOVE ZN31F2-BEN-EMPLOYEE    TO BNPEWS-EMPLOYEE.
+145200     MOVE "E"                    TO BNPEWS-COVER-TYPE.
+AI0010     MOVE ZN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+145300     PERFORM 5000-EDIT-GROUP-N-ZIP-70.
+145400     IF (ERROR-FOUND)
+145500         INITIALIZE CRT-ERROR-NBR
+145600         GO TO 630-READ-PREV-PLAN.
+145700
+145800     IF  (PLN-FLEX-PLAN          NOT = SPACES)
+145900     AND (ZN31WS-FLEX-PLAN       NOT = PLN-FLEX-PLAN)
+146000     AND (FLP-SPEND-ONLY         = "N")
+146100         GO TO 630-READ-PREV-PLAN.
+146200
+146300*
+146400**** CALL PLAN ELIGIBILITY SECTION PASSING AS OF DATE
+146500**** WHICH WILL VALIDATE AS OF DATE VS PLAN STOP DATE
+146600*
+146700     MOVE ZN31F2-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+146800     PERFORM 5000-EDIT-PLAN-START-DATE-70.
+146900     IF (ERROR-FOUND)
+147000         INITIALIZE CRT-ERROR-NBR
+               IF  (PLN-STOP-DATE      NOT = ZEROES)
+               AND (BNPEWS-START-DATE  > PLN-STOP-DATE)
+147100             GO TO 630-READ-PREV-PLAN.
+147200
+147300     MOVE PLN-COMPANY            TO BNEDWS-COMPANY.
+147400     MOVE PLN-PLAN-TYPE          TO BNEDWS-PLAN-TYPE.
+147500     MOVE PLN-PLAN-CODE          TO BNEDWS-PLAN-CODE.
+147600     MOVE ZN31F2-BEN-EMPLOYEE    TO BNEDWS-EMPLOYEE.
+147700     MOVE ZN31F2-ENROLLMENT-DATE TO BNEDWS-AS-OF-DATE.
+147800     PERFORM 5000-ELIGIBILITY-DATE-CALC-70.
+147900     IF (ERROR-FOUND)
+148000         INITIALIZE CRT-ERROR-NBR
+148100         GO TO 630-CONTINUE.
+148200
+148300*
+148400**** CALL PLAN ELIGIBILITY SECTION WHICH VALIDATES START DATE
+148500*
+148600     MOVE BNEDWS-ELIGIBILITY-DATE TO BNPEWS-START-DATE.
+148700     PERFORM 5000-EDIT-PLAN-START-DATE-70.
+148800     IF (ERROR-FOUND)
+148900         INITIALIZE CRT-ERROR-NBR
+149000         IF  (PLN-STOP-DATE      NOT = ZEROES)
+149100         AND (BNPEWS-START-DATE  > PLN-STOP-DATE)
+149200             GO TO 630-READ-PREV-PLAN.
+149300
+149400 630-CONTINUE.
+149500     SET ZN31WS-RECORD-FOUND     TO TRUE.
+149600     GO TO 630-END.
+149700
+149800 630-READ-PREV-PLAN.
+149900     PERFORM 870-FIND-PREV-PLNSET1.
+150000
+150100 630-END.
+141500******************************************************************
+141600 640-FIND-USER-FIELDS.
+141700******************************************************************
+
+           MOVE "A-ROSTER CODE"           TO DB-FIELD-NAME.
+           PERFORM 840-FIND-HRUSET2.
+           IF (HRUSERFLDS-FOUND)
+              MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY
+              INITIALIZE DB-EMP-APP
+              MOVE ZN31F2-BEN-EMPLOYEE    TO DB-EMPLOYEE
+              MOVE HRU-FIELD-KEY          TO DB-FIELD-KEY
+              PERFORM 840-FIND-HEUSET1
+              IF (HREMPUSF-FOUND)
+                 PERFORM 
+                 VARYING I1 FROM 1 BY 1
+                 UNTIL (I1 > ZN31WS-MAX-DTL2)
+                    MOVE HEU-A-FIELD  TO ZN31F2-WEN-LCMS-ROSTER (I1)
+                 END-PERFORM
+              ELSE
+                 PERFORM 
+                 VARYING I1 FROM 1 BY 1
+                 UNTIL (I1 > ZN31WS-MAX-DTL2)
+                    MOVE SPACES      TO ZN31F2-WEN-LCMS-ROSTER (I1).
+
+           MOVE "A-SELF-EMPL SS PART"  TO DB-FIELD-NAME.
+           PERFORM 840-FIND-HRUSET2.
+           IF (HRUSERFLDS-FOUND)
+              MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY
+              INITIALIZE DB-EMP-APP
+              MOVE ZN31F2-BEN-EMPLOYEE    TO DB-EMPLOYEE
+              MOVE HRU-FIELD-KEY          TO DB-FIELD-KEY
+              PERFORM 840-FIND-HEUSET1
+              IF (HREMPUSF-FOUND)
+                 PERFORM 
+                 VARYING I1 FROM 1 BY 1
+                 UNTIL (I1 > ZN31WS-MAX-DTL2)
+                    MOVE HEU-A-FIELD  TO ZN31F2-WEN-SS-PARTIC (I1)
+                 END-PERFORM
+              ELSE
+                 PERFORM 
+                 VARYING I1 FROM 1 BY 1
+                 UNTIL (I1 > ZN31WS-MAX-DTL2)
+                    MOVE SPACES      TO ZN31F2-WEN-SS-PARTIC (I1).
+
+           MOVE ZN31F2-BEN-COMPANY     TO DB-COMPANY.
+           MOVE ZN31F2-BEN-EMPLOYEE    TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           IF (EMPLOYEE-FOUND)
+              PERFORM 
+              VARYING I1 FROM 1 BY 1
+              UNTIL (I1 > ZN31WS-MAX-DTL2)
+                 MOVE EMP-EMP-STATUS TO ZN31F2-WEN-EMP-STATUS (I1)
+                 MOVE EMP-PROCESS-LEVEL
+                        TO ZN31F2-WEN-PROCESS-LEVEL (I1)
+              END-PERFORM
+           ELSE
+              PERFORM 
+              VARYING I1 FROM 1 BY 1
+              UNTIL (I1 > ZN31WS-MAX-DTL2)
+                 MOVE SPACES    TO ZN31F2-WEN-EMP-STATUS (I1)
+                 MOVE SPACES    TO ZN31F2-WEN-PROCESS-LEVEL (I1).  
+                                     
+                                        
+       640-END.
+
+150200
+150300******************************************************************
+150400 ZN31S2-TRANSACTION-END.
+150500******************************************************************
+150600
+150700******************************************************************
+150800 ZN31S3-TRANSACTION              SECTION 10.
+150900******************************************************************
+151000 ZN31S3-START.
+151100
+151200     IF (NO-ERROR-FOUND)
+151300         PERFORM 400-PROCESS-TRAN
+151400         THRU    400-END.
+151500
+151600     GO TO ZN31S3-TRANSACTION-END.
+151700
+151800******************************************************************
+151900 400-PROCESS-TRAN.
+152000******************************************************************
+152100
+152200     MOVE CRT-WINDOW-CHANGED     TO CRT-MESSAGE.
+152300     MOVE CRT-RETURN-KNS         TO CRT-REQUEST.
+152400
+152500 400-END.
+152600
+152700******************************************************************
+152800 ZN31S3-TRANSACTION-END.
+152900******************************************************************
+153000
+150700******************************************************************
+150800 ZN31S4-TRANSACTION              SECTION 10.
+150900******************************************************************
+151000 ZN31S4-START.
+151100
+151200     IF (NO-ERROR-FOUND)
+151300         PERFORM 400-PROCESS-TRAN
+151400         THRU    400-END.
+151500
+151600     GO TO ZN31S4-TRANSACTION-END.
+151700
+151800******************************************************************
+151900 400-PROCESS-TRAN.
+152000******************************************************************
+152100
+           INITIALIZE I1
+                      ZN31WS-CREATION-DATE.
+
+           MOVE ZN31F4-BEN-COMPANY     TO DB-COMPANY.
+           MOVE ZN31F4-BEN-PLAN-TYPE   TO DB-PLAN-TYPE.
+           MOVE ZN31F4-BEN-PLAN-CODE   TO DB-PLAN-CODE.
+           PERFORM 840-FIND-PLNSET1.
+
+           MOVE ZN31F4-BEN-EMPLOYEE    TO DB-EMPLOYEE.
+           MOVE ZN31F4-BEN-START-DATE  TO DB-START-DATE.
+           MOVE 21991231               TO DBRNG-START-DATE.
+           MOVE BENSET4-START-DATE     TO WS-DB-SUB-RNG.
+           PERFORM 850-FIND-SUBRNG-BENSET4.
+           IF (BENEFIT-FOUND)
+               MOVE BEN-CREATION-DATE  TO ZN31WS-CREATION-DATE.
+           PERFORM
+               UNTIL (BENEFIT-NOTFOUND)
+               OR    (I1               > 15)
+
+               IF (BEN-CREATION-DATE   = ZN31WS-CREATION-DATE)
+                   PERFORM 410-MOVE-TO-SCREEN
+                   THRU    410-END
+               END-IF
+
+               PERFORM 860-FIND-NXTRNG-BENSET4
+           END-PERFORM.
+
+152200     MOVE CRT-INQ-COMPLETE       TO CRT-MESSAGE.
+152300     MOVE CRT-RETURN-KNS         TO CRT-REQUEST.
+152400
+152500 400-END.
+152600
+020800******************************************************************
+020900 410-MOVE-TO-SCREEN.
+021000******************************************************************
+021100
+           ADD 1                       TO I1.
+
+021500     MOVE BEN-EMPLOYEE           TO ZN31F4-ABEN-EMPLOYEE (I1).
+021500     MOVE BEN-PLAN-TYPE          TO ZN31F4-ABEN-PLAN-TYPE (I1).
+021500     MOVE BEN-PLAN-CODE          TO ZN31F4-ABEN-PLAN-CODE (I1).
+021500     MOVE BEN-START-DATE         TO ZN31F4-ABEN-START-DATE (I1).
+024100     MOVE BEN-STOP-DATE          TO ZN31F4-ABEN-STOP-DATE (I1).
+021500     MOVE BEN-COV-OPTION         TO ZN31F4-ABEN-COV-OPTION (I1).
+021900     MOVE BEN-COVER-AMT          TO ZN31F4-ABEN-COVER-AMT (I1).
+023100     MOVE BEN-EMP-PRE-CONT       TO ZN31F4-ABEN-EMP-PRE-CONT(I1).
+023600     MOVE BEN-EMP-AFT-CONT       TO ZN31F4-ABEN-EMP-AFT-CONT(I1).
+022200     MOVE BEN-PCT-AMT-FLAG       TO ZN31F4-ABEN-PCT-AMT-FLAG(I1).
+
+021800     MOVE BEN-MULTIPLE           TO ZN31F4-ABEN-MULTIPLE (I1).
+022000     MOVE BEN-PAY-RATE           TO ZN31F4-ABEN-PAY-RATE (I1).
+022700     MOVE BEN-PRE-AFT-FLAG       TO ZN31F4-APRE-CONT-TAX-STS(I1).
+022900     MOVE BEN-SMOKER             TO ZN31F4-ABEN-SMOKER (I1).
+024400
+           IF (PLN-CONTRIB-TYPE        = "5" OR "6" OR "7")
+               MOVE BEN-CYCLES-REMAIN  TO ZN31F4-ABEN-COV-OPTION (I1)
+               MOVE BEN-BOND-DED-AMT   TO ZN31F4-ABEN-COVER-AMT (I1).
+
+           IF (BEN-PLAN-TYPE           = "VA")
+               MOVE BEN-NBR-HOURS      TO ZN31F4-ABEN-MULTIPLE (I1).
+
+028900 410-END.
+029000
+152700******************************************************************
+152800 ZN31S4-TRANSACTION-END.
+152900******************************************************************
+153000
+150700******************************************************************
+150800 ZN31S5-TRANSACTION              SECTION 10.
+150900******************************************************************
+151000 ZN31S5-START.
+151100
+151200     IF (NO-ERROR-FOUND)
+151300         PERFORM 400-PROCESS-TRAN
+151400         THRU    400-END.
+151500
+151600     GO TO ZN31S5-TRANSACTION-END.
+151700
+151800******************************************************************
+151900 400-PROCESS-TRAN.
+152000******************************************************************
+152100
+           INITIALIZE I1
+                      ZN31WS-CREATION-DATE.
+
+           MOVE ZN31F5-BEN-COMPANY     TO DB-COMPANY.
+           MOVE ZN31F5-BEN-PLAN-TYPE   TO DB-PLAN-TYPE.
+           MOVE ZN31F5-BEN-PLAN-CODE   TO DB-PLAN-CODE.
+           PERFORM 840-FIND-PLNSET1.
+
+           MOVE ZN31F5-BEN-EMPLOYEE    TO DB-EMPLOYEE.
+           MOVE ZN31F5-BEN-START-DATE  TO DB-START-DATE.
+           MOVE 21991231               TO DBRNG-START-DATE.
+           MOVE BENSET4-START-DATE     TO WS-DB-SUB-RNG.
+           PERFORM 850-FIND-SUBRNG-BENSET4.
+           IF (BENEFIT-FOUND)
+               MOVE BEN-CREATION-DATE  TO ZN31WS-CREATION-DATE.
+           PERFORM
+               UNTIL (BENEFIT-NOTFOUND)
+               OR    (I1               > 15)
+
+               IF (BEN-CREATION-DATE   = ZN31WS-CREATION-DATE)
+                   PERFORM 410-MOVE-TO-SCREEN
+                   THRU    410-END
+               END-IF
+
+               PERFORM 860-FIND-NXTRNG-BENSET4
+           END-PERFORM.
+
+152200     MOVE CRT-INQ-COMPLETE       TO CRT-MESSAGE.
+152300     MOVE CRT-RETURN-KNS         TO CRT-REQUEST.
+152400
+152500 400-END.
+152600
+020800******************************************************************
+020900 410-MOVE-TO-SCREEN.
+021000******************************************************************
+021100
+           ADD 1                       TO I1.
+
+021500     MOVE BEN-PLAN-TYPE          TO ZN31F5-ABEN-PLAN-TYPE (I1).
+021500     MOVE BEN-PLAN-CODE          TO ZN31F5-ABEN-PLAN-CODE (I1).
+021500     MOVE BEN-START-DATE         TO ZN31F5-ABEN-START-DATE (I1).
+024100     MOVE BEN-STOP-DATE          TO ZN31F5-ABEN-STOP-DATE (I1).
+021500     MOVE BEN-COV-OPTION         TO ZN31F5-ABEN-COV-OPTION (I1).
+021900     MOVE BEN-COVER-AMT          TO ZN31F5-ABEN-COVER-AMT (I1).
+023100     MOVE BEN-EMP-PRE-CONT       TO ZN31F5-ABEN-EMP-PRE-CONT(I1).
+023600     MOVE BEN-EMP-AFT-CONT       TO ZN31F5-ABEN-EMP-AFT-CONT(I1).
+022200     MOVE BEN-PCT-AMT-FLAG       TO ZN31F5-ABEN-PCT-AMT-FLAG(I1).
+
+021800     MOVE BEN-MULTIPLE           TO ZN31F5-ABEN-MULTIPLE (I1).
+022000     MOVE BEN-PAY-RATE           TO ZN31F5-ABEN-PAY-RATE (I1).
+022700     MOVE BEN-PRE-AFT-FLAG       TO ZN31F5-APRE-CONT-TAX-STS(I1).
+022900     MOVE BEN-SMOKER             TO ZN31F5-ABEN-SMOKER (I1).
+024400
+           IF (PLN-CONTRIB-TYPE        = "5" OR "6" OR "7")
+               MOVE BEN-CYCLES-REMAIN  TO ZN31F5-ABEN-COV-OPTION (I1)
+               MOVE BEN-BOND-DED-AMT   TO ZN31F5-ABEN-COVER-AMT (I1).
+
+           IF (BEN-PLAN-TYPE           = "VA")
+               MOVE BEN-NBR-HOURS      TO ZN31F5-ABEN-MULTIPLE (I1).
+
+028900 410-END.
+029000
+152700******************************************************************
+152800 ZN31S5-TRANSACTION-END.
+152900******************************************************************
+153000

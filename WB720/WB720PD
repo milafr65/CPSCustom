@@ -1,0 +1,112 @@
+      ******************************************************************
+       050-EDIT-PARAMETERS             SECTION 10.
+      ******************************************************************
+       050-START.
+
+       050-END.
+
+      ******************************************************************
+       100-PROGRAM-CONTROL             SECTION 10.
+      ******************************************************************
+       100-START.
+
+           MOVE 052                    TO CRT-MSG-NBR.
+           PERFORM 780-DISPLAY-MSG.
+
+      *    PERFORM 900-BUILD-TMP-FILE-NAME.
+      *    UNSTRING WS-TMP-FILE        DELIMITED BY "/work"
+      *                                INTO WS-WORK-DIR.
+      *    STRING WS-WORK-DIR          DELIMITED BY SPACE
+      *           "/work/indata/"      DELIMITED BY SIZE
+      *           PRM-FILENAME         DELIMITED BY SPACE
+      *                                INTO WS-PRT-INPUT-FILE.
+
+           MOVE PRM-INVFILE            TO WS-PRT-INPUT-FILE.
+           MOVE PRM-COLDFILE           TO WS-PRT-OUTPUT-FILE.
+
+           PERFORM 1100-CREATE-INTERFACE.
+
+      *--- Rename the input file ---------------------------------------
+      *    STRING "mv "                DELIMITED BY SIZE
+      *           WS-PRT-INPUT-FILE    DELIMITED BY SPACE
+      *           " "                  DELIMITED BY SIZE
+      *           WS-PRT-INPUT-FILE    DELIMITED BY SPACE
+      *           "."                  DELIMITED BY SIZE
+      *           WS-SYSTEM-DATE-6     DELIMITED BY SIZE
+      *           HHMM                 DELIMITED BY SIZE
+      *           WS-CMD-END-MARK      DELIMITED BY SIZE
+      *                                INTO WS-MOVE-FILE-CMD.
+      *    INSPECT WS-MOVE-FILE-CMD REPLACING ALL "\" BY "/".
+      *    CALL "system" USING WS-MOVE-FILE-CMD
+      *                  GIVING WS-CMD-RETURN-CODE.
+      *    IF (WS-CMD-RETURN-CODE NOT = ZERO)
+      *        MOVE 056                TO CRT-MSG-NBR
+      *        PERFORM 780-PRINT-MSG
+      *        MOVE 99                 TO WS-RETURN-CODE
+      *        GO TO 100-END.
+      *    MOVE 057                    TO CRT-MSG-NBR.
+      *    MOVE PRM-FILENAME           TO CRT-ERR-VAR1.
+      *    MOVE WS-SYSTEM-DATE-6       TO CRT-ERR-VAR2.
+      *    MOVE HHMM                   TO CRT-ERR-VAR3.
+      *    PERFORM 780-DISPLAY-MSG.
+      *-----------------------------------------------------------------
+
+       100-END.
+
+      ******************************************************************
+       1100-CREATE-INTERFACE                     SECTION 50.
+      ******************************************************************
+       1100-START.
+
+           OPEN INPUT  PRTINPUT-FILE.
+           OPEN OUTPUT PRTOUTPUT-FILE.
+           MOVE WS-FALSE               TO WS-PRT-EOF-SW.
+
+           PERFORM 1120-READ-PRT-INPUT.
+           IF (WS-PRT-EOF)
+               MOVE 052                TO CRT-MSG-NBR
+               PERFORM 780-PRINT-MSG
+               GO TO 1100-END.
+
+           PERFORM 1110-WRITE-COLD-OUTPUT
+           THRU    1110-END
+             UNTIL (WS-PRT-EOF).
+
+           CLOSE PRTINPUT-FILE.
+           CLOSE PRTOUTPUT-FILE.
+
+           GO TO 1100-END.
+
+      ******************************************************************
+       1110-WRITE-COLD-OUTPUT.
+      ******************************************************************
+
+      *---DROP THE ESCAPE SEQUENCE REC AND ADD NEW REC WITH 1 IN COL 1
+           MOVE ZEROES                 TO WS-ESC-SEQ-FOUND-SW.
+           INSPECT IN-PRT-REC (1:40)   TALLYING WS-ESC-SEQ-FOUND-SW
+                                       FOR ALL WS-PRT-ESC-STRING.
+
+           IF (WS-ESC-SEQ-FOUND)
+               MOVE "1"                TO OUT-PRT-REC
+           ELSE
+      *        ---- SHIFT ANY OTHER LINE OVER 1 BYTE
+               MOVE SPACE              TO OUT-PRT-REC(1:1)
+               MOVE IN-PRT-REC         TO OUT-PRT-REC(2:199).
+
+           WRITE PRTOUTPUT-REC         FROM OUT-PRTOUTPUT-REC.
+
+           PERFORM 1120-READ-PRT-INPUT.
+
+       1110-END.
+
+      ******************************************************************
+       1120-READ-PRT-INPUT.
+      ******************************************************************
+
+           READ PRTINPUT-FILE          INTO IN-PRTINPUT-REC
+               AT END 
+               MOVE WS-TRUE    TO WS-PRT-EOF-SW.
+       
+      ******************************************************************
+       1100-END.
+      ******************************************************************

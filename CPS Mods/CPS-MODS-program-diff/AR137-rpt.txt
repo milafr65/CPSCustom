@@ -1,0 +1,233 @@
+< prod\arsrc\AR137.rpt
+> vnla\arsrc\AR137.rpt
+1c1
+< ******* AR137.rpt 5.1.3 <2306517517>
+---
+> ******* AR137.rpt 5.1.2 <3026401978>
+151a152,161
+> $GROUP     GN3D-ZERO-AMT
+> **************************************
+> $LEVEL     C
+> $FORMAT
+>           Finance charge will not be assessed - Currency conversion computes to zero amount
+>           |            ; |                    ; |                 ; |                     ;  
+> $ENDFMT
+> $ENDGRP
+> 
+> **************************************
+190c200
+<       |  ; A                                       |     ; B    C                               D                         |  ; E 
+---
+>       |  ; A                                       |     ; B    C                               C1                        |  ; D
+192c202
+<       |  ; F                                       |            ; |          ; |              ; |        ; G
+---
+>       |  ; E                                       |            ; |          ; |              ; |        ; F
+206,209c216,219
+<  D     ACO-CURRENCY-CD                        
+<  E     PAGE                                   PN    
+<  F     TIME                                   CT    
+<  G     AS-OF-DATE                             CD    
+---
+>  C1    ACO-CURRENCY-CD                        
+>  D     PAGE                                   PN    
+>  E     TIME                                   CT    
+>  F     AS-OF-DATE                             CD    
+260a271,280
+> $GROUP     RN3D-ZERO-AMT
+> **************************************
+> $LEVEL     C
+> $FORMAT
+>           Finance charge will not be assessed - Currency conversion computes to zero amount
+>           |            ; |                    ; |                 ; |                        ;
+> $ENDFMT
+> $ENDGRP
+> 
+> **************************************
+283a304,394
+> **************************************
+> $GROUP     ERR-RATE
+> **************************************
+> $PREFIX    ERR2-
+> $LEVEL     B
+> $FORMAT
+> %
+> *** Rate relationship does not exist company currency XXXXX customer XXXXXXXXX currency XXXXX
+>     |                              ; |     ; |      ; A     |      ; B         |      ; C
+>     A relationship from company to customer currency does not exist. 
+>     |                         ; |                                  ;
+>     Enter rate relationship and rerun program.
+>     |                     ; |                          ;
+>     No updating has been done.
+>     |                                ;
+> $ENDFMT
+> $FIELDS
+> FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+>  ---   --------------------   --------------  --   ----------  -------------------------
+>  A     ACO-CURRENCY                        
+>  B     CUSTOMER                        
+>  C     ACM-CURRENCY                        
+> $ENDFLDS
+> $ENDGRP
+> 
+> **************************************
+> $GROUP     ERR-RELATIONSHIP
+> **************************************
+> $PREFIX    ERR1-
+> $LEVEL     B
+> $FORMAT
+> %
+> *** Currency relationship does not exist company currency XXXXX customer XXXXXXXXX currency XXXXX
+>     |                                  ; |     ; |      ; A     |      ; B         |       ;C
+>     A relationship from company to customer currency does not exist. 
+>     |                         ; |                  ; |                 ;
+>     Enter relationship and rerun program.
+>     |                                  ;
+>     No updating has been done.
+>     |                                  ;
+> $ENDFMT
+> $FIELDS
+> FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+>  ---   --------------------   --------------  --   ----------  -------------------------
+>  A     ACO-CURRENCY                        
+>  B     CUSTOMER                        
+>  C     ACM-CURRENCY                        
+> $ENDFLDS
+> $ENDGRP
+> 
+> **************************************
+> $GROUP     ERR-CURRENCY
+> **************************************
+> $PREFIX    ERR-
+> $LEVEL     B
+> $FORMAT
+> %
+> *** Customer currency does not exist for currency XXXXX
+>     |                              ; |          ; A
+>     Enter currency code and rerun program.
+>     |                                   ;
+>     No updating has been done.
+>     |                                   ;
+> $ENDFMT
+> $FIELDS
+> FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+>  ---   --------------------   --------------  --   ----------  -------------------------
+>  A     ACM-CURRENCY                        
+> $ENDFLDS
+> $ENDGRP
+> **************************************
+> $GROUP     ERR-CD
+> **************************************
+> $PREFIX    ERR-
+> $LEVEL     B
+> $FORMAT
+> %
+> *** Finance code XX does not exist for customer XXXXXXXXX
+>     |          ; A  |                         ; B
+>     Items is bypassed.
+>     |                                ;
+> $ENDFMT
+> $FIELDS
+> FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+>  ---   --------------------   --------------  --   ----------  -------------------------
+>  A     ACM-FIN-CHRG-CD                        
+>  B     CUSTOMER                        
+> $ENDFLDS
+> $ENDGRP
+> 
+> 
+284a396,397
+> 
+> 
+289c402
+< $PRINTFILE ERROR      
+---
+> $PRINTFILE LANGERR      
+292c405
+< $GROUP     GN3-ERROR-REPORT
+---
+> $GROUP     GN3-COMPANY
+300c413
+<       |  ; A                                       |     ; B    C                                D                      |  ; E
+---
+>       |  ; A                                       |     ; B    C                                C1                     |  ; D
+302c415
+<       |  ; F                                       |            ; |          ; |               ; |        ; G       
+---
+>       |  ; E                                       |            ; |          ; |               ; |        ; F       
+303a417,418
+>                                                           Language Code Error Listing
+>                                                           |                                 ;
+305,308d419
+<            Customer     Field    Error Message
+<            |        ;   |    ;   |                                                ;
+<            ---------    ------   ------------------------------------------------------------------
+< %                                                                    
+316,319c427,430
+<  D     CURRENCY-CD                        
+<  E     PAGE                                   PN    
+<  F     TIME                                   CT    
+<  G     AS-OF-DATE                             CD    
+---
+>  C1    CURRENCY-CD                        
+>  D     PAGE                                   PN    
+>  E     TIME                                   CT    
+>  F     AS-OF-DATE                             CD    
+324c435
+< $GROUP     D31-MESSAGE-ERRORS
+---
+> $GROUP     LANGUAGE-ERR
+326,327c437,438
+< $PREFIX    D3-
+< $LEVEL     C
+---
+> $PREFIX    LNG-
+> $LEVEL     B
+329,330c440,441
+<            XXXXXXXXXXX  XXXXX    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+<            A            B        C
+---
+> %
+> *** AR Payment Notice Text does not exist for Company: ZZZZ ; Text Code: XXXXXX ; Language Code: XXXXXXXXXX - Customer:  XXXXXXXXX
+330a442,443
+>     |                             ; |       ; |     ;  A      |        ; B        |            ; C                       D
+> %
+333c446
+< FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+---
+> FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+335,337c448,450
+<  A     ERR-CUSTOMER
+<  B     FIELD-NAME
+<  C     FIELD-DATA-ERROR
+---
+>  A     COMPANY                                 
+>  B     TEXT-CODE                        
+>  C     LANGUAGE-CODE
+337a451,470
+>  D     CUSTOMER
+> $ENDFLDS
+> $ENDGRP
+> 
+> **************************************
+> $GROUP     T13-LANGUAGE-ERR-CNT
+> **************************************
+> $PREFIX    CNT-
+> $LEVEL     B
+> $FORMAT
+> %
+> %
+> *** AR Payment Notice Text does not exist for ZZZZZZZZ Customers listed on this language error report.
+>     |                                       ; A        |       ; |            ; |                   ;   
+> %
+> $ENDFMT
+> $FIELDS
+> FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+>  ---   --------------------   --------------  --   ----------  -------------------------
+>  A     COMPANY-COUNT                                 
+347,348c480,481
+< *** No Error Data to Print ***
+< |                                  ;
+---
+> *** No Language Error Data to Print ***
+>     |               ; |                    ;

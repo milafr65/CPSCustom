@@ -1,0 +1,150 @@
+******* WB120.scr 3 <450445365>
+*******************************************************************************
+*                           SCREEN  WB120
+*******************************************************************************
+$FORM      WB120    R
+$NOLFCOK
+$KEYFCS    CD
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    WB120    R
+[PRRP[ ]                        ?Payroll Close           +Y]
+                             ?;                                        ;
+  |          Report:[WB120]    |   Priority:[ ]    |Save Params (Y/N):[ ]
+  |  User Name:[          ]
+  |   Job Name:[          ] --- This will be the name on your report
+  |  Run After:[          ] --- NOW, HOLD, Time (1230 pm), Job Name
+  |           Frequency:[ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\ |   Comments:[                                                  ]\
+$TAB-REGION
+$TAB-FOLDER
+$TAB-FORM  MAIN              "  Main      "
+$DRAW      OPTION  3D,CHISELED
+$DRAW      OPTION  LN
+$DRAW      GROUP    4,40, 7,38, 1      " Retro "
+
+ |            Company:&    ];                              ; |Conversion Date
+ |     Invoice Option:& ]   ;               ;                     &        ]
+ |       Year, Period:&    ]&  ]
+ |General Ledger Date:&      ]          |Monthly
+ |       Invoice Date:&      ]          |Interest Rate:&      ]          
+ |             Update:[ ]               | Grace Period:&  ]|(in months)     ]
+ |   Invoice Register:[ ]               |  Plan Groups:[      [      [      ]
+ |                                                     [      [      [      ]
+ | Cold Files Request:[ ]
+$END-TAB   MAIN    
+$TAB-FORM  RUN-OPTION        " Run Option "
+$DRAW      OPTION  3D,CHISELED
+$DRAW      OPTION  LN
+$DRAW      GROUP    1, 3, 6,76, 1      " Employer "
+$DRAW      OPTION  3D,CHISELED
+$DRAW      OPTION  LN
+$DRAW      GROUP    7, 3, 3,76, 1      " Employee "
+
+       |Processing Grp:[          ]
+       | Process Level:[     ];                              ;
+       |     Plan Type:|HL[ ]|DN[ ]|DI[ ]|EL[ ]|DL[ ]|DB[ ]
+       |          Plan:[    [    [    [    [    [    ]          
+
+
+     |   Report Option:& ]       ;                              ;
+
+$END-TAB   RUN-OPTION
+$TAB-FORM  MESSAGE           "  Message   "
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+ [                                                                           ]
+$END-TAB   MESSAGE
+$END-REGION
+$END-SCR   WB120    R
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     WB120    R
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     UPDATE-SW             P     01          SR 
+  2     SCREEN-MSG            O     40          SB 
+  2     TRANCODE              A     05          RP 
+  2     HEADER                G     00        
+   3    Q-PRIORITY            N     01          SR 
+   3    SAVE-PARAMS           A     01          SR 
+   3    USER-NAME             A     10          SK 
+   3    JOB-NAME              A     10          SK 
+   3    RUN-AFTER             A     10          SR 
+   3    FREQUENCY             A     01          SR 
+   3    COMMENTS              A     50          SB 
+  2     RUN-PARAMS            G     00        
+*
+   3    MAIN-TAB              AF    12          SB
+   3    COMPANY               N     04          SR    01  C
+   3    PRS-NAME              A     30          SB    CN 
+   3    INV-TYPE              N     01          SR
+   3    INV-TYPE              X     15          SB
+   3    WBP-FR-DATE           F     08          SR
+   3    TO-YEAR               N     04          SR
+   3    TO-PERIOD             N     02          SR
+   3    GL-DATE               F     08          SR 
+   3    INV-DATE              F     08          SR 
+   3    RATE                  N     06        2 SB   *PCP P
+   3    UPDATE                A     01          SB
+   3    GRACE-MTHS            N     02          SB   *HH4 
+   3    INV-REGISTER          A     01          SB 
+   3    PLAN-GROUP-GRP        G           
+    4   PLAN-GRP-LINE         G                 SB 06 
+     5  WBP-PLAN-GROUP        A     06          SB 
+   3    COLD-FILE-REQ         A     01          SB
+*
+   3    RUN-OPTION-TAB        AF    12          SB
+   3    PROC-GROUP            A     10          SB   *H09 
+   3    PROCESS-LEVEL         A     05          SB   *H03 
+   3    PRS1-NAME             A     30          SB   *HH4 
+   3    PLAN-TYPE-GRP         G           
+    4   PLAN-TYPE-LINE        G                 SB 06 
+     5  PLAN-TYPE             A     01          SB 
+   3    PLAN-CODE-G           G                    06 
+    4   PLAN-CODE             A     04          SB    HZW 
+   3    REPORT-OPTION         N     01          SB 
+   3    REPORT-OPTION         X     30          SB 
+*
+   3    MESSAGE-TAB           AF    12          SB
+   3    COMMENT-GRP           G                    
+    4   COMMENT-LINE          G                 SB 10
+     5  COMMENT               AL    75          SB 
+$END-TRANS WB120    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     WB120    R
+  FC                                          A,C,D,I,F,R
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+  INV-TYPE                                    1=Employer
+                                              2=Employee
+                                              3=Both EM & EE
+                                              9=Retros Only 
+  WBP-FR-DATE           08012001
+  UPDATE                N                     Y=Yes
+                                              N=No
+  INV-REGISTER          Y                     Y=Yes
+                                              N=No
+  COLD-FILE-REQ         N                     Y=Yes
+                                              N=No
+  PLAN-TYPE                                   X
+  REPORT-OPTION                               1=COBRA Participants
+                                              2=Retirees
+                                              3=COBRA and Retirees
+$END-EDITS WB120    R

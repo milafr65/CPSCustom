@@ -1,0 +1,694 @@
+******* BN11PD 1 <4193091081>
+      ******************************************************************
+      *               M O D I F I C A T I O N   L O G:                 *
+      ******************************************************************
+      *  Modified by Analysts International,MN                         *
+      ******************************************************************
+      *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+      *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+      *                    END DATE FIELDS IN DETERMINATION OF THE     *
+      *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+      * ACS000   ??/??/??  BN11.SCR WAS MODIFIED TO INCLUDE GOTO ZIP,  *
+      *                    EFF-DATE, END-DATE, INSURER, NETWORK.       *
+      *                    ACS DID NOT MAKE THESE MODS. THE ACS000 WAS *
+      *                    ADDED TO THOSE LINES BECAUSE THEY WERE NOT  *
+      *                    CLEARLY MARKED AS MODS.                     *
+      * M. HUNTER - ACS                                                *
+      *          10/28/20  REAPPLIED ABOVE CUSTOMIZATIONS AFTER 9.0    *
+      *                    APPS UPGRADE.                               *
+      * M. HUNTER - ACS                                                *
+      *          08/23/11  REAPPLIED ABOVE CUSTOMIZATIONS AFTER 9.0.1  *
+      *                    APPS UPGRADE.                               *
+      ******************************************************************
+
+000100******************************************************************
+000200*                             BN11PD                             *
+000300******************************************************************
+000400******************************************************************
+000500 BN11S1-TRANSACTION              SECTION 10.
+000600******************************************************************
+000700 BN11S1-START.
+000800
+000900     PERFORM 200-EDIT-TRAN
+001000     THRU    200-END.
+001100
+001200     IF (NO-ERROR-FOUND)
+001300         PERFORM 400-PROCESS-TRAN
+001400         THRU    400-END.
+001500
+001600     GO TO BN11S1-TRANSACTION-END.
+001700
+001800******************************************************************
+001900 200-EDIT-TRAN.
+002000******************************************************************
+002100
+002200     PERFORM 210-EDIT-ACCESS
+002300     THRU    210-END.
+002400
+002500     IF (ERROR-FOUND)
+002600         GO TO 200-END.
+002700
+002800     IF (BN11F1-FC = "A" OR "C")
+002900         PERFORM 230-EDIT-DATA
+003000         THRU    230-END
+003100         GO TO 200-END.
+003200
+003300     IF (BN11F1-FC = "D")
+003400         PERFORM 240-EDIT-DELETE
+003500         THRU    240-END
+003600         GO TO 200-END.
+003700
+003800     IF (ERROR-FOUND)
+003900         GO TO 200-END.
+004000
+004100 200-END.
+004200
+004300******************************************************************
+004400 210-EDIT-ACCESS.
+004500******************************************************************
+004600
+004700     MOVE BN11F1-BPC-POST-CODE-TBL       TO DB-POST-CODE-TBL.
+004800
+004900     IF (BN11F1-FC = "N")
+005000         MOVE HIGH-VALUES                TO DB-POSTAL-CODE
+AI0010         MOVE HIGH-VALUES                TO DB-INS-CARRIER
+AI0010         MOVE WS-HIGH-VALUES             TO DB-START-DATE
+005100         PERFORM 850-FIND-NLT-BPCSET1.
+005200
+005300     IF (BN11F1-FC = "P")
+005400         INITIALIZE DB-POSTAL-CODE
+AI0010                    DB-INS-CARRIER
+AI0010                    DB-START-DATE
+005500         PERFORM 850-FIND-NLT-BPCSET1
+005600         PERFORM 870-FIND-PREV-BPCSET1
+005700         IF (BNPOSTCODE-FOUND)
+005800             MOVE BPC-POST-CODE-TBL      TO DB-POST-CODE-TBL
+AI0010             INITIALIZE                     DB-INS-CARRIER
+AI0010                                            DB-START-DATE
+005900             PERFORM 850-FIND-NLT-BPCSET1.
+006000
+006100     IF (BN11F1-FC = "N" OR "P")
+006200         IF (BNPOSTCODE-NOTFOUND)
+006300             MOVE 12                          TO CRT-ERROR-NBR
+006400             MOVE BN11F1-FC-FN                TO CRT-FIELD-NBR
+006500             GO TO 210-END
+006600         ELSE
+006700             MOVE BPC-POST-CODE-TBL      TO
+006800                                          BN11F1-BPC-POST-CODE-TBL
+006900                                            DB-POST-CODE-TBL.
+007000
+007100     IF (BN11F1-FC NOT = "I" AND "+" AND "-")
+007200         GO TO 210-END.
+007300
+007400     IF (BN11F1-FC                = "I")
+007500     OR (BN11F1-BPC-POST-CODE-TBL NOT =
+007600                                      BN11F1-PT-BPC-POST-CODE-TBL)
+007700         MOVE "+"                        TO BN11F1-FC
+ACS000         IF (BN11F1-GO-TO-ZIP > SPACES)
+ACS000             MOVE BN11F1-GO-TO-ZIP           TO DB-POSTAL-CODE
+AI0010             INITIALIZE                         DB-INS-CARRIER 
+AI0010                                                DB-START-DATE 
+ACS000                                                BN11F1-GO-TO-ZIP
+ACS000         ELSE
+007800         INITIALIZE DB-POSTAL-CODE
+AI0010                    DB-INS-CARRIER
+AI0010                    DB-START-DATE
+007900     ELSE
+008000     IF (BN11F1-FC = "+")
+008100         MOVE BN11F1-PT-BPC-POSTAL-CODE  TO DB-POSTAL-CODE
+AI0010         MOVE BN11F1-PT-BPC-INS-CARRIER  TO DB-INS-CARRIER
+AI0010         MOVE BN11F1-PT-BPC-START-DATE   TO DB-START-DATE
+008200     ELSE
+AI0010*        MOVE BN11F1-BPC-POSTAL-CODE (1) TO DB-POSTAL-CODE.
+AI0010         MOVE BN11F1-BPC-POSTAL-CODE (1) TO DB-POSTAL-CODE 
+AI0010         MOVE BN11F1-BPC-INS-CARRIER (1) TO DB-INS-CARRIER 
+AI0010         MOVE BN11F1-BPC-START-DATE  (1) TO DB-START-DATE.
+008400
+008500     PERFORM 850-FIND-NLT-BPCSET1.
+008600     IF (BN11F1-FC = "-")
+008700         PERFORM 870-FIND-PREV-BPCSET1.
+008800
+008900     IF (BNPOSTCODE-NOTFOUND)
+009000     OR (BPC-POST-CODE-TBL NOT = DB-POST-CODE-TBL)
+009100         MOVE 11                              TO CRT-ERROR-NBR
+009200         MOVE BN11F1-BPC-POST-CODE-TBL-FN     TO CRT-FIELD-NBR
+AI0010         INITIALIZE        BN11F1-DETAIL-GROUP
+009300         GO TO 210-END.
+009400
+009500 210-END.
+009600
+009700******************************************************************
+009800 230-EDIT-DATA.
+009900******************************************************************
+010000
+010100     PERFORM 260-EDIT-DTL-TRAN
+010200     THRU    260-END
+010300         VARYING I1 FROM 1 BY 1
+010400         UNTIL  (I1 > 15)
+010500         OR     (ERROR-FOUND).
+010600
+010700     IF (ERROR-FOUND)
+010800         GO TO 230-END.
+010900
+011000 230-END.
+011100******************************************************************
+011200 240-EDIT-DELETE.
+011300******************************************************************
+011400
+011500     MOVE BN11F1-BPC-POST-CODE-TBL   TO DB-POST-CODE-TBL.
+011600     INITIALIZE DB-COMPANY
+011700                DB-PLAN-TYPE
+011800                DB-PLAN-CODE.
+011900     PERFORM 850-FIND-NLT-PLNSET5.
+012000     IF  (PLAN-FOUND)
+012100     AND (PLN-POST-CODE-TBL = DB-POST-CODE-TBL)
+012200         MOVE 103                             TO CRT-ERROR-NBR
+012300         MOVE BN11F1-BPC-POST-CODE-TBL-FN     TO CRT-FIELD-NBR
+012400         GO TO 240-END.
+012500
+012600 240-END.
+012700
+012800******************************************************************
+012900 260-EDIT-DTL-TRAN.
+013000******************************************************************
+013100
+AI0010     MOVE SPACES                 TO BN11F1-SPLAT-FUNCTION (I1).
+
+013200     IF (BN11F1-LINE-FC (I1) = SPACES)
+AI0010         IF  (BN11F1-BPC-POSTAL-CODE (I1)    NOT =
+AI0010              BN11F1-SPLAT-POSTAL-CODE (I1))
+AI0010         OR  (BN11F1-BPC-START-DATE (I1)     NOT = 
+AI0010              BN11F1-SPLAT-START-DATE (I1))
+AI0010         OR  (BN11F1-BPC-INS-CARRIER (I1)    NOT =
+AI0010              BN11F1-SPLAT-INS-CARRIER (I1))
+AI0010         OR  (BN11F1-BPC-STOP-DATE  (I1)     NOT = 
+AI0010              BN11F1-SPLAT-STOP-DATE  (I1))
+AI0010             MOVE 505                             TO CRT-ERROR-NBR
+AI0010             MOVE BN11F1-BPC-POSTAL-CODE-FN (I1)  TO CRT-FIELD-NBR
+AI0010             GO TO 260-END
+AI0010         END-IF
+013300         GO TO 260-END.
+013400
+013500     MOVE BN11F1-BPC-POST-CODE-TBL    TO DB-POST-CODE-TBL.
+013600     MOVE BN11F1-BPC-POSTAL-CODE (I1) TO DB-POSTAL-CODE.
+AI0010     MOVE BN11F1-BPC-START-DATE (I1)  TO DB-START-DATE.
+AI0010     MOVE BN11F1-BPC-INS-CARRIER (I1) TO DB-INS-CARRIER.
+013700
+013800     PERFORM 840-FIND-BPCSET1.
+013900
+014000     IF  (BNPOSTCODE-NOTFOUND)
+014100     AND (BN11F1-LINE-FC (I1) NOT = "A")
+AI0010         IF  (BN11F1-BPC-POSTAL-CODE (I1)    =
+AI0010              BN11F1-SPLAT-POSTAL-CODE (I1))
+AI0010         AND (BN11F1-BPC-START-DATE (I1)     =
+AI0010              BN11F1-SPLAT-START-DATE (I1))
+AI0010         AND (BN11F1-BPC-INS-CARRIER (I1)    =
+AI0010              BN11F1-SPLAT-INS-CARRIER (I1))
+014200         MOVE 100                             TO CRT-ERROR-NBR
+014300         MOVE BN11F1-BPC-POSTAL-CODE-FN (I1)  TO CRT-FIELD-NBR
+AI0010*        GO TO 260-END.
+AI0010         GO TO 260-END 
+AI0010         ELSE
+AI0010             MOVE BN11F1-LINE-FC (I1)    TO 
+ACS000                  BN11F1-SPLAT-FUNCTION (I1).
+014500
+014600     IF  (BNPOSTCODE-FOUND)
+014700     AND (BN11F1-LINE-FC (I1) = "A")
+014800         MOVE 101                             TO CRT-ERROR-NBR
+014900         MOVE BN11F1-BPC-POSTAL-CODE-FN (I1)  TO CRT-FIELD-NBR
+015000         GO TO 260-END.
+015100
+ACS000*    IF (BN11F1-LINE-FC (I1) = "D")
+ACS000*        MOVE BN11F1-BPC-POST-CODE-TBL   TO DB-POST-CODE-TBL 
+ACS000*        PERFORM 840-FIND-PLNSET5 
+ACS000*        IF  (PLAN-FOUND)
+ACS000*        AND (PLN-POST-CODE-TBL = DB-POST-CODE-TBL)
+ACS000*            MOVE 103                        TO CRT-ERROR-NBR
+ACS000*            MOVE BN11F1-BPC-POSTAL-CODE-FN (I1)
+ACS000*                                            TO CRT-FIELD-NBR
+ACS000*            GO TO 260-END.
+016100
+AI0010     IF  (BN11F1-LINE-FC (I1)    = "A")
+AI0010     OR  (BN11F1-LINE-FC (I1)    = "C")
+AI0010         IF (BN11F1-BPC-STOP-DATE (I1) NOT = 0)
+AI0010         AND (BN11F1-BPC-STOP-DATE (I1)
+AI0010            < BN11F1-BPC-START-DATE (I1))
+AI0010             MOVE 500                           TO CRT-ERROR-NBR
+AI0010             MOVE BN11F1-BPC-STOP-DATE-FN (I1)  TO CRT-FIELD-NBR
+AI0010             GO TO 260-END.
+
+AI0010     IF (BN11F1-BPC-INS-CARRIER (I1) NOT = SPACES)
+AI0010         MOVE BN11F1-BPC-INS-CARRIER (I1)  TO DB-INS-CARRIER
+AI0010         PERFORM 840-FIND-BCRSET1
+AI0010         IF (BNCARRIER-NOTFOUND)
+AI0010             MOVE 501                            TO CRT-ERROR-NBR
+AI0010             MOVE BN11F1-BPC-INS-CARRIER-FN (I1) TO CRT-FIELD-NBR
+AI0010             MOVE "BN11"                         TO CRT-ERROR-CAT
+AI0010             GO TO 260-END.
+
+AI0010     IF (BN11F1-LINE-FC (I1) = "C")
+AI0010         AND (BN11F1-BPC-INS-CARRIER (I1)    NOT =
+AI0010              BN11F1-SPLAT-INS-CARRIER (I1))
+AI0010             MOVE 506                             TO CRT-ERROR-NBR
+AI0010             MOVE BN11F1-BPC-INS-CARRIER-FN (I1)  TO CRT-FIELD-NBR
+AI0010             GO TO 260-END.
+015100
+AI0010     IF (BN11F1-LINE-FC (I1) = "C")
+AI0010         AND (BN11F1-BPC-POSTAL-CODE (I1)    NOT =
+AI0010              BN11F1-SPLAT-POSTAL-CODE (I1))
+AI0010             MOVE 507                             TO CRT-ERROR-NBR
+AI0010             MOVE BN11F1-BPC-POSTAL-CODE-FN (I1)  TO CRT-FIELD-NBR
+AI0010             GO TO 260-END.
+015100
+AI0010     IF (BN11F1-LINE-FC (I1) = "C")
+AI0010         AND (BN11F1-BPC-START-DATE (I1)    NOT =
+AI0010              BN11F1-SPLAT-START-DATE (I1))
+AI0010             MOVE 508                             TO CRT-ERROR-NBR
+AI0010             MOVE BN11F1-BPC-START-DATE-FN (I1)  TO CRT-FIELD-NBR
+AI0010             GO TO 260-END.
+015100
+AI0010* CHECK FOR DUPLICATES ON THE SCREEN ITSELF
+AI0010     PERFORM
+AI0010         VARYING I3 FROM 1 BY 1
+AI0010         UNTIL (I3 > 15)
+AI0010         OR (ERROR-FOUND)
+AI0010         IF  (BN11F1-BPC-POSTAL-CODE(I1) 
+AI0010                                = BN11F1-BPC-POSTAL-CODE(I3))
+AI0010         AND (BN11F1-BPC-INS-CARRIER(I1)
+AI0010                                = BN11F1-BPC-INS-CARRIER(I3))
+AI0010         AND (BN11F1-BPC-STOP-DATE  (I1)
+AI0010                                = BN11F1-BPC-STOP-DATE (I3))
+AI0010         AND (BN11F1-BPC-STOP-DATE (I1) = ZEROS)
+AI0010         AND (BN11F1-LINE-FC (I1) = "A")
+AI0010         AND (I3 NOT = I1)
+AI0010              MOVE 502                TO CRT-ERROR-NBR
+AI0010              MOVE BN11F1-BPC-POSTAL-CODE-FN (I1) 
+AI0010                                      TO CRT-FIELD-NBR
+AI0010              GO TO 260-END.
+AI0010                         
+
+AI0010     IF (BN11F1-LINE-FC (I1) = "A" OR "C")
+AI0010         MOVE BN11F1-BPC-POSTAL-CODE (I1) TO DB-POSTAL-CODE
+AI0010         MOVE BPCSET2-POSTAL-CODE         TO WS-DB-BEG-RNG
+AI0010         PERFORM 850-FIND-BEGRNG-BPCSET2
+AI0010         IF (BNPOSTCODE-FOUND)
+AI0010             PERFORM 262-DUP-CODE-CHECK
+AI0010             THRU    262-END
+AI0010                 UNTIL (BNPOSTCODE-NOTFOUND)
+AI0010                 OR    (ERROR-FOUND).    
+AI0010         
+016200 260-END.
+AI0010******************************************************************
+AI0010 262-DUP-CODE-CHECK.
+AI0010******************************************************************
+AI0010
+AI0010     PERFORM
+AI0010         VARYING I3 FROM 1 BY 1
+AI0010         UNTIL (I3 > 15)
+AI0010         OR (ERROR-FOUND)
+AI0010         IF  (BN11F1-BPC-POSTAL-CODE(I3) = BPC-POSTAL-CODE)
+AI0010         AND (BN11F1-BPC-INS-CARRIER(I3) = BPC-INS-CARRIER)
+AI0010         AND (BN11F1-BPC-INS-CARRIER(I1) = BPC-INS-CARRIER)
+AI0010             IF  (BN11F1-BPC-STOP-DATE  (I3) = ZEROES)
+AI0010             AND (BN11F1-LINE-FC (I1)        = "A")
+AI0010                 IF (I3   NOT = I1)
+AI0010                     MOVE 502                TO CRT-ERROR-NBR
+AI0010                     MOVE BN11F1-BPC-POSTAL-CODE-FN (I1) 
+AI0010                                             TO CRT-FIELD-NBR
+AI0010                 END-IF
+AI0010             END-IF
+AI0010             IF (BN11F1-BPC-START-DATE (I1)  <=
+AI0010                 BN11F1-BPC-STOP-DATE (I3))
+AI0010                 IF (I3   NOT = I1)
+AI0010                     MOVE 504            TO CRT-ERROR-NBR
+AI0010                     MOVE BN11F1-BPC-POSTAL-CODE-FN (I1) 
+AI0010                                         TO CRT-FIELD-NBR
+AI0010                 END-IF
+AI0010             END-IF
+AI0010         END-IF
+AI0010         
+AI0010     END-PERFORM.
+AI0010     IF (ERROR-FOUND)
+AI0010         GO TO 262-END.
+
+AI0010     IF  (BPC-POSTAL-CODE        = BN11F1-BPC-POSTAL-CODE (I1))
+AI0010     AND (BPC-INS-CARRIER        = BN11F1-BPC-INS-CARRIER (I1))
+AI0010     AND (BPC-STOP-DATE          = ZEROES)
+AI0010     AND (BN11F1-BPC-STOP-DATE (I1) = ZEROS)
+AI0010     AND (BN11F1-LINE-FC (I1) = "A")
+AI0010         MOVE 502                TO CRT-ERROR-NBR
+AI0010         MOVE BN11F1-BPC-POSTAL-CODE-FN (I1) 
+AI0010                                 TO CRT-FIELD-NBR
+AI0010         GO TO 262-END.
+
+AI0010     IF  (BPC-POSTAL-CODE        = BN11F1-BPC-POSTAL-CODE (I1))
+AI0010     AND (BPC-INS-CARRIER        = BN11F1-BPC-INS-CARRIER (I1))
+AI0010     AND (BPC-START-DATE     NOT = BN11F1-BPC-START-DATE (I1))
+AI0010     AND (BPC-STOP-DATE          = ZEROES)
+AI0010     AND (BN11F1-LINE-FC (I1) = "A")
+AI0010         MOVE 502                TO CRT-ERROR-NBR
+AI0010         MOVE BN11F1-BPC-POSTAL-CODE-FN (I1) 
+AI0010                                 TO CRT-FIELD-NBR
+AI0010         GO TO 262-END.
+
+AI0010     IF  (BPC-POSTAL-CODE        = BN11F1-BPC-POSTAL-CODE (I1))
+AI0010     AND (BPC-INS-CARRIER        = BN11F1-BPC-INS-CARRIER (I1))
+AI0010     AND (BN11F1-BPC-START-DATE (I1)  <= BPC-STOP-DATE)
+AI0010         MOVE 504                    TO CRT-ERROR-NBR
+AI0010         MOVE BN11F1-BPC-START-DATE-FN  (I1) 
+AI0010                                     TO CRT-FIELD-NBR
+AI0010         GO TO 262-END.
+
+AI0010     PERFORM 860-FIND-NXTRNG-BPCSET2.
+AI0010
+AI0010 262-END.
+016300
+016400******************************************************************
+016500 400-PROCESS-TRAN.
+016600******************************************************************
+016700
+016800     IF (BN11F1-FC = "A")
+016900         PERFORM 410-ADD
+017000         THRU    410-END
+017100     ELSE
+017200     IF (BN11F1-FC = "C")
+017300         PERFORM 420-CHANGE
+017400         THRU    420-END
+017500     ELSE
+017600     IF (BN11F1-FC = "D")
+017700         PERFORM 430-DELETE
+017800         THRU    430-END
+017900     ELSE
+018000     IF (BN11F1-FC = "I" OR "-" OR "+" OR "N" OR "P")
+018100         PERFORM 480-INQUIRE
+018200         THRU    480-END.
+018300
+018400 400-END.
+018500
+018600******************************************************************
+018700 410-ADD.
+018800******************************************************************
+018900
+019000     PERFORM 910-AUDIT-BEGIN.
+019100     IF (DMS-ABORTED)
+019200         GO TO 410-END.
+019300
+019400     PERFORM 422-PROCESS-DETAIL
+019500     THRU    422-END
+019600         VARYING I1 FROM 1 BY 1
+019700         UNTIL  (I1 > 15).
+019800
+019900     PERFORM 920-AUDIT-END.
+020000
+020100     PERFORM 600-MOVE-TO-SCREEN
+020200     THRU    600-END.
+020300
+020400     MOVE CRT-ADD-COMPLETE       TO CRT-MESSAGE.
+020500
+020600 410-END.
+020700
+020800******************************************************************
+020900 420-CHANGE.
+021000******************************************************************
+021100
+021200     PERFORM 910-AUDIT-BEGIN.
+021300     IF (DMS-ABORTED)
+021400         GO TO 420-END.
+021500
+021600     PERFORM 422-PROCESS-DETAIL
+021700     THRU    422-END
+021800         VARYING I1 FROM 1 BY 1
+021900         UNTIL  (I1 > 15).
+022000
+022100     PERFORM 920-AUDIT-END.
+022200
+022300     PERFORM 600-MOVE-TO-SCREEN
+022400     THRU    600-END.
+022500
+022600     MOVE CRT-CHG-COMPLETE       TO CRT-MESSAGE.
+022700
+022800 420-END.
+022900
+023000******************************************************************
+023100 430-DELETE.
+023200******************************************************************
+023300
+023400     PERFORM 910-AUDIT-BEGIN.
+023500     IF (DMS-ABORTED)
+023600         GO TO 430-END.
+023700
+023800     MOVE BN11F1-BPC-POST-CODE-TBL   TO DB-POST-CODE-TBL.
+023900     MOVE BPCSET1-POST-CODE-TBL      TO WS-DB-BEG-RNG.
+024000     PERFORM 830-DELETERNG-BPCSET1.
+024100
+024200     PERFORM 920-AUDIT-END.
+024300
+024400     INITIALIZE BN11F1-BPC-POST-CODE-TBL.
+024500     INITIALIZE BN11F1-DETAIL-GROUP.
+024600
+024700     MOVE CRT-RECS-DELETED       TO CRT-MESSAGE.
+024800
+024900 430-END.
+025000
+025100******************************************************************
+025200 422-PROCESS-DETAIL.
+025300******************************************************************
+025400
+025500     IF (BN11F1-LINE-FC (I1) = SPACES)
+025600         GO TO 422-END
+025700     ELSE
+025800     IF (BN11F1-LINE-FC (I1) = "A")
+025900         PERFORM 431-ADD-BPC
+026000         THRU    431-END
+026100     ELSE
+026200     IF (BN11F1-LINE-FC (I1) = "C")
+026300         PERFORM 432-CHANGE-BPC
+026400         THRU    432-END
+026500     ELSE
+026600     IF (BN11F1-LINE-FC (I1) = "D")
+026700         PERFORM 434-DELETE-BPC
+026800         THRU    434-END.
+026900
+027000 422-END.
+027100
+027200******************************************************************
+027300 431-ADD-BPC.
+027400******************************************************************
+027500
+027600     PERFORM 800-CREATE-BNPOSTCODE.
+027700
+027800     PERFORM 510-MOVE-DTL-DATA
+027900     THRU    510-END.
+028000
+028100     PERFORM 820-STORE-BNPOSTCODE.
+028200
+028300     PERFORM 610-MOVE-DTL-TO-SCREEN
+028400     THRU    610-END.
+028500
+028600     INITIALIZE BN11F1-LINE-FC (I1).
+028700
+028800 431-END.
+028900
+029000******************************************************************
+029100 432-CHANGE-BPC.
+029200******************************************************************
+   
+AI0010     IF (BN11F1-SPLAT-FUNCTION (I1)   = "C")
+AI0010         MOVE BN11F1-BPC-POST-CODE-TBL   TO DB-POST-CODE-TBL
+AI0010         MOVE BN11F1-SPLAT-POSTAL-CODE (I1) TO DB-POSTAL-CODE
+AI0010         MOVE BN11F1-SPLAT-START-DATE (I1)  TO DB-START-DATE
+AI0010         MOVE BN11F1-SPLAT-INS-CARRIER (I1) TO DB-INS-CARRIER
+AI0010         PERFORM 840-MODIFY-BPCSET1
+AI0010         IF (BNPOSTCODE-FOUND)
+AI0010             PERFORM 830-DELETE-BNPOSTCODE
+AI0010             PERFORM 800-CREATE-BNPOSTCODE
+AI0010         END-IF
+AI0010     ELSE
+AI0010         MOVE BN11F1-BPC-POST-CODE-TBL    TO DB-POST-CODE-TBL 
+AI0010         MOVE BN11F1-BPC-POSTAL-CODE (I1) TO DB-POSTAL-CODE 
+AI0010         MOVE BN11F1-BPC-START-DATE (I1)  TO DB-START-DATE 
+AI0010         MOVE BN11F1-BPC-INS-CARRIER (I1) TO DB-INS-CARRIER 
+AI0010         PERFORM 840-MODIFY-BPCSET1.
+029300
+ACS000*    MOVE BN11F1-BPC-POST-CODE-TBL    TO DB-POST-CODE-TBL.
+ACS000*    MOVE BN11F1-BPC-POSTAL-CODE (I1) TO DB-POSTAL-CODE.
+ACS000*
+ACS000*    PERFORM 840-MODIFY-BPCSET1.
+029800
+029900     PERFORM 510-MOVE-DTL-DATA
+030000     THRU    510-END.
+030100
+030200     PERFORM 820-STORE-BNPOSTCODE.
+030300
+030400     PERFORM 610-MOVE-DTL-TO-SCREEN
+030500     THRU    610-END.
+030600
+030700     INITIALIZE BN11F1-LINE-FC (I1).
+030800
+030900 432-END.
+031000
+031100******************************************************************
+031200 434-DELETE-BPC.
+031300******************************************************************
+031400
+031500     MOVE BN11F1-BPC-POST-CODE-TBL    TO DB-POST-CODE-TBL.
+031600     MOVE BN11F1-BPC-POSTAL-CODE (I1) TO DB-POSTAL-CODE.
+AI0010     MOVE BN11F1-BPC-START-DATE (I1)  TO DB-START-DATE.
+AI0010     MOVE BN11F1-BPC-INS-CARRIER (I1) TO DB-INS-CARRIER.
+031700
+031800     PERFORM 840-MODIFY-BPCSET1.
+031900
+032000     PERFORM 830-DELETE-BNPOSTCODE.
+032100
+032200     INITIALIZE BN11F1-DETAIL-LINE (I1).
+032300
+032400 434-END.
+032500
+032600******************************************************************
+032700 480-INQUIRE.
+032800******************************************************************
+032900
+033000     IF (BN11F1-FC = "I")
+033100         MOVE "+"                           TO BN11F1-FC.
+033200
+033300     PERFORM 600-MOVE-TO-SCREEN
+033400     THRU    600-END.
+033500
+AI0010*    INITIALIZE BN11F1-PT-BPC-POSTAL-CODE.
+AI0010     INITIALIZE BN11F1-PT-BPC-POSTAL-CODE 
+AI0010                BN11F1-PT-BPC-INS-CARRIER 
+AI0010                BN11F1-PT-BPC-START-DATE.
+033700
+033800     IF (BN11F1-FC = "-")
+033900         MOVE BN11F1-BPC-POSTAL-CODE (1)
+034000                                      TO BN11F1-PT-BPC-POSTAL-CODE
+AI0010         MOVE BN11F1-BPC-INS-CARRIER (1)
+AI0010                                      TO BN11F1-PT-BPC-INS-CARRIER
+AI0010         MOVE BN11F1-BPC-START-DATE  (1)
+AI0010                                      TO BN11F1-PT-BPC-START-DATE
+034100         INITIALIZE BN11F1-DETAIL-GROUP
+034200         PERFORM 610-MOVE-DTL-TO-SCREEN
+034300         THRU    610-END
+034400             VARYING I1 FROM 15 BY NEGATIVE-ONE
+034500             UNTIL  (I1                < 1)
+034600             OR     (BNPOSTCODE-NOTFOUND)
+034700             OR     (BPC-POST-CODE-TBL NOT =
+034800                                         BN11F1-BPC-POST-CODE-TBL)
+034900
+035000         IF (I1 NOT < 1)
+035100             MOVE I1                        TO I9
+035200             ADD 1                          TO I9
+035300             MOVE 1                         TO I1
+035400             PERFORM
+035500                 UNTIL (I9 > 15)
+035600
+035700                 MOVE BN11F1-DETAIL-LINE (I9)
+035800                                        TO BN11F1-DETAIL-LINE (I1)
+035900                 INITIALIZE BN11F1-DETAIL-LINE (I9)
+036000                 ADD 1                      TO I1
+036100                 ADD 1                      TO I9
+036200             END-PERFORM
+036300             MOVE "+"                       TO BN11F1-FC
+036400             MOVE BN11F1-BPC-POST-CODE-TBL  TO DB-POST-CODE-TBL
+036500             MOVE BN11F1-PT-BPC-POSTAL-CODE TO DB-POSTAL-CODE
+AI0010             MOVE BN11F1-PT-BPC-INS-CARRIER TO DB-INS-CARRIER
+AI0010             MOVE BN11F1-PT-BPC-START-DATE  TO DB-START-DATE
+036600             PERFORM 850-FIND-NLT-BPCSET1
+036700             PERFORM 610-MOVE-DTL-TO-SCREEN
+036800             THRU    610-END
+036900                 VARYING I1 FROM I1 BY 1
+037000                 UNTIL  (I1                > 15)
+037100                 OR     (BNPOSTCODE-NOTFOUND)
+037200                 OR     (BPC-POST-CODE-TBL NOT =
+037300                                         BN11F1-BPC-POST-CODE-TBL)
+037400
+037500             IF (BNPOSTCODE-NOTFOUND)
+037600             OR (BPC-POST-CODE-TBL NOT = BN11F1-BPC-POST-CODE-TBL)
+037700                 INITIALIZE BN11F1-PT-BPC-POSTAL-CODE
+AI0010                            BN11F1-PT-BPC-INS-CARRIER
+AI0010                            BN11F1-PT-BPC-START-DATE
+037800             ELSE
+037900                 MOVE BPC-POSTAL-CODE TO BN11F1-PT-BPC-POSTAL-CODE
+AI0010                 MOVE BPC-INS-CARRIER TO BN11F1-PT-BPC-INS-CARRIER
+AI0010                 MOVE BPC-START-DATE  TO BN11F1-PT-BPC-START-DATE
+038000             END-IF
+038100         END-IF
+038200         IF (BNPOSTCODE-NOTFOUND)
+038300         OR (BPC-POST-CODE-TBL NOT = BN11F1-BPC-POST-CODE-TBL)
+038400             MOVE CRT-INQ-COMPLETE          TO CRT-MESSAGE
+038500         ELSE
+038600             MOVE CRT-MORE-RECS             TO CRT-MESSAGE
+038700     ELSE
+038800         INITIALIZE BN11F1-DETAIL-GROUP
+038900         PERFORM 610-MOVE-DTL-TO-SCREEN
+039000         THRU    610-END
+039100             VARYING I1 FROM 1 BY 1
+039200             UNTIL  (I1                > 15)
+039300             OR     (BNPOSTCODE-NOTFOUND)
+039400             OR     (BPC-POST-CODE-TBL NOT =
+039500                                         BN11F1-BPC-POST-CODE-TBL)
+039600
+039700         IF (BNPOSTCODE-NOTFOUND)
+039800         OR (BPC-POST-CODE-TBL NOT = BN11F1-BPC-POST-CODE-TBL)
+039900             INITIALIZE BN11F1-PT-BPC-POSTAL-CODE
+AI0010                        BN11F1-PT-BPC-INS-CARRIER
+AI0010                        BN11F1-PT-BPC-START-DATE
+040000             MOVE CRT-INQ-COMPLETE          TO CRT-MESSAGE
+040100         ELSE
+040200             MOVE BPC-POSTAL-CODE     TO BN11F1-PT-BPC-POSTAL-CODE
+AI0010             MOVE BPC-INS-CARRIER     TO BN11F1-PT-BPC-INS-CARRIER
+AI0010             MOVE BPC-START-DATE      TO BN11F1-PT-BPC-START-DATE
+040300             MOVE CRT-MORE-RECS             TO CRT-MESSAGE.
+040400
+040500 480-END.
+040600
+040700******************************************************************
+040800 510-MOVE-DTL-DATA.
+040900******************************************************************
+041000
+041100     MOVE BN11F1-BPC-POST-CODE-TBL    TO BPC-POST-CODE-TBL.
+041200     MOVE BN11F1-BPC-POSTAL-CODE (I1) TO BPC-POSTAL-CODE.
+AI0010     MOVE BN11F1-BPC-START-DATE (I1)  TO BPC-START-DATE.
+AI0010     MOVE BN11F1-BPC-STOP-DATE (I1)   TO BPC-STOP-DATE.
+AI0010     MOVE BN11F1-BPC-INS-CARRIER (I1) TO BPC-INS-CARRIER.
+AI0010     MOVE BN11F1-BPC-NETWORK (I1)     TO BPC-NETWORK.
+041300
+041400 510-END.
+041500
+041600******************************************************************
+041700 600-MOVE-TO-SCREEN.
+041800******************************************************************
+041900
+042000     MOVE BPC-POST-CODE-TBL      TO BN11F1-BPC-POST-CODE-TBL.
+042100
+042200 600-END.
+042300
+042400******************************************************************
+042500 610-MOVE-DTL-TO-SCREEN.
+042600******************************************************************
+042700
+AI0010*    MOVE BPC-POSTAL-CODE        TO BN11F1-BPC-POSTAL-CODE (I1).
+AI0010     MOVE BPC-POSTAL-CODE        TO BN11F1-BPC-POSTAL-CODE (I1) 
+AI0010                                    BN11F1-SPLAT-POSTAL-CODE (I1).
+AI0010     MOVE BPC-START-DATE         TO BN11F1-BPC-START-DATE (I1) 
+AI0010                                    BN11F1-SPLAT-START-DATE (I1).
+AI0010     MOVE BPC-STOP-DATE          TO BN11F1-BPC-STOP-DATE (I1)
+AI0010                                    BN11F1-SPLAT-STOP-DATE (I1).
+AI0010     MOVE BPC-INS-CARRIER        TO BN11F1-BPC-INS-CARRIER (I1) 
+AI0010                                    BN11F1-SPLAT-INS-CARRIER (I1).
+AI0010     MOVE BPC-NETWORK            TO BN11F1-BPC-NETWORK (I1).
+042900
+043000     IF (BN11F1-LINE-FC (I1) NOT = SPACES)
+043100         GO TO 610-END.
+043200
+043300     IF (BN11F1-FC = "-")
+043400         PERFORM 870-FIND-PREV-BPCSET1
+043500     ELSE
+043600         PERFORM 860-FIND-NEXT-BPCSET1.
+043700
+043800 610-END.
+043900
+044000******************************************************************
+044100 BN11S1-TRANSACTION-END.
+044200******************************************************************
+044300

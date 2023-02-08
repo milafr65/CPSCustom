@@ -1,0 +1,17 @@
+2442c2442
+< VNLA
+>PROD
+
+< 232900         03  WS-FH-SEND-ID       PIC Z(10) VALUE ZEROS.
+---
+> 232900**       03  WS-FH-SEND-ID       PIC Z(10) VALUE ZEROS.
+2446c2446
+<       *        03  WS-FH-SEND-ID       PIC 9(10) VALUE ZEROS.
+---
+>                03  WS-FH-SEND-ID       PIC 9(10) VALUE ZEROS.
+2641c2641
+<       *                     06  WT-GROUP       PIC 9(03)  VALUE ZEROES.
+---
+>                            06  WT-GROUP       PIC 9(03)  VALUE ZEROES.
+2793a2794
+> 

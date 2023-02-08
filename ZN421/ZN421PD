@@ -1,0 +1,718 @@
+000100******************************************************************
+      *                  MODIFICATION LOG
+      ******************************************************************
+WO5483* 04/16/2014  MLF  ADDED EMPLOYEE OVERRIDE CAPABILITY
+WO5483*                  (1500- PARAGRAPHS)
+WO5483*                  IF EMPLOYEE IS IN OVERRIDE FILE, THEY ARE
+WO5483*                  WRITTEN TO FILE WHETHER OR NOT THEY HAVE AN
+WO5483*                  UPDATE IN THE REPORTING DATE RANGE
+SR4177* 05/07/2018  MLF  CHANGES TO RULES FOR DETERMINING EMPLOYMENT
+SR4177*                  CODE 1 - ADDED CODE TO CHECK PREVIOUS PAY
+SR4177*                  GRADE WHEN REQUIRED
+190313* 03/13/2019  MLF  CHECKING IN 1/7/19 AND 3/13/19 CHANGES
+190313*                  190107 CHANGED PAPOSITION PROCESSING TO RETURN
+190313*                  THE LAST NON-NUMERIC PROCESS LEVEL
+190313*                  190313 CREATED SPECIAL EXCEPTION FOR CPH
+AI0001* 11/15/2019  SCC -Set effective date to first of next month if 
+AI0001*                  not the first of the month; exception is if 
+AI0001*                  WBPBENTAG.EmpStatus = "DN", use start date.
+AI0001*                 -Adjust logic for SubPlanName; move to 1120-.
+AI0002* 01/08/2020  SCC -Default SubPlanName is TRADITIONAL in 1120-.
+AI0002* 01/22/2020  SCC -Update logic for Employment Code 1. Fourth byte
+AI0002*                  of Plan ID no longer relevant; put in an over-
+AI0002*                  ride for Process Level 07216.
+200707* 07/07/2020  MLF -WHEN READING BACK THRU BENSET1 RECORDS,
+200707*                  INCORRECT TRAD/ACCOUNT OPTION VALUE SET
+200707*                  WHEN CDSP PLAN TYPE IS READ. CHANGED TO
+200707*                  TO DISREGARD PLAN OPTION 60.
+US0300* 01/20/2021  MLF -DO NOT WRITE RECORD TO EMPLOYMENT FILE IF
+US0300*                  MEMBER HAS NEVER BEEN IN A PENSION PLAN.
+US0300*                  OTHERWISE THIS PROGRAM WILL WRITE A MEMBER TO FILE
+US0300*                  WHO IS NOT ON THE PERSONAL FILE, CREATES EXCESSIVE
+US0300*                  ERRORS WHEN WTW LOADS THE DATA.
+      ******************************************************************
+000200 050-EDIT-PARAMETERS             SECTION 10.
+      ******************************************************************
+000400 050-START.
+000500
+000600     IF (PRM-COMPANY NOT = ZEROES)
+000700         MOVE PRM-COMPANY           TO DB-COMPANY
+000800         PERFORM 840-FIND-BNCSET1
+000900         IF (BNCOMPANY-NOTFOUND)
+001000             MOVE PRM-COMPANY       TO CRT-ERR-VAR1
+001100             MOVE 050               TO CRT-ERROR-NBR
+001200             MOVE WS-TRUE           TO WS-PARAMETER-ERROR
+001300             PERFORM 780-PRINT-ERROR-MSG
+001400             GO TO 050-END.
+001500
+001600     IF (PRM-TO-DATE-STAMP = ZEROES)
+001700         IF (PRM-FR-DATE-STAMP = ZEROES)
+                   MOVE WS-SYSTEM-DATE-YMD TO PRM-TO-DATE-STAMP     
+                                              WSDR-FR-DATE 
+                   PERFORM 900-DATE-TO-JULIAN 
+                   SUBTRACT 1            FROM WSDR-JULIAN-DAYS 
+                   PERFORM 900-JULIAN-TO-DATE 
+                   MOVE WSDR-FR-DATE       TO PRM-FR-DATE-STAMP   
+002000         ELSE
+002100             MOVE PRM-FR-DATE-STAMP  TO PRM-TO-DATE-STAMP
+002200     ELSE
+002300     IF (PRM-FR-DATE-STAMP > PRM-TO-DATE-STAMP)
+002400         MOVE 051                    TO CRT-ERROR-NBR
+002500         MOVE WS-TRUE                TO WS-PARAMETER-ERROR
+002600         PERFORM 780-PRINT-ERROR-MSG
+002700         GO TO 050-END.
+002800
+002900 050-END.
+003000
+003100******************************************************************
+003200 100-PROGRAM-CONTROL             SECTION 10.
+003300******************************************************************
+003400 100-START.
+003500
+003600     MOVE 052                    TO CRT-MSG-NBR.
+003700     PERFORM 780-DISPLAY-MSG.
+003800
+001290     PERFORM 900-BUILD-TMP-FILE-NAME.
+           STRING WS-TMP-FILE    DELIMITED BY "tmp"
+                  "ZN421WRK/EMPLOYMENT_"
+                  WS-SYSTEM-Y
+                  WS-SYSTEM-YY
+                   "_"
+                  WS-SYSTEM-MM
+                  "_"
+                  WS-SYSTEM-DD                                      
+                  ".csv"                 INTO WS-EMPLOYMENT-OUT.
+           MOVE "EMPLOY-DTL"               TO WS-EMPLOY-DTL-FILE.
+           MOVE "EMPLOY-HDR"               TO WS-EMPLOY-HDR-FILE.
+           MOVE "EMPLOY-TR"                TO WS-EMPLOY-TRLR-FILE.
+
+002350     PERFORM 800-OPENOUTPUTCSV-EMPLOY-HDR.
+002350     PERFORM 800-OPENOUTPUTCSV-EMPLOYMENT.
+002350     PERFORM 800-OPENOUTPUTCSV-EMPLOY-TR.
+
+003900     PERFORM 1000-DO-REPORT.
+004000
+002450     PERFORM 800-CLOSECSV-EMPLOY-HDR.
+002450     PERFORM 800-CLOSECSV-EMPLOYMENT.
+002450     PERFORM 800-CLOSECSV-EMPLOY-TR.
+
+004100 100-END.
+004200
+004300******************************************************************
+004400 1000-DO-REPORT                  SECTION 50.
+004500******************************************************************
+004600 1000-START.
+004700
+004800     MOVE ZEROES                 TO RPT-PAGE-COUNT (ZN421-R1).
+004900
+002570     MOVE "H"                        TO HD-RECORD-TYPE.
+002570     MOVE "CPS"                      TO HD-CLIENT-NAME.
+002570     MOVE "EMPLOYMENT"               TO HD-FILE-TYPE.
+002570     MOVE WS-SYSTEM-DATE-YMD         TO HD-CREATE-DATE.
+002570     MOVE HHMMSS                     TO HD-CREATE-TIME.
+002570     MOVE PRM-FR-DATE-STAMP          TO HD-PERIOD-START-DATE.
+002570     MOVE PRM-TO-DATE-STAMP          TO HD-PERIOD-END-DATE.
+004170     PERFORM 800-WRITECSV-EMPLOY-HDR.
+
+           PERFORM 1500-LOAD-OVERRIDES
+           THRU    1500-END.
+
+005000     MOVE PRM-COMPANY            TO DB-COMPANY.
+005200     MOVE SPACES                 TO DB-PLAN-TYPE.
+005100     MOVE ZEROES                 TO DB-EMPLOYEE.
+005400     MOVE ZEROES                 TO DB-START-DATE.
+005300     MOVE SPACES                 TO DB-PLAN-CODE.
+005500     PERFORM 850-FIND-NLT-WENSET1.
+005600
+005700     IF (PRM-COMPANY NOT = ZEROES)
+005800         PERFORM 1020-DO-WEN-COMPANY
+005900         THRU    1020-END
+006000             UNTIL (WBPBENTAG-NOTFOUND)
+006100             OR    (WEN-COMPANY NOT = PRM-COMPANY)
+006200     ELSE
+006300         PERFORM 1020-DO-WEN-COMPANY
+006400         THRU    1020-END
+006500             UNTIL (WBPBENTAG-NOTFOUND).
+006600
+003090     MOVE WS-RECORD-COUNT            TO G2-RECORD-COUNT.
+003100     MOVE GN2-TOTALS                 TO RPT-GROUP-REQUEST.
+003110     PERFORM 700-PRINT-RPT-GRP.
+003120
+002570     MOVE "T"                        TO TR-RECORD-TYPE.
+002570     MOVE "EMPLOYMENT"               TO TR-FILE-TYPE.
+003090     MOVE WS-RECORD-COUNT            TO TR-RECORD-COUNT.
+           INSPECT TR-RECORD-COUNT REPLACING LEADING ZEROES BY SPACES.
+           MOVE TR-RECORD-COUNT            TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO TR-RECORD-COUNT.
+004170     PERFORM 800-WRITECSV-EMPLOY-TR.
+004180
+           INITIALIZE                         WS-COMMAND-STRING.
+           STRING "gawk '{gsub(""@"""         DELIMITED BY SIZE
+                 ","""");print}'"             DELIMITED BY SPACES
+                  "  "                        DELIMITED BY SIZE
+                  WS-EMPLOY-DTL-FILE          DELIMITED BY SPACES
+                  " > temp1 "                 DELIMITED BY SIZE
+                                         INTO WS-COMMAND-STRING.
+            CALL "system"               USING WS-COMMAND.
+004180
+           INITIALIZE                         WS-COMMAND-STRING.
+           STRING "cat "                      DELIMITED BY SIZE
+                  WS-EMPLOY-HDR-FILE          DELIMITED BY SPACES
+                  "  "                        DELIMITED BY SIZE
+                  "temp1"                     DELIMITED BY SPACES
+                  "  "                        DELIMITED BY SIZE
+                  WS-EMPLOY-TRLR-FILE         DELIMITED BY SPACES
+                  " > "                       DELIMITED BY SIZE
+                  WS-EMPLOYMENT-OUT           DELIMITED BY SPACES
+                                         INTO WS-COMMAND-STRING.
+            CALL "system"               USING WS-COMMAND.
+AI0002      DISPLAY "Output file: " WS-EMPLOYMENT-OUT.
+
+006700     GO TO 1000-END.
+006800
+006900******************************************************************
+007000 1020-DO-WEN-COMPANY.
+007100******************************************************************
+007200
+007300     MOVE WEN-COMPANY            TO WS-WEN-COMPANY.
+007400
+007500     MOVE WEN-COMPANY            TO G1-COMPANY.
+
+003220     MOVE WEN-COMPANY                TO DB-COMPANY.
+003230     MOVE SPACES                     TO DB-PROCESS-LEVEL.
+003240     PERFORM 840-FIND-PRSSET1.
+003250
+003260     MOVE EMP-COMPANY                TO G1-COMPANY.
+003270     MOVE PRS-NAME                   TO G1-NAME.
+007600
+007700     MOVE GN1-WEN-COMPANY        TO RPT-GROUP-REQUEST.
+007800     PERFORM 700-PRINT-RPT-GRP.
+007900
+008000     MOVE GN2H-WEN-START-DATE    TO RPT-GROUP-REQUEST.
+008100     PERFORM 700-PRINT-RPT-GRP.
+008200
+008300     PERFORM 1040-DO-WEN-EMPLOYEE
+008400     THRU    1040-END
+008500         UNTIL (WBPBENTAG-NOTFOUND)
+008600         OR    (WEN-COMPANY NOT = WS-WEN-COMPANY).
+008700
+008800 1020-END.
+008900
+009000******************************************************************
+009100 1040-DO-WEN-EMPLOYEE.
+009200******************************************************************
+009300
+009400     MOVE WEN-EMPLOYEE           TO WS-WEN-EMPLOYEE.
+009500
+009600     MOVE WEN-EMPLOYEE           TO G2-WEN-EMPLOYEE.
+009700
+009800     MOVE WEN-COMPANY            TO DB-COMPANY.
+009900     MOVE WEN-EMPLOYEE           TO DB-EMPLOYEE.
+010000     PERFORM 840-FIND-EMPSET1.
+010100     MOVE EMP-FIRST-NAME         TO G2-EMP-FIRST-NAME.
+010200     MOVE EMP-LAST-NAME          TO G2-EMP-LAST-NAME.
+010300
+010400     PERFORM 1060-DO-WEN-PLAN-TYPE
+010500     THRU    1060-END
+010600         UNTIL (WBPBENTAG-NOTFOUND)
+010700         OR    (WEN-COMPANY  NOT = WS-WEN-COMPANY)
+010800         OR    (WEN-EMPLOYEE NOT = WS-WEN-EMPLOYEE).
+010900
+011000 1040-END.
+011100
+011200******************************************************************
+011300 1060-DO-WEN-PLAN-TYPE.
+011400******************************************************************
+011500
+011600     MOVE WEN-PLAN-TYPE          TO WS-WEN-PLAN-TYPE.
+011700
+011800     PERFORM 1080-DO-WEN-PLAN-CODE
+011900     THRU    1080-END
+012000         UNTIL (WBPBENTAG-NOTFOUND)
+012100         OR    (WEN-COMPANY   NOT = WS-WEN-COMPANY)
+012200         OR    (WEN-EMPLOYEE  NOT = WS-WEN-EMPLOYEE)
+012300         OR    (WEN-PLAN-TYPE NOT = WS-WEN-PLAN-TYPE).
+012400
+012500 1060-END.
+012600
+012700******************************************************************
+012800 1080-DO-WEN-PLAN-CODE.
+012900******************************************************************
+013000
+013100     MOVE WEN-PLAN-CODE          TO WS-WEN-PLAN-CODE.
+013200
+013300     MOVE WEN-PLAN-CODE          TO G2-WEN-PLAN-CODE.
+013400
+013500     PERFORM 1100-DO-WEN-START-DATE
+013600     THRU    1100-END
+013700         UNTIL (WBPBENTAG-NOTFOUND)
+013800         OR    (WEN-COMPANY   NOT = WS-WEN-COMPANY)
+013900         OR    (WEN-EMPLOYEE  NOT = WS-WEN-EMPLOYEE)
+014000         OR    (WEN-PLAN-TYPE NOT = WS-WEN-PLAN-TYPE)
+014100         OR    (WEN-PLAN-CODE NOT = WS-WEN-PLAN-CODE).
+014200
+014300 1080-END.
+014400
+014500******************************************************************
+014600 1100-DO-WEN-START-DATE.
+014700******************************************************************
+014800
+014900     IF (WEN-DATE-STAMP < PRM-FR-DATE-STAMP)
+015000     OR (WEN-DATE-STAMP > PRM-TO-DATE-STAMP)
+WO5483         PERFORM 1550-CHECK-OVERRIDES
+WO5483         THRU    1550-END
+WO5483         IF (WS-OVERRIDE-FOUND-FLAG = 0)
+WO5483             GO TO 1100-NEXT-WBPBENTAG
+WO5483         ELSE
+WO5483             DISPLAY WEN-EMPLOYEE, " BENTAG OVERRIDE FOUND"
+WO5483         END-IF.
+
+      *--- Per ken (2/12/14) include future starts as current record
+014900*    IF (WEN-START-DATE > PRM-TO-DATE-STAMP)
+015100*        GO TO 1100-NEXT-WBPBENTAG.
+015200
+004630     MOVE "D"                        TO CSV-RECORD-TYPE.
+
+004630     MOVE EMP-EMPLOYEE               TO CSV-EMPLOYEE.
+           INSPECT CSV-EMPLOYEE REPLACING LEADING ZEROES BY SPACES.
+           MOVE CSV-EMPLOYEE               TO HRWS-VALUE.
+           PERFORM 771-HR-LEFT-JUSTIFY.
+           MOVE HRWS-VALUE                 TO CSV-EMPLOYEE.
+
+004670     MOVE EMP-FIRST-NAME             TO CSV-FIRST-NAME.
+004660     MOVE EMP-LAST-NAME              TO CSV-LAST-NAME.
+
+           MOVE WEN-COMPANY                TO DB-COMPANY.
+           MOVE WEN-PLAN-TYPE              TO DB-PLAN-TYPE.
+           MOVE WEN-EMPLOYEE               TO DB-EMPLOYEE.
+           MOVE WEN-START-DATE             TO DB-START-DATE.
+           MOVE WEN-PLAN-CODE              TO DB-PLAN-CODE.
+           PERFORM 840-FIND-BENSET1.
+           IF (BENEFIT-NOTFOUND)
+WO5483         IF (WS-OVERRIDE-FOUND-FLAG = 1)
+WO5483             DISPLAY WEN-EMPLOYEE,
+WO5483             " BENEFIT NOT FOUND, NO OVERRIDE"
+WO5483         END-IF
+015500         GO TO 1100-NEXT-WBPBENTAG.
+
+004660     MOVE BEN-START-DATE             TO CSV-EFFECT-DATE.
+AI0001*--- default effective date is Benefit Start Date. If WBPBENTAG
+AI0001*--- EmpStatus = DN, then continue on. Otherwise, if the Benefit
+AI0001*--- Start Date is not the first of the month, roll to the 
+AI0001*--- first of next month.
+AI0001     IF (WEN-EMP-STATUS = "DN")
+AI0001         GO TO 1040-CONTINUE
+AI0001     END-IF.
+AI0001     
+AI0001     IF (BEN-START-DATE(7:2) NOT = 01)
+AI0001         MOVE BEN-START-DATE         TO WSDR-FR-DATE
+AI0001         PERFORM 900-GET-DATE-EOM
+AI0001         MOVE WSDR-TO-DATE           TO WSDR-FR-DATE
+AI0001         MOVE 1                      TO WSDR-DAY-INCR
+AI0001         MOVE ZERO                   TO WSDR-MONTH-INCR
+AI0001                                        WSDR-YEAR-INCR
+AI0001         MOVE "Y"                    TO WSDR-EOM-ROLLOVER
+AI0001         PERFORM 900-INCREMENT-DATE
+AI0001         MOVE WSDR-TO-DATE           TO CSV-EFFECT-DATE
+AI0001     END-IF.
+AI0001
+AI0001 1040-CONTINUE.
+           IF  (BEN-STOP-DATE NOT = ZEROES)                
+004660         MOVE "HISTORY"              TO CSV-UPDATE-IND
+           ELSE
+004660         MOVE "CURRENT"              TO CSV-UPDATE-IND.
+
+      *--- Use IF10 Lookup for Status Code, Leave Type
+012000     MOVE "TW-STATUS&LEAVE"          TO DB-LVL-1-KEY.
+012100     MOVE WEN-NONPARTIC-CD           TO DB-LVL-2-KEY.
+012200     MOVE SPACES                     TO DB-LVL-3-KEY.
+012400     MOVE  "TW-STATUS"               TO DB-DTL-KEY.
+012600     PERFORM 840-FIND-IF1SET1.
+           IF (LUPTBLDTL-NOTFOUND)
+               MOVE  WEN-EMP-STATUS        TO DB-LVL-3-KEY
+012600         PERFORM 840-FIND-IF1SET1
+               IF (LUPTBLDTL-NOTFOUND)
+                   MOVE SPACES             TO IF1-DTL-VALUE.
+           MOVE IF1-DTL-VALUE              TO CSV-STATUS-CODE.
+           IF (CSV-STATUS-CODE = SPACES)
+               MOVE "@"                    TO CSV-STATUS-CODE.
+
+012000     MOVE "TW-STATUS&LEAVE"          TO DB-LVL-1-KEY.
+012100     MOVE WEN-NONPARTIC-CD           TO DB-LVL-2-KEY.
+012200     MOVE SPACES                     TO DB-LVL-3-KEY.
+012400     MOVE  "TW-LEAVE"                TO DB-DTL-KEY.
+012600     PERFORM 840-FIND-IF1SET1.
+           IF (LUPTBLDTL-NOTFOUND)
+               MOVE  WEN-EMP-STATUS        TO DB-LVL-3-KEY
+012600         PERFORM 840-FIND-IF1SET1
+               IF (LUPTBLDTL-NOTFOUND)
+                   MOVE SPACES             TO IF1-DTL-VALUE.
+           MOVE IF1-DTL-VALUE              TO CSV-LEAVE-TYPE.  
+           IF (CSV-LEAVE-TYPE = SPACES)
+               MOVE "@"                    TO CSV-LEAVE-TYPE.
+
+004660     MOVE WEN-EMP-STATUS             TO CSV-SUB-STATUS-CODE.
+           IF (WEN-EMP-STATUS = SPACES)
+               MOVE "@"                    TO CSV-SUB-STATUS-CODE.
+004660     MOVE WEN-NONPARTIC-CD           TO CSV-EMPLOYMENT-CLASS.
+           IF (WEN-NONPARTIC-CD = SPACES)
+               MOVE "@"                    TO CSV-EMPLOYMENT-CLASS.
+004660     MOVE "@"                        TO CSV-EXEMPT-CODE.
+004660     MOVE WEN-LCMS-ROSTER            TO CSV-CATEGORY.
+           IF (WEN-LCMS-ROSTER = SPACES)
+               MOVE "@"                    TO CSV-CATEGORY.    
+004660     MOVE "@"                        TO CSV-UNION.
+004660     MOVE BEN-PLAN-CODE              TO CSV-DIVISION.
+
+003220     MOVE WEN-COMPANY                TO DB-COMPANY.
+003230     MOVE WEN-PROCESS-LEVEL          TO DB-PROCESS-LEVEL.
+003240     PERFORM 840-FIND-PRSSET1.
+           IF (PRSYSTEM-NOTFOUND)
+               MOVE SPACES                 TO PRS-NAME.
+           MOVE SPACES                     TO CSV-LOCATION.
+004660     STRING WEN-PROCESS-LEVEL           DELIMITED SPACE
+004660            "-"                         DELIMITED BY SIZE
+004660            PRS-NAME               INTO CSV-LOCATION.
+
+004690     MOVE "@"                        TO CSV-DEPARTMENT
+004700                                        CSV-REGION
+004700                                        CSV-OFFICE.
+004720     MOVE "@"                        TO CSV-FULL-TIME-IND
+004730                                        CSV-FULL-TIME-PCT
+004740                                        CSV-ACTION-CODE
+004700                                        CSV-REASON-CODE
+004700                                        CSV-COMPANY
+004710                                        CSV-OFFICER-IND
+004720                                        CSV-EXECUTIVE-IND
+004730                                        CSV-WAGE-GRADE
+004740                                        CSV-WORK-SHIFT
+004740                                        CSV-EXPATRIATE-CODE.
+008000     MOVE "NO"                       TO CSV-EMPLOYMENT-CD1.
+AI0002*    IF (BEN-PLAN-CODE(4:1) = "A" OR "1")
+AI0002*        MOVE "YES"                  TO CSV-EMPLOYMENT-CD1
+AI0002     IF (EMP-PROCESS-LEVEL = "07216")
+AI0002         MOVE "YES"                  TO CSV-EMPLOYMENT-CD1
+SR4177     ELSE
+SR4177         MOVE "N"                    TO WS-PREV-PL-FLAG
+SR4177         PERFORM 1600-CHECK-PREV-PL
+SR4177            THRU 1600-END
+SR4177         IF (WS-PREV-PL-FLAG = "Y")
+SR4177             MOVE "YES"              TO CSV-EMPLOYMENT-CD1
+SR4177         END-IF
+SR4177     END-IF.
+
+008000     MOVE "@"                        TO CSV-EMPLOYMENT-CD2.
+           IF (BEN-PLAN-CODE(2:1) = "F")
+008000         MOVE "YES"                  TO CSV-EMPLOYMENT-CD2
+           ELSE
+               IF (BEN-PLAN-CODE(2:1) = "R")
+008000             MOVE "NO"               TO CSV-EMPLOYMENT-CD2.
+008000     MOVE WEN-CRP-VEST               TO CSV-EMPLOYMENT-CD3.
+           IF (WEN-CRP-VEST = SPACES)
+                MOVE "X"                   TO CSV-EMPLOYMENT-CD3.
+008000     MOVE WEN-SRA-VEST               TO CSV-EMPLOYMENT-CD4.
+           IF (WEN-SRA-VEST = SPACES)
+                MOVE "@"                   TO CSV-EMPLOYMENT-CD4.
+                                                                    
+           MOVE SPACES                     TO CSV-SUB-PLAN-NAME. 
+AI0001*    IF (BEN-PLAN-CODE      = "PNP" OR "OEO")
+AI0001*        PERFORM 850-FIND-NLT-BENSET1
+AI0001*        PERFORM 1120-DO-PREV-BEN-CODE
+AI0001*        THRU    1120-END
+AI0001*          UNTIL (BENEFIT-NOTFOUND)
+AI0001*          OR   (BEN-COMPANY NOT = DB-COMPANY)
+AI0001*          OR   (BEN-PLAN-TYPE NOT = DB-PLAN-TYPE)
+AI0001*          OR   (BEN-EMPLOYEE NOT = DB-EMPLOYEE)
+AI0001*          OR   ((BEN-PLAN-CODE      NOT = "PNP")
+AI0001*          AND   (BEN-PLAN-CODE      NOT = "OEO")).
+AI0001*    IF   (BEN-COMPANY NOT = DB-COMPANY)
+AI0001*    OR   (BEN-PLAN-TYPE NOT = DB-PLAN-TYPE)
+AI0001*    OR   (BEN-EMPLOYEE NOT = DB-EMPLOYEE)
+AI0001*        MOVE "XXX"          TO BEN-PLAN-CODE.
+AI0001*    IF (BEN-PLAN-CODE = "PAE" OR "PAE1" OR "PAEA" OR
+AI0001*                          "PAN" OR "PAN1" OR "PANA" OR
+AI0001*                          "PAV" OR "PAV1" OR "PAVA")
+AI0001*        MOVE "ACCOUNT"              TO CSV-SUB-PLAN-NAME
+AI0001*    ELSE
+AI0001*        MOVE "TRADITIONAL"          TO CSV-SUB-PLAN-NAME.
+AI0001     PERFORM 1120-DO-SUB-PLAN-NAME
+AI0001        THRU 1120-END.
+       
+US0300* 2000 WILL RETURN Y IF IT FINDS ANY PENSION PLAN BENEFIT
+US0300* RECORD FOR THE EMPLOYEE. AN EMPLOYEE NEVER ENROLLED IN
+US0300* A PENSION PLAN WOULD NOT BE ON THE PERSONAL FILE AND
+US0300* SHOULD ALSO NOT BE IN THE EMPLOYMENT FILE.
+US0300
+US0300     PERFORM 2000-SCAN-BENEFIT
+US0300        THRU 2000-END.
+US0300
+US0300     IF (WS-EMP-IN-PENSION-PLAN = "N")
+US0300         DISPLAY WEN-EMPLOYEE, 
+US0300                 " NEVER ENROLLED IN PENSION PLAN"
+US0300         GO TO 1100-NEXT-WBPBENTAG
+US0300     END-IF.
+          
+AI0001
+008000     MOVE "@"                        TO CSV-ADJ-BENEFIT-DATE
+008000                                        CSV-ADJ-ELIG-DATE
+008000                                        CSV-ADJ-VESTING-DATE
+008000                                        CSV-PARTICIPATION-DATE.
+008000     MOVE "@"                        TO CSV-PLAN-INFO-CD1
+008000                                        CSV-PLAN-INFO-CD2
+008000                                        CSV-PLAN-INFO-CD3
+008000                                        CSV-PLAN-INFO-CD4
+008000                                        CSV-PART-SUB-STATUS.
+008010
+004170     PERFORM 800-WRITECSV-EMPLOYMENT.
+004180
+004190     ADD 1 TO WS-RECORD-COUNT.
+004200
+015700     MOVE WEN-START-DATE             TO G2-WEN-START-DATE.
+015800     MOVE WEN-EMP-STATUS             TO G2-WEN-EMP-STATUS.
+015900     MOVE WEN-NONPARTIC-CD           TO G2-WEN-NONPARTIC-CD.
+016000     MOVE WEN-LCMS-ROSTER            TO G2-WEN-LCMS-ROSTER.
+016100     MOVE WEN-PROCESS-LEVEL          TO G2-WEN-PROCESS-LEVEL.
+016200     MOVE WEN-SRA-VEST               TO G2-WEN-SRA-VEST.
+016300
+016400     MOVE GN2D-WEN-START-DATE        TO RPT-GROUP-REQUEST.
+016500     PERFORM 700-PRINT-RPT-GRP.
+016600
+016700 1100-NEXT-WBPBENTAG.
+016800     PERFORM 860-FIND-NEXT-WENSET1.
+016900
+017000 1100-END.
+017100
+AI0001******************************************************************
+AI0001*1120-DO-PREV-BEN-CODE. 
+AI0001******************************************************************
+AI0001*
+AI0001*     PERFORM 870-FIND-PREV-BENSET1.
+AI0001*
+AI0001*1120-END.
+AI0001*
+AI0001******************************************************************
+AI0001 1120-DO-SUB-PLAN-NAME. 
+AI0001******************************************************************
+AI0001
+AI0001     MOVE BEN-PLAN-CODE(1:2)     TO WS-PLAN-CODE-PFX.
+AI0001     IF (BEN-PLAN-CODE = "PNP" OR "OEO")
+200707     OR (BEN-PLAN-OPTION = 60)
+AI0001         PERFORM 850-FIND-NLT-BENSET1
+AI0001         PERFORM
+AI0001           UNTIL (BENEFIT-NOTFOUND)
+AI0001             OR  (BEN-COMPANY   NOT = WEN-COMPANY)
+AI0001             OR  (BEN-PLAN-TYPE NOT = WEN-PLAN-TYPE)
+AI0001             OR  (BEN-EMPLOYEE  NOT = WEN-EMPLOYEE)
+AI0001             OR ((BEN-PLAN-CODE NOT = "PNP")
+AI0001            AND  (BEN-PLAN-CODE NOT = "OEO")
+200707            AND  (BEN-PLAN-OPTION NOT = 60) )
+AI0001
+AI0001           MOVE BEN-PLAN-CODE(1:2) TO WS-PLAN-CODE-PFX
+AI0001           PERFORM 870-FIND-PREV-BENSET1
+AI0001         END-PERFORM
+AI0001     END-IF.
+AI0001
+AI0001     IF  (BEN-COMPANY   = WEN-COMPANY)
+AI0001     AND (BEN-PLAN-TYPE = WEN-PLAN-TYPE)
+AI0001     AND (BEN-EMPLOYEE  = WEN-EMPLOYEE)
+AI0001          MOVE BEN-PLAN-CODE(1:2)  TO WS-PLAN-CODE-PFX 
+AI0001     END-IF.
+AI0002     MOVE "TRADITIONAL"          TO CSV-SUB-PLAN-NAME.
+AI0001     IF (WS-PLAN-CODE-PFX = "PA") 
+AI0001         MOVE "ACCOUNT"          TO CSV-SUB-PLAN-NAME
+AI0002*    ELSE
+AI0002*        IF (WS-PLAN-CODE-PFX = "PF" OR "PR")
+AI0002*            MOVE "TRADITIONAL"  TO CSV-SUB-PLAN-NAME
+AI0002*        END-IF
+AI0001     END-IF.
+AI0001
+AI0001 1120-END.
+AI0001
+003150******************************************************************
+003160 1500-LOAD-OVERRIDES.
+003170******************************************************************
+
+003260     MOVE PRM-COMPANY                TO G3-COMPANY.
+003270     MOVE PRS-NAME                   TO G3-NAME.
+
+           MOVE GN3H-WEN-PLAN-CODE     TO RPT-GROUP-REQUEST.
+           PERFORM 700-PRINT-RPT-GRP.
+
+           PERFORM 800-OPENINPUTCSV-ZN420IN.
+           MOVE 1 TO WS-NBR-OF-OVERRIDES.
+       
+           PERFORM  800-READCSV-ZN420IN.             
+
+           PERFORM  1510-WRITE-CSV
+              THRU  1510-END
+             UNTIL (ZN420IN-NOTFOUND). 
+
+       1500-END.
+       
+       1510-WRITE-CSV.
+           MOVE 1000                   TO DB-COMPANY.
+           MOVE WKI-EMPLOYEE           TO DB-EMPLOYEE.
+           PERFORM 840-FIND-EMPSET1.
+           
+           IF (EMPLOYEE-FOUND)
+              DISPLAY "LOADING:",
+              WS-NBR-OF-OVERRIDES,":",
+              WKI-EMPLOYEE,
+              WS-OVERRIDE-EMP (WS-NBR-OF-OVERRIDES)
+              MOVE WKI-EMPLOYEE          
+              TO WS-OVERRIDE-EMP (WS-NBR-OF-OVERRIDES)
+              ADD 1 TO WS-NBR-OF-OVERRIDES
+           ELSE
+              DISPLAY "INVALID EMPLOYEE:", WKI-EMPLOYEE
+              GO TO 1510-READ-NEXT-CSV.
+              
+           IF (WS-NBR-OF-OVERRIDES > WS-MAX-OVERRIDES)
+               DISPLAY "***********************************"
+               DISPLAY "NUMBER OF OVERRIDES EXCEEDS MAXIMUM"
+               DISPLAY "***********************************"
+               GO TO 1000-END.
+           
+007800     MOVE WKI-EMPLOYEE           TO G3-EMPLOYEE.
+012900     MOVE EMP-FIRST-NAME         TO G3-FIRST-NAME.
+013000     MOVE EMP-LAST-NAME          TO G3-LAST-NAME.
+           MOVE EMP-FICA-NBR           TO G3-FICA-NBR.
+013200     MOVE EMP-EMP-STATUS         TO G3-EMP-STATUS.
+013300     MOVE EMP-PROCESS-LEVEL      TO G3-PROCESS-LEVEL.
+013900
+014000     MOVE GN3D-WEN-PLAN-CODE     TO RPT-GROUP-REQUEST.
+014100     PERFORM 700-PRINT-RPT-GRP.
+013900
+           
+       1510-READ-NEXT-CSV.
+           PERFORM  800-READCSV-ZN420IN.      
+       1510-END.
+       
+ 
+003150******************************************************************
+003160 1550-CHECK-OVERRIDES.
+003170******************************************************************
+
+           MOVE 0 TO WS-OVERRIDE-FOUND-FLAG.
+           PERFORM 1560-CHECK-OVERRIDE-TABLE
+              THRU 1560-END
+           VARYING I1 FROM 1 BY 1
+             UNTIL (I1 > WS-NBR-OF-OVERRIDES)
+             OR    (WS-OVERRIDE-FOUND-FLAG = 1).
+
+
+       1550-END.
+004330
+
+003150******************************************************************
+003160 1560-CHECK-OVERRIDE-TABLE.
+003170******************************************************************
+    
+           IF (WEN-EMPLOYEE = WS-OVERRIDE-EMP (I1) )
+               MOVE 1 TO WS-OVERRIDE-FOUND-FLAG. 
+
+       1560-END.
+       
+SR4177******************************************************************
+SR4177 1600-CHECK-PREV-PL.
+SR4177******************************************************************
+SR4177* READ BACK THRU PAEMPPOS TABLE FOR THIS EMPLOYEE
+SR4177* TO THEIR PREVIOUS NUMERIC PROCESS LEVEL
+SR4177* IF GRADE 1/1CP/2C/2CP AT THAT PL, SET THE FLAG TO Y
+SR4177* CODE BASED ON 1070 PARAGRAPH FROM ZH211
+
+190107     MOVE "N"               TO WS-PEP-PROC-FLAG.
+SR4177
+SR4177     MOVE EMP-COMPANY       TO DB-COMPANY.
+SR4177     MOVE EMP-EMPLOYEE      TO DB-EMPLOYEE.
+SR4177     MOVE 01                TO DB-POS-LEVEL.
+SR4177     MOVE 99999999          TO DB-EFFECT-DATE.
+SR4177     PERFORM 850-FIND-NLT-PEPSET3.
+
+190107     PERFORM 1610-PROCESS-PEP-DETAIL 
+190107        THRU 1610-END
+190107       UNTIL (PAEMPPOS-NOTFOUND)
+SR4177          OR (PEP-EMPLOYEE NOT = EMP-EMPLOYEE)
+190107          OR (WS-PEP-PROC-FLAG = "Y").
+SR4177
+SR4177 1600-END.
+
+      ******************************************************************
+       1610-PROCESS-PEP-DETAIL.
+      ******************************************************************
+      
+190107* NEW PARAGRAPH
+
+      * WS-PREV-PL-FLAG WAS INITIALIZED BEFORE 1600 CALL
+      * THIS SHOULD LOOK FOR FIRST PEP RECORD WITH A NUMERIC PL
+      * IF EMPLOYER IS CRSP AT THAT TIME, SET THE PREV-PL-FLAG
+            
+             IF  (PAEMPPOS-FOUND)
+             AND (PEP-EMPLOYEE = EMP-EMPLOYEE)
+             AND (PEP-PROCESS-LEVEL IS NUMERIC)
+                  
+                  MOVE PEP-PAY-GRADE   TO WS-PAY-GRADE
+                  
+                  IF (WS-TARGET-GRADE)
+                      MOVE "Y"         TO WS-PREV-PL-FLAG
+                  END-IF
+                  
+190313            IF (PEP-PROCESS-LEVEL = "07216")
+190313*                MOVE "Y"         TO WS-PREV-PL-FLAG
+190313                DISPLAY PEP-EMPLOYEE,
+190313                " EMP AT 07216 FOUND"
+190313            END-IF
+                  
+                  MOVE "Y"             TO WS-PEP-PROC-FLAG
+             ELSE
+             
+                  PERFORM 860-FIND-NEXT-PEPSET3
+                  
+             END-IF.
+      
+       1610-END.
+
+US0300* 2000-SCAN-BENEFIT AND 2050-PROCESS-BENEFIT
+US0300* ARE NEW PARAGRAPHS
+
+      ******************************************************************
+       2000-SCAN-BENEFIT.
+      ******************************************************************
+
+            MOVE "N" TO WS-EMP-IN-PENSION-PLAN. 
+ 
+            MOVE WEN-COMPANY           TO DB-COMPANY.
+            MOVE WEN-EMPLOYEE          TO DB-EMPLOYEE.
+            MOVE SPACES                TO DB-PLAN-TYPE.
+            MOVE SPACES                TO DB-PLAN-CODE.
+
+            PERFORM 850-FIND-NLT-BENSET3.
+
+            PERFORM 2050-PROCESS-BENEFIT
+               THRU 2050-END
+              UNTIL (BENEFIT-NOTFOUND)
+                 OR (BEN-EMPLOYEE NOT = WEN-EMPLOYEE)
+                 OR (WS-EMP-IN-PENSION-PLAN = "Y").
+
+       2000-END.
+
+      ******************************************************************
+       2050-PROCESS-BENEFIT.
+      ******************************************************************
+  
+            IF  (BENEFIT-FOUND)
+            AND (BEN-EMPLOYEE = WEN-EMPLOYEE)
+            AND (BEN-PLAN-OPTION = 61)
+                 MOVE "Y" TO WS-EMP-IN-PENSION-PLAN
+                 GO TO 2050-END.
+                 
+            PERFORM 860-FIND-NEXT-BENSET3.     
+
+       2050-END.
+            
+      
+
+017200******************************************************************
+017300 1000-END.
+017400******************************************************************
+017500

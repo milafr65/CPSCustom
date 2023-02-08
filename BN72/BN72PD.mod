@@ -1,0 +1,1007 @@
+******* BN72PD 2.1.1.1.12 <1507465212>
+000100******************************************************************
+000200*                        BN72PD                                  *
+000300******************************************************************
+      *                                                                *
+      *  JT#      TAG      DESCRIPTION                                 *
+      *  ------   ------   ------------------------------------------  *
+      *  307540 | J07540 | DOMESTIC PARTNER                            *
+      ******************************************************************
+      ******************************************************************
+      *               M O D I F I C A T I O N   L O G:                 *
+      ******************************************************************
+      *  Modified by Analysts International,MN                         *
+      ******************************************************************
+      *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+      *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+      *                    END DATE FIELDS IN DETERMINATION OF THE     *
+      *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+      * ACS001  03/17/11   MODIFIED TO WRITE RECORD TO THE ZN325WK1    *
+      *                    FILE WHEN A RECORD WITH A PLAN CODE ESMS OR *
+      *                    ESMX IS DELETED FROM THE BENEFIT, PARTBEN OR*
+      *                    HRDEPBEN TABLES.                            *
+      * M. HUNTER - ACS    READDED CUSTOM CODE AFTER 9.0.1 APP UPGRADE *
+      *         08/24/11                                               *
+      *                                                                *
+      * ACS002 11/29/11                                                *
+      * M. HUNTER - ACS    MODIFIED TO ONLY WRITE TO ZN325WK1 IF PLAN  *
+      *                    CODE = ESMS.                                *
+      * ACS003 12/01/11    MODIFIED TO POPULATE AND INCLUDE WK1-COV-   *
+      * M. HUNTER - ACS    OPTION ON ZN325WK1 FILE.                    *
+      ******************************************************************
+      *  SDB 11/22/2011 - WO 642 - ADD LAST MOD'S BACK IN
+000400******************************************************************
+000500 BN72S1-TRANSACTION              SECTION 48.
+000600******************************************************************
+000700 BN72S1-START.
+000800
+000900     PERFORM 200-EDIT-TRAN
+001000     THRU    200-END.
+001100
+001200     IF (NO-ERROR-FOUND)
+001300         PERFORM 400-PROCESS-TRAN
+001400         THRU    400-END.
+001500
+001600     GO TO BN72S1-TRANSACTION-END.
+001700
+001800******************************************************************
+001900 200-EDIT-TRAN.
+002000******************************************************************
+002100
+002200     PERFORM 210-EDIT-ACCESS
+002300     THRU    210-END.
+002400
+002500     IF (ERROR-FOUND)
+002600         GO TO 200-END.
+002700
+002800     IF (BN72F1-FC                   = "C")
+002900         PERFORM 220-EDIT-DATA
+ACS001         THRU    220-END.
+ACS001*        THRU    220-END
+ACS001*        GO TO 200-END.
+ACS001
+ACS002*    MOVE WS-FALSE               TO WS-ESMS-ESMX-DEL-SW.
+ACS002     MOVE WS-FALSE               TO WS-ESMS-DEL-SW.
+ACS001
+ACS001     IF (BN72F1-FC = "C")
+ACS001        PERFORM
+ACS001         VARYING I1 FROM 1 BY 1
+ACS001         UNTIL (I1 > 12)
+ACS001
+ACS002*          IF (BN72F1-PTB-PLAN-CODE (I1) = "ESMS" OR "ESMX")
+ACS002           IF (BN72F1-PTB-PLAN-CODE (I1) = "ESMS")
+ACS001              IF (BN72F1-LINE-FC (I1) = "D")
+ACS002*                MOVE WS-TRUE TO WS-ESMS-ESMX-DEL-SW 
+ACS002                 MOVE WS-TRUE TO WS-ESMS-DEL-SW 
+ACS001              END-IF
+ACS001           END-IF
+ACS001       END-PERFORM
+ACS001     END-IF.
+ACS001
+003200
+003300 200-END.
+003400
+003500******************************************************************
+003600 210-EDIT-ACCESS.
+003700******************************************************************
+003800
+003900     MOVE BN72F1-PTB-COMPANY         TO DB-COMPANY.
+004000     PERFORM 840-FIND-PRSSET1.
+004100     IF (PRSYSTEM-NOTFOUND)
+004200******** Company not setup in HR00
+004300         MOVE 52                     TO CRT-ERROR-NBR
+004400         MOVE BN72F1-PTB-COMPANY-FN  TO CRT-FIELD-NBR
+004500         GO TO 210-END.
+004600
+004700     MOVE BN72F1-PTB-COMPANY         TO DB-COMPANY.
+004800     PERFORM 840-FIND-BNCSET1.
+004900     IF (BNCOMPANY-NOTFOUND)
+005000******** Company not setup in BN00
+005100         MOVE 53                     TO CRT-ERROR-NBR
+005200         MOVE BN72F1-PTB-COMPANY-FN  TO CRT-FIELD-NBR
+005300         GO TO 210-END.
+005400
+005500     MOVE BN72F1-PTB-COMPANY         TO DB-COMPANY.
+005600     MOVE BN72F1-PTB-EMPLOYEE        TO DB-EMPLOYEE.
+005700
+005800     IF  (BN72F1-FC                  = "P")
+005900     AND (BN72F1-PTB-EMPLOYEE        = ZEROES)
+006000         MOVE 11                     TO CRT-ERROR-NBR
+006100         MOVE BN72F1-FC-FN           TO CRT-FIELD-NBR
+006200         GO TO 210-END.
+006300
+006400     IF (BN72F1-FC                   = "N" OR "P")
+006500         PERFORM 212-EMP-LOGIC
+006600         THRU    212-END.
+GW0506
+GW0506     IF (BN72F1-GO-TO-PLAN-CODE > SPACES)
+GW0506        IF (BN72F1-GO-TO-PLAN-TYPE NOT > SPACES)
+GW0506             MOVE 501                        TO CRT-ERROR-NBR
+GW0506             MOVE BN72F1-GO-TO-PLAN-TYPE-FN  TO CRT-FIELD-NBR
+GW0506             GO TO 210-END.
+006700
+006800     IF (ERROR-FOUND)
+006900         GO TO 210-END.
+007000
+007100     MOVE BN72F1-PTB-COMPANY         TO DB-COMPANY.
+007200     MOVE BN72F1-PTB-EMPLOYEE        TO DB-EMPLOYEE.
+007300     PERFORM 840-FIND-EMPSET1.
+007400     IF (EMPLOYEE-NOTFOUND)
+007500         MOVE 203                    TO CRT-ERROR-NBR
+007600         MOVE BN72F1-PTB-EMPLOYEE-FN TO CRT-FIELD-NBR
+007700         GO TO 210-END.
+007800
+007900     IF (BN72F1-ENROLLMENT-DATE      = ZEROES)
+015400         IF (EMP-TERM-DATE           = ZEROES)
+015500             MOVE WS-SYSTEM-DATE-YMD TO BN72F1-ENROLLMENT-DATE
+015600         ELSE
+015700             MOVE EMP-TERM-DATE      TO BN72F1-ENROLLMENT-DATE.
+008100
+008200     IF (BN72F1-FC                   = "C")
+008300         GO TO 210-END.
+008400
+008500     IF  (BN72F1-FC                  = "I")
+008600     OR  (BN72F1-PTB-COMPANY         NOT = BN72F1-PT-PTB-COMPANY)
+008700     OR  (BN72F1-PTB-EMPLOYEE        NOT = BN72F1-PT-PTB-EMPLOYEE)
+008800     OR  (BN72F1-ENROLLMENT-DATE NOT = BN72F1-PT-ENROLLMENT-DATE)
+008900     OR ((BN72F1-FC                  = "+")
+009000     AND (BN72F1-PT-RECORD-ORIG      = "E"))
+009100         MOVE "B"                    TO BNWS-RECORD-ORIG
+009200         INITIALIZE DB-PLAN-TYPE
+009300                    DB-PLAN-CODE
+009400                    DB-START-DATE
+009500         IF (BN72F1-FC               NOT = "N" AND "P")
+009600             MOVE "+"                TO BN72F1-FC
+009700         ELSE
+009800             NEXT SENTENCE
+009900     ELSE
+010000     IF (BN72F1-FC = "+")
+010100         MOVE BN72F1-PT-PTB-PLAN-TYPE     TO DB-PLAN-TYPE
+010200         MOVE BN72F1-PT-PTB-PLAN-CODE     TO DB-PLAN-CODE
+010300         MOVE BN72F1-PT-PTB-START-DATE    TO DB-START-DATE
+010400         MOVE BN72F1-PT-RECORD-ORIG       TO BNWS-RECORD-ORIG
+010500     ELSE
+P33813         IF (BN72WS-MOVE-HIGH-VAL)
+P33813             MOVE HIGH-VALUES             TO DB-PLAN-TYPE
+P33813                                             DB-PLAN-CODE
+P33813         ELSE
+010600             MOVE BN72F1-PTB-PLAN-TYPE(1) TO DB-PLAN-TYPE
+010700             MOVE BN72F1-PTB-PLAN-CODE(1) TO DB-PLAN-CODE
+P33813         END-IF
+010800         MOVE BN72F1-PTB-START-DATE (1)   TO DB-START-DATE
+010900         MOVE BN72F1-RECORD-ORIG (1)      TO BNWS-RECORD-ORIG.
+011000
+011100     IF (BNWS-RECORD-ORIG            = "B")
+011200         PERFORM 850-FIND-NLT-PTBSET5
+011300         IF (BN72F1-FC               = "-")
+011400             PERFORM 870-FIND-PREV-PTBSET5
+011500             IF (PARTBEN-NOTFOUND)
+011600             OR (PTB-COMPANY         NOT = DB-COMPANY)
+011700             OR (PTB-EMPLOYEE        NOT = DB-EMPLOYEE)
+011800             OR (PTB-PARTICIPNT      NOT = DB-PARTICIPNT)
+011900**************** No more records to view
+012000                 MOVE 150            TO CRT-ERROR-NBR
+012100                 MOVE BN72F1-FC-FN   TO CRT-FIELD-NBR
+012200                 GO TO 210-END.
+012300
+012400     IF  (BNWS-RECORD-ORIG           = "B")
+012500     AND ((PARTBEN-NOTFOUND)
+012600     OR   (PTB-COMPANY               NOT = DB-COMPANY)
+012700     OR   (PTB-EMPLOYEE              NOT = DB-EMPLOYEE))
+012800         MOVE "P"                    TO BNWS-RECORD-ORIG
+012900         INITIALIZE DB-PLAN-TYPE
+013000                    DB-PLAN-CODE.
+013100
+013200     IF (BNWS-RECORD-ORIG            = "P")
+013300         PERFORM 850-FIND-NLT-PLNSET1
+013400         IF (BN72F1-FC               = "-")
+013500             PERFORM 870-FIND-PREV-PLNSET1
+013600             IF (PLAN-NOTFOUND)
+013700             OR (PLN-COMPANY         NOT = DB-COMPANY)
+013800                 MOVE WS-HIGH-VALUES TO DB-START-DATE
+013900                 MOVE HIGH-VALUES    TO DB-PLAN-CODE
+014000                                        DB-PLAN-TYPE
+014100                 PERFORM 850-FIND-NLT-PTBSET5
+014200                 PERFORM 870-FIND-PREV-PTBSET5
+014300                 MOVE "B"            TO BNWS-RECORD-ORIG
+014400                 IF (PARTBEN-NOTFOUND)
+014500                 OR (PTB-COMPANY     NOT = DB-COMPANY)
+014600                 OR (PTB-EMPLOYEE    NOT = DB-EMPLOYEE)
+014700                 OR (PTB-PARTICIPNT  NOT = DB-PARTICIPNT)
+014800******************** No more records to view
+014900                     MOVE 150            TO CRT-ERROR-NBR
+015000                     MOVE BN72F1-FC-FN   TO CRT-FIELD-NBR
+015100                     GO TO 210-END.
+015200
+015300 210-END.
+015400
+015500******************************************************************
+015600 212-EMP-LOGIC.
+015700******************************************************************
+015800
+015900     IF (BN72F1-FC                   = "N")
+016000         IF (BN72F1-PTB-EMPLOYEE NOT = ZEROS)
+016100             PERFORM 850-FIND-NLT-EMPSET1
+016200             PERFORM 860-FIND-NEXT-EMPSET1
+016300         ELSE
+016400             PERFORM 850-FIND-NLT-EMPSET1.
+016500
+016600     IF (BN72F1-FC                   = "P")
+016700         PERFORM 850-FIND-NLT-EMPSET1
+016800         PERFORM 870-FIND-PREV-EMPSET1.
+016900
+017000     IF  (EMPLOYEE-FOUND)
+017100     AND (EMP-COMPANY                = DB-COMPANY)
+017200         MOVE EMP-COMPANY            TO CRT-COMPANY
+017300         MOVE EMP-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL
+017400         PERFORM 700-HR-EMP-SECURITY
+017500         IF (HRWS-EMP-SECURED)
+017600             PERFORM 214-GET-NEXT-EMPLOYEE
+017700             THRU    214-END
+017800                 UNTIL (EMPLOYEE-NOTFOUND)
+017900                 OR    (EMP-COMPANY  NOT = DB-COMPANY)
+018000                 OR    (HRWS-EMP-NOT-SECURED).
+018100
+018200     IF (BN72F1-FC                   = "N")
+018300         IF (EMPLOYEE-NOTFOUND)
+018400         OR (EMP-COMPANY             NOT = BN72F1-PTB-COMPANY)
+018500             MOVE 11                 TO CRT-ERROR-NBR
+018600             MOVE BN72F1-FC-FN       TO CRT-FIELD-NBR
+018700             GO TO 212-END
+018800         ELSE
+018900             MOVE EMP-EMPLOYEE       TO DB-EMPLOYEE
+019000                                        BN72F1-PTB-EMPLOYEE
+019100     ELSE
+019200     IF (EMPLOYEE-NOTFOUND)
+019300     OR (EMP-COMPANY                 NOT = BN72F1-PTB-COMPANY)
+019400         GO TO 212-END
+019500     ELSE
+019600         MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE
+019700                                        BN72F1-PTB-EMPLOYEE.
+019800
+019900     MOVE BN72F1-PTB-COMPANY         TO DB-COMPANY.
+020000     MOVE BN72F1-PTB-EMPLOYEE        TO DB-EMPLOYEE.
+020100     PERFORM 840-FIND-PEMSET1.
+020200     IF (PAEMPLOYEE-NOTFOUND)
+020300         MOVE 50                     TO CRT-ERROR-NBR
+020400         MOVE BN72F1-PTB-EMPLOYEE-FN TO CRT-FIELD-NBR
+020500         GO TO 212-END.
+020600
+020700 212-END.
+020800
+020900******************************************************************
+021000 214-GET-NEXT-EMPLOYEE.
+021100******************************************************************
+021200
+021300     IF (BN72F1-FC                   = "N")
+021400         PERFORM 860-FIND-NEXT-EMPSET1
+021500     ELSE
+021600         PERFORM 870-FIND-PREV-EMPSET1.
+021700
+021800     IF  (EMPLOYEE-FOUND)
+021900     AND (EMP-COMPANY                = DB-COMPANY)
+022000         MOVE EMP-COMPANY            TO CRT-COMPANY
+022100         MOVE EMP-PROCESS-LEVEL      TO CRT-PROCESS-LEVEL
+022200         PERFORM 700-HR-EMP-SECURITY.
+022300
+022400 214-END.
+022500
+022600******************************************************************
+022700 220-EDIT-DATA.
+022800******************************************************************
+022900
+023000     PERFORM 500-MOVE-PTB-SCR-TO-WS
+023100     THRU    500-END.
+023200
+023300     PERFORM 2000-BNPTB-EDIT-TRAN.
+023400
+J93630     MOVE BNPTB-FIRST-XMIT           TO BN72F1-FIRST-XMIT.
+J93630
+023500     IF (ERROR-FOUND)
+023600         GO TO 220-END.
+023700
+023800 220-END.
+023900
+024000******************************************************************
+024100 400-PROCESS-TRAN.
+024200******************************************************************
+024300 
+024400     IF (BN72F1-FC                   = "C")
+024500         PERFORM 420-CHANGE
+024600         THRU    420-END
+024700     ELSE
+024800     IF (BN72F1-FC                   = "I" OR "+" OR "-")
+024900     OR (BN72F1-FC                   = "N" OR "P")
+025000         PERFORM 480-INQUIRE
+025100         THRU    480-END.
+GW0506
+GW0506     INITIALIZE BN72F1-GO-TO-PLAN-CODE 
+GW0506                BN72F1-GO-TO-PLAN-TYPE.  
+GW0506
+GW0506     MOVE "N"                 TO WS-GO-TO-SW.
+025200
+025300 400-END.
+025400
+025500******************************************************************
+025600 420-CHANGE.
+025700******************************************************************
+025800
+ACS002*    IF (ESMS-ESMX-DELETED)
+ACS002     IF (ESMS-DELETED)
+ACS001         PERFORM 425-WRITE-ZN325WK1-REC
+ACS001         THRU    425-END.
+025900     PERFORM 910-AUDIT-BEGIN.
+026000     IF (DMS-ABORTED)
+026100         GO TO 420-END.
+026200
+026300     PERFORM 4000-BNPTB-PROCESS-TRAN.
+026400
+026700     PERFORM 920-AUDIT-END.
+026800
+026900     PERFORM 530-MOVE-WS-TO-SCR
+027000     THRU    530-END.
+027100
+026500     MOVE CRT-CHG-COMPLETE       TO CRT-MESSAGE.
+026600
+027200     MOVE "I"                    TO BN72F1-FC.
+027300
+027400 420-END.
+ACS001******************************************************************
+ACS001 425-WRITE-ZN325WK1-REC.
+ACS001******************************************************************
+ACS001
+ACS001     OPEN EXTEND ZN325WK1-FILE.
+ACS001
+ACS001     PERFORM 
+ACS001       VARYING I1 FROM 1 BY 1 
+ACS001       UNTIL ( I1 > 12)
+ACS002*      IF (BN72F1-PTB-PLAN-CODE (I1) = "ESMS" OR "ESMX")
+ACS002       IF (BN72F1-PTB-PLAN-CODE (I1) = "ESMS")
+ACS001          IF (BN72F1-LINE-FC (I1) = "D")
+ACS001                MOVE BN72F1-PTB-EMPLOYEE  TO WK1-EMPLOYEE
+ACS001
+ACS001                MOVE BN72F1-PTB-COMPANY  TO DB-COMPANY
+ACS001                                            WK1-COMPANY
+ACS001                INITIALIZE DB-EMP-APP
+ACS001                MOVE BN72F1-PTB-EMPLOYEE TO DB-EMPLOYEE
+ACS001                MOVE "57"                TO DB-FIELD-KEY
+ACS001                PERFORM 840-FIND-HEUSET1
+ACS001                IF (HREMPUSF-FOUND)
+ACS001                   MOVE HEU-A-FIELD      TO WK1-PROCESS-LEVEL
+ACS001                ELSE
+ACS001                   MOVE EMP-PROCESS-LEVEL
+ACS001                                         TO WK1-PROCESS-LEVEL
+ACS001                END-IF
+ACS001
+ACS001                MOVE BN72F1-PTB-START-DATE (I1)
+ACS001                                         TO WK1-START-DATE
+ACS001                MOVE BN72F1-PTB-STOP-DATE (I1)
+ACS001                                         TO WK1-STOP-DATE
+ACS001                MOVE BN72F1-PTB-PLAN-CODE (I1) 
+ACS001                                         TO WK1-PLAN-CODE
+ACS003                MOVE BN72F1-PTB-COV-OPTION (I1)
+ACS003                                         TO WK1-COV-OPTION
+ACS001                MOVE CRT-USER-NAME       TO WK1-USER-ID
+ACS001                MOVE WS-SYSTEM-DATE-YMD  TO WK1-DATE-DELETED      
+ACS001                WRITE ZN325WK1-REC FROM WK1-ZN325WK1-REC 
+ACS001          END-IF
+ACS001       END-IF
+ACS001     END-PERFORM.
+ACS001
+ACS001     CLOSE ZN325WK1-FILE SAVE.
+ACS001
+ACS001 425-END.
+027500
+027600******************************************************************
+027700 480-INQUIRE.
+027800******************************************************************
+027900
+028000     IF (BN72F1-FC               = "I")
+028100         MOVE "+"                TO BN72F1-FC.
+028200
+028300     PERFORM 481-MOVE-TO-SCREEN
+028400     THRU    481-END.
+028500
+GW0506     IF (BN72F1-GO-TO-PLAN-TYPE > SPACES)
+GW0506        MOVE "Y"              TO WS-GO-TO-SW
+GW0506        IF (BN72F1-GO-TO-PLAN-TYPE < PLN-PLAN-TYPE)
+GW0506            IF (BN72F1-GO-TO-PLAN-CODE < PLN-PLAN-CODE)
+GW0506               MOVE "-"                TO BN72F1-FC.
+GW0506
+028600     IF (BN72F1-FC               = "-")
+028700         MOVE 13                 TO I1
+028800     ELSE
+028900         INITIALIZE I1.
+029000
+P33813     SET BN72WS-MOVE-NO-HIGH-VAL TO TRUE.
+P33813
+029100     IF (BN72F1-FC               = "-")
+029200         MOVE BN72F1-PTB-PLAN-TYPE (1) TO BN72F1-PT-PTB-PLAN-TYPE
+029300         MOVE BN72F1-PTB-PLAN-CODE (1) TO BN72F1-PT-PTB-PLAN-CODE
+029400         MOVE BN72F1-PTB-START-DATE (1)
+029500                                       TO BN72F1-PT-PTB-START-DATE
+029600         MOVE BN72F1-RECORD-ORIG (1)   TO BN72F1-PT-RECORD-ORIG
+029700         INITIALIZE BN72F1-DETAIL-GROUP
+029800         IF (BNWS-RECORD-ORIG          = "P")
+GW0506          IF (WS-GO-TO-SW = "Y")
+GW0506           PERFORM 483-FIND-GO-TO-PLAN
+GW0506           THRU 483-END
+GW0506           UNTIL (WS-GO-TO-SW = "N")
+GW0506             OR (PLAN-NOTFOUND)
+GW0506             OR (PLN-COMPANY            NOT = DB-COMPANY)
+GW0506
+GW0506          ELSE
+029900             PERFORM 484-MOVE-PLN-DTL-TO-SCREEN
+030000             THRU    484-END
+030100                 UNTIL  (I1            = 1)
+030200                 OR     (PLAN-NOTFOUND)
+030300                 OR     (PLN-COMPANY   NOT = DB-COMPANY)
+030400             MOVE CRT-MORE-RECS        TO CRT-MESSAGE
+030500             IF (PLAN-NOTFOUND)
+030600             OR (PLN-COMPANY           NOT = DB-COMPANY)
+030700                 MOVE WS-HIGH-VALUES   TO DB-START-DATE
+030800                 MOVE HIGH-VALUES      TO DB-PLAN-CODE
+030900                                          DB-PLAN-TYPE
+031000                 PERFORM 850-FIND-NLT-PTBSET5
+031100                 PERFORM 870-FIND-PREV-PTBSET5
+031200                 MOVE "B"              TO BNWS-RECORD-ORIG.
+031300
+031400     IF  (BN72F1-FC                    = "-")
+031500     AND (BNWS-RECORD-ORIG             = "B")
+031600     AND (I1                           > 1)
+031700         PERFORM 482-MOVE-PTB-DTL-TO-SCREEN
+031800         THRU    482-END
+031900             UNTIL (I1                 = 1)
+032000             OR    (PARTBEN-NOTFOUND)
+032100             OR    (PTB-COMPANY        NOT = DB-COMPANY)
+032200             OR    (PTB-EMPLOYEE       NOT = DB-EMPLOYEE)
+032300         IF (PARTBEN-NOTFOUND)
+032400         OR (PTB-COMPANY               NOT = DB-COMPANY)
+032500         OR (PTB-EMPLOYEE              NOT = DB-EMPLOYEE)
+032600             MOVE CRT-INQ-COMPLETE     TO CRT-MESSAGE
+032700             IF (BN72F1-RECORD-ORIG (1) = SPACES)
+032800                 MOVE "E"              TO BN72F1-PT-RECORD-ORIG
+032900             ELSE
+033000                 NEXT SENTENCE
+033100         ELSE
+033200             MOVE CRT-MORE-RECS        TO CRT-MESSAGE.
+033300
+033400     IF (BN72F1-FC                      NOT = "-")
+033500         INITIALIZE BN72F1-DETAIL-GROUP
+033600         IF (BNWS-RECORD-ORIG           = "B")
+033700             PERFORM 482-MOVE-PTB-DTL-TO-SCREEN
+033800             THRU    482-END
+033900                 UNTIL  (I1             = BN72F1-DETAIL-SIZE)
+034000                 OR     (PARTBEN-NOTFOUND)
+034100                 OR     (PTB-COMPANY    NOT = DB-COMPANY)
+034200                 OR     (PTB-EMPLOYEE   NOT = DB-EMPLOYEE)
+034300             IF (PARTBEN-NOTFOUND)
+034400             OR (PTB-COMPANY            NOT = DB-COMPANY)
+034500             OR (PTB-EMPLOYEE           NOT = DB-EMPLOYEE)
+034600                 INITIALIZE DB-PLAN-TYPE
+034700                            DB-PLAN-CODE
+034800                 PERFORM 850-FIND-NLT-PLNSET1
+034900                 MOVE "P"               TO BNWS-RECORD-ORIG
+035000             ELSE
+035100                 MOVE "B"               TO BN72F1-PT-RECORD-ORIG
+035200                 MOVE PTB-PLAN-TYPE     TO BN72F1-PT-PTB-PLAN-TYPE
+035300                 MOVE PTB-PLAN-CODE     TO BN72F1-PT-PTB-PLAN-CODE
+035400                 MOVE PTB-START-DATE   TO BN72F1-PT-PTB-START-DATE
+035500                 MOVE CRT-MORE-RECS     TO CRT-MESSAGE.
+035600
+035700     IF  (BN72F1-FC                     NOT = "-")
+035800     AND (BNWS-RECORD-ORIG              = "P")
+035900     AND (I1                            <= BN72F1-DETAIL-SIZE)
+GW0506       IF (WS-GO-TO-SW = "Y")
+GW0506         PERFORM 483-FIND-GO-TO-PLAN
+GW0506          THRU 483-END
+GW0506          UNTIL (WS-GO-TO-SW = "N")
+GW0506             OR (PLAN-NOTFOUND)
+GW0506             OR (PLN-COMPANY            NOT = DB-COMPANY)
+GW0506
+GW0506       ELSE
+036000         PERFORM 484-MOVE-PLN-DTL-TO-SCREEN
+036100         THRU    484-END
+036200             UNTIL (I1                  = BN72F1-DETAIL-SIZE)
+036300             OR (PLAN-NOTFOUND)
+036400             OR (PLN-COMPANY            NOT = DB-COMPANY)
+GW0506        END-IF
+036500         IF (PLAN-NOTFOUND)
+036600         OR (PLN-COMPANY                NOT = DB-COMPANY)
+036700             MOVE "E"                   TO BN72F1-PT-RECORD-ORIG
+036800             INITIALIZE BN72F1-PT-PTB-PLAN-TYPE
+036900                        BN72F1-PT-PTB-PLAN-CODE
+037000                        BN72F1-PT-PTB-START-DATE
+037100             MOVE CRT-INQ-COMPLETE      TO CRT-MESSAGE
+037200             IF (BN72F1-PTB-PLAN-CODE (1) = SPACES)
+P33813                 SET BN72WS-MOVE-HIGH-VAL TO TRUE
+037500                 MOVE "P"            TO BN72F1-RECORD-ORIG (1)
+037600             ELSE
+037700                 NEXT SENTENCE
+037800         ELSE
+037900             MOVE "P"                TO BN72F1-PT-RECORD-ORIG
+038000             MOVE PLN-PLAN-TYPE      TO BN72F1-PT-PTB-PLAN-TYPE
+038100             MOVE PLN-PLAN-CODE      TO BN72F1-PT-PTB-PLAN-CODE
+038200             MOVE PLN-START-DATE     TO BN72F1-PT-PTB-START-DATE
+038300             MOVE CRT-MORE-RECS      TO CRT-MESSAGE.
+038400
+038500 480-END.
+038600
+038700******************************************************************
+038800 481-MOVE-TO-SCREEN.
+038900******************************************************************
+039000
+039100     MOVE PRS-NAME               TO BN72F1-PRS-NAME.
+039200
+039300     MOVE EMP-LAST-NAME          TO HRWS-LAST-NAME.
+039400     MOVE EMP-FIRST-NAME         TO HRWS-FIRST-NAME.
+039500     MOVE EMP-MIDDLE-INIT        TO HRWS-MIDDLE-INIT.
+           MOVE EMP-NAME-SUFFIX        TO HRWS-NAME-SUFFIX.
+           MOVE EMP-LAST-NAME-PRE      TO HRWS-LAST-NAME-PRE.
+039600     PERFORM 750-HR-FORMAT-NAME.
+039700     MOVE HRWS-FORMAT-NAME       TO BN72F1-EMP-NAME.
+RAY
+RAY        MOVE EMP-COMPANY            TO DB-COMPANY.
+RAY        MOVE ZEROES                 TO DB-STATUS.
+RAY        MOVE EMP-EMPLOYEE           TO DB-EMPLOYEE.
+RAY        MOVE ZEROES                 TO DB-PARTICIPNT.
+RAY        INITIALIZE                     DB-PLAN-TYPE.
+RAY        INITIALIZE                     DB-PLAN-CODE.
+RAY        INITIALIZE                     DB-START-DATE.
+RAY        PERFORM 850-FIND-NLT-WBPSET3.
+RAY        IF (WBPBENEFIT-NOTFOUND)
+RAY        OR (WBP-COMPANY  NOT = EMP-COMPANY)
+RAY        OR (WBP-STATUS   NOT = ZEROES)
+RAY        OR (WBP-EMPLOYEE NOT = EMP-EMPLOYEE)
+RAY        OR (WBP-PARTICIPNT NOT = ZEROES)
+RAY            MOVE 200                TO CRT-MSG-NBR
+RAY        ELSE
+RAY            MOVE 201                TO CRT-MSG-NBR
+RAY        END-IF.
+RAY        MOVE "ZNMSG"                TO CRT-ERROR-CAT.
+RAY        PERFORM 790-GET-MSG.
+RAY        MOVE CRT-MESSAGE            TO BN72F1-RETRO-BTN.
+039800
+090800     MOVE "BNMSG"                TO CRT-ERROR-CAT.
+090900     MOVE 202                    TO CRT-MSG-NBR.
+091000     PERFORM 790-GET-MSG.
+091100     MOVE CRT-MESSAGE            TO BN72F1-COMMENTS.
+           INITIALIZE CRT-MESSAGE.
+
+           INITIALIZE BN72F1-COMMENTS-FLAG.
+           MOVE BN72F1-PTB-COMPANY     TO DB-COMPANY.
+           MOVE BN72F1-BCM-CMT-TYPE    TO DB-CMT-TYPE.
+           MOVE BN72F1-PTB-EMPLOYEE    TO DB-EMPLOYEE.
+           MOVE BCMSET1-EMPLOYEE       TO WS-DB-BEG-RNG.
+           PERFORM 850-KFIND-BEGRNG-BCMSET1.
+           IF (BNCOMMENTS-KFOUND)
+               MOVE "*"                TO BN72F1-COMMENTS-FLAG.
+115300
+039900 481-END.
+040000
+040100******************************************************************
+040200 482-MOVE-PTB-DTL-TO-SCREEN.
+040300******************************************************************
+040400
+040500     IF (PTB-PARTICIPNT          NOT = ZEROES)
+040600         GO TO 482-FIND-NEXT-PTB.
+040700
+040800     IF  (BN72F1-ENROLLMENT-DATE > WS-SYSTEM-DATE-YMD)
+040900     AND (PTB-STOP-DATE          < WS-SYSTEM-DATE-YMD)
+041000     AND (PTB-STOP-DATE          NOT = ZEROES)
+041100         GO TO 482-FIND-NEXT-PTB.
+041200
+041300     IF  (BN72F1-ENROLLMENT-DATE <= WS-SYSTEM-DATE-YMD)
+041400     AND (PTB-STOP-DATE          < BN72F1-ENROLLMENT-DATE)
+041500     AND (PTB-STOP-DATE          NOT = ZEROES)
+041600         GO TO 482-FIND-NEXT-PTB.
+041700
+041800     IF (BN72F1-FC               = "-")
+041900         SUBTRACT 1              FROM I1
+042000     ELSE
+042100         ADD 1                   TO I1.
+042200
+042300     MOVE PTB-PLAN-TYPE          TO DB-PLAN-TYPE.
+042400     MOVE PTB-PLAN-CODE          TO DB-PLAN-CODE.
+042500     PERFORM 840-FIND-PLNSET1.
+042600
+042700     MOVE CRT-HILITE             TO BN72F1-HILIGHT (I1).
+042800     MOVE "B"                    TO BN72F1-RECORD-ORIG (I1).
+042900     MOVE "Y"                    TO BN72F1-PLAN-INFO (I1).
+043000
+043100     MOVE PTB-PLAN-TYPE          TO BN72F1-PTB-PLAN-TYPE (I1).
+043200     MOVE PTB-PLAN-CODE          TO BN72F1-PTB-PLAN-CODE (I1).
+043300
+043400     MOVE PLN-DISPLAY-DESC       TO BN72F1-PLN-DISPLAY-DESC (I1).
+043500
+043600     MOVE PTB-START-DATE         TO BN72F1-PTB-START-DATE (I1).
+043700     MOVE PTB-STOP-DATE          TO BN72F1-PTB-STOP-DATE (I1).
+043800
+043900     MOVE PTB-COV-OPTION         TO BN72F1-PTB-COV-OPTION (I1).
+044000
+044100     MOVE PTB-SMOKER             TO BN72F1-PTB-SMOKER (I1).
+044200
+J55910     MOVE PTB-PROCESS-LEVEL      TO BN72F1-PTB-PROC-LEVEL (I1).
+J55910
+044300     MOVE PTB-COVER-AMT          TO BN72F1-PTB-COVER-AMT (I1).
+044400
+044500     IF (PLN-COVERAGE-TYPE       NOT = "0")
+044600         MOVE PTB-COMPANY        TO DB-COMPANY
+044700         MOVE PTB-PLAN-TYPE      TO DB-PLAN-TYPE
+044800         MOVE PTB-PLAN-CODE      TO DB-PLAN-CODE
+044900         IF (PLN-COVERAGE-TYPE   = "1")
+045000             MOVE PTB-COV-OPTION TO DB-COVERAGE-OPT
+045100             PERFORM 840-FIND-COPSET1
+045200         ELSE
+045300             MOVE "R"            TO DB-COVER-TYPE
+045400             MOVE PTB-COV-UPD-DT TO DB-START-DATE
+045500             MOVE PTB-COV-GROUP  TO DB-GROUP-NAME
+045600             PERFORM 840-FIND-CVRSET1
+045700         END-IF
+045800         MOVE PTB-EMPLOYEE       TO DB-EMPLOYEE
+045900         MOVE EMDSET1-EMPLOYEE   TO WS-DB-BEG-RNG
+046000         PERFORM 850-FIND-BEGRNG-EMDSET1
+046100         IF (EMDEPEND-FOUND)
+046200             IF  ((PLN-PLAN-TYPE          = "HL")
+046300             AND  (BNC-DEP-HEALTH         = "Y"))
+046400             OR  ((PLN-PLAN-TYPE          = "DN")
+046500             AND  (BNC-DEP-DENTAL         = "Y"))
+046600             OR  ((PLN-PLAN-TYPE          = "DL")
+046700             AND  (BNC-DEP-DEP-LIFE       = "Y"))
+J07540* (S)POUSE, (D)EPENDENTS, (B)OTH SPOUSE AND DEPS, (P)ARTNER,
+J07540* SPOUSE (O)R PARTNER, PA(R)TNER DEPS, (C) PARTNER AND DEPS,
+J07540* SPOUSE OR PARTNER (A)ND DEPS.
+046800                 IF  ((PLN-COVERAGE-TYPE  = "1")
+J07540                 AND  (COP-COV-DEPENDENTS = "S" OR "D" OR "B" OR
+J07540                       "P" OR "O" OR "R" OR "C" OR "A"))
+047000                 OR  ((PLN-COVERAGE-TYPE  = "2")
+J07540                 AND  (CVR-LIFE-ADD-FLG   = "S" OR "D" OR "B" OR
+J07540                       "P" OR "O" OR "R" OR "C" OR "A"))
+P08090                     MOVE PTB-START-DATE      TO DB-EMP-START
+P08090                     MOVE HDBSET3-EMP-START   TO WS-DB-BEG-RNG
+P08090                     PERFORM 850-FIND-BEGRNG-HDBSET3
+P08090                     IF (HRDEPBEN-FOUND)
+J59108                         MOVE 204         TO CRT-MSG-NBR
+J59108                         PERFORM 790-GET-MSG
+J59108                         MOVE CRT-MESSAGE TO BN72F1-DEP (I1)
+P08090*                        MOVE "Dep*"      TO BN72F1-DEP (I1)
+P08090                     ELSE
+J59108                         MOVE 205         TO CRT-MSG-NBR
+J59108                         PERFORM 790-GET-MSG
+J59108                         MOVE CRT-MESSAGE TO BN72F1-DEP (I1).
+P08090*                        MOVE "Dep "      TO BN72F1-DEP (I1).
+047300
+           MOVE PLN-CREATE-TRANS        TO BN72F1-BNT-CREATE-TRANS (I1)
+                                           BN72F1-PT-CREATE-TRANS (I1).
+           IF  (PLN-PLAN-TYPE              = "HL" OR "DN" OR "DI"
+                                          OR "EL" OR "DL")
+           AND (PLN-CREATE-TRANS           = "Y")
+195200         MOVE 206                    TO CRT-MSG-NBR
+091500         MOVE "BNMSG"                TO CRT-ERROR-CAT
+091700         PERFORM 790-GET-MSG
+091800         MOVE CRT-MESSAGE            TO BN72F1-HIPAA (I1).
+
+047400 482-FIND-NEXT-PTB.
+047500     IF (BN72F1-FC               = "-")
+047600         PERFORM 870-FIND-PREV-PTBSET5
+047700     ELSE
+047800         PERFORM 860-FIND-NEXT-PTBSET5.
+047900
+048000 482-END.
+GW0506******************************************************************
+GW0506 483-FIND-GO-TO-PLAN.
+GW0506******************************************************************
+GW0506
+GW0506     PERFORM 484-MOVE-PLN-DTL-TO-SCREEN
+GW0506     THRU    484-END
+GW0506         UNTIL (I1                  = BN72F1-DETAIL-SIZE)
+GW0506         OR (PLAN-NOTFOUND)
+GW0506         OR (PLN-COMPANY            NOT = DB-COMPANY).
+GW0506
+GW0506     IF (WS-GO-TO-SW = "Y")
+GW0506            PERFORM 
+GW0506            VARYING I3 FROM 1 BY 1
+GW0506            UNTIL (I3 > BN72F1-DETAIL-SIZE)
+GW0506               INITIALIZE BN72F1-LINE-FC (I3)
+GW0506                          BN72F1-HILIGHT (I3)
+GW0506                          BN72F1-PTB-PLAN-TYPE (I3)
+GW0506                          BN72F1-PTB-PLAN-CODE (I3)
+GW0506                          BN72F1-PLN-DISPLAY-DESC (I3)
+GW0506                          BN72F1-PTB-START-DATE (I3)
+GW0506                          BN72F1-PTB-STOP-DATE (I3)
+GW0506                          BN72F1-PTB-COV-OPTION (I3)
+GW0506                          BN72F1-PTB-SMOKER (I3)
+GW0506                          BN72F1-PTB-COVER-AMT (I3)
+GW0506            END-PERFORM
+GW0506         
+GW0506     END-IF.
+GW0506
+GW0506     MOVE 0 TO I1.
+GW0506
+GW0506*    IF (BN72F1-FC = "+")
+GW0506*       ADD 1 TO BN72WS-PAGE-NBR
+GW0506*    ELSE
+GW0506*       SUBTRACT 1 FROM BN72WS-PAGE-NBR.
+GW0506 483-END.
+048200******************************************************************
+048300 484-MOVE-PLN-DTL-TO-SCREEN.
+048400******************************************************************
+048500
+048600     IF  (PLN-PLAN-TYPE          NOT = "HL" AND "DN" AND "EL")
+048700     AND (PLN-PLAN-TYPE          NOT = "DL")
+048800         GO TO 484-FIND-NEXT-PLAN.
+048900
+049000     IF  (PLN-START-DATE         > BN72F1-ENROLLMENT-DATE)
+049100     OR ((PLN-STOP-DATE          < BN72F1-ENROLLMENT-DATE)
+049200     AND (PLN-STOP-DATE          NOT = ZEROES))
+049300         GO TO 484-FIND-NEXT-PLAN.
+049400
+049500     IF (PLN-PLAN-TYPE           = "HL" OR "DN" OR "EL")
+049600     OR (PLN-PLAN-TYPE           = "DL")
+049700         IF ((PLN-STOP-DATE      < BN72F1-ENROLLMENT-DATE)
+049800         AND (PLN-STOP-DATE      NOT = ZEROES))
+049900             GO TO 484-FIND-NEXT-PLAN.
+050000
+050100     MOVE BN72F1-PTB-COMPANY     TO BNPEWS-COMPANY.
+050200     MOVE PLN-PLAN-TYPE          TO BNPEWS-PLAN-TYPE.
+050300     MOVE PLN-PLAN-CODE          TO BNPEWS-PLAN-CODE.
+050400     MOVE BN72F1-PTB-EMPLOYEE    TO BNPEWS-EMPLOYEE.
+050500     MOVE "R"                    TO BNPEWS-COVER-TYPE.
+AI0010     MOVE BN72F1-ENROLLMENT-DATE TO BNPEWS-START-DATE.
+050600     PERFORM 5000-EDIT-GROUP-N-ZIP-70.
+050700     IF (ERROR-FOUND)
+050800         INITIALIZE CRT-ERROR-NBR
+050900         GO TO 484-FIND-NEXT-PLAN.
+051000
+051100     IF (PLN-ACR-ACCT-UNT        = SPACES)
+051200         GO TO 484-FIND-NEXT-PLAN.
+051300
+051400     IF (PLN-RET-COVERED         NOT = "Y")
+051500         GO TO 484-FIND-NEXT-PLAN.
+051600
+051700     IF (BN72F1-FC               = "-")
+051800         SUBTRACT 1              FROM I1
+051900     ELSE
+052000         ADD 1                   TO I1.
+052100
+052200     MOVE "P"                    TO BN72F1-RECORD-ORIG (I1).
+052300     MOVE "Y"                    TO BN72F1-PLAN-INFO (I1).
+052400
+052500     MOVE PLN-PLAN-TYPE          TO BN72F1-PTB-PLAN-TYPE (I1).
+052600     MOVE PLN-PLAN-CODE          TO BN72F1-PTB-PLAN-CODE (I1).
+052700     MOVE PLN-DISPLAY-DESC       TO BN72F1-PLN-DISPLAY-DESC (I1).
+052800
+052900     INITIALIZE BN72F1-PTB-COV-OPTION (I1)
+053000                BN72F1-PTB-START-DATE (I1)
+053100                BN72F1-PTB-STOP-DATE (I1)
+053200                BN72F1-PTB-SMOKER (I1)
+J55910                BN72F1-PTB-PROC-LEVEL (I1)
+053300                BN72F1-PTB-COVER-AMT (I1)
+053400                BN72F1-DEP (I1)
+051000                BN72F1-BNT-REASON (I1)
+051000                BN72F1-BNT-MEMBER-ID (I1).
+053500
+           MOVE PLN-CREATE-TRANS        TO BN72F1-BNT-CREATE-TRANS (I1)
+                                           BN72F1-PT-CREATE-TRANS (I1).
+           IF  (PLN-PLAN-TYPE              = "HL" OR "DN" OR "DI"
+                                          OR "EL" OR "DL")
+           AND (PLN-CREATE-TRANS           = "Y")
+195200         MOVE 206                    TO CRT-MSG-NBR
+091500         MOVE "BNMSG"                TO CRT-ERROR-CAT
+091700         PERFORM 790-GET-MSG
+091800         MOVE CRT-MESSAGE            TO BN72F1-HIPAA (I1).
+GW0506     IF (WS-GO-TO-SW = "Y")
+GW0506        IF (BN72F1-FC = "+")
+GW0506           IF (BN72F1-GO-TO-PLAN-TYPE <= PLN-PLAN-TYPE)
+GW0506              IF (BN72F1-GO-TO-PLAN-CODE <= PLN-PLAN-CODE)
+GW0506                 MOVE "N"         TO  WS-GO-TO-SW
+GW0506              END-IF
+GW0506           END-IF
+GW0506        ELSE
+GW0506        IF (BN72F1-FC = "-")
+GW0506           IF (BN72F1-GO-TO-PLAN-TYPE >= PLN-PLAN-TYPE)
+GW0506              IF (BN72F1-GO-TO-PLAN-CODE >= PLN-PLAN-CODE)
+GW0506                 MOVE "N"         TO  WS-GO-TO-SW.
+GW0506
+
+053600 484-FIND-NEXT-PLAN.
+053700     IF (BN72F1-FC               = "-")
+053800         PERFORM 870-FIND-PREV-PLNSET1
+053900     ELSE
+054000         PERFORM 860-FIND-NEXT-PLNSET1.
+054100
+054200 484-END.
+054300
+054400******************************************************************
+054500 500-MOVE-PTB-SCR-TO-WS.
+054600******************************************************************
+054700
+054800     INITIALIZE BNPTB-DETAIL-GROUP.
+054900 
+055000     MOVE WS-TRUE                    TO BNPTB-RETIREE-ENT-SW.
+055100
+055200     MOVE BN72F1-FC                  TO BNPTB-FC.
+055300     MOVE BN72F1-FC-FN               TO BNPTB-FC-FN.
+055400     MOVE BN72F1-PTB-COMPANY         TO BNPTB-COMPANY.
+055500     MOVE BN72F1-PTB-COMPANY-FN      TO BNPTB-COMPANY-FN.
+055600     MOVE BN72F1-PTB-EMPLOYEE        TO BNPTB-EMPLOYEE.
+055700     MOVE BN72F1-PTB-EMPLOYEE-FN     TO BNPTB-EMPLOYEE-FN.
+055800     MOVE BN72F1-ENROLLMENT-DATE     TO BNPTB-ENROLLMENT-DATE.
+055900     MOVE BN72F1-ENROLLMENT-DATE-FN  TO BNPTB-ENROLLMENT-DATE-FN.
+J93630     MOVE BN72F1-FIRST-XMIT          TO BNPTB-FIRST-XMIT.
+056000
+056100     MOVE BN72F1-DETAIL-SIZE         TO BNPTB-NBR-LINES.
+056200
+056300     PERFORM 510-MOVE-TO-BNPTB-DTL
+056400     THRU    510-END
+056500         VARYING I2 FROM 1 BY 1
+056600         UNTIL  (I2 > BNPTB-NBR-LINES).
+056700
+056800 500-END.
+056900
+057000******************************************************************
+057100 510-MOVE-TO-BNPTB-DTL.
+057200******************************************************************
+057300
+057600     MOVE BN72F1-LINE-FC (I2)        TO BNPTB-LINE-FC (I2).
+057700     MOVE BN72F1-LINE-FC-FN (I2)     TO BNPTB-LINE-FC-FN (I2).
+057800
+057900     MOVE BN72F1-PLAN-INFO (I2)      TO BNPTB-PLAN-INFO (I2).
+058000     MOVE BN72F1-RECORD-ORIG (I2)    TO BNPTB-RECORD-ORIG (I2).
+058100
+058200     MOVE BN72F1-PTB-PLAN-TYPE (I2)  TO BNPTB-PLAN-TYPE (I2).
+058300     MOVE BN72F1-PTB-PLAN-CODE (I2)  TO BNPTB-PLAN-CODE (I2).
+058400
+058500     MOVE BN72F1-PTB-START-DATE (I2) TO BNPTB-START-DATE (I2).
+058600     MOVE BN72F1-PTB-START-DATE-FN (I2)
+058700                                     TO BNPTB-START-DATE-FN (I2).
+058800     MOVE BN72F1-PTB-STOP-DATE (I2)  TO BNPTB-STOP-DATE (I2).
+058900     MOVE BN72F1-PTB-STOP-DATE-FN (I2)
+059000                                     TO BNPTB-STOP-DATE-FN (I2).
+059100
+059200     MOVE BN72F1-PTB-COV-OPTION (I2) TO BNPTB-COVER-OPT (I2).
+059300     MOVE BN72F1-PTB-COV-OPTION-FN (I2)
+059400                                     TO BNPTB-COVER-OPT-FN (I2).
+059500
+059600     MOVE BN72F1-PTB-SMOKER (I2)     TO BNPTB-SMOKER-FLAG (I2).
+059700     MOVE BN72F1-PTB-SMOKER-FN (I2)  TO BNPTB-SMOKER-FLAG-FN (I2).
+059800
+J55910     MOVE BN72F1-PTB-PROC-LEVEL (I2) TO BNPTB-PROC-LEVEL (I2).
+J55910     MOVE BN72F1-PTB-PROC-LEVEL-FN (I2)
+J55910                                     TO BNPTB-PROC-LEVEL-FN (I2).
+J55910
+059900     MOVE BN72F1-PTB-COVER-AMT (I2)   TO BNPTB-COVER-AMT (I2).
+060000     MOVE BN72F1-PTB-COVER-AMT-FN (I2)
+060100                                     TO BNPTB-COVER-AMT-FN (I2).
+060200
+           IF (BN72F1-BNT-CREATE-TRANS (I2) = SPACES)
+015500         MOVE BN72F1-PT-CREATE-TRANS (I2)
+                                            TO BNPTB-CREATE-TRANS(I2)
+                                           BN72F1-BNT-CREATE-TRANS (I2)
+           ELSE
+015500         MOVE BN72F1-BNT-CREATE-TRANS (I2)
+                                            TO BNPTB-CREATE-TRANS(I2).
+015600     MOVE BN72F1-BNT-CREATE-TRANS-FN (I2)
+015700                                    TO BNPTB-CREATE-TRANS-FN (I2).
+015500     MOVE BN72F1-BNT-REASON (I2)    TO BNPTB-REASON (I2).
+015600     MOVE BN72F1-BNT-REASON-FN (I2) TO BNPTB-REASON-FN (I2).
+015500     MOVE BN72F1-BNT-MEMBER-ID (I2) TO BNPTB-MEMBER-ID (I2).
+015600     MOVE BN72F1-BNT-MEMBER-ID-FN (I2) TO BNPTB-MEMBER-ID-FN (I2).
+
+060300 510-END.
+060400
+060500******************************************************************
+060600 530-MOVE-WS-TO-SCR.
+060700******************************************************************
+060800
+060900     MOVE BNPTB-FC                   TO BN72F1-FC.
+061000     MOVE BNPTB-COMPANY              TO BN72F1-PTB-COMPANY.
+061100     MOVE BNPTB-ENROLLMENT-DATE      TO BN72F1-ENROLLMENT-DATE.
+J93630     MOVE BNPTB-FIRST-XMIT           TO BN72F1-FIRST-XMIT.
+061200
+061300     MOVE PRS-NAME                   TO BN72F1-PRS-NAME.
+061400
+061500     PERFORM 540-BNPTB-DTL-TO-SCREEN
+061600     THRU    540-END
+061700         VARYING I2 FROM 1 BY 1
+061800         UNTIL  (I2 > BNPTB-NBR-LINES).
+061900
+062000 530-END.
+062100
+062200******************************************************************
+062300 540-BNPTB-DTL-TO-SCREEN.
+062400******************************************************************
+062500
+062600     IF (BN72F1-LINE-FC (I2)     = "D")
+062700         INITIALIZE BN72F1-DETAIL-LINE (I2)
+062800         GO TO 540-END.
+062900
+063000     MOVE BNPTB-LINE-FC (I2)     TO BN72F1-LINE-FC (I2).
+063100     MOVE BNPTB-PLAN-INFO (I2)   TO BN72F1-PLAN-INFO (I2).
+063200     MOVE BNPTB-RECORD-ORIG (I2) TO BN72F1-RECORD-ORIG (I2).
+063300
+063400     MOVE BNPTB-START-DATE (I2)  TO BN72F1-PTB-START-DATE (I2).
+063500     MOVE BNPTB-STOP-DATE (I2)   TO BN72F1-PTB-STOP-DATE (I2).
+063600     MOVE BNPTB-COVER-OPT (I2)   TO BN72F1-PTB-COV-OPTION (I2).
+063700     MOVE BNPTB-COVER-AMT (I2)   TO BN72F1-PTB-COVER-AMT (I2).
+063800     MOVE BNPTB-SMOKER-FLAG (I2) TO BN72F1-PTB-SMOKER (I2).
+J55910     MOVE BNPTB-PROC-LEVEL (I2)  TO BN72F1-PTB-PROC-LEVEL (I2).
+063900
+015500     MOVE BNPTB-CREATE-TRANS(I2) TO BN72F1-BNT-CREATE-TRANS (I2).
+015500     MOVE BNPTB-REASON (I2)      TO BN72F1-BNT-REASON (I2).
+015500     MOVE BNPTB-MEMBER-ID (I2)   TO BN72F1-BNT-MEMBER-ID (I2).
+
+064000     MOVE BNPTB-COMPANY          TO DB-COMPANY.
+064100     MOVE BNPTB-PLAN-TYPE (I2)   TO DB-PLAN-TYPE.
+064200     MOVE BNPTB-PLAN-CODE (I2)   TO DB-PLAN-CODE.
+064300     PERFORM 840-FIND-PLNSET1.
+064400
+064500     IF (PLN-COVERAGE-TYPE              NOT = "0")
+064600         MOVE BNPTB-COMPANY             TO DB-COMPANY
+064700         MOVE BNPTB-PLAN-TYPE (I2)      TO DB-PLAN-TYPE
+064800         MOVE BNPTB-PLAN-CODE (I2)      TO DB-PLAN-CODE
+064900         IF (PLN-COVERAGE-TYPE          = "1")
+065000             MOVE BNPTB-COVER-OPT (I2)  TO DB-COVERAGE-OPT
+065100             PERFORM 840-FIND-COPSET1
+065200         ELSE
+065300             MOVE "R"                   TO DB-COVER-TYPE
+065400             MOVE BNPTB-COV-UPD-DT (I2) TO DB-START-DATE
+065500             MOVE BNPTB-COV-GROUP (I2)  TO DB-GROUP-NAME
+065600             PERFORM 840-FIND-CVRSET1
+065700         END-IF
+065800         MOVE BNPTB-EMPLOYEE            TO DB-EMPLOYEE
+065900         MOVE EMDSET1-EMPLOYEE          TO WS-DB-BEG-RNG
+066000         PERFORM 850-FIND-BEGRNG-EMDSET1
+066100         IF (EMDEPEND-FOUND)
+066200             IF  ((PLN-PLAN-TYPE          = "HL")
+066300             AND  (BNC-DEP-HEALTH         = "Y"))
+066400             OR  ((PLN-PLAN-TYPE          = "DN")
+066500             AND  (BNC-DEP-DENTAL         = "Y"))
+066600             OR  ((PLN-PLAN-TYPE          = "DL")
+066700             AND  (BNC-DEP-DEP-LIFE       = "Y"))
+J07540* (S)POUSE, (D)EPENDENTS, (B)OTH SPOUSE AND DEPS, (P)ARTNER,
+J07540* SPOUSE (O)R PARTNER, PA(R)TNER DEPS, (C) PARTNER AND DEPS,
+J07540* SPOUSE OR PARTNER (A)ND DEPS.
+066800                 IF  ((PLN-COVERAGE-TYPE  = "1")
+J07540                 AND  (COP-COV-DEPENDENTS = "S" OR "D" OR "B" OR
+J07540                       "P" OR "O" OR "R" OR "C" OR "A"))
+067000                 OR  ((PLN-COVERAGE-TYPE  = "2")
+J07540                 AND  (CVR-LIFE-ADD-FLG   = "S" OR "D" OR "B" OR
+J07540                       "P" OR "O" OR "R" OR "C" OR "A"))
+P08090                     MOVE BNPTB-START-DATE (I2) TO DB-EMP-START
+P08090                     MOVE HDBSET3-EMP-START     TO WS-DB-BEG-RNG
+P08090                     PERFORM 850-FIND-BEGRNG-HDBSET3
+P08090                     IF (HRDEPBEN-FOUND)
+J59108                         MOVE 204         TO CRT-MSG-NBR
+J59108                         PERFORM 790-GET-MSG
+J59108                         MOVE CRT-MESSAGE TO BN72F1-DEP (I2)
+P08090*                        MOVE "Dep*"      TO BN72F1-DEP (I2)
+P08090                     ELSE
+J59108                         MOVE 205         TO CRT-MSG-NBR
+J59108                         PERFORM 790-GET-MSG
+J59108                         MOVE CRT-MESSAGE TO BN72F1-DEP (I2).
+P08090*                        MOVE "Dep "      TO BN72F1-DEP (I2).
+067300
+015500     INITIALIZE BN72F1-BNT-REASON (I2)
+015500                BN72F1-BNT-MEMBER-ID (I2).
+
+067400 540-END.
+067500
+067600******************************************************************
+067700 BN72S1-TRANSACTION-END.
+067800******************************************************************
+215900
+208000******************************************************************
+208100 BN72S2-TRANSACTION              SECTION 10.
+208200******************************************************************
+208300 BN72S2-START.
+208400
+215100     MOVE CRT-CHG-COMPLETE       TO CRT-MESSAGE.
+215200     MOVE CRT-EXIT-WINDOW        TO CRT-REQUEST.
+209100
+209200     GO TO BN72S2-TRANSACTION-END.
+209300
+215600******************************************************************
+215700 BN72S2-TRANSACTION-END.
+215800******************************************************************
+215900

@@ -1,0 +1,772 @@
+< WB101 prod
+> PA512 prod
+
+1c1
+< ******* WB101PD 6 <1426501081>
+---
+> ******* PA512PD 6 <1426501081>
+2,6d1
+< 000010******************************************************************
+< 000010* THIS PROGRAM WAS CLONED FROM STANDARD LAWSON PROGRAM PA512.
+< 000010* 4/7/03 BJR         INITIAL PROGRAM CODE ANALYSTS INTERNATIONAL
+< 000010*
+< 000010******************************************************************
+32c27
+< 000260     PERFORM 800-OPENINPUTCSV-SALHISTCSV.
+---
+> 000260     PERFORM 800-OPENINPUTCSV-PAELOADCSV.
+34c29
+<            MOVE CSVINFO-FILENAME               TO HR-PRT-LINE.
+---
+>            MOVE CVLINFO-FILENAME               TO HR-PRT-LINE.
+36c31
+< 000270     PERFORM 800-OPENOUTPUTCSV-SALOUTCSV.
+---
+> 000270     PERFORM 800-OPENOUTPUTCSV-PAEOUTCSV.
+38c33
+<            MOVE OUTINFO-FILENAME               TO HR-PRT-LINE.
+---
+>            MOVE CVOINFO-FILENAME               TO HR-PRT-LINE.
+41a37
+> 000300                                           WS-RECS-CHANGED
+52a49
+> 000420                 MOVE WS-REST-CHANGED    TO WS-RECS-CHANGED
+54c51
+< 000440                 PERFORM 800-READCSV-SALHISTCSV
+---
+> 000440                 PERFORM 800-READCSV-PAELOADCSV
+56,58c53,55
+< 000460                     UNTIL  (SALHISTCSV-NOTFOUND)
+< 000470                     OR     (CSV-EMPLOYEE   = WS-REST-EMPLOYEE)
+< 000500                         PERFORM 800-READCSV-SALHISTCSV
+---
+> 000460                     UNTIL  (PAELOADCSV-NOTFOUND)
+> 000470                     OR    ((CVL-EMPLOYEE   = WS-REST-EMPLOYEE)
+> 000480                     AND    (CVL-LAST-NAME  = WS-REST-LAST-NAME)
+58a56,57
+> 000490                     AND    (CVL-FIRST-NAME = WS-REST-FIRST-NAME))
+> 000500                         PERFORM 800-READCSV-PAELOADCSV
+61c60
+< 000530     PERFORM 800-READCSV-SALHISTCSV.
+---
+> 000530     PERFORM 800-READCSV-PAELOADCSV.
+63c62
+< 000550     IF (SALHISTCSV-NOTFOUND)
+---
+> 000550     IF (PAELOADCSV-NOTFOUND)
+74c73
+< 000650             UNTIL (SALHISTCSV-NOTFOUND).
+---
+> 000650             UNTIL (PAELOADCSV-NOTFOUND).
+76,77c75,76
+< 000670     PERFORM 800-CLOSECSV-SALHISTCSV.
+< 000680     PERFORM 800-CLOSECSV-SALOUTCSV.
+---
+> 000670     PERFORM 800-CLOSECSV-PAELOADCSV.
+> 000680     PERFORM 800-CLOSECSV-PAEOUTCSV.
+103,104c102,103
+< 000900     MOVE ZEROES                 TO RPT-PAGE-COUNT (WB101-R1)
+< 000910                                    RPT-PAGE-COUNT (WB101-R2).
+---
+> 000900     MOVE ZEROES                 TO RPT-PAGE-COUNT (PA512-R1)
+> 000910                                    RPT-PAGE-COUNT (PA512-R2).
+108c107
+< 000950     MOVE PRS-NAME               TO G1-PRS-NAME
+---
+> 000950     MOVE WS-PRS-NAME            TO G1-PRS-NAME
+116c115
+< 001030     MOVE CSV-EMPLOYEE           TO WS-EMPLOYEE.
+---
+> 001030     MOVE CVL-EMPLOYEE           TO WS-EMPLOYEE.
+116a116,117
+> 001040     MOVE CVL-LAST-NAME          TO WS-LAST-NAME.
+> 001050     MOVE CVL-FIRST-NAME         TO WS-FIRST-NAME.
+118d118
+< 001730     SET NO-AUDIT-BEGIN          TO TRUE.
+120c120
+< 001080     PERFORM 1020-SAL-HIST-UPD  
+---
+> 001080     PERFORM 1020-DO-PAE-COMPANY
+122c122
+< 001100         UNTIL (SALHISTCSV-NOTFOUND).
+---
+> 001100         UNTIL (PAELOADCSV-NOTFOUND).
+124a125
+> 001130     MOVE WS-RECS-CHANGED        TO G3-RECS-CHANGED.
+137c138
+< 001260 1020-SAL-HIST-UPD.
+---
+> 001260 1020-DO-PAE-COMPANY.
+142c143
+< 001310     PERFORM 1200-EDIT-INPUT-RECORD
+---
+> 001310     PERFORM 1200-EDIT-EMPLOYEE
+147,150c148,151
+< 001360         MOVE CSV-SALHISTCSV-REC     TO OUT-SALOUTCSV-REC
+< 001370         PERFORM 800-ALLUSEDCSV-SALHISTCSV
+< 001380         PERFORM 800-WRITECSV-SALOUTCSV
+< 001390         GO TO 1020-NEXT-SALHISTCSV
+---
+> 001360         MOVE CVL-PAELOADCSV-REC     TO CVO-PAEOUTCSV-REC
+> 001370         PERFORM 800-ALLUSEDCSV-PAELOADCSV
+> 001380         PERFORM 800-WRITECSV-PAEOUTCSV
+> 001390         GO TO 1020-NEXT-PAELOADCSV
+155d155
+< 001730                 SET AUDIT-BEGIN    TO TRUE
+157c157
+< 001450             PERFORM 1250-UPDATE-PERSACTION
+---
+> 001450             PERFORM 3000-PAPAE-PROCESS-TRAN
+158d157
+< 001450                THRU 1250-END 
+161c160
+< 001490         ADD 1 TO WS-RECS-ADDED.
+---
+> 001480         IF (CVL-FC = "A")
+161a161,163
+> 001490             ADD 1 TO WS-RECS-ADDED
+> 001500         ELSE
+> 001510             ADD 1 TO WS-RECS-CHANGED.
+162a165,169
+> 001530     IF  (PRM-UPDATE = "Y")
+> 001540     AND (CVL-FC     = "A")
+> 001550         MOVE PAPAE-SEQ-NBR          TO G2-PAE-SEQ-NBR
+> 001560     ELSE
+> 001570         MOVE CVL-SEQ-NBR            TO G2-PAE-SEQ-NBR.
+164,169c171,176
+< 001590     MOVE CSV-PAY-RATE               TO G2-PCT-PAY-RATE.      
+< 001600     MOVE CSV-BASIC-CASH             TO G2-PAE-BEN-SALARY-1.
+< 001600     MOVE CSV-HOUSE-PROVIDED         TO G2-PAE-BEN-SALARY-2.
+< 001600     MOVE CSV-CASH-HOUSING           TO G2-PAE-BEN-SALARY-3.
+< 001600     MOVE CSV-CASH-UTILITY           TO G2-PAE-BEN-SALARY-4.
+< 001610     MOVE CSV-STAND-HOURS            TO G2-EMP-STAND-HOURS.   
+---
+> 001590     MOVE CVL-HM-PHONE-CNTRY         TO G2-PAE-HM-PHONE-CNTRY.
+> 001600     MOVE CVL-HM-PHONE-NBR           TO G2-PAE-HM-PHONE-NBR.
+> 001610     MOVE CVL-WK-PHONE-CNTRY         TO G2-PAE-WK-PHONE-CNTRY.
+> 001620     MOVE CVL-WK-PHONE-NBR           TO G2-PAE-WK-PHONE-NBR.
+> 001630     MOVE CVL-WK-PHONE-EXT           TO G2-PAE-WK-PHONE-EXT.
+> 001640     MOVE GN2-PAE-SEQ-NBR            TO RPT-GROUP-REQUEST.
+170d176
+< 001640     MOVE GN2-SAL-HIST-REC           TO RPT-GROUP-REQUEST.
+173c179
+< 001670 1020-NEXT-SALHISTCSV.
+---
+> 001670 1020-NEXT-PAELOADCSV.
+186,187c192,193
+< 001800     PERFORM 800-READCSV-SALHISTCSV.
+< 001810     IF  (SALHISTCSV-FOUND)
+---
+> 001800     PERFORM 800-READCSV-PAELOADCSV.
+> 001810     IF  (PAELOADCSV-FOUND)
+190c196
+< 001840     IF  (SALHISTCSV-NOTFOUND)
+---
+> 001840     IF  (PAELOADCSV-NOTFOUND)
+193d198
+<            AND (AUDIT-BEGIN)
+200a206,207
+> 001930         MOVE WS-LAST-NAME           TO WS-REST-LAST-NAME
+> 001940         MOVE WS-FIRST-NAME          TO WS-REST-FIRST-NAME
+202a210
+> 001970         MOVE WS-RECS-CHANGED        TO WS-REST-CHANGED
+208,209c216,217
+< 002030         IF (SALHISTCSV-FOUND)
+< 002040             MOVE CSV-EMPLOYEE       TO WS-EMPLOYEE.
+---
+> 002030         IF (PAELOADCSV-FOUND)
+> 002040             MOVE CVL-EMPLOYEE       TO WS-EMPLOYEE
+209a218,219
+> 002050             MOVE CVL-FIRST-NAME     TO WS-FIRST-NAME
+> 002060             MOVE CVL-LAST-NAME      TO WS-LAST-NAME.
+214c224
+< 002110 1200-EDIT-INPUT-RECORD.
+---
+> 002110 1200-EDIT-EMPLOYEE.  
+216a227,228
+> 002140     IF (CVL-FC = SPACES)
+> 002150         MOVE "A"                    TO CVL-FC.
+218c230
+< 002170     MOVE CSV-SALHISTCSV-REC         TO WS-CSV-SALHIST-REC.
+---
+> 002170     MOVE CVL-PAELOADCSV-REC         TO WS-CVL-PAELOAD-REC.
+219a232,233
+> 002190     MOVE CVL-FC                     TO GE2-FC
+> 002200                                        G2-FC.
+221,222c235,236
+< 002540     IF (WS-CSV-EMPLOYEE-A    NOT NUMERIC) 
+< 002580         MOVE 100                    TO CRT-MSG-NBR
+---
+> 002220     IF (CVL-LAST-NAME   NOT = SPACES)
+> 002230     OR (CVL-FIRST-NAME  NOT = SPACES)
+222a237,271
+> 002240     OR (CVL-MIDDLE-INIT NOT = SPACES)
+> 002250         MOVE CVL-LAST-NAME          TO HRWS-LAST-NAME
+> 002260         MOVE CVL-FIRST-NAME         TO HRWS-FIRST-NAME
+> 002270         MOVE CVL-MIDDLE-INIT        TO HRWS-MIDDLE-INIT
+> 002280         PERFORM 750-HR-FORMAT-NAME
+> 002290         MOVE HRWS-FORMAT-NAME       TO G2-PAE-FULL-NAME
+> 002300                                        GE2-PAE-FULL-NAME.
+> 002310
+> 002320     IF (WS-CVL-COMPANY-A NOT NUMERIC)
+> 002330         MOVE PAPAE-COMPANY-DN       TO DB-FLD-NBR
+> 002340         PERFORM 840-FIND-PADSET1
+> 002350         MOVE PAD-ITEM-NAME          TO WS-FIELD-VALUE
+> 002360         MOVE 199                    TO CRT-MSG-NBR
+> 002370         PERFORM 790-GET-MSG
+> 002380         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+> 002390         PERFORM 1300-PRINT-ERROR
+> 002400         THRU    1300-END
+> 002410         GO TO 1200-END
+> 002420      ELSE
+> 002430          IF (CVL-COMPANY = ZEROES)
+> 002440             MOVE PAPAE-COMPANY-DN   TO DB-FLD-NBR
+> 002450             PERFORM 840-FIND-PADSET1
+> 002460             MOVE PAD-ITEM-NAME      TO WS-FIELD-VALUE
+> 002470             MOVE 198                TO CRT-MSG-NBR
+> 002480             PERFORM 790-GET-MSG
+> 002490             MOVE CRT-MESSAGE        TO WS-ERR-MSG
+> 002500             PERFORM 1300-PRINT-ERROR
+> 002510             THRU    1300-END
+> 002520             GO TO 1200-END.
+> 002530
+> 002540     IF (WS-CVL-EMPLOYEE-A    NOT NUMERIC) 
+> 002550         MOVE PAPAE-EMPLOYEE-DN      TO DB-FLD-NBR
+> 002560         PERFORM 840-FIND-PADSET1
+> 002570         MOVE PAD-ITEM-NAME          TO WS-FIELD-VALUE
+> 002580         MOVE 199                    TO CRT-MSG-NBR
+229,232c278,281
+< 002650         MOVE CSV-EMPLOYEE           TO GE2-PCT-EMPLOYEE
+< 002660                                        G2-PCT-EMPLOYEE
+< 002670         IF (CSV-EMPLOYEE = ZEROES)
+< 002720             MOVE 104                TO CRT-MSG-NBR
+---
+> 002650         MOVE CVL-EMPLOYEE           TO GE2-PAE-EMPLOYEE
+> 002660                                        G2-PAE-EMPLOYEE
+> 002670         IF (CVL-EMPLOYEE = ZEROES)
+> 002680             MOVE PAPAE-EMPLOYEE-DN
+232a282,285
+> 002690                                     TO DB-FLD-NBR
+> 002700             PERFORM 840-FIND-PADSET1
+> 002710             MOVE PAD-ITEM-NAME      TO WS-FIELD-VALUE
+> 002720             MOVE 198                TO CRT-MSG-NBR
+239,240c292,293
+< 002790             MOVE PRM-COMPANY        TO DB-COMPANY
+< 002800             MOVE CSV-EMPLOYEE       TO DB-EMPLOYEE
+---
+> 002790             MOVE CVL-COMPANY        TO DB-COMPANY
+> 002800             MOVE CVL-EMPLOYEE       TO DB-EMPLOYEE
+242,248c295,301
+< 002820             IF (EMPLOYEE-NOTFOUND)
+< 002720                 MOVE 105                TO CRT-MSG-NBR
+< 002730                 PERFORM 790-GET-MSG
+< 002740                 MOVE CRT-MESSAGE        TO WS-ERR-MSG
+< 002750                 PERFORM 1300-PRINT-ERROR
+< 002760                 THRU    1300-END
+< 002770                 GO TO 1200-END.
+---
+> 002820             IF (EMPLOYEE-FOUND)
+> 002830                 MOVE EMP-LAST-NAME  TO HRWS-LAST-NAME
+> 002840                 MOVE EMP-FIRST-NAME TO HRWS-FIRST-NAME
+> 002850                 MOVE EMP-MIDDLE-INIT
+> 002860                                     TO HRWS-MIDDLE-INIT
+>                        MOVE EMP-LAST-NAME-PRE
+>                                            TO HRWS-LAST-NAME-PRE
+248a302,310
+>                        MOVE EMP-NAME-SUFFIX
+>                                            TO HRWS-NAME-SUFFIX
+> 002870                 PERFORM 750-HR-FORMAT-NAME
+> 002880                 MOVE HRWS-FORMAT-NAME
+> 002890                                     TO G2-EMP-SHORT-NAME
+> 002900                                        GE2-EMP-SHORT-NAME
+>                    ELSE
+>                        INITIALIZE             G2-EMP-SHORT-NAME
+>                                               GE2-EMP-SHORT-NAME.
+250,254c312,316
+< 002920     IF (WS-CSV-PAY-RATE-A   NOT NUMERIC) 
+< 002960         MOVE 101                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+---
+> 002920     IF (WS-CVL-SEQ-NBR-A    NOT NUMERIC) 
+> 002930         MOVE PAPAE-SEQ-NBR-DN       TO DB-FLD-NBR
+> 002940         PERFORM 840-FIND-PADSET1
+> 002950         MOVE PAD-ITEM-NAME          TO WS-FIELD-VALUE
+> 002960         MOVE 199                    TO CRT-MSG-NBR
+255,291d316
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+< 003120
+< 002920     IF (WS-CSV-BASIC-CASH-A   NOT NUMERIC) 
+< 002960         MOVE 102                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+< 003120
+< 002920     IF (WS-CSV-HOUSE-PROVIDED-A NOT NUMERIC) 
+< 002960         MOVE 108                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+< 003120
+< 002920     IF (WS-CSV-CASH-HOUSING-A NOT NUMERIC) 
+< 002960         MOVE 109                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+< 003120
+< 002920     IF (WS-CSV-CASH-UTILITY-A NOT NUMERIC) 
+< 002960         MOVE 110                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+< 003120
+< 002920     IF (WS-CSV-STAND-HOURS-A NOT NUMERIC) 
+< 002960         MOVE 103                    TO CRT-MSG-NBR
+296c321
+< 003010         GO TO 1200-END.
+---
+> 003010         GO TO 1200-END
+296a322,331
+> 003020     ELSE
+> 003030         MOVE CVL-SEQ-NBR            TO GE2-PAE-SEQ-NBR.
+> 003040         IF  (CVL-FC      = "C")
+> 003050         AND (CVL-SEQ-NBR = ZEROES)
+> 003060             MOVE 197                TO CRT-MSG-NBR
+> 003070             PERFORM 790-GET-MSG
+> 003080             MOVE CRT-MESSAGE        TO WS-ERROR-MESSAGE
+> 003090             PERFORM 1300-PRINT-ERROR
+> 003100             THRU    1300-END
+> 003110             GO TO 1200-END.
+298,314c333,349
+<            MOVE PRM-COMPANY            TO DB-COMPANY.
+<            MOVE CSV-EMPLOYEE           TO DB-EMPLOYEE.
+<            MOVE 1                      TO DB-POS-LEVEL.
+<            MOVE WS-HIGH-VALUES         TO DB-EFFECT-DATE.
+<            PERFORM 850-FIND-NLT-PEPSET3.
+<            IF  (PAEMPPOS-FOUND)
+<            AND (PEP-COMPANY       = DB-COMPANY)
+<            AND (PEP-EMPLOYEE      = DB-EMPLOYEE)
+<            AND (PEP-POS-LEVEL     = DB-POS-LEVEL)
+<                NEXT SENTENCE                               
+<            ELSE
+< 002960         MOVE 107                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+---
+> 003130     IF (CVL-FIRST-NAME = SPACES)
+> 003140         MOVE PAPAE-FIRST-NAME-DN    TO DB-FLD-NBR
+> 003150         PERFORM 840-FIND-PADSET1
+> 003160         MOVE PAD-ITEM-NAME          TO WS-FIELD-VALUE
+> 003170         MOVE 198                    TO CRT-MSG-NBR
+> 003180         PERFORM 790-GET-MSG
+> 003190         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+> 003200         PERFORM 1300-PRINT-ERROR
+> 003210         THRU    1300-END
+> 003220         GO TO 1200-END.
+> 003230
+> 003240     IF (CVL-LAST-NAME = SPACES)
+> 003250         MOVE PAPAE-LAST-NAME-DN     TO DB-FLD-NBR
+> 003260         PERFORM 840-FIND-PADSET1
+> 003270         MOVE PAD-ITEM-NAME          TO WS-FIELD-VALUE
+> 003280         MOVE 198                    TO CRT-MSG-NBR
+> 003290         PERFORM 790-GET-MSG        
+314a350,400
+> 003300         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+> 003310         PERFORM 1300-PRINT-ERROR
+> 003320         THRU    1300-END
+> 003330         GO TO 1200-END.
+> 003340
+> 003350     IF (CVL-FC NOT = "A" AND "C")
+> 003360         MOVE 114                    TO CRT-MSG-NBR
+> 003370         PERFORM 790-GET-MSG
+> 003380         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+> 003390         PERFORM 1300-PRINT-ERROR
+> 003400         THRU    1300-END
+> 003410         GO TO 1200-END.
+> 003420
+>            IF (CVL-FC = "C")
+>                MOVE CVL-COMPANY            TO DB-COMPANY
+>                MOVE CVL-EMPLOYEE           TO DB-EMPLOYEE
+>                MOVE CVL-SEQ-NBR            TO DB-SEQ-NBR
+>                PERFORM 840-FIND-PAESET1
+>                IF (PAEMERGCNT-NOTFOUND)
+>                    INITIALIZE          WS-FIELD-VALUE
+>                    MOVE 115                TO CRT-MSG-NBR
+>                    PERFORM 790-GET-MSG
+>                    MOVE CRT-MESSAGE        TO WS-ERR-MSG
+>                    PERFORM 1300-PRINT-ERROR
+>                    THRU    1300-END
+>                    GO TO 1200-END
+>                ELSE
+>                    PERFORM 1230-LOAD-FIELDS
+>                    THRU    1230-END
+>                END-IF.
+> 
+> 003430     PERFORM 1210-MOVE-TO-PAPAE
+> 003440     THRU    1210-END.
+> 003450
+> 003460     PERFORM 2000-PAPAE-EDIT-TRAN.
+> 003470
+> 003480     IF (PAPAE-I2 NOT = ZEROES)
+> 003490         PERFORM
+> 003500             VARYING I2 FROM 1 BY 1
+> 003510             UNTIL  (I2 > PAPAE-I2)
+> 003520                 MOVE PAPAE-ERROR-NBR (I2)
+> 003530                                     TO CRT-MSG-NBR
+> 003540                 PERFORM 790-GET-MSG
+> 003550                 MOVE CRT-MESSAGE    TO WS-ERROR-MESSAGE
+> 003560                 PERFORM 1300-PRINT-ERROR
+> 003570                 THRU    1300-END
+> 003580                 MOVE "PAPAE"        TO CRT-ERROR-CAT
+> 003590         END-PERFORM
+> 003600     END-IF.              
+> 003610
+> 003620     MOVE "PA512"                    TO CRT-ERROR-CAT.
+316,330d401
+<            MOVE PRM-COMPANY            TO DB-COMPANY.
+<            MOVE "E"                    TO DB-ACTION-TYPE.   
+<            MOVE PRM-EFFECTIVE-DATE     TO DB-EFFECT-DATE.
+<            MOVE "ACR CHG"              TO DB-ACTION-CODE.
+<            MOVE CSV-EMPLOYEE           TO DB-EMPLOYEE.
+<            MOVE 1                      TO DB-ACTION-NBR.
+<            PERFORM 840-FIND-PCTSET1.
+<            IF (PERSACTION-FOUND)
+< 002960         MOVE 111                    TO CRT-MSG-NBR
+< 002970         PERFORM 790-GET-MSG
+< 002980         MOVE CRT-MESSAGE            TO WS-ERR-MSG
+< 002990         PERFORM 1300-PRINT-ERROR
+< 003000         THRU    1300-END
+< 003010         GO TO 1200-END.
+< 
+333,410c404,481
+< 005300******************************************************************
+< 005310 1250-UPDATE-PERSACTION.
+< 005320******************************************************************
+<            
+< 005330     PERFORM 800-CREATE-PERSACTION.
+< 
+<            MOVE PRM-COMPANY            TO PCT-COMPANY.
+<            MOVE "E"                    TO PCT-ACTION-TYPE.
+<            MOVE PRM-EFFECTIVE-DATE     TO PCT-EFFECT-DATE.
+<            MOVE "ACR CHG"              TO PCT-ACTION-CODE.
+<            MOVE CSV-EMPLOYEE           TO PCT-EMPLOYEE.
+<            MOVE 1                      TO PCT-ACTION-NBR.
+< 
+<            MOVE PEP-PROCESS-LEVEL      TO PCT-PROCESS-LEVEL.
+<            MOVE PEP-DEPARTMENT         TO PCT-DEPARTMENT.
+< 
+<            MOVE 62                     TO PCT-FLD-NBR (1).
+<            MOVE ZEROS                  TO WS-NUM-16.
+<            MOVE SPACES                 TO WS-ALPHA-12.
+<            MOVE CSV-PAY-RATE           TO WS-NUM-16.
+<            MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (1).
+< 
+<            MOVE 75                     TO PCT-FLD-NBR (2).
+<            MOVE ZEROS                  TO WS-NUM-16.
+<            MOVE SPACES                 TO WS-ALPHA-12.
+<            MOVE CSV-BASIC-CASH         TO WS-NUM-16.
+<            MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (2).
+< 
+<            MOVE 76                     TO PCT-FLD-NBR (3).
+<            MOVE ZEROS                  TO WS-NUM-16.
+<            MOVE SPACES                 TO WS-ALPHA-12.
+<            MOVE CSV-HOUSE-PROVIDED     TO WS-NUM-16.
+<            MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (3).
+< 
+<            MOVE 77                     TO PCT-FLD-NBR (4).
+<            MOVE ZEROS                  TO WS-NUM-16.
+<            MOVE SPACES                 TO WS-ALPHA-12.
+<            MOVE CSV-CASH-HOUSING       TO WS-NUM-16.
+<            MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (4).
+< 
+<            MOVE 78                     TO PCT-FLD-NBR (5).
+<            MOVE ZEROS                  TO WS-NUM-16.
+<            MOVE SPACES                 TO WS-ALPHA-12.
+<            MOVE CSV-CASH-UTILITY       TO WS-NUM-16.
+<            MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (5).
+< 
+<            MOVE 68                     TO PCT-FLD-NBR (6).
+<            MOVE ZEROS                  TO WS-NUM-16.
+<            MOVE SPACES                 TO WS-ALPHA-12.
+<            MOVE CSV-STAND-HOURS        TO WS-NUM-16.
+<            MOVE WS-NEW-VALUE-FLD       TO PCT-NEW-VALUE (6).
+< 
+<            MOVE CRT-USER-NAME          TO PCT-USER-ID.
+<            MOVE "Y"                    TO PCT-UPDATE-BENEFIT.
+<            MOVE "N"                    TO PCT-UPDATE-REQ-DED.
+<            MOVE "Y"                    TO PCT-APPROVAL-FLAG.
+<            MOVE CSV-PAY-RATE           TO PCT-BASE-PAY-RATE.
+< 
+<            MOVE PEP-POS-LEVEL          TO PCT-POS-LEVEL.
+<            MOVE PEP-EFFECT-DATE        TO PCT-POS-EFF-DT.
+<            MOVE PEP-POSITION           TO PCT-POSITION.
+<            MOVE PEP-JOB-CODE           TO PCT-JOB-CODE.
+<            MOVE PEP-POSITION           TO PCT-PAY-POSITION.
+<            MOVE PEP-BASE-CURRENCY      TO PCT-BASE-CURRENCY.
+<            MOVE PEP-BASE-ND            TO PCT-BASE-ND.
+< 
+<            MOVE PRM-COMPANY            TO DB-COMPANY.
+<            MOVE CSV-EMPLOYEE           TO DB-EMPLOYEE.
+<            PERFORM 840-MODIFY-EMPSET1.
+<            IF (PRM-EFFECTIVE-DATE < EMP-PEND-ACT-DATE)
+<            OR (EMP-PEND-ACT-DATE = ZEROS)
+<                MOVE PRM-EFFECTIVE-DATE TO EMP-PEND-ACT-DATE.
+<            PERFORM 820-STORE-EMPLOYEE.
+< 
+<            PERFORM 8200-STORE-PERSACTION.
+< 
+<        1250-END.
+< 005470
+---
+> 003660******************************************************************
+> 003670 1210-MOVE-TO-PAPAE.
+> 003680******************************************************************
+> 003690
+> 003700     MOVE CVL-FC                     TO PAPAE-FC.
+> 003710     MOVE CVL-COMPANY                TO PAPAE-COMPANY.
+> 003720     MOVE PAPAE-COMPANY-DN           TO PAPAE-COMPANY-FN.
+> 003730     MOVE CVL-EMPLOYEE               TO PAPAE-EMPLOYEE.
+> 003740     MOVE PAPAE-EMPLOYEE-DN          TO PAPAE-EMPLOYEE-FN.
+> 003750     MOVE CVL-SEQ-NBR                TO PAPAE-SEQ-NBR.
+> 003760     MOVE PAPAE-SEQ-NBR-DN           TO PAPAE-SEQ-NBR-FN.
+> 003770     MOVE CVL-LAST-NAME              TO PAPAE-LAST-NAME.
+> 003780     MOVE PAPAE-LAST-NAME-DN         TO PAPAE-LAST-NAME-FN.
+> 003790     MOVE CVL-FIRST-NAME             TO PAPAE-FIRST-NAME.
+> 003800     MOVE PAPAE-FIRST-NAME-DN        TO PAPAE-FIRST-NAME-FN.
+> 003810     MOVE CVL-MIDDLE-INIT            TO PAPAE-MIDDLE-INIT.
+> 003820     MOVE PAPAE-MIDDLE-INIT-DN       TO PAPAE-MIDDLE-INIT-FN.
+> 003830     MOVE CVL-ADDR1                  TO PAPAE-ADDR1.
+> 003840     MOVE PAPAE-ADDR1-DN             TO PAPAE-ADDR1-FN.
+> 003850     MOVE CVL-ADDR2                  TO PAPAE-ADDR2.
+> 003860     MOVE PAPAE-ADDR2-DN             TO PAPAE-ADDR2-FN.
+> 003870     MOVE CVL-ADDR3                  TO PAPAE-ADDR3.
+> 003880     MOVE PAPAE-ADDR3-DN             TO PAPAE-ADDR3-FN.
+> 003890     MOVE CVL-ADDR4                  TO PAPAE-ADDR4.
+> 003900     MOVE PAPAE-ADDR4-DN             TO PAPAE-ADDR4-FN.
+> 003910     MOVE CVL-CITY                   TO PAPAE-CITY.
+> 003920     MOVE PAPAE-CITY-DN              TO PAPAE-CITY-FN.
+> 003930     MOVE CVL-STATE                  TO PAPAE-STATE.
+> 003940     MOVE PAPAE-STATE-DN             TO PAPAE-STATE-FN.
+> 003950     MOVE CVL-ZIP                    TO PAPAE-ZIP.
+> 003960     MOVE PAPAE-ZIP-DN               TO PAPAE-ZIP-FN.
+> 003970     MOVE CVL-COUNTRY-CODE           TO PAPAE-COUNTRY-CODE.
+> 003980     MOVE PAPAE-COUNTRY-CODE-DN      TO PAPAE-COUNTRY-CODE-FN.
+> 003990     MOVE CVL-RELATIONSHIP           TO PAPAE-RELATIONSHIP.
+> 004000     MOVE PAPAE-RELATIONSHIP-DN      TO PAPAE-RELATIONSHIP-FN.
+> 004010     MOVE CVL-HM-PHONE-CNTRY         TO PAPAE-HM-PHONE-CNTRY.
+> 004020     MOVE PAPAE-HM-PHONE-CNTRY-DN
+> 004030                                     TO PAPAE-HM-PHONE-CNTRY-FN.
+> 004040     MOVE CVL-HM-PHONE-NBR           TO PAPAE-HM-PHONE-NBR.
+> 004050     MOVE PAPAE-HM-PHONE-NBR-DN      TO PAPAE-HM-PHONE-NBR-FN.
+> 004060     MOVE CVL-WK-PHONE-CNTRY         TO PAPAE-WK-PHONE-CNTRY. 
+> 004070     MOVE PAPAE-WK-PHONE-CNTRY-DN
+> 004080                                     TO PAPAE-WK-PHONE-CNTRY-FN.
+> 004090     MOVE CVL-WK-PHONE-NBR           TO PAPAE-WK-PHONE-NBR.
+> 004100     MOVE PAPAE-WK-PHONE-NBR-DN      TO PAPAE-WK-PHONE-NBR-FN.
+> 004110     MOVE CVL-WK-PHONE-EXT           TO PAPAE-WK-PHONE-EXT.
+> 004120     MOVE PAPAE-WK-PHONE-EXT-DN      TO PAPAE-WK-PHONE-EXT-FN.
+>            MOVE CVL-DATE-STAMP             TO PAPAE-DATE-STAMP.
+>            MOVE CVL-TIME-STAMP             TO PAPAE-TIME-STAMP.
+>            MOVE CVL-USER-ID                TO WS-USER-DISPLAY-NAME.
+>            PERFORM 900-GET-USER-DBUIDKEY.
+>            MOVE WS-USER-DBUIDKEY           TO PAPAE-USER-ID.
+>            IF (PAPAE-DATE-STAMP = ZEROES)
+>                MOVE WS-SYSTEM-DATE-YMD     TO PAPAE-DATE-STAMP.
+>            IF (PAPAE-TIME-STAMP = ZEROES)
+>                MOVE HHMMSS                 TO PAPAE-TIME-STAMP.
+>            IF (PAPAE-USER-ID    = SPACES)
+>                MOVE CRT-USER-NAME          TO PAPAE-USER-ID.
+> 004130     MOVE "Y"                        TO PAPAE-BATCH-PROGRAM.
+> 004140     INITIALIZE                         PAPAE-I2.
+> 004150    
+> 004160     IF (CVL-FC = "C")
+> 004170         PERFORM 1250-INITIALIZE-DATA
+> 004180         THRU    1250-END.
+> 004190
+> 004200 1210-END.
+> 004210
+>       ******************************************************************
+>        1230-LOAD-FIELDS.
+>       ******************************************************************
+>       
+>            IF (CVL-LAST-NAME        = SPACES)  
+>                MOVE PAE-LAST-NAME      TO CVL-LAST-NAME.
+>            IF (CVL-FIRST-NAME       = SPACES)   
+>                MOVE CVL-FIRST-NAME     TO CVL-FIRST-NAME.
+>            IF (CVL-MIDDLE-INIT      = SPACES)
+>                MOVE PAE-MIDDLE-INIT    TO CVL-MIDDLE-INIT.
+>            IF (CVL-ADDR1            = SPACES)
+410a482,619
+>                MOVE PAE-ADDR1          TO CVL-ADDR1.
+>            IF (CVL-ADDR2            = SPACES)
+>                MOVE PAE-ADDR2          TO CVL-ADDR2.
+>            IF (CVL-ADDR3            = SPACES)
+>                MOVE PAE-ADDR3          TO CVL-ADDR3.
+>            IF (CVL-ADDR4            = SPACES)
+>                MOVE PAE-ADDR4          TO CVL-ADDR4.
+>            IF (CVL-CITY             = SPACES)
+>                MOVE PAE-CITY           TO CVL-CITY.
+>            IF (CVL-STATE            = SPACES)
+>                MOVE PAE-STATE          TO CVL-STATE.
+>            IF (CVL-ZIP              = SPACES)
+>                MOVE PAE-ZIP            TO CVL-ZIP.
+>            IF (CVL-COUNTRY-CODE     = SPACES)          
+>                MOVE PAE-COUNTRY-CODE   TO CVL-COUNTRY-CODE.
+>            IF (CVL-RELATIONSHIP     = SPACES)
+>                MOVE PAE-RELATIONSHIP   TO CVL-RELATIONSHIP.
+>            IF (CVL-HM-PHONE-CNTRY   = SPACES)
+>                MOVE PAE-HM-PHONE-CNTRY TO CVL-HM-PHONE-CNTRY.
+>            IF (CVL-HM-PHONE-NBR     = SPACES)
+>                MOVE PAE-HM-PHONE-NBR   TO CVL-HM-PHONE-NBR.
+>            IF (CVL-WK-PHONE-CNTRY   = SPACES)
+>                MOVE PAE-WK-PHONE-CNTRY TO CVL-WK-PHONE-CNTRY.
+>            IF (CVL-WK-PHONE-NBR     = SPACES)
+>                MOVE PAE-WK-PHONE-NBR   TO CVL-WK-PHONE-NBR.
+>            IF (CVL-WK-PHONE-EXT     = SPACES)
+>                MOVE PAE-WK-PHONE-EXT   TO CVL-WK-PHONE-EXT.
+> 
+>        1230-END.
+> 
+> 004220******************************************************************
+> 004230 1250-INITIALIZE-DATA.
+> 004240******************************************************************
+> 004250
+> 004260
+> 004270     IF (CVL-LAST-NAME        = WS-30-STARS)  
+> 004280         MOVE SPACES             TO PAPAE-LAST-NAME
+> 004290     ELSE
+> 004300     IF (CVL-LAST-NAME        = SPACES)
+> 004310         MOVE ZEROS              TO PAPAE-LAST-NAME-FN.
+> 004320
+> 004330     IF (CVL-FIRST-NAME       = WS-15-STARS)   
+> 004340         MOVE SPACES             TO PAPAE-FIRST-NAME
+> 004350     ELSE
+> 004360     IF (CVL-FIRST-NAME       = SPACES)
+> 004370         MOVE ZEROS              TO PAPAE-FIRST-NAME-FN.
+> 004380
+> 004390     IF (CVL-MIDDLE-INIT      = "*")
+> 004400         MOVE SPACES             TO PAPAE-MIDDLE-INIT
+> 004410     ELSE
+> 004420     IF (CVL-MIDDLE-INIT      = SPACES)
+> 004430         MOVE ZEROS              TO PAPAE-MIDDLE-INIT-FN.
+> 004440
+> 004450     IF (CVL-ADDR1            = WS-30-STARS)
+> 004460         MOVE SPACES             TO PAPAE-ADDR1
+> 004470     ELSE
+> 004480     IF (CVL-ADDR1            = SPACES)
+> 004490         MOVE ZEROS              TO PAPAE-ADDR1-FN.
+> 004500     
+> 004510     IF (CVL-ADDR2            = WS-30-STARS)
+> 004520         MOVE SPACES             TO PAPAE-ADDR2
+> 004530     ELSE
+> 004540     IF (CVL-ADDR2            = SPACES)
+> 004550         MOVE ZEROS              TO PAPAE-ADDR2-FN.
+> 004560     
+> 004570     IF (CVL-ADDR3            = WS-30-STARS)
+> 004580         MOVE SPACES             TO PAPAE-ADDR3
+> 004590     ELSE
+> 004600     IF (CVL-ADDR3            = SPACES)
+> 004610         MOVE ZEROS              TO PAPAE-ADDR3-FN.
+> 004620     
+> 004630     IF (CVL-ADDR4            = WS-30-STARS)
+> 004640         MOVE SPACES             TO PAPAE-ADDR4
+> 004650     ELSE
+> 004660     IF (CVL-ADDR4            = SPACES)
+> 004670         MOVE ZEROS              TO PAPAE-ADDR4-FN.
+> 004680     
+> 004690     IF (CVL-CITY             = WS-18-STARS)
+> 004700         MOVE SPACES             TO PAPAE-CITY
+> 004710     ELSE
+> 004720     IF (CVL-CITY             = SPACES)
+> 004730         MOVE ZEROS              TO PAPAE-CITY-FN.
+> 004740     
+> 004750     IF (CVL-STATE            = "**")
+> 004760         MOVE SPACES             TO PAPAE-STATE
+> 004770     ELSE
+> 004780     IF (CVL-STATE            = SPACES)
+> 004790         MOVE ZEROS              TO PAPAE-STATE-FN.
+> 004800     
+> 004810     IF (CVL-ZIP              = WS-10-STARS)
+> 004820         MOVE SPACES             TO PAPAE-ZIP
+> 004830     ELSE
+> 004840     IF (CVL-ZIP              = SPACES)
+> 004850         MOVE ZEROS              TO PAPAE-ZIP-FN.
+> 004860     
+> 004870     IF (CVL-COUNTRY-CODE     = "**")          
+> 004880         MOVE SPACES             TO PAPAE-COUNTRY-CODE
+> 004890     ELSE
+> 004900     IF (CVL-COUNTRY-CODE     = SPACES)
+> 004910         MOVE ZEROS              TO PAPAE-COUNTRY-CODE-FN.
+> 004920     
+> 004930     IF (CVL-RELATIONSHIP     = WS-30-STARS)
+> 004940         MOVE SPACES             TO PAPAE-RELATIONSHIP
+> 004950     ELSE
+> 004960     IF (CVL-RELATIONSHIP     = SPACES)
+> 004970         MOVE ZEROES             TO PAPAE-RELATIONSHIP-FN.   
+> 004980     IF (CVL-HM-PHONE-CNTRY   = WS-6-STARS)
+> 004990         MOVE SPACES             TO PAPAE-HM-PHONE-CNTRY
+> 005000     ELSE
+> 005010     IF (CVL-HM-PHONE-CNTRY   = SPACES)
+> 005020         MOVE ZEROS              TO PAPAE-HM-PHONE-CNTRY-FN.
+> 005030
+> 005040     IF (CVL-HM-PHONE-NBR     = WS-15-STARS)
+> 005050         MOVE SPACES             TO PAPAE-HM-PHONE-NBR
+> 005060     ELSE
+> 005070     IF (CVL-HM-PHONE-NBR     = SPACES)
+> 005080         MOVE ZEROS              TO PAPAE-HM-PHONE-NBR-FN.
+> 005090
+> 005100     IF (CVL-WK-PHONE-CNTRY   = WS-6-STARS)
+> 005110         MOVE SPACES             TO PAPAE-WK-PHONE-CNTRY
+> 005120     ELSE
+> 005130     IF (CVL-WK-PHONE-CNTRY   = SPACES)
+> 005140         MOVE ZEROS              TO PAPAE-WK-PHONE-CNTRY-FN.
+> 005150
+> 005160     IF (CVL-WK-PHONE-NBR     = WS-15-STARS)
+> 005170         MOVE SPACES             TO PAPAE-WK-PHONE-NBR
+> 005180     ELSE
+> 005190     IF (CVL-WK-PHONE-NBR     = SPACES)
+> 005200         MOVE ZEROS              TO PAPAE-WK-PHONE-NBR-FN.
+> 005210
+> 005220     IF (CVL-WK-PHONE-EXT     = WS-5-STARS)
+> 005230         MOVE SPACES             TO PAPAE-WK-PHONE-EXT
+> 005240     ELSE
+> 005250     IF (CVL-WK-PHONE-EXT     = SPACES)
+> 005260         MOVE ZEROS              TO PAPAE-WK-PHONE-EXT-FN.
+> 005270
+> 005280 1250-END.
+> 005290
+414a624,629
+>            MOVE WS-FIELD-VALUE          TO CRT-PHRASE.
+>            MOVE WS-PHRASE-SIZE          TO CRT-PHRASE-SIZE.
+>            MOVE "N"                     TO CRT-PUT-DOTS.
+>            PERFORM 900-GET-PHRASE-XLT.
+>            MOVE CRT-PHRASE-XLT          TO WS-FIELD-VALUE.
+> 
+416,417c631,632
+< 005350     MOVE WS-ERR-MSG              TO GE2-ERROR.
+< 005360     MOVE GEN2-SAL-HIST-REC       TO RPT-GROUP-REQUEST.
+---
+> 005350     MOVE WS-ERROR-MESSAGE        TO GE2-ERROR.
+> 005360     MOVE GEN2-PAE-SEQ-NBR        TO RPT-GROUP-REQUEST.
+420c635
+< 005400                                     GE2-PCT-EMPLOYEE
+---
+> 005390                                     GE2-FC
+420a636,639
+> 005400                                     GE2-PAE-EMPLOYEE
+> 005410                                     GE2-EMP-SHORT-NAME
+> 005420                                     GE2-PAE-SEQ-NBR
+> 005430                                     GE2-PAE-FULL-NAME

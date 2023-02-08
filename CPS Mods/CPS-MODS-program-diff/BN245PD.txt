@@ -1,0 +1,13 @@
+2,11d1
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+<       *  Modified by Analysts International,MN                         *
+<       ******************************************************************
+<       *  AI0010  03/24/03  MODIFY THE BENEFIT PLAN ELIGIBILITY COMMON  *
+<       *                    MODULE TO UTILIZE THE EFFECTIVE DATE AND    *
+<       *                    END DATE FIELDS IN DETERMINATION OF THE     *
+<       *                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
+<       ******************************************************************
+2649d2638
+< AI0010     MOVE PRM-ELEC-DATE              TO BNPEWS-START-DATE.

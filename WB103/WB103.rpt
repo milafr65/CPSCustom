@@ -1,0 +1,182 @@
+******* WB103.rpt 3 <3861230635>
+******************************************************************
+$PROGRAM   WB103
+******************************************************************
+
+****************************************************
+$REPORT    WB103-R1
+****************************************************
+
+**************************************
+$GROUP     GN1-PRM-COMPANY
+**************************************
+$PREFIX    G1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+WB103 Date: ZZ/ZZ/ZZ                 Company ZZZ9 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX          Page ZZZZ
+      |   ; A                        |     ; B    C                                       |  ; D
+      Time: 99:99                    ER-WITHDRW Load into PERSACTION
+      |   ; E
+%
+     Employee  Status  Position     Prc Lvl Term Dat  User Levl  Shft Schedule   Work Sched   Grade 
+    |               ;  |          ; |              ;  |             ; |       ;  |                
+    ---------- ------  ------------  -----  --------  ----------   -  ---------  ----------  ------  
+    |               ;  |          ; |              ;  |             ; |       ;  |                ; 
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     DATE                                   TD 
+ B     PRM-COMPANY
+ C     PRS-NAME
+ D     PAGE                                   PN
+ E     TIME                                   CT
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2-ERWITHDRW-REC
+**************************************
+$PREFIX    G2-
+$LEVEL     C
+$FORMAT
+    ZZZZZZZZ9     XX   XXXXXXXXXXXX  XXXXX  ZZZZZZZZ  XXXXXXXXXX   9  XXXXXXXXX   XXXXXXXXXX XXXXXX                                              
+    A             B    C             D      E         F            G  H           I          J                              
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     EMPLOYEE
+ B     EMP-STATUS          
+ C     POSITION        
+ D     PROCESS-LEVEL   
+ E     TERM-DATE                                
+ F     USER-LEVEL      
+ G     SHIFT             
+ H     SCHEDULE
+ I     WORK-SCHED
+ J     PAY-GRADE
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN3-COUNTERS
+**************************************
+$PREFIX    G3-
+$FORMAT
+%
+Total ER-WITHDRW Records Added:   ZZZ,ZZZ,ZZZ,ZZ9
+|                             ;   A
+Total ER-WITHDRW Recs in error:   ZZZ,ZZZ,ZZZ,ZZ9
+|                             ;   C
+Total ER-WITHDRW Recs processed:  ZZZ,ZZZ,ZZZ,ZZ9
+|                              ;  D
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     RECS-ADDED
+ C     RECS-IN-ERROR
+ D     RECS-PROCESSED
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+**************************************
+$REPORT    WB103-R2           
+**************************************
+$PRINTFILE ERRORS
+**************************************
+$GROUP     GEN1-PRM-COMPANY
+**************************************
+$PREFIX    GE1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+WB103 Date ZZ/ZZ/ZZ         Company ZZZ9 XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX    Page ZZZZ
+      |  ; A                |     ; B    C                                 |  ; D
+      Time 99:99            Error Listing
+      |  ; E                |           ;
+%
+FC  Employee   Error Message                                                                              
+|; |                                      ;|                        ;                                                               
+-- ---------- -------------------------------------------------------                                                                      
+|; |                                      ;|                        ;  
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     DATE                                   TD
+ B     PRM-COMPANY
+ C     PRS-NAME
+ D     PAGE                                   PN
+ E     TIME                                   CT
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GEN2-ER-WITHDRW-REC        
+**************************************
+$PREFIX    GE2-
+$LEVEL     B
+$FORMAT
+   ZZZZZZZZZ  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                                  
+   A          B                                                                                     
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     EMPLOYEE
+ B     ERROR   
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GEN3-COUNTERS
+**************************************
+$PREFIX    GE3-
+$FORMAT
+Total ER-WITHDRW Recs in error:  ZZZ,ZZZ,ZZZ,ZZ9
+|                             ;  A
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+ A     RECS-IN-ERROR
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GEN4-BLANK
+**************************************
+$PREFIX    GE4-
+$FORMAT
+%
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  ---------------------------------
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

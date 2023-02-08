@@ -1,0 +1,27 @@
+< prod/prsrc/PR134PD
+6,11d5
+<       ******************************************************************
+<       *               M O D I F I C A T I O N   L O G:                 *
+<       ******************************************************************
+< MG0325*  MG0325  03/25/04  ADD CODE FOR SPECIAL RUNS THAT WILL BYPASS  *
+< MG0325*                    STANDTIME RECORDS BASED ON CHECK GROUPS     *
+< MG0325******************************************************************
+773,790d766
+< MG0325     IF (PRM-SPECIAL-RUN = "Y")
+< MG0325         MOVE 0                   TO WS-BYPASS-CG-SW
+< MG0325         PERFORM
+< MG0325             VARYING I3 FROM 1 BY 1
+< MG0325             UNTIL  (I3 > 9) OR
+< MG0325                    (BYPASS-CG)
+< MG0325                 IF (PRM-CHECK-GROUP (I3) > SPACES)
+< MG0325                      IF (STM-CHECK-GRP = PRM-CHECK-GROUP (I3))
+< MG0325                         MOVE 1   TO WS-BYPASS-CG-SW
+< MG0325                     END-IF
+< MG0325                 END-IF
+< MG0325         END-PERFORM
+< MG0325         IF (BYPASS-CG)
+< MG0325             GO TO 230-NEXT
+< MG0325         END-IF
+< MG0325     END-IF.
+< MG0325
+< 053000

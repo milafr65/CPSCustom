@@ -1,0 +1,228 @@
+< prod/bnsrc/bn.sr
+> vnla/bnsrc/bn.sr
+792,896d791
+< DEFINE RULE
+<        ID          ZN-PCO-R-0032
+<        SCRFLD      EMP-USER-FIELD
+<        FILENAME    PCODES
+<        INDEX       PCOSET1
+<        KEYRNG      HR-TYPE, EMP-USER-FIELD 
+<        RETURNS     DESCRIPTION into   EMP-USER-FIELD-DESC
+< 
+< DEFINE RULE
+<        ID          ZN-PCO-R-0094
+<        SCRFLD      EMP-USER-FIELD-94
+<        FILENAME    PCODES
+<        INDEX       PCOSET1
+<        KEYRNG      HR-TYPE, EMP-USER-FIELD-94
+<        RETURNS     DESCRIPTION into   EMP-USER-FIELD-DESC
+< 
+< DEFINE RULE
+<        ID          ZN-PCO-R-0095
+<        SCRFLD      EMP-USER-FIELD-95
+<        FILENAME    PCODES
+<        INDEX       PCOSET1
+<        KEYRNG      HR-TYPE, EMP-USER-FIELD-95 
+<        RETURNS     DESCRIPTION into   EMP-USER-FIELD-DESC
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0001
+<        SCRFLD      BN-CRPVESTING
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "CRPVESTING", BN-CRPVESTING 
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0002
+<        SCRFLD      BN-NONPARTRSN
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "NONPARTRSN", BN-NONPARTRSN
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0003
+<        SCRFLD      BN-SRAVESTING
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "SRAVESTING", BN-SRAVESTING 
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WQH-0001
+<        SCRFLD      WQH-EMPLOYER 
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET1
+<        KEYRNG      COMPANY-01, WQH-EMPLOYER, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES, ~ZEROS, ~ZEROS
+<        RETURNS     PROCESS-LEVEL into WQH-EMPLOYER
+< 
+< DEFINE RULE
+<        ID          ZN-WQH-0002
+<        SCRFLD      WQH-DATE       
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET2
+<        KEYRNG      COMPANY-01, WQH-DATE, ~ZEROS, ~SPACES, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES
+<        RETURNS     DATE      into WQH-DATE
+< 
+< DEFINE RULE
+<        ID          ZN-WQH-0003
+<        SCRFLD      WQH-EMPLOYEE   
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET3
+<        KEYRNG      COMPANY-01, WQH-EMPLOYEE, ~ZEROS, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES, ~SPACES
+<        RETURNS     EMPLOYEE  into WQH-EMPLOYEE
+< 
+< DEFINE RULE
+<        ID          ZN-WQH-0004
+<        SCRFLD      WQH-PART       
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET4
+<        KEYRNG      COMPANY-01, WQH-PART, ~ZEROS, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES, ~SPACES
+<        RETURNS     PARTICIPNT into WQH-PART
+< 
+< DEFINE RULE
+<        ID          ZN-WQH-0006
+<        SCRFLD      WQH-USER   
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET6
+<        KEYRNG      COMPANY-01, WQH-USER, ~ZEROS, ~ZEROS, ~ZEROS, ~ZEROS, ~SPACES, ~SPACES
+<        RETURNS     USER-ID  into WQH-USER
+< 
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0011
+<        SCRFLD      PNREVRSN      
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENREVRSN ", PNREVRSN 
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+< DEFINE RULE
+<        ID          ZN-WPC-0010
+<        SCRFLD      PNSTOPRSN    
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENSTPRSN ", PNSTOPRSN     
+<        RETURNS     DESCRIPTION40 into WBPCODE-DESC40
+< 
+2225,2343d2119
+< DEFINE SELECT      "LCMS Roster       "
+<        ID          ZN-PCO-S-0045
+<        SCRFLD      EMP-USER-FIELD-95
+<        FILENAME    PCODES
+<        INDEX       PCOSET1
+<        KEYRNG      "95"   
+<        NXTKEY      EMP-USER-FIELD-95
+<        DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+<        RETURNS     CODE
+< 
+< DEFINE SELECT      "Soc Sec Participtn"
+<        ID          ZN-PCO-S-0046
+<        SCRFLD      EMP-USER-FIELD-94
+<        FILENAME    PCODES
+<        INDEX       PCOSET1
+<        KEYRNG      "94"   
+<        NXTKEY      EMP-USER-FIELD-94
+<        DSPFLDS     CODE, DESCRIPTION, ACTIVE-FLAG
+<        RETURNS     CODE
+< 
+< DEFINE SELECT      "CRP Vesting Codes "
+<        ID          ZN-WPC-0001  
+<        SCRFLD      BN-CRPVESTING        
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "CRPVESTING"   
+<        NXTKEY      BN-CRPVESTING
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "Non Partic Reason"
+<        ID          ZN-WPC-0002
+<        SCRFLD      BN-NONPARTRSN
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "NONPARTRSN"   
+<        NXTKEY      BN-NONPARTRSN
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "SRA Vesting Codes "
+<        ID          ZN-WPC-0003  
+<        SCRFLD      BN-SRAVESTING        
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "SRAVESTING"   
+<        NXTKEY      BN-SRAVESTING
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "WQH Employers "
+<        ID          ZN-WQH-0001  
+<        SCRFLD      WQH-EMPLOYER         
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET1
+<        KEYRNG      COMPANY-01    
+<        NXTKEY      WQH-EMPLOYER 
+<        DSPFLDS     PROCESS-LEVEL:"Employer", MAIN-TAB-NAME:"Main Tab Name",DATE:"Date"
+<        RETURNS     PROCESS-LEVEL
+< 
+< DEFINE SELECT      "WQH Date "
+<        ID          ZN-WQH-0002  
+<        SCRFLD      WQH-DATE         
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET2
+<        KEYRNG      COMPANY-01    
+<        NXTKEY      WQH-DATE 
+<        DSPFLDS     DATE:"Date", MAIN-TAB-NAME:"Main Tab Name"
+<        RETURNS     DATE
+< 
+< DEFINE SELECT      "WQH Employee "
+<        ID          ZN-WQH-0003  
+<        SCRFLD      WQH-EMPLOYEE         
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET3
+<        KEYRNG      COMPANY-01    
+<        NXTKEY      WQH-EMPLOYEE 
+<        DSPFLDS     EMPLOYEE:"Employee", MAIN-TAB-NAME:"Main Tab Name"
+<        RETURNS     EMPLOYEE
+< 
+< DEFINE SELECT      "WQH Participnt"
+<        ID          ZN-WQH-0004  
+<        SCRFLD      WQH-PART       
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET4
+<        KEYRNG      COMPANY-01    
+<        NXTKEY      WQH-PART 
+<        DSPFLDS     PARTICIPNT:"Participnt", MAIN-TAB-NAME:"Main Tab Name"
+<        RETURNS     PARTICIPNT
+< 
+< DEFINE SELECT      "WQH User-ID "
+<        ID          ZN-WQH-0006  
+<        SCRFLD      WQH-USER         
+<        FILENAME    WBPQTHSTRY
+<        INDEX       WQHSET6
+<        KEYRNG      COMPANY-01    
+<        NXTKEY      WQH-USER 
+<        DSPFLDS     USER-ID:"User-ID", MAIN-TAB-NAME:"Main Tab Name"
+<        RETURNS     USER-ID
+< 
+< DEFINE SELECT      "Ben Stop Reason "
+<        ID          ZN-WPC-0010  
+<        SCRFLD      PNSTOPRSN         
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENSTPRSN "   
+<        NXTKEY      PNSTOPRSN
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE
+< 
+< DEFINE SELECT      "Ben Reveiew Reason"
+<        ID          ZN-WPC-0011  
+<        SCRFLD      PNREVRSN             
+<        FILENAME    WBPCODES
+<        INDEX       WPCSET1
+<        KEYRNG      "BENREVRSN "   
+<        NXTKEY      PNREVRSN
+<        DSPFLDS     CODE-VALUE, DESCRIPTION40, ACTIVE-FLAG
+<        RETURNS     CODE-VALUE 

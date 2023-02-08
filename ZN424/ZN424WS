@@ -1,0 +1,55 @@
+******* ZN424WS 1.1.2 <577138916>
+000010******************************************************************
+000020*                            ZN424WS                             *
+000030******************************************************************
+      *                        MODIFICATION LOG                        *
+      ******************************************************************
+WO5772* 05/22/2014   MLF   WO5772                                      *
+WO5772*                    INITIAL VERSION                             *
+      ******************************************************************
+000040 01  ZN424WS.
+           02  WS-RECORD-COUNT                 PIC 9(13) VALUE ZEROES. 
+           02  WS-BEN-RECORD-COUNT             PIC 9(13) VALUE ZEROES. 
+           02  WS-PERS-HDR-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-PERS-DTL-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-PERS-TRLR-FILE               PIC X(90) VALUE SPACES. 
+           02  WS-PERSONAL-OUT                 PIC X(90) VALUE SPACES. 
+           02  WS-BENE-HDR-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-BENE-DTL-FILE                PIC X(90) VALUE SPACES. 
+           02  WS-BENE-TRLR-FILE               PIC X(90) VALUE SPACES. 
+           02  WS-BENEFIC-OUT                  PIC X(90) VALUE SPACES. 
+           02  WS-COMMAND.
+               03  WS-COMMAND-STRING           PIC X(600) VALUE SPACES.
+               03  FILLER                      PIC X(01)  VALUE X"00". 
+
+           02  WS-EMPLOYEE-ID.
+               03 WS-EMPLOYEE-NBR              PIC 9(09) VALUE ZEROES. 
+           02  WS-150-DAYS                     PIC 9(08) VALUE ZEROES.  
+           02  WS-PERIOD-START-DATE.                                   
+               03  WS-PERIOD-START-CCYY        PIC 9(04) VALUE ZEROES.
+               03  WS-PERIOD-START-MM          PIC 9(02) VALUE ZEROES.
+               03  WS-PERIOD-START-DD          PIC 9(02) VALUE ZEROES.
+           02  FILLER REDEFINES WS-PERIOD-START-DATE.
+               03  WS-PERIOD-START             PIC 9(08).               
+           02  WS-PERIOD-END-DATE.                                     
+               03  WS-PERIOD-END-CCYY          PIC 9(04) VALUE ZEROES.
+               03  WS-PERIOD-END-MM            PIC 9(02) VALUE ZEROES.
+               03  WS-PERIOD-END-DD            PIC 9(02) VALUE ZEROES.
+           02  FILLER REDEFINES WS-PERIOD-END-DATE.
+               03  WS-PERIOD-END               PIC 9(08).               
+           02  WS-CURR-YEAR-END-A              PIC X(08) VALUE ZEROES. 
+           02  WS-CURR-YEAR-END-N REDEFINES WS-CURR-YEAR-END-A.
+               03  WS-CURR-YEAR-END         PIC 9(08).
+           02  WS-PTB-START-DATE               PIC 9(08) VALUE ZEROES.
+           02  WS-PTB-STOP-DATE                PIC 9(08) VALUE ZEROES.
+           02  WS-PTB-COV-OPTION               PIC 9(02) VALUE ZEROES.
+           02  WS-PTB-PLAN-CODE                PIC X(04) VALUE SPACES.
+
+           02 LOWER-CASE PIC X(26) VALUE "abcdefghijklmnopqrstuvwxyz".
+           02 UPPER-CASE PIC X(26) VALUE "ABCDEFGHIJKLMNOPQRSTUVWXYZ".
+           
+           02 WS-OVERRIDE-FOUND-FLAG           PIC 9(01) VALUE 0.
+           02 WS-NBR-OF-OVERRIDES              PIC 9(02) VALUE 10.
+           02 WS-OVERRIDE-TABLE.
+              03  WS-OVERRIDE-EMP              PIC 9(09)
+                                               OCCURS 1000 TIMES.
