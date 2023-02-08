@@ -130,6 +130,10 @@ AI0010*                    EMPLOYEES ELIGIBILITY FOR THE BENEFIT PLAN. *
 AI0030*  AI0030  07/24/03  ADD LOGIC FOR DL AND HL BENEFICIARIES       *
       ******************************************************************
       *  Modified by CPS                       *
+      ******************************************************************
+US3543*  MLF 7/19/2022   US3543   AGE 21 ELIGIBILITY CHANGE
+US3543*                           ADDED LOGIC TO CREATE PNP RECORDS
+US3543*                           WITH NONPART CODE 3      
 AI0095******************************************************************
       *  SDB 4/16/2019   SDB416   ADDED STATUS CHECK TO DETERMINE
       *                           NONPARTIC-CD 
@@ -5235,7 +5239,11 @@ SDB416                      AND ((EMP-EMP-STATUS(1:1) = "A")
                              OR  (EMP-EMP-STATUS(1:1) = "I") 
                              OR  (EMP-EMP-STATUS(1:1) = "D")
                              OR  (EMP-EMP-STATUS(1:1) = "L"))
-SDB411                         MOVE 6          TO WEN-NONPARTIC-CD
+US3543                         IF (EMP-SHIFT = 2) 
+SDB411                           MOVE 6          TO WEN-NONPARTIC-CD
+US3543                         ELSE
+US3543                           MOVE 3          TO WEN-NONPARTIC-CD
+US3543                         END-IF
 SDB411                      ELSE
 SDB416                        IF (EMP-EMP-STATUS(1:1) = "T")
                               OR (EMP-EMP-STATUS(1:1) = "R")
