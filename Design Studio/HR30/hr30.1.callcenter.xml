@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
-
-<UIDEF default="true" id="HR30.1_CALLCENTER" pdl="LSAPPS" token="HR30.1">
-	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="HR" TITLE="Correspondence Tracking" TOKEN="HR30.1" TYPE="ONLINE" XMLGenBy="xscrgen 9.0.1.7.181 2010-08-10 04:00:00 (201010)" XMLGenDT="20111029 1333" add="A" chg="C" custom="1" datareq="AC" dblXmit="D" defaultFC="I" defaultui="true" del="D" evttype="" formid="HR30.1_CALLCENTER" gHeight="24" gWidth="14" height="24" hiddenFC="0" id="form1" inq="I" keycheck="CD" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="" rtntype="ALL" staticsize="1" targetid="junk" typ="o" width="80" workflow="0">
+<UIDEF default="true" id="HR30.1_CALLCENTER" token="HR30.1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="HR" TITLE="Correspondence Tracking" TOKEN="HR30.1" TYPE="ONLINE" XMLGenBy="xscrgen 9.0.1.7.181 2010-08-10 04:00:00 (201010)" XMLGenDT="20111029 1333" add="A" chg="C" custom="1" datareq="AC" dblXmit="D" defaultFC="I" defaultui="true" del="D" evttype="" formid="HR30.1_CALLCENTER" gHeight="32" gWidth="18" height="24" hiddenFC="0" id="form1" inq="I" keycheck="CD" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="" rtntype="ALL" staticsize="1" targetid="junk" typ="o" width="80" workflow="0">
 		<PATH id="path1" nbr="_l1">
 			<POSITION PROD="LSAPPS" TITLE="Main Menu LSAPPS" TOKEN="LAMN.0" id="position1" nbr="_l2"/>
 			<POSITION PROD="LSAPPS" TITLE="Human Resources" TOKEN="HRMN.0" id="position2" nbr="_l3"/>
@@ -135,7 +133,7 @@
 				<fld al="left" blankzero="1" col="26" deftkn="HR04.2" ed="upper" hdef="1" hrul="1" hsel="1" hselrul="1" id="text28" keynbr="hca" label="Data Requested:" nbr="_f46" nm="HCP-DATA-REQUESTED" par="TF0-2" row="3" sz="10" tp="Text"/>
 				<fld al="left" blankzero="1" col="39" id="out11" keynbr="hcg" nbr="_f47" nm="PCO-DESCRIPTION" par="TF0-2" row="3" sz="30" tp="Out"/>
 				<fld al="right" blankzero="1" col="26" decsz="2" ed="signed" id="text29" keynbr="98b" label="Cost:" mxsz="16" nbr="_f48" nknimp="1" nm="HCP-COST" par="TF0-2" row="4" sz="13" tp="Text"/>
-				<fld al="left" blankzero="1" col="43" deftkn="CU01.1" drlnokeys="0" ed="upper" hdef="1" hdet="1" hsel="1" hselrul="1" id="text30" keynbr="98" nbr="_f49" nknimp="1" nm="HCP-CURRENCY-CODE" par="TF0-2" row="4" sz="5" tp="Text"/>
+				<fld al="left" blankzero="1" col="43" drlnokeys="0" ed="upper" hdef="1" hdet="1" hsel="1" hselrul="1" id="text30" keynbr="98" nbr="_f49" nknimp="1" nm="HCP-CURRENCY-CODE" par="TF0-2" row="4" sz="5" tp="Text"/>
 				<fld al="left" blankzero="1" col="51" id="out12" keynbr="98E" nbr="_f50" nm="CURR-FORMS-EXP" par="TF0-2" row="4" sz="10" tp="Out"/>
 				<fld al="left" blankzero="1" col="26" ed="date" id="text31" label="Extension Sent:" nbr="_f51" nm="HCP-EXTENSION-SENT" par="TF0-2" row="5" sz="6" tp="Text"/>
 				<fld al="left" blankzero="1" col="26" ed="date" id="text32" label="Extension Date:" nbr="_f52" nm="HCP-EXTENSION-DATE" par="TF0-2" row="6" sz="6" tp="Text"/>
@@ -147,7 +145,7 @@
 				<push al="center" blankzero="0" btnnm=" Base Currency " col="30" hdef="1" id="push1" keynbr="HR30.2" nbr="_f58" nm="BASE-CURR" par="TF0-2" row="11" sz="15"/>
 				<fld al="left" blankzero="0" decsz="7" ed="numeric" fldbtn="_f58" hdef="1" id="hidden3" keynbr="98R" nbr="_f59" nknimp="1" nm="SPOT-CURR-RATE" sz="15" tp="Hidden"/>
 				<fld al="left" blankzero="0" decsz="2" ed="signed" fldbtn="_f58" id="hidden4" keynbr="98a" mxsz="18" nbr="_f60" nknimp="1" nm="HCP-BASE-AMOUNT" sz="15" tp="Hidden"/>
-				<fld al="left" blankzero="0" deftkn="CU01.1" drlnokeys="0" ed="upper" fldbtn="_f58" hdef="1" hdet="1" hsel="1" hselrul="1" id="hidden5" keynbr="98A" nbr="_f61" nknimp="1" nm="HCP-BASE-CURRENCY" sz="5" tp="Hidden"/>
+				<fld al="left" blankzero="0" drlnokeys="0" ed="upper" fldbtn="_f58" hdef="1" hdet="1" hsel="1" hselrul="1" id="hidden5" keynbr="98A" nbr="_f61" nknimp="1" nm="HCP-BASE-CURRENCY" sz="5" tp="Hidden"/>
 				<fld al="left" blankzero="0" ed="numeric" id="hidden6" keynbr="98C" nbr="_f62" nknimp="1" nm="HCP-BASE-ND" sz="1" tp="Hidden"/>
 				<fld al="left" blankzero="0" ed="numeric" id="hidden7" keynbr="98c" nbr="_f63" nknimp="1" nm="HCP-CURR-ND" sz="1" tp="Hidden"/>
 				<fld al="left" blankzero="0" id="hidden8" keynbr="98e" nbr="_f64" nm="BASE-FORMS-EXP" sz="10" tp="Hidden"/>

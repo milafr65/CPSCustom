@@ -1,5 +1,5 @@
 <UIDEF default="true" id="BN70.1_COBRA" token="BN70.1">
-	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="BN" TITLE="COBRA Participant Custom" TOKEN="BN70.1" TYPE="ONLINE" XMLGenBy="xscrgen 9.0.1.7.181 2010-08-10 04:00:00 (201010)" XMLGenDT="20110919 1616" add="A" chg="C" custom="1" datareq="AC" dblXmit="D" defaultFC="I" defaultui="true" del="D" evttype="" formid="BN70.1_COBRA" gHeight="24" gWidth="14" height="24" hiddenFC="0" id="form1" inq="I" keycheck="CD" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="I" rtntype="ALL" staticsize="1" typ="o" width="80" workflow="1">
+	<form FORMTYPE="form" NOTKNXFER="0" RUNTYPE="lapm" SYSTEM="BN" TITLE="COBRA Participant Custom" TOKEN="BN70.1" TYPE="ONLINE" XMLGenBy="xscrgen 9.0.1.7.181 2010-08-10 04:00:00 (201010)" XMLGenDT="20110919 1616" add="A" chg="C" custom="1" datareq="AC" dblXmit="D" defaultFC="I" defaultui="true" del="D" evttype="" formid="BN70.1_COBRA" gHeight="32" gWidth="18" height="24" hiddenFC="0" id="form1" inq="I" keycheck="CD" lineDupAllow="0" nbr="form1" next="NP" objmode="0" pdl="LSAPPS" prefc="I" rtntype="ALL" staticsize="1" typ="o" width="80" workflow="1">
 		<transfers id="transfers1" nbr="_l1">
 			<frm_trans FC="I" PROD="LSAPPS" TITLE="Participant Dates" TOKEN="BN70.2" id="frm_trans1" nbr="_l2"/>
 			<frm_trans PROD="LSAPPS" TITLE="Benefit Entry" TOKEN="BN71.1" id="frm_trans2" nbr="_l53"/>
@@ -29,7 +29,7 @@
 		<fld al="right" col="15" id="label22" nbr="_l28" nm="Consent:" row="21" sz="8" tp="label"/>
 		<fld al="right" col="4" id="label23" nbr="_l29" nm="Medicare Indicator:" row="22" sz="19" tp="label"/>
 		<fld al="left" blankzero="1" col="1" defval="BN70.1" hsel="1" id="hidden1" nbr="_f0" nm="TC" row="0" sz="6" tp="Hidden"/>
-		<toolbar al="left" blankzero="1" col="9" defval="I" ed="upper" hsel="1" id="toolbar1" nbr="_f1" nm="FC" req="1" row="0" sz="1" customTbrOrder="0">
+		<toolbar al="left" blankzero="1" col="9" customTbrOrder="0" defval="I" ed="upper" hsel="1" id="toolbar1" nbr="_f1" nm="FC" req="1" row="0" sz="1">
 			<button Disp="A" id="button1" nbr="_l30" nm="Add" value="A" visible="1"/>
 			<button Disp="C" id="button2" nbr="_l31" nm="Change" value="C" visible="1"/>
 			<button Disp="D" id="button3" nbr="_l32" nm="Delete" value="D" visible="1"/>
@@ -112,17 +112,17 @@
 					<variable id="variable4" name="START_DATE" nbr="_l10" pos="3" src="Variable" type="Field" value="PAR-OCCUR-DATE"/>
 				</variables>
 			</workflow>
-			<workflow id="COBRA Cust Chg" pdl="LSAPPS" value="C" workcatval="" nbr="_l0">
+			<workflow id="COBRA Cust Chg" nbr="_l0" pdl="LSAPPS" value="C" workcatval="">
 				<criteria id="criteria2" nbr="_l1">
-					<criterion name="CRITERIA-1" pos="0" src="" type="Literal" value="" id="criterion4" nbr="_l2"/>
-					<criterion name="CRITERIA-2" pos="1" src="" type="Literal" value="" id="criterion5" nbr="_l3"/>
-					<criterion name="CRITERIA-3" pos="2" src="" type="Literal" value="" id="criterion6" nbr="_l4"/>
+					<criterion id="criterion4" name="CRITERIA-1" nbr="_l2" pos="0" src="" type="Literal" value=""/>
+					<criterion id="criterion5" name="CRITERIA-2" nbr="_l3" pos="1" src="" type="Literal" value=""/>
+					<criterion id="criterion6" name="CRITERIA-3" nbr="_l4" pos="2" src="" type="Literal" value=""/>
 				</criteria>
 				<variables id="variables2" nbr="_l5">
-					<variable name="COMPANY" pos="0" src="Variable" type="Field" value="PAR-COMPANY" id="variable5" nbr="_l6"/>
-					<variable name="EMPLOYEE" pos="1" src="Variable" type="Field" value="PAR-EMPLOYEE" id="variable6" nbr="_l7"/>
-					<variable name="PARTICIPNT" pos="2" src="Variable" type="Field" value="PAR-PARTICIPNT" id="variable7" nbr="_l8"/>
-					<variable name="START_DATE" pos="3" src="Variable" type="Field" value="PAR-OCCUR-DATE" id="variable8" nbr="_l9"/>
+					<variable id="variable5" name="COMPANY" nbr="_l6" pos="0" src="Variable" type="Field" value="PAR-COMPANY"/>
+					<variable id="variable6" name="EMPLOYEE" nbr="_l7" pos="1" src="Variable" type="Field" value="PAR-EMPLOYEE"/>
+					<variable id="variable7" name="PARTICIPNT" nbr="_l8" pos="2" src="Variable" type="Field" value="PAR-PARTICIPNT"/>
+					<variable id="variable8" name="START_DATE" nbr="_l9" pos="3" src="Variable" type="Field" value="PAR-OCCUR-DATE"/>
 				</variables>
 			</workflow>
 		</workflows>
