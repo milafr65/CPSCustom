@@ -1,3 +1,4 @@
+
 000100******************************************************************
 000200*                            ZH510PD                             *
 000300******************************************************************
@@ -1026,7 +1027,8 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
       
            MOVE PRM-COMPANY            TO DB-COMPANY.
            MOVE IN-EMPLOYER-ID        TO DB-POSITION.
-           MOVE WS-RUN-DATE           TO DB-EFFECT-DATE.
+      *     MOVE WS-RUN-DATE           TO DB-EFFECT-DATE.
+           MOVE 99999999              TO DB-EFFECT-DATE.
            PERFORM 850-FIND-NLT-POSSET2.
            IF  (PAPOSITION-FOUND)
            AND (POS-COMPANY = PRM-COMPANY)
@@ -1040,6 +1042,10 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
                MOVE 052                TO CRT-MSG-NBR
                PERFORM 780-DISPLAY-MSG
            ELSE
+                DISPLAY "219 ERROR:", POS-PROCESS-LEVEL,
+                IN-EMPLOYER-ID,
+                POS-EFFECT-DATE, WS-RUN-DATE,
+                POS-END-DATE, WS-DB-NULL-DATE
                 MOVE 219               TO CRT-MSG-NBR
                 MOVE IN-EMPLOYER-ID    TO WS-EMP-FIELD
                 MOVE "Y"               TO WS-LOAD-ERR-FLAG
