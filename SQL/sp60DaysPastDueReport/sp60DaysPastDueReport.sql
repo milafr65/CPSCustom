@@ -116,7 +116,12 @@ select distinct upper(d.DistrictDesc) as District
  , t.LastPaymentAmount as 'Last Payment Amount'
  , t.PaymentPlan as 'Payment Plan'
  , t.PaymentArrangement as 'Payment Arrangement'
- , ag.BalancePastDue61to90Days/ag.BalancePastDue31to60Days as Percentage
+-- , ag.BalancePastDue61to90Days/ag.BalancePastDue31to60Days as Percentage
+ , case
+        when ag.BalancePastDue31to60Days = 0
+        THEN 0
+        else ag.BalancePastDue61to90Days/ag.BalancePastDue31to60Days
+   end as Percentage
  , case
 	when datediff(month,max(ag.AsofDate),getdate()) <= .5 
 	then 'TRUE'
@@ -133,8 +138,8 @@ select distinct upper(d.DistrictDesc) as District
  join dbo.District d (nolock) 
 	on t.SCHEDULE = d.DistrictCode
  where (ag.BalancePastDue61to90Days > 0 or ag.BalancePastDue91to120Days > 0 or ag.BalancePastDueGt120Days > 0)
-	and ag.BalancePastDue31to60Days > 0
-	and (ag.BalancePastDue61to90Days/ag.BalancePastDue31to60Days) > '0.44'
+--	and ag.BalancePastDue31to60Days > 0
+--	and (ag.BalancePastDue61to90Days/ag.BalancePastDue31to60Days) > '0.44'
 group by  d.DistrictDesc
 		, ag.EmployerNumber
 		, t.CustomerName
