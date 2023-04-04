@@ -1,0 +1,391 @@
+      ******************************************************************
+       050-EDIT-PARAMETERS             SECTION 10.
+      ******************************************************************
+       050-START.
+      *--- Verify input file present
+           MOVE WS-INFILE             TO SYSCMD-FILENAME.
+           PERFORM 900-FILEEXISTS.
+           IF (SYSCMD-ERROR           NOT = ZEROES)
+000330             MOVE 165                TO CRT-ERROR-NBR
+000340             MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+000350             PERFORM 780-PRINT-ERROR-MSG
+000360             GO TO 050-END.
+
+       050-END.
+
+      ******************************************************************
+       100-PROGRAM-CONTROL             SECTION 10.
+      ******************************************************************
+       100-START.
+           INITIALIZE                    WS-COMMAND.
+
+           PERFORM VARYING I1 FROM 1 BY 1 
+           UNTIL (I1 > 9999)
+              MOVE SPACES        TO  WS-CST-CUSTOMER(I1)
+              MOVE ZEROES        TO  WS-CST-RECON-BAL(I1)
+                                     WS-CST-CURR-BAL (I1).
+  
+           MOVE SPACES                   TO ICLAWDWS-DIR-EXT.
+           STRING  WS-DIR-EXT         DELIMITED BY SPACE
+                   "\LW-REC80.txt"     DELIMITED BY SIZE
+                            INTO ICLAWDWS-DIR-EXT.
+           PERFORM 1000-CREATE-LAWDIR-FILENAME-61.
+           MOVE ICLAWDWS-LAWDIR-EXT         TO WS-RECORD80-FILE.
+
+           MOVE SPACES                   TO ICLAWDWS-DIR-EXT.
+           STRING  WS-DIR-EXT         DELIMITED BY SPACE
+                   "\LW-REC81.txt"     DELIMITED BY SIZE
+                            INTO ICLAWDWS-DIR-EXT.
+           PERFORM 1000-CREATE-LAWDIR-FILENAME-61.
+           MOVE ICLAWDWS-LAWDIR-EXT         TO WS-RECORD81-FILE.
+
+           MOVE SPACES                   TO ICLAWDWS-DIR-EXT.
+           STRING  WS-DIR-EXT         DELIMITED BY SPACE
+                   "\LW-REC82.txt"     DELIMITED BY SIZE
+                            INTO ICLAWDWS-DIR-EXT.
+           PERFORM 1000-CREATE-LAWDIR-FILENAME-61.
+           MOVE ICLAWDWS-LAWDIR-EXT         TO WS-RECORD82-FILE.
+
+           MOVE SPACES                   TO ICLAWDWS-DIR-EXT.
+           STRING  WS-DIR-EXT         DELIMITED BY SPACE
+                   "\LW-REC84.txt"     DELIMITED BY SIZE
+                            INTO ICLAWDWS-DIR-EXT.
+           PERFORM 1000-CREATE-LAWDIR-FILENAME-61.
+           MOVE ICLAWDWS-LAWDIR-EXT         TO WS-RECORD84-FILE.
+      *--- Do 80 records
+           MOVE ZEROES            TO WS-REC80-TOTAL.
+           PERFORM 800-OPENINPUTCSV-RECORD80.
+           PERFORM 800-READCSV-RECORD80.
+      *--- Second read to skip header
+           PERFORM 800-READCSV-RECORD80.
+           PERFORM 1001-RECORD80       
+               UNTIL (RECORD80-NOTFOUND).
+           PERFORM 800-CLOSECSV-RECORD80.
+           IF (WS-R80-EMPLOYEE NOT = ZEROES)  
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE "D"                TO WS-CUSTOMER(1:1) 
+               MOVE WS-R80-EMPLOYEE(4:6)  TO WS-CUSTOMER(2:6) 
+               MOVE "00"               TO WS-CUSTOMER(8:2) 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R80 - " WS-R80-EMPLOYEE " " WS-CUSTOMER            
+                    " " WS-REC80-TOTAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                  ADD 1 TO I7
+               END-PERFORM
+                  MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+                  MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+                  ADD WS-REC80-TOTAL      TO WS-CST-RECON-BAL(I1).
+
+      *--- Do 81 records
+           MOVE ZEROES            TO WS-REC81-TOTAL.
+           PERFORM 800-OPENINPUTCSV-RECORD81.
+           PERFORM 800-READCSV-RECORD81.
+      *--- Second read to skip header
+           PERFORM 800-READCSV-RECORD81.
+           PERFORM 1005-RECORD81       
+               UNTIL (RECORD81-NOTFOUND).
+           PERFORM 800-CLOSECSV-RECORD81.
+           IF (WS-R81-EMPLOYER NOT = SPACES)
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE "ER"               TO WS-CUSTOMER(3:2) 
+               MOVE WS-R81-EMPLOYER(1:5)  TO WS-CUSTOMER(5:5) 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R81 - " WS-R81-EMPLOYER " " WS-CUSTOMER            
+                    " " WS-REC81-TOTAL 
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                  ADD 1 TO I7
+               END-PERFORM
+                  MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+                  MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+                  ADD WS-REC81-TOTAL      TO WS-CST-RECON-BAL(I1).
+
+      *--- Do 84 records
+           PERFORM 800-OPENINPUTCSV-RECORD84.
+           MOVE ZEROES         TO WS-REC84-TOTAL.
+           PERFORM 800-READCSV-RECORD84.
+      *--- Second read to skip header
+           PERFORM 800-READCSV-RECORD84.
+           PERFORM 1010-RECORD84      
+               UNTIL (RECORD84-NOTFOUND).
+           IF (WS-R84-BILLING-ENTITY NOT = SPACES)   
+               MOVE SPACES            TO WS-CUSTOMER 
+             IF (WS-R84-BILLING-GROUP = "directBilled")
+             OR (WS-R84-BILLING-GROUP = "suppLife")          
+             OR (WS-R84-BILLING-GROUP = "retirees")          
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE "D"                TO WS-CUSTOMER(1:1) 
+               MOVE WS-R84-BILLING-ENTITY(1:6)  TO JSTWS-STR        
+               MOVE 6                        TO JSTWS-STR-LEN
+               SET JSTWS-RIGHT               TO TRUE
+AI0000         SET JSTWS-NUMERIC TO TRUE
+               PERFORM 2000-JUSTIFY-OBJECT
+               MOVE JSTWS-STR-OUT(1:6)  TO WS-CUSTOMER(2:6) 
+               MOVE "00"               TO WS-CUSTOMER(8:2) 
+             ELSE
+               MOVE "ER"               TO WS-CUSTOMER(3:2) 
+               MOVE WS-R84-BILLING-ENTITY(1:5)  TO WS-CUSTOMER(5:5)
+             END-IF 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R84 - " WS-R84-BILLING-ENTITY  " " WS-CUSTOMER 
+                    " " WS-REC84-TOTAL  " " ACM-CURR-BAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                     ADD 1 TO I7
+               END-PERFORM
+                  MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+                  MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+                  SUBTRACT WS-REC84-TOTAL      FROM WS-CST-RECON-BAL(I1).
+           PERFORM 800-CLOSECSV-RECORD84.
+                         
+      *--- Do 82 records
+           PERFORM 800-OPENINPUTCSV-RECORD82.
+           MOVE ZEROES            TO WS-REC82-TOTAL.
+           PERFORM 800-READCSV-RECORD82.
+      *--- Second read to skip header
+           PERFORM 800-READCSV-RECORD82.
+           PERFORM 1015-RECORD82      
+               UNTIL (RECORD82-NOTFOUND).
+           PERFORM 800-CLOSECSV-RECORD82.
+           IF (WS-R82-BILLING-ENTITY NOT = SPACES)   
+               MOVE SPACES            TO WS-CUSTOMER 
+             IF (WS-R82-BILLING-GROUP = "directBilled")
+             OR (WS-R82-BILLING-GROUP = "suppLife")          
+             OR (WS-R82-BILLING-GROUP = "retirees")          
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE WS-R82-BILLING-ENTITY(1:6)  TO JSTWS-STR
+               MOVE 6                        TO JSTWS-STR-LEN
+               SET JSTWS-RIGHT               TO TRUE
+AI0000         SET JSTWS-NUMERIC TO TRUE
+               PERFORM 2000-JUSTIFY-OBJECT
+               MOVE JSTWS-STR-OUT(1:6)       TO WS-CUST6
+               INSPECT WS-CUST6 REPLACING LEADING SPACE BY ZERO
+               STRING "D"              DELIMITED BY SIZE
+                    WS-CUST6           DELIMITED BY SIZE
+                    "00"               INTO WS-CUSTOMER 
+             ELSE
+               MOVE "ER"               TO WS-CUSTOMER(3:2) 
+               MOVE WS-R82-BILLING-ENTITY(1:5)  TO WS-CUSTOMER(5:5)
+             END-IF 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R82 - " WS-R82-EMPLOYER " " WS-CUSTOMER            
+                    " " WS-REC82-TOTAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                     ADD 1 TO I7
+               END-PERFORM
+                  MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+                  MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+                  ADD WS-REC82-TOTAL      TO WS-CST-RECON-BAL(I1).
+           PERFORM 800-CLOSECSV-RECORD82.
+
+           PERFORM VARYING I1 FROM 1 BY 1 
+           UNTIL (I1 > 9999)
+              IF (WS-CST-CUSTOMER (I1) NOT = SPACES)
+                DISPLAY "Customer: " WS-CST-CUSTOMER(I1)
+                                 " " WS-CST-RECON-BAL(I1)
+                                 " " WS-CST-CURR-BAL (I1).
+  
+       100-END.
+      ******************************************************************
+       1001-RECORD80                   SECTION 10.
+      ******************************************************************
+       1001-START.
+
+           IF (R80-EMPLOYEE        NOT = WS-R80-EMPLOYEE)         
+           AND (WS-R80-EMPLOYEE NOT = ZEROES)  
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE "D"                TO WS-CUSTOMER(1:1) 
+               MOVE WS-R80-EMPLOYEE(4:6)  TO WS-CUSTOMER(2:6) 
+               MOVE "00"               TO WS-CUSTOMER(8:2) 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R80 - " WS-R80-EMPLOYEE " " WS-CUSTOMER            
+                    " " WS-REC80-TOTAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                  ADD 1 TO I7
+               END-PERFORM
+               MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+               MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+               ADD WS-REC80-TOTAL      TO WS-CST-RECON-BAL(I1)
+               MOVE ZEROES             TO WS-REC80-TOTAL.
+        
+            MOVE R80-EMPLOYEE       TO WS-R80-EMPLOYEE.           
+            ADD R80-BALANCE    TO WS-REC80-TOTAL.
+
+           PERFORM 800-READCSV-RECORD80.
+
+       1001-END.
+      ******************************************************************
+       1005-RECORD81                   SECTION 10.
+      ******************************************************************
+       1005-START.
+
+           IF (R81-EMPLOYER        NOT = WS-R81-EMPLOYER)         
+           AND (WS-R81-EMPLOYER NOT = SPACES)  
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE "ER"               TO WS-CUSTOMER(3:2) 
+               MOVE WS-R81-EMPLOYER(1:5)  TO WS-CUSTOMER(5:5) 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R81A - " WS-R81-EMPLOYER " " WS-CUSTOMER            
+                    " " WS-REC81-TOTAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                  ADD 1 TO I7
+               END-PERFORM
+               MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+               MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+               ADD WS-REC81-TOTAL      TO WS-CST-RECON-BAL(I1)
+               MOVE ZEROES             TO WS-REC81-TOTAL.
+
+
+
+            MOVE R81-EMPLOYER       TO WS-R81-EMPLOYER.           
+            ADD R81-BALANCE    TO WS-REC81-TOTAL.
+
+
+       1005-NEXT.
+           PERFORM 800-READCSV-RECORD81.
+
+       1005-END.
+      ******************************************************************
+       1010-RECORD84                   SECTION 10.
+      ******************************************************************
+       1010-START.
+
+           IF (R84-BILLING-ENTITY NOT = WS-R84-BILLING-ENTITY)   
+           AND (WS-R84-BILLING-ENTITY NOT = SPACES)   
+             MOVE SPACES            TO WS-CUSTOMER 
+             IF (WS-R84-BILLING-GROUP = "directBilled")
+             OR (WS-R84-BILLING-GROUP = "suppLife")          
+             OR (WS-R84-BILLING-GROUP = "retirees")          
+               MOVE SPACES            TO WS-CUSTOMER 
+               MOVE "D"                TO WS-CUSTOMER(1:1) 
+               MOVE WS-R84-BILLING-ENTITY(1:6)  TO JSTWS-STR        
+               MOVE 6                        TO JSTWS-STR-LEN
+               SET JSTWS-RIGHT               TO TRUE
+AI0000         SET JSTWS-NUMERIC TO TRUE
+               PERFORM 2000-JUSTIFY-OBJECT
+               MOVE JSTWS-STR-OUT(1:6)  TO WS-CUSTOMER(2:6) 
+               MOVE "00"               TO WS-CUSTOMER(8:2) 
+             ELSE
+               MOVE "ER"               TO WS-CUSTOMER(3:2) 
+               MOVE WS-R84-BILLING-ENTITY(1:5)  TO WS-CUSTOMER(5:5)
+             END-IF 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R84 - " WS-R84-BILLING-ENTITY  " " WS-CUSTOMER 
+                    " " WS-REC84-TOTAL  " " ACM-CURR-BAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                     ADD 1 TO I7
+               END-PERFORM
+               MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+               MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+               SUBTRACT WS-REC84-TOTAL      FROM WS-CST-RECON-BAL(I1)
+               MOVE ZEROES             TO WS-REC84-TOTAL.
+
+           MOVE R84-BILLING-ENTITY TO WS-R84-BILLING-ENTITY.
+           MOVE R84-BILLING-GROUP  TO WS-R84-BILLING-GROUP.   
+           ADD R84-AMOUNT          TO  WS-REC84-TOTAL.
+
+       1010-NEXT.
+           PERFORM 800-READCSV-RECORD84.
+
+       1010-END.
+      ******************************************************************
+       1015-RECORD82                   SECTION 10.
+      ******************************************************************
+       1015-START.
+      *--- SuppLife records have employee# in billing entity not employer
+            IF (R82-BILLING-ITEM(1:4) = "supp")       
+            AND (R82-EMPLOYER  NOT = SPACES)               
+                MOVE R82-EMPLOYER         TO R82-BILLING-ENTITY.
+           IF (R82-BILLING-ENTITY NOT = WS-R82-BILLING-ENTITY)   
+           AND (WS-R82-BILLING-ENTITY NOT = SPACES)   
+             MOVE SPACES            TO WS-CUSTOMER 
+             IF (WS-R82-BILLING-GROUP = "directBilled")
+             OR (WS-R82-BILLING-GROUP = "suppLife")          
+             OR (WS-R82-BILLING-GROUP = "retirees")          
+               MOVE "D"                TO WS-CUSTOMER(1:1) 
+               MOVE WS-R82-BILLING-ENTITY(1:6)  TO JSTWS-STR        
+               MOVE 6                        TO JSTWS-STR-LEN
+               SET JSTWS-RIGHT               TO TRUE
+AI0000         SET JSTWS-NUMERIC TO TRUE
+               PERFORM 2000-JUSTIFY-OBJECT
+               MOVE JSTWS-STR-OUT(1:6)  TO WS-CUSTOMER(2:6) 
+               MOVE "00"               TO WS-CUSTOMER(8:2) 
+             ELSE
+               MOVE "ER"               TO WS-CUSTOMER(3:2) 
+               MOVE WS-R82-BILLING-ENTITY(1:5)  TO WS-CUSTOMER(5:5)
+             END-IF 
+               MOVE 1000              TO DB-COMPANY 
+               MOVE WS-CUSTOMER       TO DB-CUSTOMER 
+               PERFORM 840-FIND-ACMSET1 
+               DISPLAY "R82A - " WS-R82-EMPLOYER " " WS-CUSTOMER            
+                    " " WS-REC82-TOTAL
+               PERFORM VARYING I1 FROM 1 BY 1 
+                 UNTIL (I1 > 9999)
+                 OR (WS-CST-CUSTOMER(I1) = SPACES)
+                 OR (WS-CST-CUSTOMER(I1) = WS-CUSTOMER)
+                     ADD 1 TO I7
+               END-PERFORM
+               MOVE WS-CUSTOMER       TO WS-CST-CUSTOMER(I1)
+               MOVE  ACM-CURR-BAL      TO WS-CST-CURR-BAL(I1)
+               ADD WS-REC82-TOTAL      TO WS-CST-RECON-BAL(I1)
+               MOVE ZEROES             TO WS-REC82-TOTAL.
+
+            IF (R82-BILLING-ITEM(1:4) = "supp")       
+            AND (R82-EMPLOYER  NOT = SPACES)               
+                MOVE R82-EMPLOYER         TO R82-BILLING-ENTITY.
+           MOVE R82-BILLING-GROUP  TO WS-R82-BILLING-GROUP.   
+           MOVE R82-BILLING-ENTITY TO WS-R82-BILLING-ENTITY.    
+           ADD R82-TRAN-AMOUNT        TO  WS-REC82-TOTAL.
+
+       1015-NEXT.
+           PERFORM 800-READCSV-RECORD82.
+
+       1015-END.
+      ******************************************************************
+       1020-PROCESS-EMP-ID             SECTION 10.
+      ******************************************************************
+       1020-START.
+                 PERFORM 1030-BEN-PLAN-OPT.
+
+       1020-END.
+
+      ******************************************************************
+       1030-BEN-PLAN-OPT               SECTION 10.
+      ******************************************************************
+       1030-START.
+
+
+       1030-END.

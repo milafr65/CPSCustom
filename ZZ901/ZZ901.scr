@@ -1,0 +1,62 @@
+******* ZZ901.scr 8.1.14 <2017330379>
+*CHECKED
+$RELEASE   08.0
+*******************************************************************************
+*                           SCREEN   ZZ901
+*******************************************************************************
+$FORM      ZZ901    R
+$MENU      ARMN0
+$SECURITY  NO
+$DECIMALS  NO
+$NOLFCOK
+$KEYFCS    CD
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZZ901    R
+[ARRP[ ]              ?*** Lifeworks IF10 Load        ***          +N]
+                             ?;                                        ;
+   Report          [ZZ901]     Priority    [ ]     Save Params (Y,N) [ ]
+   User Name  [          ]
+   Job Name   [          ] --- This will be the name on your report
+   Run After  [          ] --- NOW, HOLD, Time (1230 pm), Job Name
+   Frequency           [ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\  Comments   [                                                  ]\
+
+   This will consolidate 80/81, 82 and 84 records and compare against
+   the ACM-CURR-BAL and write a result to the joblog
+   
+$END-SCR   ZZ901    R
+*                            ELEMENT NAME
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZZ901    R
+  2     TC                    AL    06          SB
+  2     FC                    A     01          SF
+  2     UPDATE-SW             A     01          SB
+  2     SCREEN-MSG            O     40          SB
+  2     TRANCODE              A     05          RP
+  2     HEADER                G     00
+   3    Q-PRIORITY            N     01          SB
+   3    SAVE-PARAMS           A     01          SB
+   3    USER-NAME             A     10          SK
+   3    JOB-NAME              A     10          SK
+   3    RUN-AFTER             A     10          SB
+   3    FREQUENCY             A     01          SB
+   3    COMMENTS              A     50          SB
+$END-TRANS ZZ901    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     ZZ901    R
+  FC                                          A,C,D,I
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  JOB-NAME                                    R.00000000:R.ZZZZZZZZ
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+$END-EDITS ZZ901    R
+

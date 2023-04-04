@@ -1,0 +1,1430 @@
+******* ZR900.rpt 32 <3087020008>
+******************************************************************
+$PROGRAM   ZR900
+******************************************************************
+
+****************************************************
+$REPORT    ZR900-R1
+****************************************************
+**************************************
+$GROUP     BROADCAST-TAG-LINE-R1
+**************************************
+$PREFIX    CHN1-
+$LEVEL     A
+$FORMAT
+XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+A
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TAG-LINE
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN1-ARO-COMPANY
+**************************************
+$PREFIX    R1G1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+ZR900 Date   ZZ/ZZ/ZZ         Company  ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXX                                       Page ZZZZ
+      |    ; A                |      ; B    C                               D                                           |  ; E
+      Time   99:99                          Company Aging Report            Aging As Of: ZZ/ZZ/ZZ
+      |    ; F                              |                             ; |         ;  G
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DATE                                   TD    
+ B     ARO-COMPANY                        
+ C     ACO-NAME                        
+ D     ACO-CURRENCY-CD                        
+ E     PAGE                                   PN    
+ F     TIME                                   CT    
+ G     AS-OF-DATE                             CD    
+ *     COMPANY                                     Numeric 4
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+ ARO-COMPANY            N7
+ ACO-NAME               01D
+ COMPANY                NM
+$ENDDTL
+
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3-CREDIT-ANLYST
+**************************************
+$PREFIX    R1G3-
+$LEVEL     B
+$FORMAT
+%
+ Analyst  XXXX        XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ |      ; A           B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     CREDIT-ANLYST                        
+ B     CAN-NAME                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3-SALESMAN
+**************************************
+$PREFIX    R1G3-
+$LEVEL     B
+$FORMAT
+%
+ Sales Rep ZZZZ  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ |       ; A     B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     SALESMAN                        
+ B     SAW-NAME                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3-PROCESS-LEVEL
+**************************************
+$PREFIX    R1G3-
+$LEVEL     B
+$FORMAT
+%
+ Process Level  XXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ |            ; A     B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     PROCESS-LEVEL                        
+ B     APV-NAME                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3-SPACE
+**************************************
+$PREFIX    R1G3-
+$FORMAT
+%
+$ENDFMT
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3-ATTRIBUTES
+**************************************
+$PREFIX    R1G3-
+$LEVEL     B
+$FORMAT
+ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ A
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ATTRIBUTE-STRING
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3-ACTIVITY
+**************************************
+$PREFIX    R1G3-
+$LEVEL     B
+$FORMAT
+%
+ Activity  XXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ |       ; A                B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ACTIVITY                        
+ B     DESCRIPTION                        
+$ENDFLDS
+$ENDGRP
+**************************************
+$GROUP     R1GN3-BILL-TO
+**************************************
+$PREFIX    R1G3-
+$LEVEL     E
+$FORMAT
+        Bill To:  ZZZZ
+        |      ;  A
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     BILL-TO                        
+$ENDFLDS
+$ENDGRP
+**************************************
+$GROUP     R1GN2-CURR-CODE
+**************************************
+$PREFIX    R1G2-
+$LEVEL     C
+$FORMAT
+%
+***********************************************************************************************************************************
+
+     Currency   XXXXX
+     |        ; A
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     CURR-CODE                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN2-ARO-CUSTOMER
+**************************************
+$PREFIX    R1G2-
+$LEVEL     D
+$LINECNT   14
+$FORMAT
+%
+***********************************************************************************************************************************
+
+  Customer   Address/Contact                                                                   XXXXXXXXXXXXXX                       
+  |        ; |                            ;                                                    A
+ XXXXXXXXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX               As Of Total: Z,ZZZ,ZZZ,ZZZ,ZZZ.99-   Cur Ytd:  ZZZ.99  Sales Rep: ZZZZ
+ B           C                                            |          ; D                       |       ; E       |        ; F
+             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX              Credit Limit: Z,ZZZ,ZZZ,ZZZ,ZZ9-      Last Yrs: ZZZ.99    Analyst: XXXX
+             G                                           |           ; H                       |       ; I         |      ; J
+             XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXX   Pct Of Limit:               ZZZ.99-%                     Last Pay: ZZ/ZZ/ZZ
+             K                              L            |                         ; M                            |       ; N
+               XXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX             Terms: XXXXX                  Risk Code: X
+               O                    P                           |    ; Q                |             ;  R
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     HEADER-1                        
+ B     ARO-CUSTOMER                        
+ C     CUD-NAME                        
+ D     AS-OF-TOTAL                            DV    
+ E     ACM-COLLECT-DAYS                        
+ F     ACM-SALESMAN                        
+ G     CUD-ADDR1                        
+ H     ACM-CREDIT-LIM                        
+ I     ACM-YEAR-2-DAYS                        
+ J     ACM-CREDIT-ANLYST                        
+ K     CUD-ADDR2                        
+ L     CUD-ZIP                        
+ M     PCNT-LIMIT                        
+ N     ACM-LAST-PMT-DATE                      CD    
+ O     ACM-CONTACT                        
+ P     ACM-PHONE-NMBR                        
+ Q     ACM-TERMS-CD                        
+ R     ACM-RISK-CD
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+ ARO-CUSTOMER           N8
+$ENDDTL
+
+$ENDGRP
+
+
+**************************************
+$GROUP     R1GN21-ARO-CUSTOMER
+**************************************
+$PREFIX    R1G21-
+$LEVEL     D
+$LINECNT   11
+$FORMAT
+%
+***********************************************************************************************************************************
+
+  Customer   Name                                     As Of Total        XXXXXXXXXX   Terms     XXXXXXXXXXXXXX Risk Code: X
+  |      ;   |                            ;           |         ;        A            |   ;     B              |       ;  B1
+ XXXXXXXXX   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-    XXXXXXXXXXXXX   XXXXX     Cur Ytd:  ZZZ.99- Sales Rep: ZZZZ
+ C           D                              E                         F               G         |      ;  H       |        ; I
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TOT-HEADER                        
+ B     HEADER-1                        
+ B1    ACM-RISK-CD                         
+ C     ARO-CUSTOMER                        
+ D     CUD-NAME                        
+ E     OPENAMT                                DV    
+ F     TOT-DSO                        
+ G     ACM-TERMS-CD                        
+ H     ACM-COLLECT-DAYS                        
+ I     ACM-SALESMAN                        
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+ ARO-CUSTOMER           N8
+$ENDDTL
+
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3H-FULL
+**************************************
+$PREFIX    R1G3-
+$LEVEL     E
+$LINECNT   R1GN3D-ARO-DUE-DATE
+$FORMAT
+%
+                                                         ----------------XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX------------------
+                                                                         A
+Transaction   P F XXXXXXXX         Future        Current         1 -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ     Over-ZZZ 
+|          ;  | | A1               |           ; |                ; B         C    D         E    F         G    H         I    J         K    L       |  ; M
+------------- - - -------- -------------- -------------- -------------- -------------- -------------- -------------- --------------  -------------- --------------
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TYPE-HEADER                        
+ A1    DATE-HEADER                        
+ B     AGE-PERIOD-1E                        
+ C     AGE-PERIOD-2                        
+ D     AGE-PERIOD-2E                        
+ E     AGE-PERIOD-3                        
+ F     AGE-PERIOD-3E                        
+ G     AGE-PERIOD-4                        
+ H     AGE-PERIOD-4E                        
+ I     AGE-PERIOD-5                        
+ J     AGE-PERIOD-5E                        
+ K     AGE-PERIOD-6                        
+ L     AGE-PERIOD-6E                        
+ M     AGE-PERIOD-7                        
+$ENDFLDS
+$ENDGRP
+
+
+**************************************
+$GROUP     R1GN3H-TRUNC
+**************************************
+$PREFIX    R1GT3-
+$LEVEL     E
+$LINECNT   R1GN3D-ARO-DUE-DATE
+$FORMAT
+%
+                                                                  ----------XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX--------------
+                                                                            A
+Transaction                P F XXXXXXXX       Future      Current       1 -ZZZ     ZZZ -ZZZ     ZZZ -ZZZ     ZZZ -ZZZ     ZZZ -ZZZ       ZZZ -ZZZ        Over-ZZZ 
+|                        ; | | A1             |         ; |              ; B       C    D       E    F       G    H       I    J         K    L          |  ; M
+-------------------------  - - -------- ------------ ------------ ------------ ------------ ------------ ------------ ------------   -------------- --------------
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TYPE-HEADER                        
+ A1    DATE-HEADER                        
+ B     AGE-PERIOD-1E                        
+ C     AGE-PERIOD-2                        
+ D     AGE-PERIOD-2E                        
+ E     AGE-PERIOD-3                        
+ F     AGE-PERIOD-3E                        
+ G     AGE-PERIOD-4                        
+ H     AGE-PERIOD-4E                        
+ I     AGE-PERIOD-5                        
+ J     AGE-PERIOD-5E                        
+ K     AGE-PERIOD-6                        
+ L     AGE-PERIOD-6E                        
+ M     AGE-PERIOD-7                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3D-ARO-DUE-DATE
+**************************************
+$PREFIX    R1G3-
+$LINECNT   R1GN31-CUSTOMER-TOTALS
+$LINECNT   3
+$FORMAT
+X XXXXXXXXXXX X X ZZ/ZZ/ZZ ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99- 
+A B           K L C        D              E              F              G              H              I              J              M               N
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ARO-TRANS-TYPE                        
+ B     ARO-INVOICE                        
+ K     APPL-FLAG                        
+ L     FUTURE-FL                        
+ C     DATE                                   CD    
+ D     OPENAMT                                DV    
+ E     1-OPENAMT                              DV    
+ F     2-OPENAMT                              DV    
+ G     3-OPENAMT                              DV    
+ H     4-OPENAMT                              DV    
+ I     5-OPENAMT                              DV    
+ J     6-OPENAMT                              DV    
+ M     7-OPENAMT                              DV    
+ N     8-OPENAMT                              DV    
+ *     BATCH-NBR                                   Numeric 6
+ *     PAYMENT-SEQ                                 Numeric 6
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+ ARO-TRANS-TYPE         16 
+ ARO-INVOICE            N7I
+ BATCH-NBR              12 
+ PAYMENT-SEQ            MCA
+$ENDDTL
+
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3D-ARO-DUE-DATE-2
+**************************************
+$PREFIX    R1G4-
+$LINECNT   R1GN31-CUSTOMER-TOTALS
+$LINECNT   3
+$FORMAT
+X XXXXXXXXXXXXXXXXXXXXXXX
+A B
+              X X ZZ/ZZ/ZZ ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-ZZZZZZZZZZZ.99-
+              C D E        F              G              H              I              J              K              L              M              N
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ARO-TRANS-TYPE                        
+ B     ARO-INVOICE                        
+ C     APPL-FLAG                        
+ D     FUTURE-FL                        
+ E     DATE                                   CD    
+ F     OPENAMT                                DV    
+ G     1-OPENAMT                              DV    
+ H     2-OPENAMT                              DV    
+ I     3-OPENAMT                              DV    
+ J     4-OPENAMT                              DV    
+ K     5-OPENAMT                              DV    
+ L     6-OPENAMT                              DV    
+ *     BATCH-NBR                                   Numeric 6
+ M     7-OPENAMT                              DV    
+ N     8-OPENAMT                              DV    
+ *     PAYMENT-SEQ                                 Numeric 6
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+ ARO-TRANS-TYPE         16 
+ ARO-INVOICE            N7I
+ BATCH-NBR              12 
+ PAYMENT-SEQ            MCA
+$ENDDTL
+
+$ENDGRP
+
+**************************************
+$GROUP     R1GN3P-ARO-DUE-DATE
+**************************************
+$PREFIX    R1P3-
+$LINECNT   R1GN31-CUSTOMER-TOTALS
+$LINECNT   3
+$FORMAT
+X XXXXXXXXXXXXXXXXXXXXXXX  X X ZZ/ZZ/ZZ ZZZZZZZZZ.99-ZZZZZZZZZ.99-ZZZZZZZZZ.99-ZZZZZZZZZ.99-ZZZZZZZZZ.99-ZZZZZZZZZ.99-ZZZZZZZZZ.99-
+A B                        K L C        D            E            F            G            H            I            J
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ARO-TRANS-TYPE                        
+ B     ARO-INVOICE                        
+ K     APPL-FLAG                        
+ L     FUTURE-FL                        
+ C     DATE                                   CD    
+ D     OPENAMT                                DV    
+ E     1-OPENAMT                              DV    
+ F     2-OPENAMT                              DV    
+ G     3-OPENAMT                              DV    
+ H     4-OPENAMT                              DV    
+ I     5-OPENAMT                              DV    
+ J     6-OPENAMT                              DV    
+ *     BATCH-NBR                                   Numeric 6
+ K     7-OPENAMT                              DV    
+ L     8-OPENAMT                              DV    
+ *     PAYMENT-SEQ                                 Numeric 6
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+ ARO-TRANS-TYPE         16 
+ ARO-INVOICE            N7I
+ BATCH-NBR              12 
+ PAYMENT-SEQ            MCA
+$ENDDTL
+
+$ENDGRP
+
+**************************************
+$GROUP     R1GN31-CUSTOMER-TOTALS
+**************************************
+$PREFIX    R1G31-
+$FORMAT
+%                          -------------- -------------- -------------- -------------- -------------- -------------- -------------- 
+Customer Totals: Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     ZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+|             ;  A                             C                             E                             G
+                                Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-      ZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+                                B                             D                             F                              H
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     1-OPENAMT                              DV    
+ C     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ G     9-OPENAMT                              DV    
+ B     2-OPENAMT                              DV    
+ D     4-OPENAMT                              DV    
+ F     6-OPENAMT                              DV    
+ G     7-OPENAMT                              DV    
+ H     8-OPENAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN31-BILLTO-TOTALS
+**************************************
+$PREFIX    R1G31-
+$FORMAT
+%                          -------------- -------------- -------------- -------------- -------------- -------------- -------------- 
+ Bill To Totals: Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+|             ;  A                             C                             E                             G
+                                Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+                                B                             D                             F
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     1-BILLAMT                              DV    
+ B     2-BILLAMT                              DV    
+ C     3-BILLAMT                              DV    
+ D     4-BILLAMT                              DV    
+ E     5-BILLAMT                              DV    
+ F     6-BILLAMT                              DV    
+ G     7-BILLAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN32-BILLTO-EXPSUM
+**************************************
+$PREFIX    R1G32-
+$FORMAT
+%                          -------------- -------------- -------------- -------------- -------------- -------------- -------------- 
+ Bill To:  ZZZZ  Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+|       ;  A1    A                             C                             E                             G
+                                Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+                                B                             D                             F
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    BILL-TO                        
+ A     1-BILLAMT                              DV    
+ B     2-BILLAMT                              DV    
+ C     3-BILLAMT                              DV    
+ D     4-BILLAMT                              DV    
+ E     5-BILLAMT                              DV    
+ F     6-BILLAMT                              DV    
+ G     7-BILLAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN32-CUSTOMER-CONDENSED
+**************************************
+$PREFIX    R1G32-
+$FORMAT
+XXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXX ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99-ZZZZZZZZ.99- 
+A         B                         C           D           E           F           G           H           I           J           K           L
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ARO-CUSTOMER
+ B     CUD-NAME
+ C     1-OPENAMT                              DV    
+ D     2-OPENAMT                              DV    
+ E     3-OPENAMT                              DV    
+ F     4-OPENAMT                              DV    
+ G     5-OPENAMT                              DV    
+ H     6-OPENAMT                              DV    
+ I     7-OPENAMT                              DV    
+ J     8-OPENAMT                              DV    
+ K     9-OPENAMT                              DV    
+ L     CUST-TOTAL                             DV    
+$ENDFLDS 
+$ENDGRP 
+
+**************************************
+$GROUP     R1GN31H-PARTIAL
+**************************************
+$PREFIX    R1G31-
+$LEVEL     C
+$FORMAT
+%
+                                  Future        Current         1 -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ     ZZZ -ZZZ     Over-ZZZ  
+                                  |           ; |                ; B         C    D         E    F         G    H         I    J       K    L       |  ; M
+%                         -------------- -------------- -------------- -------------- -------------- -------------- --------------  -------------- --------------
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ B     AGE-PERIOD-1E                        
+ C     AGE-PERIOD-2                        
+ D     AGE-PERIOD-2E                        
+ E     AGE-PERIOD-3                        
+ F     AGE-PERIOD-3E                        
+ G     AGE-PERIOD-4                        
+ H     AGE-PERIOD-4E                        
+ I     AGE-PERIOD-5                        
+ J     AGE-PERIOD-5E                        
+ K     AGE-PERIOD-6                        
+ L     AGE-PERIOD-6E                        
+ M     AGE-PERIOD-7                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1GN32H-CONDENSED
+**************************************
+$PREFIX    R1G32-
+$LEVEL     C
+$FORMAT
+                                         Future      Current     1 -ZZZ     ZZZ -ZZZ    ZZZ -ZZZ    ZZZ -ZZZ    ZZZ -ZZZ    ZZZ -ZZZ    Over-ZZZ        Total
+                                         |         ; |            ; B       C    D      E    F      G    H      I    J      K    L       |  ; M
+%                                   ----------- ----------------------- ------------ ----------- ----------- ----------- ----------- -------------- --------------
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ B     AGE-PERIOD-1E                        
+ C     AGE-PERIOD-2                        
+ D     AGE-PERIOD-2E                        
+ E     AGE-PERIOD-3                        
+ F     AGE-PERIOD-3E                        
+ G     AGE-PERIOD-4                        
+ H     AGE-PERIOD-4E                        
+ I     AGE-PERIOD-5                        
+ J     AGE-PERIOD-5E                        
+ K     AGE-PERIOD-6                        
+ L     AGE-PERIOD-6E                        
+ M     AGE-PERIOD-7                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1TN1-TOTAL-FOR-P
+**************************************
+$PREFIX    R1T1P-
+$FORMAT
+XXXXXXXXXX XXXXXXXXXXXXX         ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%    ZZZZZ.99-%
+I          J                     K              L              M              N              O              P             Q
+F.O.R. Avg ZZZ.99-
+|        ; R      
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ I     TOT-HEADER                        
+ J     TOT-DSO                        
+ K     1-PERCENT                        
+ L     2-PERCENT                        
+ M     3-PERCENT                        
+ N     4-PERCENT                        
+ O     5-PERCENT                        
+ P     6-PERCENT                        
+ Q     7-PERCENT                        
+ R     FOR-AVG                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1TN21-ARO-COMPANY
+**************************************
+$PREFIX    R1T21-
+$FORMAT
+Currency Totals: Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+|             ;  A                             C                             E                             G  
+Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-       Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+H                               B                             D                             F                    
+XXXXXXXXXX XXXXXXXXXXXXX         ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%    ZZZZZ.99-%
+I          J                     K              L              M              N              O              P             Q
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     1-OPENAMT                              DV    
+ C     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ G     7-OPENAMT                              DV    
+ *     9-OPENAMT                              DV    
+ H     NETAMT                                 DV    
+ B     2-OPENAMT                              DV    
+ D     4-OPENAMT                              DV    
+ F     6-OPENAMT                              DV    
+ *     8-OPENAMT                              DV    
+ I     TOT-HEADER                        
+ J     TOT-DSO                        
+ K     1-PERCENT                        
+ L     2-PERCENT                        
+ M     3-PERCENT                        
+ N     4-PERCENT                        
+ O     5-PERCENT                        
+ P     6-PERCENT                        
+ Q     7-PERCENT                        
+$ENDFLDS
+$ENDGRP
+
+
+**************************************
+$GROUP     C1TN21-ARO-COMPANY
+**************************************
+$PREFIX    C1T21-
+$FORMAT
+Currency Totals: Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+|             ;  A                             C                             E                             G           
+Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-       Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+H                               B                             D                             F                     
+XXXXXXXXXX XXXXXXXXXXXXX         ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%    ZZZZZ.99-%
+I          J                     K              L              M              N              O              P             Q
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     1-OPENAMT                              DV    
+ C     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ G     7-OPENAMT                              DV    
+ *     9-OPENAMT                              DV    
+ H     NETAMT                                 DV    
+ B     2-OPENAMT                              DV    
+ D     4-OPENAMT                              DV    
+ F     6-OPENAMT                              DV    
+ *     8-OPENAMT                              DV    
+ I     TOT-HEADER                        
+ J     TOT-DSO                        
+ K     1-PERCENT                        
+ L     2-PERCENT                        
+ M     3-PERCENT                        
+ N     4-PERCENT                        
+ O     5-PERCENT                        
+ P     6-PERCENT                        
+ Q     7-PERCENT                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R3TN1-PROCESS-LEVEL
+**************************************
+$PREFIX    R3T1-
+$LINECNT   3
+$FORMAT
+%                  
+%              
+XXXXXXXXXX XXXXXXXXXXXXXXX
+A          B              
+                Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+                C                             D                             E                             F           
+Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-      Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+G                              H                             I                             J
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TOT-HEADER                        
+ B     TOT-TYPE                          
+ C     1-OPENAMT                              DV    
+ D     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ F     7-OPENAMT                              DV    
+ *     9-OPENAMT                              DV    
+ G     NETAMT                                 DV    
+ H     2-OPENAMT                              DV    
+ I     4-OPENAMT                              DV    
+ J     6-OPENAMT                              DV    
+ *     8-OPENAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     C3TN1-PROCESS-LEVEL
+**************************************
+$PREFIX    C3T1-
+$LINECNT   3
+$FORMAT
+%                  
+%              
+XXXXXXXXXX XXXXXXXXXXXXXXX
+A          B              
+                Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+                C                             D                             E                             F           
+Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-      Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+G                              H                             I                             J           
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TOT-HEADER                        
+ B     TOT-TYPE                          
+ C     1-OPENAMT                              DV    
+ D     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ F     7-OPENAMT                              DV    
+ *     9-OPENAMT                              DV    
+ G     NETAMT                                 DV    
+ H     2-OPENAMT                              DV    
+ I     4-OPENAMT                              DV    
+ J     6-OPENAMT                              DV    
+ *     8-OPENAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1TN1-REPORT-TOTAL
+**************************************
+$PREFIX    R1T1-
+$LEVEL     B
+$LINECNT   3
+$FORMAT
+%
+***********************************************************************************************************************************
+%
+                                   Future        Current         1 -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ     ZZZ -ZZZ       ZZZ -ZZZ     Over-ZZZ 
+                                   |           ; |                ; B1        C1   D1        E1   F1        G1   H1      I1   J1        K1   L1      |  ; M1
+%                          -------------- -------------- -------------- -------------- -------------- -------------- -------------- -------------- --------------
+ Report Totals:  Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+ |            ;  A                             C                             E                             G
+Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-       Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- 
+H                               B                             D                             F
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ B1    AGE-PERIOD-1E                          
+ C1    AGE-PERIOD-2                               
+ D1    AGE-PERIOD-2E                              
+ E1    AGE-PERIOD-3                               
+ F1    AGE-PERIOD-3E                              
+ G1    AGE-PERIOD-4                               
+ H1    AGE-PERIOD-4E                              
+ I1    AGE-PERIOD-5                               
+ J1    AGE-PERIOD-5E                        
+ K1    AGE-PERIOD-6                        
+ L1    AGE-PERIOD-6E                        
+ M1    AGE-PERIOD-7                        
+ A     1-OPENAMT                              DV    
+ C     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ G     7-OPENAMT                              DV    
+ *     9-OPENAMT                              DV    
+ H     NETAMT                                 DV    
+ B     2-OPENAMT                              DV    
+ D     4-OPENAMT                              DV    
+ F     6-OPENAMT                              DV    
+ *     8-OPENAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     C1TN1-REPORT-TOTAL
+**************************************
+$PREFIX    C1T1-
+$LEVEL     B
+$LINECNT   3
+$FORMAT
+%
+***********************************************************************************************************************************
+%
+                                   Future        Current         1 -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ       ZZZ -ZZZ   Over-ZZZ 
+                                   |           ; |                ; B1        C1   D1        E1   F1        G1   H1        I1   J1        K1   L1    |  ; M1  
+%                          -------------- -------------- -------------- -------------- -------------- -------------- -------------- -------------- -------------- 
+ Report Totals:  Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-      ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+ |           ;   A                             C                             E                             G                              I
+Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-       Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-     Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-   Z,ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+H                               B                             D                             F                           J
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ B1    AGE-PERIOD-1E                              
+ C1    AGE-PERIOD-2                               
+ D1    AGE-PERIOD-2E                              
+ E1    AGE-PERIOD-3                               
+ F1    AGE-PERIOD-3E                              
+ G1    AGE-PERIOD-4                               
+ H1    AGE-PERIOD-4E                              
+ I1    AGE-PERIOD-5                               
+ J1    AGE-PERIOD-5E                              
+ K1    AGE-PERIOD-6                               
+ L1    AGE-PERIOD-6E                              
+ M1    AGE-PERIOD-7                               
+ A     1-OPENAMT                              DV    
+ C     3-OPENAMT                              DV    
+ E     5-OPENAMT                              DV    
+ G     7-OPENAMT                              DV    
+ I     9-OPENAMT                              DV    
+ H     NETAMT                                 DV    
+ B     2-OPENAMT                              DV    
+ D     4-OPENAMT                              DV    
+ F     6-OPENAMT                              DV    
+ J     8-OPENAMT                              DV    
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R1TN1-TOTAL-FOR
+**************************************
+$PREFIX    R1T1-
+$FORMAT
+XXXXXXXXXX XXXXXXXXXXXXX         ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%     ZZZZZ.99-%    ZZZZZ.99-%
+I          J                     K              L              M              N              O              P             Q
+F.O.R. Avg ZZZ.99-                                               ZZZ.99-        ZZZ.99-        ZZZ.99-        ZZZ.99-       ZZZ.99-
+|        ; R                                                     S              T              U              V             W 
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ I     TOT-HEADER                        
+ J     TOT-DSO                        
+ K     1-PERCENT                        
+ L     2-PERCENT                        
+ M     3-PERCENT                        
+ N     4-PERCENT                        
+ O     5-PERCENT                        
+ P     6-PERCENT                        
+ Q     7-PERCENT                        
+ R     FOR-AVG                        
+ S     1-FOR-AVG                        
+ T     2-FOR-AVG                        
+ U     3-FOR-AVG                        
+ V     4-FOR-AVG                        
+ W     5-FOR-AVG                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D1-COMMENTS
+**************************************
+$PREFIX    D1-
+$LEVEL     F
+$FORMAT
+         XXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+         A        B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     LABEL                        
+ B     COMMENT                        
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D2-APPLICATIONS
+**************************************
+$PREFIX    D2-
+$LEVEL     G
+$FORMAT
+     Application  GL Date ZZ/ZZ/ZZ  Transaction X XXXXXXXXXXXXXXXXXXXXXX Applied Amount ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+  |            ;  |     ; A         |         ; B C                      |            ; D
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     GL-DATE                                CD
+ B     TRANS-TYPE
+ C     TRANSACTION
+ D     APPLD-AMT                              DV
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D3-ADJUSTMENTS
+**************************************
+$PREFIX    D3-
+$LEVEL     G
+$FORMAT
+      Adjustment  GL Date ZZ/ZZ/ZZ  Reason Code XXXX                      Adjust Amount ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+    |          ;  |     ; A         |         ; B                         |           ; C
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     GL-DATE                                CD
+ B     REASON-CODE
+ C     ADJ-AMT                                DV
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D4-X-REFERENCE
+**************************************
+$PREFIX    D4-
+$LEVEL     G
+$FORMAT
+ Cross Reference  Company ZZZZ   Type X   Number XXXXXXXXXXXXXXXXXXXXXX
+ |             ;  |     ; A      |  ; B   |    ; C
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     XREF-COMPANY
+ B     XREF-TYPE
+ C     XREF-NBR
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D5-DETAIL-INFO
+**************************************
+$PREFIX    D5-
+$LEVEL     G
+$FORMAT
+       Reference  Description XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX   PO Number XXXXXXXXXXXXXXXXXXXXXX
+ |             ;  |         ; A                                |       ; B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DESC
+ B     CUST-PO-NBR
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D6-DETAIL-INFO
+**************************************
+$PREFIX    D6-
+$LEVEL     G
+$FORMAT
+          Values  Currency  XXXXX  Sum Line X  Activity XXXXXXXXXXXXXXX
+ |             ;  |      ;  A      |      ; B  |      ; C
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ORIG-CURRENCY
+ B     SUM-LINE
+ C     ACTIVITY
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D7-TRANSFER-FROM
+**************************************
+$PREFIX    D7-
+$LEVEL     G
+$FORMAT
+     Transferred  Transferred from Customer XXXXXXXXX on ZZ/ZZ/ZZ
+    |          ;  |                       ; A         |; B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     CUSTOMER
+ B     CANCEL-DATE                            CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D7-PARTIAL-TXFR-FROM
+**************************************
+$PREFIX    D7P-
+$LEVEL     G
+$FORMAT
+     Partial Transfer of ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99- Transferred To Customer XXXXXXXXX on ZZ/ZZ/ZZ
+    |                  ; A                       |                     ; B         |; C
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     PARTIAL-TXFR                           DV
+ B     TO-CUSTOMER
+ C     TRANSFER-DATE                          CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D8-TRANSFER-TO
+**************************************
+$PREFIX    D8-
+$LEVEL     G
+$FORMAT
+     Transferred   Transferred To   Customer XXXXXXXXX on ZZ/ZZ/ZZ
+    |          ;   |                       ; A         |; B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     CUSTOMER
+ B     CANCEL-DATE                            CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D9-TRANSFER-NON-AR
+**************************************
+$PREFIX    D9-
+$LEVEL     G
+$FORMAT
+     Transferred  Transferred To Non-AR on ZZ/ZZ/ZZ
+    |          ;  |                      ; A
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     CANCEL-DATE                            CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D10-RTM-PAYMENT
+**************************************
+$PREFIX    D10-
+$LEVEL     G
+$FORMAT
+     RTM Payment  Cancel Date ZZ/ZZ/ZZ
+ |             ;  |         ; A
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     CANCEL-DATE                            CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D11-DISPUTE
+**************************************
+$PREFIX    D11-
+$LEVEL     G
+$FORMAT
+         Dispute  Dispute Date ZZ/ZZ/ZZ  Dispute Code XX   Dispute Amount ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.99-
+ |             ;  |          ; A         |          ; B    |            ; C
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     DISPUTE-DATE                           CD
+ B     DISPUTE-CD
+ C     DISPUTE-AMOUNT
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     P1-APPLICATIONS
+**************************************
+$PREFIX    P1-
+$LEVEL     G
+$FORMAT
+         Pending  Applications exist
+       |                               ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     P2-AP-INTERFACE
+**************************************
+$PREFIX    P2-
+$LEVEL     G
+$FORMAT
+         Pending  AP Interface records exist
+      |                                   ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     P3-REVERSALS
+**************************************
+$PREFIX    P3-
+$LEVEL     G
+$FORMAT
+         Pending  Reversal records exist
+      |                               ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     P4-TRANS-GROUPING
+**************************************
+$PREFIX    P4-
+$LEVEL     G
+$FORMAT
+         Pending  Transaction Obligation Grouping records exist
+        |                                      ; |           ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     P5-ADJUSTMENTS
+**************************************
+$PREFIX    P5-
+$LEVEL     G
+$FORMAT
+         Pending  Adjustment Maintenance records exist
+        |                                           ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     D11-LAST-DATE
+**************************************
+$PREFIX    D11-
+$LEVEL     G
+$FORMAT
+       Last Date  Statement ZZ/ZZ/ZZ  Finance Charge ZZ/ZZ/ZZ  Advanced Dunning ZZ/ZZ/ZZ
+ |             ;  |       ; A         |            ; B         |              ; C
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     LAST-STA-DATE                          CD
+ B     LAST-FC-DATE                           CD
+ C     LAST-LTR-DATE                          CD
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     U1-USER-OPEN
+**************************************
+$PREFIX    U1-
+$LEVEL     G
+$FORMAT
+  User Open Flds  1) XXXXXXXXXX     2) XXXXXXXXXXXXXXX     3) ZZ/ZZ/ZZ     4) ZZZZZZZZZ     5) ZZZ,ZZZ,ZZZ,ZZZ,ZZZ.ZZ-
+ |             ;  |; A              |; B                   |; C            |; D             |; E
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TRANS-USER1
+ B     TRANS-USER2
+ C     TRANS-USER3                            CD
+ D     TRANS-USER4
+ E     TRANS-USER5
+$ENDFLDS
+$ENDGRP
+**************************************
+$GROUP     U2-USER-SORT
+**************************************
+$PREFIX    U2-
+$LEVEL     G
+$FORMAT
+  User Sort Flds  XXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX    XXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+ |             ;  A          B                                   C          D
+                  XXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX    XXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                  E          F                                   G          H
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     COL-HEADING1
+ B     USER-SORT1
+ C     COL-HEADING2
+ D     USER-SORT2
+ E     COL-HEADING3
+ F     USER-SORT3
+ G     COL-HEADING4
+ H     USER-SORT4
+$ENDFLDS
+$ENDGRP
+**************************************
+$GROUP     U3-TRANS-HEADER
+**************************************
+$PREFIX    U3-
+$LEVEL     G
+$FORMAT
+ Trans User Flds  1) XXXXXXXXXXXXXXXXXXXX  2) XXXXXXXXXXXXXXXXXXXX  3) XXXXXXXXXXXXXXXXXXXX
+ |             ;  |; A                     |; B                     |; C
+                  4) XXXXXXXXXXXXXXXXXXXX  5) XXXXXXXXXXXXXXXXXXXX
+                  |; D                     |; E
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     ARH-USR-FLD-01
+ B     ARH-USR-FLD-02
+ C     ARH-USR-FLD-03
+ D     ARH-USR-FLD-04
+ E     ARH-USR-FLD-05
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     U4-APH-USER-FIELDS
+**************************************
+$PREFIX    U4-
+$LEVEL     G
+$FORMAT
+ Pmt Header Flds  1) XXXXXXXXXXXXXXXXXXXX  2) XXXXXXXXXXXXXXXXXXXX  3) XXXXXXXXXXXXXXXXXXXX
+ |             ;  |; A                     |; B                     |; C
+                  4) XXXXXXXXXXXXXXXXXXXX  5) XXXXXXXXXXXXXXXXXXXX
+                  |; D                     |; E
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     APH-USR-FLD-01
+ B     APH-USR-FLD-02
+ C     APH-USR-FLD-03
+ D     APH-USR-FLD-04
+ E     APH-USR-FLD-05
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     U5-APM-USER-FIELDS
+**************************************
+$PREFIX    U5-
+$LEVEL     G
+$FORMAT
+   Pmt User Flds  1) XXXXXXXXXXXXXXXXXXXX  2) XXXXXXXXXXXXXXXXXXXX  3) XXXXXXXXXXXXXXXXXXXX
+ |             ;  |; A                     |; B                     |; C
+                  4) XXXXXXXXXXXXXXXXXXXX  5) XXXXXXXXXXXXXXXXXXXX
+                  |; D                     |; E
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     APM-USR-FLD-01
+ B     APM-USR-FLD-02
+ C     APM-USR-FLD-03
+ D     APM-USR-FLD-04
+ E     APM-USR-FLD-05
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     T12-REPORT-MESSAGE
+**************************************
+$LEVEL     B
+$FORMAT
+%
+%
+%
+*** Report Completed ***
+|                                  ; 
+%
+$ENDFMT
+$ENDGRP
+
+
+$ENDRPT
+****************************************************
+$REPORT    ZR900-R2
+****************************************************
+$PRINTFILE ERROR-RPT
+**************************************
+$GROUP     E1-COMPANY-ERROR
+**************************************
+$PREFIX    E1-
+$PGBRK
+$LEVEL     A
+$FORMAT
+ZR900 Date Z9/99/99                          Company Aging Error Report                                                Page ZZZZ
+      |  ; A1                                |                           ;                                             |  ; E1
+      Time 99:99                             
+      |  ; F1                                                                    
+%
+                    Skipped Company                      Reason
+                    |                     ;              |            ;
+                    -----------------------------------  ------------------------------------------------------------
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ E1    PAGE                                   PN    
+ F1    TIME                                   CT    
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     E1-DETAIL-LINE
+**************************************
+$PREFIX    E1-
+$LEVEL     B
+$FORMAT
+%
+                    ZZZZ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+                    C1   C2                              C3
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ C1    COMPANY                                      
+ C2    NAME
+ C3    MESSAGE                          
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     E12-REPORT-MESSAGE
+**************************************
+$LEVEL     B
+$FORMAT
+%
+%
+%
+*** Report Completed ***
+|                                  ; 
+%
+$ENDFMT
+$ENDGRP
+$ENDRPT
+
+$ENDPGM
+
+
+

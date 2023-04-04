@@ -1,0 +1,241 @@
+******* ZR900.scr 8.1.14 <2017330379>
+*CHECKED
+$RELEASE   08.0
+*******************************************************************************
+*                           SCREEN   ZR900
+*******************************************************************************
+$FORM      ZR900    R
+$MENU      ARMN0
+$SECURITY  NO
+$DECIMALS  NO
+$NOLFCOK
+$KEYFCS    CD
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZR900    R
+[ARRP[ ]              ?*** Company Aged Trial Balance ***          +N]
+                             ?;                                        ;
+   Report          [ZR900]     Priority    [ ]     Save Params (Y,N) [ ]
+   User Name  [          ]
+   Job Name   [          ] --- This will be the name on your report
+   Run After  [          ] --- NOW, HOLD, Time (1230 pm), Job Name
+   Frequency           [ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\  Comments   [                                                  ]\
+|                 Company:&    ]         ;                              ;
+ |      or| Company Group:[            ] ;                              ;
+|              As of Date:&      ]|    Qualify Future Applications:[ ] ;   ;  
+$TAB-REGION
+$TAB-FOLDER
+$TAB-FORM  CUSTOMER          "Customer"
+|                 Customer:&         ]   [                              ]
+|  Or |      Customer List:[            ];                              ;
+|           Credit Analyst:[    ]      ;                              ;
+|              Major Class:[    ]   |  Minor Class:[    ] 
+|     Balance Greater Than:&              ]
+|   Past Due Balances Only:[ ]               +CUST ]
+|                Risk Code:[ ]
+$END-TAB  CUSTOMER 
+$TAB-FORM  TRANSACTION1      "Transactions1"
+ +ACTVY]|         Activity:[               ] |  or|Activity List:[            ]
+|            Process Level:[     ]           ;                              ;
+|              User 1 Open:[          ] - [          ]
+|     Sales Representative:&    ] - &    ]
+|   Exempt Finance Charges:[ ] ;                            ;   
+|                  Bill To:&    ]
+$END-TAB  TRANSACTION1
+$TAB-FORM  TRANSACTION2      "Transactions2"
+|        Include Invoices:[ ] |     Include Credits:[ ]
+|          Include Debits:[ ] |    Include Payments:[ ]
+| Transaction Open Amount:&             ] |Payment Open Amount:&             ]
+|      Days Past Due Date:&    ] - &    ] |Days Past Tran Date:&    ] - &    ]
+$END-TAB  TRANSACTION2
+$TAB-FORM  AGING             "Aging Rules"
+|             Current Days:&   ] |              Periods:&   ] &   ] &   ] &   ]
+|               Aging Date:[ ] |               Payments:[ ]
+|                  Credits:[ ] |               Disputes:[ ]
+|         National Summary:[ ] |        Payment Average:[ ]                     
+|          Audit or Period:[ ] |             Gain, Loss:[ ]
+$END-TAB  AGING        
+$TAB-FORM  FORMAT            "Format"
+
+|         Expanded Heading:[ ] |     Detail Transaction:[ ]
+|          Report Sequence:[ ] |      Customer Sequence:[ ]
+|         Currency Display:[ ] |        Create CSV File:[ ]
+|         Truncate Amounts:[ ] |   Transaction Sequence:[ ]
+|            Format Option:[ ] |
+
+$END-TAB  FORMAT       
+$END-REGION
+$END-SCR   ZR900    R
+*                            ELEMENT NAME
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZR900    R
+  2     TC                    AL    06          SB
+  2     FC                    A     01          SF
+  2     UPDATE-SW             A     01          SB
+  2     SCREEN-MSG            O     40          SB
+  2     TRANCODE              A     05          RP
+  2     HEADER                G     00
+   3    Q-PRIORITY            N     01          SB
+   3    SAVE-PARAMS           A     01          SB
+   3    USER-NAME             A     10          SK
+   3    JOB-NAME              A     10          SK
+   3    RUN-AFTER             A     10          SB
+   3    FREQUENCY             A     01          SB
+   3    COMMENTS              A     50          SB
+  2     RUN-PARAMS            G     00
+   3    COMPANY               N     04          SB    01  C
+   3    ACO-NAME              A     30          SB    01D
+   3    COMPANY-GROUP         A     12          SB    GCG
+   3    GCG-DESCRIPTION       AL    30          SB    GCD
+   3    TRANS-DATE            F     08          SB
+   3    FUTURE-APPS           A     01          SB
+   3    FUTURE-APPS           X     03          SB
+*
+   3    CUSTOMER-TAB          AF    08          SB 
+   3    CUSTOMER              A     09          SB   *M3
+   3    CUD-NAME              A     30          SB   *21 
+   3    MATRIX-LIST           A     12          SB   *GML
+   3    MATRIX-LIST-DESC      A     30          SB   *GMM
+   3    CREDIT-ANLYST         A     04          SB   *M7
+   3    ANLYST-NAME           A     30          SB   *M7D
+   3    MAJ-CLASS             A     04          SB   *N3
+   3    MIN-CLASS             A     04          SB   *N4
+   3    BALANCE               N     14          SB 
+   3    PAST-DUE-ONLY         A     01          SB 
+   3    MTH-OBJ-TYPE          A     05          SB   *GOT
+   3    RISK-CD               A     01          SB 
+*
+   3    TRANSACTION1-TAB      AF    13          SB 
+   3    MTH-OBJ-TYPE2         A     05          SB   *GOT
+   3    ACTIVITY              A     15          SB   *11X
+   3    ACTIVITY-LIST         A     12          SB   *GML   
+   3   *ACTIVX-LIST-DESC      A     30          SB   *GMM
+   3    PROCESS-LEVEL         A     05          SB   *23  P
+   3    PROC-LEV-DESC         A     30          SB   *23D
+   3    FR-TRANS-USER1        A     10          SB
+   3    TO-TRANS-USER1        A     10          SB
+   3    FR-SALESMAN           N     04          SB   *ND
+   3    TO-SALESMAN           N     04          SB   *ND
+   3    EXEMPT-FIN-CHRG-FL    A     01          SB
+   3    EXEMPT-FIN-CHRG-FL    X     28          SB
+   3    ARO-BILL-TO           N     04          SB    M3N
+*
+*
+   3    TRANSACTION2-TAB      AF    13          SB 
+   3    INCLUDE-INVOICES      A     01          SB   
+   3    INCLUDE-CREDITS       A     01          SB   
+   3    INCLUDE-DEBITS        A     01          SB   
+   3    INCLUDE-PAYMENTS      A     01          SB   
+   3    TRANS-OPEN-AMT        N     13          SB   
+   3    PAYMENT-OPEN-AMT      N     13          SB   
+   3    PAST-DUE-DAYS-FR      N     04          SB   
+   3    PAST-DUE-DAYS-TO      N     04          SB   
+   3    PAST-TRAN-DAYS-FR     N     04          SB   
+   3    PAST-TRAN-DAYS-TO     N     04          SB   
+*
+   3    AGING-TAB             AF    11          SB 
+   3    AGE-CURRENT           N     03          SB
+   3    AGE-PERIODS-1         N     03          SB
+   3    AGE-PERIODS-2         N     03          SB
+   3    AGE-PERIODS-3         N     03          SB
+   3    AGE-PERIODS-4         N     03          SB
+   3   *AGE-PERIODS-5         N     03          SB
+   3   *AGE-PERIODS-6         N     03          SB
+   3    ACO-AGE-TYPE          A     01          SB
+   3    AGE-AGE-PYMNT         A     01          SB
+   3    AGE-AGE-CREDITS       A     01          SB
+   3    AGE-AGE-DISPUTES      A     01          SB
+   3    NA-SUMM               A     01          SB
+   3    PMNT-AVG-FL           A     01          SB
+   3    PERIOD-OF             A     01          SB
+   3    X-GAIN-LOSS           A     01          SB
+*
+   3    FORMAT-TAB            AF    06          SB 
+   3    EXPANDED-OPT          A     01          SB
+   3    DETAIL-OPTION         A     01          SB
+   3    REPORT-OPTION         A     01          SB
+   3    SORT-OPTION           A     01          SR
+   3    ACO-CURR-DISPLAY      A     01          SB
+   3    CSV-FILE-OPT          A     01          SB
+   3    AMTS-OPT              A     01          SB
+   3    TRANS-SORT            A     01          SB
+   3    FORM-OPT              A     01          SB
+$END-TRANS ZR900    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     ZR900    R
+  FC                                          A,C,D,I
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  JOB-NAME                                    R.00000000:R.ZZZZZZZZ
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+  FUTURE-APPS           Y                     N=No
+                                              Y=Yes  
+  PAST-DUE-ONLY         N                     N=No
+                                              Y=Yes  
+  MTH-OBJ-TYPE          CUST
+  MTH-OBJ-TYPE2         ACTVY
+  EXEMPT-FIN-CHRG-FL    N                     N=Do Not Omit Finance Charges     
+                                              Y=Omit Finance Charges          
+  INCLUDE-INVOICES      Y                     Y=Include Invoices     
+                                              N=Exclude Invoices          
+  INCLUDE-CREDITS       Y                     Y=Include Credits     
+                                              N=Exclude Credits          
+  INCLUDE-DEBITS        Y                     Y=Include Debits     
+                                              N=Exclude Debits          
+  INCLUDE-PAYMENTS      Y                     Y=Include Payments     
+                                              N=Exclude Payments          
+  ACO-AGE-TYPE                                D=Age By Due Date
+                                              T=Age By Transaction Date
+  AGE-AGE-PYMNT                               L=Aged To Last Debit Column
+                                              N=Not Aged - Current Column
+                                              R=Aged Respective To Date
+  AGE-AGE-CREDITS                             L=Aged To Last Debit Column
+                                              N=Not Aged - Current Column
+                                              R=Aged Respective To Date
+  AGE-AGE-DISPUTES                            N=Not Aged - Current Column
+                                              Y=Aged Respective To Date
+  NA-SUMM               N                     N=Do Not Print Nat Acct Summary
+                                              Y=Print National Account Summary
+  PMNT-AVG-FL           I                     D=Days Beyond Terms (DBT)
+                                              I=Invoice Payment Average (IPA)
+  PERIOD-OF                                   P=Current Period
+                                              A=Audit
+  X-GAIN-LOSS           N                     N=No
+                                              Y=Yes
+  EXPANDED-OPT          N                     N=No Expanded Customer Heading
+                                              Y=Expanded Customer Heading
+  DETAIL-OPTION         Y                     C=Condensed Summary
+                                              Y=Detail Printed
+                                              E=Expanded Summary
+                                              A=All Related Detail
+  REPORT-OPTION         C                     A=Credit Analyst
+                                              C=Customer
+                                              P=Process Level
+                                              S=Sales Representative
+                                              M=Activity
+                                              L=Activity List Attributes
+                                              B=Customer/Bill To
+  SORT-OPTION           N                     A=Alphanum By Cust Search Name
+                                              N=Numeric By Customer
+  ACO-CURR-DISPLAY      B                     B=Base
+                                              T=Tranaction
+  CSV-FILE-OPT          Y                     Y=Create A CSV Export File
+                                              N=Do Not Create CSV File
+  AMTS-OPT              N                     Y=Truncate Amounts
+                                              N=Do Not Truncate Amounts
+  TRANS-SORT                                  O=Open Amt Descending
+                                              D=Due Date
+                                              T=Tran Date
+  FORM-OPT              1                     1=Standard
+                                              2=Expanded
+$END-EDITS ZR900    R
+

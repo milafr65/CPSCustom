@@ -1,0 +1,788 @@
+******* ZR900WS 6.2.21 <1641362097>
+      ******************************************************************
+      *                            ZR900WS                             *
+      ******************************************************************
+       01  ZR900WS.
+AI0000     02  WS-DIR-EXT              PIC X(14) VALUE "work/lifeworks".
+AI0000     02  WS-LEVEL-1              PIC X(14) VALUE "LIFEWORKS". 
+AI0000     02  WS-COMMAND              PIC X(200) VALUE SPACES.
+AI0000     02  WS-CAT-INP1             PIC X(60) VALUE SPACES.
+AI0000     02  WS-CAT-INP2             PIC X(60) VALUE SPACES.
+AI0000*    02  WS-OUT-FOLDER           PIC X(60) VALUE SPACES.
+AI0000     02  WS-FILE-OUT             PIC X(60) VALUE SPACES.
+AI0000     02  WS-HEADER80-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-RECORD80-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-HEADER81-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-RECORD81-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-HEADER82-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-RECORD82-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-HEADER84-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-RECORD84-FILE        PIC X(60) VALUE SPACES.
+AI0000     02  WS-REC84WRK-FILE        PIC X(60) VALUE SPACES.
+AI0000
+AI0000     02  WS-WF2-CUSTOMER         PIC X(09) VALUE SPACES.
+AI0000     02  WS-CUST-EMP-NUM  REDEFINES WS-WF2-CUSTOMER
+AI0000                                 PIC 9(09). 
+AI0000     02  WS-TMP-NBR-A            PIC X(06) VALUE SPACES.
+AI0000     02  WS-TMP-NBR       REDEFINES WS-TMP-NBR-A
+AI0000                                 PIC 9(06). 
+AI0000     02  WS-CUST-EMP-A           PIC X(06) VALUE SPACES.
+AI0000     02  WS-CUST-EMP-N    REDEFINES WS-CUST-EMP-A
+AI0000                                 PIC 9(06). 
+AI0000     02  WS-INVOICE-SEQ-A        PIC X(02) VALUE SPACES.
+AI0000     02  WS-INVOICE-SEQ-N REDEFINES WS-INVOICE-SEQ-A
+AI0000                                 PIC 9(02). 
+AI0000     02  WS-PBHSTDTL-SEQ         PIC 9(02)     VALUE ZEROES.
+AI0000     02  WS-INVOICE10            PIC X(10)     VALUE SPACES.
+AI0000     02  WS-EMP-FIRST-NAME       PIC X(50)     VALUE SPACES.
+AI0000     02  WS-EMP-LAST-NAME        PIC X(50)     VALUE SPACES.
+AI0000     02  WS-EMP-EMP-STATUS       PIC XX        VALUE SPACES.
+AI0000     02  WS-BILLING-GRP          PIC X(50)     VALUE SPACES.
+AI0000     02  WS-BILLING-ITEM         PIC X(50)     VALUE SPACES.
+AI0000     02  WS-BILLING-SUBITEM.
+AI0000         04 WS-BILLING-SUBITEM01 PIC X(10)     VALUE "conversion".
+AI0000         04 WS-BILLING-SUBITEM02 PIC X(03)     VALUE "ret".
+AI0000         04 WS-BILLING-SUBITEM03 PIC X(37)     VALUE SPACES.
+AI0000     02  WS-EMPLOYER             PIC X(50)     VALUE SPACES.
+AI0000     02  WS-ZB3-PLAN-TYPE        PIC XX        VALUE SPACES.
+AI0000     02  WS-ZB3-PLAN-CODE        PIC X(04)     VALUE SPACES.
+AI0000     02  WS-ZB3-PLAN-STR         PIC X(32)     VALUE SPACES.
+           02  ZR900WS-CO-NAME         PIC X(30)     VALUE SPACES.
+           02  WS-ZR900W-NAME          LIKE FILENAME VALUE SPACES.
+P3FX24     02  WS-LAW-DISTRIBS             PIC X(160) VALUE SPACES.
+AI0000     02  WS-EMPLOYER-FLAG            PIC X(01) VALUE SPACES.
+AI0000     02  WS-80-COUNT                 PIC 9(10) VALUE ZEROS.
+AI0000     02  WS-81-COUNT                 PIC 9(10) VALUE ZEROS.
+AI0000     02  WS-82-COUNT                 PIC 9(10) VALUE ZEROS.
+AI0000     02  WS-84-COUNT                 PIC 9(10) VALUE ZEROS.
+AI0000     02  WS-INVOICE-TOT          LIKE INTL-AMT VALUE ZEROS. 
+AI0000     02  WS-PAST-DUE-TOT         LIKE INTL-AMT VALUE ZEROS. 
+AI0000     02  WS-TEMP-SEQ               PIC 9(04)        VALUE ZEROS.
+AI0000     02  WS-TEMP-ORIG              PIC S9(12)V9(02) VALUE ZEROS.
+AI0000     02  WS-TEMP-AMT               PIC S9(12)V9(02) VALUE ZEROS.
+AI0000     02  WS-TEMP-DIFF              PIC S9(12)V9(02) VALUE ZEROS.
+AI0000     02  WS-TEMP-TOTAL             PIC S9(12)V9(02) VALUE ZEROS.
+AI0000     02  WS-TEMP-ZB3-CNT           PIC  9(06)       VALUE ZEROS.
+AI0000     02  WS-ZB3-BILLABLE-AMT     LIKE INTL-AMT VALUE ZEROS.
+AI0000     02  WS-ZB3-REMAINDER        LIKE INTL-AMT VALUE ZEROS.
+AI0000     02  WS-L2-BILL-AMT          LIKE INTL-AMT VALUE ZEROS.
+AI0000     02  WS-CUST-PROC-LVL            PIC X(05) VALUE SPACES.
+AI0000     02  WS-ZB3-PROCESS-LVL          PIC X(05) VALUE SPACES.
+AI0000     02  WS-BILLING-STRING           PIC X(50) VALUE SPACES.
+AI0000     02  WS-LW-BENEFIT               PIC X(12) VALUE SPACES.
+AI0000     02  WS-LW-BILL-ITEM             PIC X(50) VALUE SPACES.
+AI0000     02  WS-EMP-PLN-OPT              PIC X(32) VALUE SPACES.
+AI0000     02  WS-LW-PLAN                  PIC X(16) VALUE SPACES.
+AI0000     02  WS-LW-OPTION                PIC X(16) VALUE SPACES.
+AI0000     02  WS-LW-SOURCE                PIC X     VALUE SPACES.
+AI0000     02  WS-LW-CHK-NBR               PIC X(20) VALUE SPACES.
+AI0000     02  WS-LW-DATE-RECVD            PIC 9(08) VALUE ZEROES.
+AI0000     02  WS-MAJ-CLASS                PIC XX    VALUE SPACES.
+AI0000     02  WS-MIN-CLASS                PIC XX    VALUE SPACES.
+AI0000     02  WS-LW-STATUS                PIC X     VALUE SPACES.
+AI0000     02  WS-SAVE-COMPANY             PIC 9(04) VALUE ZEROES.
+AI0000     02  WS-SAVE-CUSTOMER            PIC X(09) VALUE SPACES.
+AI0000     02  WS-SAVE-EMPLOYEE            PIC 9(09) VALUE ZEROES.
+AI0000     02  WS-SAVE-BILL-ITEM           PIC X(50) VALUE SPACES.
+AI0000     02  WS-SAVE-STATUS              PIC X     VALUE SPACES.
+AI0000     02  WS-RETRO-FL                 PIC X     VALUE SPACES.
+AI0000     02  WS-SAVE-BENEFIT             PIC X(12) VALUE SPACES.
+AI0000     02  WS-SAVE-PLAN                PIC X(15) VALUE SPACES.
+AI0000     02  WS-SAVE-OPTION              PIC X(17) VALUE SPACES.
+AI0000     02  WS-LW-BILL-AMT          LIKE INTL-AMT VALUE ZEROES.
+AI0000     02  WS-AS-OF-DATE-ALP           PIC X(08) VALUE SPACES.
+AI0000     02  WS-PER-BEG-DATE             PIC 9(08) VALUE ZEROES.
+AI0000     02  WS-PER-END-DATE             PIC 9(08) VALUE ZEROES.
+AI0000     02  WS-SV-COMPANY               PIC 9(04) VALUE ZEROES.
+AI0000     02  WS-SV-TRANS-TYPE            PIC X(01) VALUE SPACES.
+AI0000     02  WS-SV-INVOICE               PIC X(22) VALUE SPACES.
+AI0000     02  WS-SV-PAYMENT-SEQ           PIC 9(06) VALUE ZEROES.
+
+           02  ZR900WS-RESTART-DATA.
+               03  ZR900WS-RESTART-COMPANY  PIC 9(04) VALUE ZEROES.
+               03  ZR900WS-RESTART-CO-GRP   PIC X(12) VALUE SPACES.
+           02  ZR900WS-PASS-EDITS           PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-ERROR-FL             PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-PRM-AGE-PERIODS-1    PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-AGE-PERIODS-2    PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-AGE-PERIODS-3    PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-AGE-PERIODS-4    PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-AGE-PERIODS-5    PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-AGE-PERIODS-6    PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-ACO-AGE-TYPE        PIC X(01) VALUE SPACES.
+           02  ZR900WS-PRM-AGE-AGE-PYMNT       PIC X(01) VALUE SPACES.
+           02  ZR900WS-PRM-AGE-AGE-CREDITS     PIC X(01) VALUE SPACES.
+           02  ZR900WS-PRM-AGE-AGE-DISPUTES    PIC X(01) VALUE SPACES.
+           02  ZR900WS-PRM-AGE-CURRENT         PIC 9(03) VALUE ZEROS.
+           02  ZR900WS-PRM-COMPANY     PIC 9(04) VALUE ZEROS.
+           02  WS-HEX-A                    PIC X(01) VALUE x"0A".
+           02  WS-CMT-SIZE                 PIC 9(04) BINARY VALUE 100.
+           02  ZR900WS-L-PER               PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-USER-SORTS      OCCURS 4 TIMES.
+               03  ZR900WS-COL-HEAD        PIC X(10).
+               03  ZR900WS-MATRIX-CAT      PIC X(12).
+               03  ZR900WS-REQUIRED        PIC X(01).
+               03  ZR900WS-HAS-VALIDATION  PIC X(01).
+               03  ZR900WS-DATA-TYPE       PIC X(01).
+               03  ZR900WS-FIELD-SIZE      PIC 9(02).
+           02  ZR900WS-D1-LABEL            PIC X(30) VALUE SPACES.
+           02  ZR900WS-D2-LABEL            PIC X(30) VALUE SPACES.
+           02  ZR900WS-D3-LABEL            PIC X(30) VALUE SPACES.
+           02  ZR900WS-CANCEL-DATE         PIC 9(08) VALUE ZEROS.
+           02  ZR900WS-CANCEL-FLAG         PIC X(01) VALUE SPACES.
+           02  ZR900WS-CANCEL-CUST         PIC X(09) VALUE SPACES.
+J56704     02  ZR900WS-SV-BILL-TO          PIC 9(04) VALUE ZEROES.
+
+000320     02  ZR900WS-INVOICE-FILTER.
+000350         03 FILLER                   PIC X(28)       VALUE
+000360                                  "((ARO-TRANS-TYPE    = ""?""))".
+           02  ZR900WS-I1                      PIC 9(02) VALUE ZEROS.
+           02  ZR900WS-FILTER-TRANS-TYPE       PIC X(01) VALUE SPACES.
+           02  ZR900WS-SUMLINE            LIKE INTL-AMT VALUE ZEROS.
+           02  ZR900WS-OPEN-TRAN-AMT      LIKE INTL-AMT VALUE ZEROS. 
+           02  ZR900WS-ORIG-OPEN-AMT      LIKE INTL-AMT VALUE ZEROS. 
+           02  ZR900WS-SAVE-INVOICE            PIC X(22) VALUE SPACES.
+           02  ZR900WS-TRANS-SORT              PIC 9(13) VALUE ZEROS.
+           02  ZR900WS-DUE-DAYS-FR             PIC 9(08) VALUE ZEROS.
+           02  ZR900WS-DUE-DAYS-TO             PIC 9(08) VALUE ZEROS.
+           02  ZR900WS-TRAN-DAYS-FR            PIC 9(08) VALUE ZEROS.
+           02  ZR900WS-TRAN-DAYS-TO            PIC 9(08) VALUE ZEROS.
+           02  ZR900WS-TEMP-TYPE               PIC X(01) VALUE SPACES.
+           02  ZR900WS-TEMP-CURR               PIC X(05) VALUE SPACES.
+           02  ZR900WS-PAST-DUE-TRANS          PIC X(01) VALUE SPACES.
+           02  ZR900WS-ALL-NINES               PIC 9(18)
+                                               VALUE 999999999999999999.
+           02  ZR900WS-ACTIVE-ACCT             PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-ARZ-CR-ANALYST          PIC X(04) VALUE SPACES.
+           02  ZR900WS-ARZ-NAME                PIC X(30) VALUE SPACES.
+           02  ZR900WS-ARZ-REC                 PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-WF1-REC-KEY.
+               03  ZR900WS-WF1-COMPANY         PIC 9(4) VALUE ZEROS.
+               03  ZR900WS-WF1-SORT-FIELD      PIC X(15) VALUE SPACES.
+               03  ZR900WS-WF1-ORIG-CURRENCY   PIC X(5) VALUE SPACES.
+               03  ZR900WS-WF1-SEARCH-NAME     PIC X(30) VALUE SPACES.
+               03  ZR900WS-WF1-CUSTOMER        PIC X(9) VALUE SPACES.
+               03  ZR900WS-WF1-SEQ-NBR         PIC 9(1) VALUE ZEROS.
+               03  ZR900WS-WF1-TRANS-TYPE      PIC X(1) VALUE SPACES.
+               03  ZR900WS-WF1-INVOICE         PIC X(22) VALUE SPACES.
+               03  ZR900WS-WF1-PAYMENT-SEQ     PIC 9(6) VALUE ZEROS.
+               03  ZR900WS-WF1-CR-INVOICE      PIC X(22) VALUE SPACES.
+               03  ZR900WS-WF1-BATCH-NBR       PIC 9(6) VALUE ZEROS.
+AI0000     02  ZR900WS-WF2-REC-KEY.
+AI0000         03  ZR900WS-WF2-COMPANY         PIC 9(4)  VALUE ZEROS.
+AI0000         03  ZR900WS-WF2-CUSTOMER        PIC X(09) VALUE SPACES.
+AI0000         03  ZR900WS-WF2-EMPLOYEE        PIC 9(09) VALUE ZEROES.
+AI0000         03  ZR900WS-WF2-LW-BILL-ITEM    PIC X(50) VALUE SPACES.
+AI0000         03  ZR900WS-WF2-PLAN-TYPE       PIC X(02) VALUE SPACES.
+AI0000         03  ZR900WS-WF2-PLAN-CODE       PIC X(04) VALUE SPACES.
+           02  ZR900WS-ORIG-OPEN       LIKE INTL-AMT VALUE ZEROS.
+           02  ZR900WS-PERCENT         LIKE INTL-AMT VALUE ZEROS.
+           02  ZR900WS-ERR-FL          PIC 9(01) VALUE ZEROES.
+           02  ZR900WS-RECORD-SELECTED PIC 9(01) VALUE ZEROES.
+           02  ZR900WS-ORIG-ND         PIC 9(01) VALUE ZEROES.
+           02  WS-ARO-COMPANY          PIC 9(04) VALUE ZEROES.
+           02  ZR900WS-NAT-FLAG        PIC X(01) VALUE SPACES.
+           02  WS-SEARCH-NAME          PIC X(30) VALUE SPACES.
+           02  WS-INVOICE-22.
+               03  WS-INVOICE-11       PIC X(11) VALUE SPACES.
+               03  FILLER              PIC X(11) VALUE SPACES.
+           02  ZR900WS-CURRENCY-CD     PIC X(05) VALUE SPACES.
+           02  WS-CURRENCY             PIC X(05) VALUE SPACES.
+           02  ZR900WS-FUTURE          PIC X(01) VALUE SPACES.
+           02  ZR900WS-APPL            PIC X(01) VALUE SPACES.
+           02  ZR900WS-DISPLAY-DATE    PIC X(01) VALUE SPACES.
+           02  ZR900WS-TRANS-SEQUENCE  PIC X(01) VALUE SPACES.
+           02  ZR900WS-FINISH          PIC 9(01) VALUE 1.
+           02  ARWORK-SW               PIC 9(01) VALUE 1.
+               88  ARWORK-NOTFOUND               VALUE 1.
+               88  ARWORK-FOUND                  VALUE 0.
+           02  ZR900WS-ZR900WORK-CREATED-SW PIC 9(01) VALUE 0.
+               88  ZR900WORK-CREATED                  VALUE 1.
+AI0000     02  LWWORK-SW               PIC 9(01) VALUE 1.
+AI0000         88  LWWORK-NOTFOUND               VALUE 1.
+AI0000         88  LWWORK-FOUND                  VALUE 0.
+AI0000     02  REC84WRK-SW             PIC 9(01) VALUE 1.
+AI0000         88  REC84WRK-NOTFOUND             VALUE 1.
+AI0000         88  REC84WRK-FOUND                VALUE 0.
+AI0000     02  ZR900WS-ZR9002WORK-CREATED-SW PIC 9(01) VALUE 0.
+AI0000         88  ZR9002WORK-CREATED                  VALUE 1.
+           02  ZR900WS-AGE-PER-FL      PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-TOTAL           LIKE INTL-AMT VALUE ZEROS.
+           02  ZR900WS-CUST-TOTAL      LIKE INTL-AMT VALUE ZEROS.
+           02  K                       PIC 9(04) COMP-3 VALUE ZEROS.
+           02  J                       PIC 9(04) COMP-3 VALUE ZEROS.
+           02  ZR900WS-SEARCH-NAME     PIC X(30) VALUE SPACES.
+           02  ZR900WS-COMPANY         PIC 9(04) VALUE ZEROES.
+           02  ZR900WS-CUSTOMER        PIC X(09) VALUE SPACES.
+           02  ZR900WS-SAVE-CUSTOMER   PIC X(09) VALUE SPACES.
+           02  ZR900WS-TRANS-TYPE      PIC X(01) VALUE SPACES.
+           02  ZR900WS-INVOICE.
+               03  ZR900WS-TRAN-PREFIX     PIC X(3)  VALUE SPACE.
+               03  ZR900WS-TRAN-SUFIX      PIC X(19)  VALUE SPACE.
+           02  ZR900WS-ORIG-CURRENCY   PIC X(5) VALUE SPACES.
+           02  ZR900WS-CUST            PIC X(09) VALUE SPACES.
+           02  ZR900WS-NAT-CUSTOMER    PIC X(09) VALUE SPACES.
+           02  ZR900WS-REC-FOUND       PIC X(01)     VALUE SPACES.
+           02  ZR900WS-ASOF-DAYS       PIC S9(08)     COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-PER             PIC S9(01)     COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-FOR-PERIOD      PIC S9(01)     COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-AGE-DATE        PIC 9(08)     VALUE ZEROES.
+           02  ZR900WS-DP              PIC S9(05)     COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-DP-1            PIC S9(05)     COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-AGE-PERIOD      PIC S9(05)    COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-OPEN-AMT        LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-DISPUTE-AMT     LIKE INTL-AMT VALUE ZEROS.
+           02  WS-PERIOD-BILL          LIKE INTL-AMT VALUE ZEROS.
+           02  ZR900WS-ORIG-APP-AMT    LIKE INTL-AMT VALUE ZEROS.
+           02  ZR900WS-ORIG-ADJ-AMT    LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-NAT-PERIOD-BILL      PIC S9(15)V9(2) COMP-3 
+                                       VALUE ZEROS.
+           02  ZR900WS-ADJ-ADJ-AMT     LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-ADJ-ORIG-ADJ    LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-PR-PER-JULIAN-DAYS PIC S9(07)    COMP-3
+                                       VALUE ZEROES.
+           02  ZR900WS-PERIOD-DAYS     PIC S9(07)    COMP-3
+                                       VALUE ZEROES.
+           02  WS9                     PIC S9(02)
+                                       VALUE ZEROES.
+           02  ZR900WS-NET-AMT         LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-YTD-CASH        LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-CREDIT-LIMIT         LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-CURR-BAL             LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-CNT-1                PIC S9(05)     COMP-3
+                                       VALUE ZEROES.
+           02  WS-CNT-2                PIC S9(05)     COMP-3
+                                       VALUE ZEROES.
+           02  WS-YEAR-2-DAYS          LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-YTD-CSH-DAYS         LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-YTD-CASH             LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-DBT-PR-YR            LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-DBT-YTD-DAYS         LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-DBT-YTD-CASH         LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-LAST-PMT-DATE        PIC 9(08)     VALUE ZEROES.
+           02  ZR900WS-FOR-AMT         LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-TOTAL-AMT            LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-TOTAL-FOR            LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-FOR-AVG         LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-SALE                 LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-TOTAL                LIKE INTL-AMT VALUE ZEROS.  
+           02  WS-DSO                  LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-ADDR            PIC X(30) VALUE SPACES.
+           02  ZR900WS-ADDRESS         REDEFINES ZR900WS-ADDR.
+               03 ZR900WS-CITY         PIC X(18).
+               03 FILLER               PIC X(01).
+               03 ZR900WS-STATE        PIC X(02).
+               03 FILLER               PIC X(09).
+           02  ZR900WS-CSV-CUST-TOTAL  LIKE INTL-AMT VALUE ZEROS.
+AI0000     02  WS-ZB3-BUCKET-AMTS.
+AI0000         03  WS-ZB3-BUCKET       LIKE INTL-AMT 
+AI0000                                 OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-REPORT-AMT.
+               03  ZR900WS-REPORT-AMT  LIKE INTL-AMT 
+                                       OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-REPORT-PCT.
+               03  ZR900WS-REPORT-PCT  OCCURS 9 TIMES
+                                       PIC S9(05)V9(2).
+           02  ZR900WS-TOTAL-REPORT-FOR.
+               03  ZR900WS-REPORT-FOR  LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-REP-AMT.
+               03  ZR900WS-REP-AMT     LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-REP-FOR.
+               03  ZR900WS-REP-FOR     LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-CUSTOMER-AMT.
+               03  ZR900WS-CUSTOMER-AMT LIKE INTL-AMT 
+                                       OCCURS 9 TIMES.
+J56704     02  ZR900WS-TOTAL-BILLTO.
+J56704         03  ZR900WS-BILLTO-AMT  LIKE INTL-AMT 
+J56704                                 OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-CUSTOMER-PCT.
+               03  ZR900WS-CUSTOMER-PCT LIKE INTL-AMT 
+                                       OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-CUSTOMER-FOR.
+               03  ZR900WS-CUSTOMER-FOR LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-CUST-AMT.
+               03  ZR900WS-CUST-AMT    LIKE INTL-AMT 
+                                       OCCURS 7 TIMES.
+           02  ZR900WS-TOTAL-CUST-FOR.
+               03  ZR900WS-CUST-FOR    LIKE INTL-AMT 
+                                       OCCURS 7 TIMES.
+           02  ZR900WS-TOTAL-PRINT-AMT.
+               03  ZR900WS-PRINT-AMT   LIKE INTL-AMT 
+                                       OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-PRINT-FOR.
+               03  ZR900WS-PRINT-FOR   LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-SORT-AMT.
+               03  ZR900WS-SORT-AMT  LIKE INTL-AMT 
+                                       OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-SORT-PCT.
+               03  ZR900WS-SORT-PCT  LIKE INTL-AMT 
+                                       OCCURS 9 TIMES.
+           02  ZR900WS-TOTAL-SORT-FOR.
+               03  ZR900WS-SORT-FOR  LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-SRT-AMT.
+               03  ZR900WS-SRT-AMT     LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-TOTAL-SRT-FOR.
+               03  ZR900WS-SRT-FOR     LIKE INTL-AMT 
+                                       OCCURS 5 TIMES.
+           02  ZR900WS-CURRENCY-CODES.
+               03 ZR900WS-AMT          LIKE INTL-AMT 
+                                       OCCURS 20 TIMES.
+               03 ZR900WS-CURR         OCCURS 20 TIMES
+                                       PIC X(05).
+               03 ZR900WS-ND           OCCURS 20 TIMES
+                                       PIC 9(01).
+               03 ZR900WS-SORT-F       OCCURS 20 TIMES
+                                       PIC X(120).
+           02  ZR900WS-TABLE-CURR      PIC X(05) VALUE SPACES.
+           02  ZR900WS-TABLE-ND        PIC 9(01) VALUE ZEROS.
+           02  WS-DSO-CHAR             PIC X(13) VALUE SPACES.
+           02  WS-DSO-RED              REDEFINES WS-DSO-CHAR.
+               03  WS-DSO-NBR          PIC Z(10).Z(2).
+           02  WS-ZR9001WORK-NAME      PIC X(50)      VALUE SPACES.
+AI0000     02  WS-ZR9002WORK-NAME      PIC X(50)      VALUE SPACES.
+           02  ZR900WS-SORT-FIELD      PIC X(120)     VALUE SPACES.
+           02  ZR900WS-ATTRIBUTE-KEY   PIC X(120) VALUE SPACES.
+           02  ZR900WS-SALESMAN        PIC 9(04) VALUE ZEROS.
+           02  ZR900WS-SALESMAN-A      REDEFINES ZR900WS-SALESMAN.
+               03  ZR900WS-ALPHA-S     PIC X(04).
+           02  ZR900WS-XREF-FL         PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-SUM-REC         PIC 9(01) VALUE ZEROS.
+           02  ZR900WS-SUM-NBR         PIC X(10) VALUE SPACES.
+           02  ZR900WS-SUM-SORT        PIC X(01) VALUE SPACES.
+           02  ZR900WS-SUM-TRANS       PIC X(01) VALUE SPACES.
+           02  ZR900WS-SUM-AMT         LIKE INTL-AMT VALUE ZEROS.  
+           02  ZR900WS-CSV-TOT-NAME    PIC X(30).
+           02  ZR900WS-CSV-TOT-HEAD    PIC X(09).
+           02  ZR900WS-PL-SORT.
+               03  ZR900WS-PL-LBL      PIC X(04) VALUE "PL  ".
+               03  ZR900WS-PL-VAR      PIC X(05).
+           02  ZR900WS-CR-SORT.
+               03  ZR900WS-CR-LBL      PIC X(04) VALUE "Cur ".
+               03  ZR900WS-CR-VAR      PIC X(05).
+           02  ZR900WS-SR-SORT.
+               03  ZR900WS-SR-LBL      PIC X(05) VALUE "SlsR ".
+               03  ZR900WS-SR-VAR      PIC X(04).
+           02  ZR900WS-CA-SORT.
+               03  ZR900WS-CA-LBL      PIC X(05) VALUE "Anly ".
+               03  ZR900WS-CA-VAR      PIC X(04).
+000410     02  ZR900WS-BROADCAST-WS.
+000420         03  ZR900WS-PRINT-FILE-1         PIC X(250) VALUE SPACES.
+000450         03  ZR900WS-ELEMENT-TYPE         PIC 9(03) VALUE ZEROS.
+000460         03  ZR900WS-ELEMENT-VALUE        PIC X(60) VALUE SPACES.
+000470         03  ZR900WS-SV-ELEMENT-VALUE     PIC X(60) VALUE SPACES.
+000480         03  ZR900WS-DO-BASE-BROADCAST    PIC X(01) VALUE SPACES.
+           02  ZR900WS-TEMP-STRING     PIC X(64) VALUE SPACES.
+           02  ZR900WS-TEMP-STRING2    PIC X(132) VALUE SPACES.
+           02  ZR900WS-TMP-STR-LENGTH  PIC 9(03) VALUE ZEROES.
+           02  ZR900WS-STR-LENGTH      PIC 9(03) VALUE ZEROES.
+           02  ZR900WS-TOTAL-LENGTH    PIC 9(03) VALUE ZEROES.
+           02  ZR900WS-STRING-LST.
+               03  ZR900WS-STR-LST    OCCURS 4 TIMES
+                                      PIC X(132) VALUE SPACES.
+J54577     02  ZR900WS-PAST-DUE-TRANS-A   PIC X(01) VALUE SPACES.
+J58879     02  ZR900WS-TEMP-TRAN-AMT      LIKE INTL-AMT VALUE ZEROS.
+903341     02  ZR900WS-AROPWS-TRAN-AMT    PIC S9(16)V9(02) VALUE ZEROS.
+903341     02  ZR900WS-AROWS-TRAN-AMT     PIC S9(16)V9(02) VALUE ZEROS.
+942549     02  ZR900WS-FILTER-LENGTH      PIC 9(06) VALUE ZEROES.
+           02  WS-RTR-CUST                PIC X(09) VALUE SPACES.
+           02  WS-RTR-INV-DATE             PIC 9(08) VALUE ZEROES.
+           02  WS-RTR-CREDIT              PIC X(15) VALUE SPACES.
+RETROS     02  WS-RTR-TBL              OCCURS 999 TIMES.
+RETROS         03  WS-RTR-INV              PIC X(22).
+RETROS         03  WS-RTR-BEN              PIC X(10).
+RETROS         03  WS-RTR-LAW-CODE         PIC X(04).
+RETROS         03  WS-RTR-BEN-DT-USED      PIC X(01).
+RETROS         03  WS-RTR-BEN-DT           PIC 9(08).
+RETROS         03  WS-RTR-EMPLOYEE         PIC 9(09).
+RETROS         03  WS-RTR-INV-DT           PIC 9(08).
+RETROS         03  WS-RTR-CUSTOMER         PIC X(09).
+RETROS         03  WS-RTR-AMOUNT           LIKE INTL-AMT VALUE ZEROS. 
+RETROG         03  WS-RTR-OPEN-AMOUNT      LIKE INTL-AMT VALUE ZEROS. 
+RETROG         03  WS-RTR-ORIG-AMOUNT      LIKE INTL-AMT VALUE ZEROS. 
+RETROS         03  WS-RTR-LW-BILL-ITEM     PIC X(50).
+RETROS         03  WS-RTR-PLAN-TYPE        PIC X(02).
+RETROS         03  WS-RTR-PLAN-CODE        PIC X(04).
+RETROS         03  WS-RTR-MAJ-CLASS        PIC X(02).
+RETROS         03  WS-RTR-MIN-CLASS        PIC X(02).
+RETROS         03  WS-RTR-LW-STATUS        PIC X(01).
+RETROS         03  WS-RTR-LW-BENEFIT       PIC X(12).
+RETROS         03  WS-RTR-LW-PLAN          PIC X(16).
+RETROS         03  WS-RTR-LW-OPTION        PIC X(16).
+
+
+DB0001     02  WS-ZB3-TBL              OCCURS 999 TIMES.
+RETR01         03  WS-ZB3-COMPANY          PIC 9(04).
+RETR01         03  WS-ZB3-PROCESS-LEVEL    PIC X(05).
+RETR01         03  WS-ZB3-INVOICE          PIC X(22).
+RETR01         03  WS-ZB3-LINE-NBR         PIC X(08).
+RETR01         03  WS-ZB3-EFF-BILL-DT      PIC 9(08).
+DB0001         03  WS-ZB3-EMPLOYEE         PIC 9(09).
+P3FX12         03  WS-ZB3-BENEFIT          PIC X(12).
+
+
+002393****************************************************************
+002394*                   SCREEN AR50F1                              *
+002395****************************************************************
+002396 01  AR50F1.                                   
+002397     02  AR50F1-TC                          PIC X(06).
+002398     02  AR50F1-TC-FN                       PIC 9(04) BINARY.
+002399     02  AR50F1-FC                          PIC X(01).
+002400     02  AR50F1-FC-FN                       PIC 9(04) BINARY.
+002401     02  AR50F1-ACM-COMPANY                 PIC 9(04).
+002402     02  AR50F1-ACM-COMPANY-FN              PIC 9(04) BINARY.
+002403     02  AR50F1-ACO-NAME                    PIC X(30).
+002404     02  AR50F1-ACO-NAME-FN                 PIC 9(04) BINARY.
+002405     02  AR50F1-ACM-CURRENCY-CD             PIC X(05).
+002406     02  AR50F1-ACM-CURRENCY-CD-FN          PIC 9(04) BINARY.
+002407     02  AR50F1-ACM-CUSTOMER                PIC X(09).
+002408     02  AR50F1-ACM-CUSTOMER-FN             PIC 9(04) BINARY.
+002409     02  AR50F1-CUD-NAME                    PIC X(30).
+002410     02  AR50F1-CUD-NAME-FN                 PIC 9(04) BINARY.
+002411     02  AR50F1-AR50A-NAME                  PIC X(50).
+002412     02  AR50F1-AR50A-NAME-FN               PIC 9(04) BINARY.
+002413     02  AR50F1-AR50B-NAME                  PIC X(50).
+002414     02  AR50F1-AR50B-NAME-FN               PIC 9(04) BINARY.
+002415     02  AR50F1-CUD-CUST-GROUP              PIC X(05).
+002416     02  AR50F1-CUD-CUST-GROUP-FN           PIC 9(04) BINARY.
+002417     02  AR50F1-CUD-CUSTOMER                PIC X(09).
+002418     02  AR50F1-CUD-CUSTOMER-FN             PIC 9(04) BINARY.
+002419     02  AR50F1-CUD-VENDOR-GROUP            PIC X(04).
+002420     02  AR50F1-CUD-VENDOR-GROUP-FN         PIC 9(04) BINARY.
+002421     02  AR50F1-CUD-VENDOR                  PIC X(09).
+002422     02  AR50F1-CUD-VENDOR-FN               PIC 9(04) BINARY.
+002423     02  AR50F1-HOLD-CODE                   PIC X(04).
+002424     02  AR50F1-HOLD-CODE-FN                PIC 9(04) BINARY.
+002425     02  AR50F1-CUD-CONTACT                 PIC X(20).
+002426     02  AR50F1-CUD-CONTACT-FN              PIC 9(04) BINARY.
+002427     02  AR50F1-ACM-PHONE-NMBR              PIC X(15).
+002428     02  AR50F1-ACM-PHONE-NMBR-FN           PIC 9(04) BINARY.
+002429     02  AR50F1-CUD-PHONE-EXT               PIC X(05).
+002430     02  AR50F1-CUD-PHONE-EXT-FN            PIC 9(04) BINARY.
+002431     02  AR50F1-FILTER                      PIC X(06).
+002432     02  AR50F1-FILTER-FN                   PIC 9(04) BINARY.
+002433     02  AR50F1-FILTER-ON                   PIC X(01).
+002434     02  AR50F1-FILTER-ON-FN                PIC 9(04) BINARY.
+002435     02  AR50F1-COMMENTS                    PIC X(08).
+002436     02  AR50F1-COMMENTS-FN                 PIC 9(04) BINARY.
+002437     02  AR50F1-COMMENT-FL                  PIC X(01).
+002438     02  AR50F1-COMMENT-FL-FN               PIC 9(04) BINARY.
+002439     02  AR50F1-X-PROCESS                   PIC X(05).
+002440     02  AR50F1-X-PROCESS-FN                PIC 9(04) BINARY.
+002441     02  AR50F1-X-DATE                      PIC X(01).
+002442     02  AR50F1-X-DATE-FN                   PIC 9(04) BINARY.
+002443     02  AR50F1-X-SUMMARY                   PIC X(01).
+002444     02  AR50F1-X-SUMMARY-FN                PIC 9(04) BINARY.
+002445     02  AR50F1-X-CURRENCY                  PIC X(05).
+002446     02  AR50F1-X-CURRENCY-FN               PIC 9(04) BINARY.
+002447     02  AR50F1-X-GAIN-LOSS                 PIC X(01).
+002448     02  AR50F1-X-GAIN-LOSS-FN              PIC 9(04) BINARY.
+002449     02  AR50F1-X-ACTIVITY                  PIC X(15).
+002450     02  AR50F1-X-ACTIVITY-FN               PIC 9(04) BINARY.
+002451     02  AR50F1-X-ACCT-CAT                  PIC X(05).
+002452     02  AR50F1-X-ACCT-CAT-FN               PIC 9(04) BINARY.
+002453     02  AR50F1-BALANCE                     PIC X(11).
+002454     02  AR50F1-BALANCE-FN                  PIC 9(04) BINARY.
+002455     02  AR50F1-BALANCE-ON                  PIC X(01).
+002456     02  AR50F1-BALANCE-ON-FN               PIC 9(04) BINARY.
+002457     02  AR50F1-INCLUDE-BOE                 PIC X(01).
+002458     02  AR50F1-INCLUDE-BOE-FN              PIC 9(04) BINARY.
+002459     02  AR50F1-LINE-FC                     PIC X(01).
+002460     02  AR50F1-LINE-FC-FN                  PIC 9(04) BINARY.
+002461     02  AR50F1-OPEN-AMT                    PIC S9(16)V99
+002462                                       SIGN IS TRAILING SEPARATE.
+002463     02  AR50F1-OPEN-AMT-FN                 PIC 9(04) BINARY.
+002464     02  AR50F1-OPEN-AMT-ND                 PIC 9(01).
+002465     02  AR50F1-PCNT                        PIC S9(03)V99
+002466                                       SIGN IS TRAILING SEPARATE.
+002467     02  AR50F1-PCNT-FN                     PIC 9(04) BINARY.
+002468     02  AR50F1-ACM-START-DATE              PIC 9(08).
+002469     02  AR50F1-ACM-START-DATE-FN           PIC 9(04) BINARY.
+002470     02  AR50F1-LINE-FC-1                   PIC X(01).
+002471     02  AR50F1-LINE-FC-1-FN                PIC 9(04) BINARY.
+002472     02  AR50F1-OPEN-AMT1                   PIC S9(16)V99
+002473                                       SIGN IS TRAILING SEPARATE.
+002474     02  AR50F1-OPEN-AMT1-FN                PIC 9(04) BINARY.
+002475     02  AR50F1-OPEN-AMT1-ND                PIC 9(01).
+002476     02  AR50F1-PCNT1                       PIC S9(03)V99
+002477                                       SIGN IS TRAILING SEPARATE.
+002478     02  AR50F1-PCNT1-FN                    PIC 9(04) BINARY.
+002479     02  AR50F1-ACM-LAST-INV-DATE           PIC 9(08).
+002480     02  AR50F1-ACM-LAST-INV-DATE-FN        PIC 9(04) BINARY.
+002481     02  AR50F1-LINE-FC-2                   PIC X(01).
+002482     02  AR50F1-LINE-FC-2-FN                PIC 9(04) BINARY.
+002483     02  AR50F1-PERIOD-1-END                PIC 9(03).
+002484     02  AR50F1-PERIOD-1-END-FN             PIC 9(04) BINARY.
+002485     02  AR50F1-OPEN-AMT2                   PIC S9(16)V99
+002486                                       SIGN IS TRAILING SEPARATE.
+002487     02  AR50F1-OPEN-AMT2-FN                PIC 9(04) BINARY.
+002488     02  AR50F1-OPEN-AMT2-ND                PIC 9(01).
+002489     02  AR50F1-PCNT2                       PIC S9(03)V99
+002490                                       SIGN IS TRAILING SEPARATE.
+002491     02  AR50F1-PCNT2-FN                    PIC 9(04) BINARY.
+002492     02  AR50F1-ACM-LAST-PMT-DATE           PIC 9(08).
+002493     02  AR50F1-ACM-LAST-PMT-DATE-FN        PIC 9(04) BINARY.
+002494     02  AR50F1-LINE-FC-3                   PIC X(01).
+002495     02  AR50F1-LINE-FC-3-FN                PIC 9(04) BINARY.
+002496     02  AR50F1-PERIOD-2-BEG                PIC 9(03).
+002497     02  AR50F1-PERIOD-2-BEG-FN             PIC 9(04) BINARY.
+002498     02  AR50F1-PERIOD-2-END                PIC 9(03).
+002499     02  AR50F1-PERIOD-2-END-FN             PIC 9(04) BINARY.
+002500     02  AR50F1-OPEN-AMT3                   PIC S9(16)V99
+002501                                       SIGN IS TRAILING SEPARATE.
+002502     02  AR50F1-OPEN-AMT3-FN                PIC 9(04) BINARY.
+002503     02  AR50F1-OPEN-AMT3-ND                PIC 9(01).
+002504     02  AR50F1-PCNT3                       PIC S9(03)V99
+002505                                       SIGN IS TRAILING SEPARATE.
+002506     02  AR50F1-PCNT3-FN                    PIC 9(04) BINARY.
+002507     02  AR50F1-ACM-LAST-STA-DATE           PIC 9(08).
+002508     02  AR50F1-ACM-LAST-STA-DATE-FN        PIC 9(04) BINARY.
+002509     02  AR50F1-LINE-FC-4                   PIC X(01).
+002510     02  AR50F1-LINE-FC-4-FN                PIC 9(04) BINARY.
+002511     02  AR50F1-PERIOD-3-BEG                PIC 9(03).
+002512     02  AR50F1-PERIOD-3-BEG-FN             PIC 9(04) BINARY.
+002513     02  AR50F1-PERIOD-3-END                PIC 9(03).
+002514     02  AR50F1-PERIOD-3-END-FN             PIC 9(04) BINARY.
+002515     02  AR50F1-OPEN-AMT4                   PIC S9(16)V99
+002516                                       SIGN IS TRAILING SEPARATE.
+002517     02  AR50F1-OPEN-AMT4-FN                PIC 9(04) BINARY.
+002518     02  AR50F1-OPEN-AMT4-ND                PIC 9(01).
+002519     02  AR50F1-PCNT4                       PIC S9(03)V99
+002520                                       SIGN IS TRAILING SEPARATE.
+002521     02  AR50F1-PCNT4-FN                    PIC 9(04) BINARY.
+002522     02  AR50F1-LINE-FC-5                   PIC X(01).
+002523     02  AR50F1-LINE-FC-5-FN                PIC 9(04) BINARY.
+002524     02  AR50F1-PERIOD-4-BEG                PIC 9(03).
+002525     02  AR50F1-PERIOD-4-BEG-FN             PIC 9(04) BINARY.
+002526     02  AR50F1-PERIOD-4-END                PIC 9(03).
+002527     02  AR50F1-PERIOD-4-END-FN             PIC 9(04) BINARY.
+002528     02  AR50F1-OPEN-AMT5                   PIC S9(16)V99
+002529                                       SIGN IS TRAILING SEPARATE.
+002530     02  AR50F1-OPEN-AMT5-FN                PIC 9(04) BINARY.
+002531     02  AR50F1-OPEN-AMT5-ND                PIC 9(01).
+002532     02  AR50F1-PCNT5                       PIC S9(03)V99
+002533                                       SIGN IS TRAILING SEPARATE.
+002534     02  AR50F1-PCNT5-FN                    PIC 9(04) BINARY.
+002535     02  AR50F1-LINE-FC-6                   PIC X(01).
+002536     02  AR50F1-LINE-FC-6-FN                PIC 9(04) BINARY.
+002537     02  AR50F1-PERIOD-5-END                PIC 9(03).
+002538     02  AR50F1-PERIOD-5-END-FN             PIC 9(04) BINARY.
+002539     02  AR50F1-OPEN-AMT6                   PIC S9(16)V99
+002540                                       SIGN IS TRAILING SEPARATE.
+002541     02  AR50F1-OPEN-AMT6-FN                PIC 9(04) BINARY.
+002542     02  AR50F1-OPEN-AMT6-ND                PIC 9(01).
+002543     02  AR50F1-PCNT6                       PIC S9(03)V99
+002544                                       SIGN IS TRAILING SEPARATE.
+002545     02  AR50F1-PCNT6-FN                    PIC 9(04) BINARY.
+P3FX22     02  AR50F1-OPEN-AMT7                   PIC S9(16)V99
+P3FX22                                       SIGN IS TRAILING SEPARATE.
+P3FX22     02  AR50F1-OPEN-AMT7-FN                PIC 9(04) BINARY.
+P3FX22     02  AR50F1-OPEN-AMT7-ND                PIC 9(01).
+P3FX22     02  AR50F1-PCNT7                       PIC S9(03)V99
+P3FX22                                       SIGN IS TRAILING SEPARATE.
+P3FX22     02  AR50F1-PCNT7-FN                    PIC 9(04) BINARY.
+P3FX22     02  AR50F1-OPEN-AMT8                   PIC S9(16)V99
+P3FX22                                       SIGN IS TRAILING SEPARATE.
+P3FX22     02  AR50F1-OPEN-AMT8-FN                PIC 9(04) BINARY.
+P3FX22     02  AR50F1-OPEN-AMT8-ND                PIC 9(01).
+P3FX22     02  AR50F1-PCNT8                       PIC S9(03)V99
+P3FX22                                       SIGN IS TRAILING SEPARATE.
+P3FX22     02  AR50F1-PCNT8-FN                    PIC 9(04) BINARY.
+002546     02  AR50F1-CURR-IPA                    PIC S9(03)V99
+002547                                       SIGN IS TRAILING SEPARATE.
+002548     02  AR50F1-CURR-IPA-FN                 PIC 9(04) BINARY.
+002549     02  AR50F1-UNRELAPPLD                  PIC S9(16)V99
+002550                                       SIGN IS TRAILING SEPARATE.
+002551     02  AR50F1-UNRELAPPLD-FN               PIC 9(04) BINARY.
+002552     02  AR50F1-UNRELAPPLD-ND               PIC 9(01).
+002553     02  AR50F1-ACM-COLLECT-DAYS            PIC S9(03)V99
+002554                                       SIGN IS TRAILING SEPARATE.
+002555     02  AR50F1-ACM-COLLECT-DAYS-FN         PIC 9(04) BINARY.
+002556     02  AR50F1-ACM-CURR-BAL                PIC S9(16)V99
+002557                                       SIGN IS TRAILING SEPARATE.
+002558     02  AR50F1-ACM-CURR-BAL-FN             PIC 9(04) BINARY.
+002559     02  AR50F1-ACM-CURR-BAL-ND             PIC 9(01).
+002560     02  AR50F1-YTD-IPA                     PIC S9(03)V99
+002561                                       SIGN IS TRAILING SEPARATE.
+002562     02  AR50F1-YTD-IPA-FN                  PIC 9(04) BINARY.
+002563     02  AR50F1-ACM-INV-BAL                 PIC S9(16)V99
+002564                                       SIGN IS TRAILING SEPARATE.
+002565     02  AR50F1-ACM-INV-BAL-FN              PIC 9(04) BINARY.
+002566     02  AR50F1-ACM-INV-BAL-ND              PIC 9(01).
+002567     02  AR50F1-ACM-DRAFT-BAL               PIC S9(16)V99
+002568                                       SIGN IS TRAILING SEPARATE.
+002569     02  AR50F1-ACM-DRAFT-BAL-FN            PIC 9(04) BINARY.
+002570     02  AR50F1-ACM-DRAFT-BAL-ND            PIC 9(01).
+002571     02  AR50F1-ACM-OPEN-ORDS               PIC 9(16)V99.
+002572     02  AR50F1-ACM-OPEN-ORDS-FN            PIC 9(04) BINARY.
+002573     02  AR50F1-ACM-OPEN-ORDS-ND            PIC 9(01).
+002574     02  AR50F1-ACM-HIGH-BAL                PIC S9(14)
+002575                                       SIGN IS TRAILING SEPARATE.
+002576     02  AR50F1-ACM-HIGH-BAL-FN             PIC 9(04) BINARY.
+002577     02  AR50F1-ACM-CREDIT-LIM              PIC 9(13).
+002578     02  AR50F1-ACM-CREDIT-LIM-FN           PIC 9(04) BINARY.
+002579     02  AR50F1-LIMIT-PCT                   PIC S9(03)V99
+002580                                       SIGN IS TRAILING SEPARATE.
+002581     02  AR50F1-LIMIT-PCT-FN                PIC 9(04) BINARY.
+002582     02  AR50F1-ACM-TERMS-CD                PIC X(05).
+002583     02  AR50F1-ACM-TERMS-CD-FN             PIC 9(04) BINARY.
+002584     02  AR50F1-UNAPPLIED                   PIC 9(16)V99.
+002585     02  AR50F1-UNAPPLIED-FN                PIC 9(04) BINARY.
+002586     02  AR50F1-UNAPPLIED-ND                PIC 9(01).
+002587     02  AR50F1-ACM-CREDIT-ANLYST           PIC X(04).
+002588     02  AR50F1-ACM-CREDIT-ANLYST-FN        PIC 9(04) BINARY.
+002589     02  AR50F1-ACM-RISK-CD                 PIC X(01).
+002590     02  AR50F1-ACM-RISK-CD-FN              PIC 9(04) BINARY.
+002591     02  AR50F1-UNRELPAYMNT                 PIC 9(16)V99.
+002592     02  AR50F1-UNRELPAYMNT-FN              PIC 9(04) BINARY.
+002593     02  AR50F1-UNRELPAYMNT-ND              PIC 9(01).
+002594     02  AR50F1-ACM-SALESMAN                PIC 9(04).
+002595     02  AR50F1-ACM-SALESMAN-FN             PIC 9(04) BINARY.
+002596     02  AR50F1-ACO-CURRENCY-CD             PIC X(05).
+002597     02  AR50F1-ACO-CURRENCY-CD-FN          PIC 9(04) BINARY.
+002598     02  AR50F1-PERIOD-AGE                  PIC 9(02).
+002599     02  AR50F1-PERIOD-AGE-FN               PIC 9(04) BINARY.
+002600     02  AR50F1-PER-SELECTED                PIC X(07).
+002601     02  AR50F1-PER-SELECTED-FN             PIC 9(04) BINARY.
+002602     02  AR50F1-PT-CURRENCY-ND              PIC 9(01).
+002603     02  AR50F1-PT-CURRENCY-ND-FN           PIC 9(04) BINARY.
+002604     02  AR50F1-PT-SEL-PRD-TOT              PIC S9(16)V99
+002605                                       SIGN IS TRAILING SEPARATE.
+002606     02  AR50F1-PT-SEL-PRD-TOT-FN           PIC 9(04) BINARY.
+002607     02  AR50F1-PT-SEL-PRD-TOT-ND           PIC 9(01).
+002608     02  AR50F1-USER-NAME                   PIC X(12).
+002609     02  AR50F1-USER-NAME-FN                PIC 9(04) BINARY.
+002610     02  AR50F1-PT-CUST-GROUP               PIC X(05).
+002611     02  AR50F1-PT-CUST-GROUP-FN            PIC 9(04) BINARY.
+002612     02  AR50F1-PT-X-PROCESS                PIC X(05).
+002613     02  AR50F1-PT-X-PROCESS-FN             PIC 9(04) BINARY.
+002614     02  AR50F1-PT-X-DATE                   PIC X(01).
+002615     02  AR50F1-PT-X-DATE-FN                PIC 9(04) BINARY.
+002616     02  AR50F1-PT-X-SUMMARY                PIC X(01).
+002617     02  AR50F1-PT-X-SUMMARY-FN             PIC 9(04) BINARY.
+002618     02  AR50F1-DETAIL-GROUP.
+002619         03  AR50F1-DETAIL-LINE             OCCURS 09 TIMES.
+002620             04  AR50F1-COUNT               PIC 9(10).
+002621             04  AR50F1-COUNT-FN            PIC 9(04) BINARY.
+002622     02  AR50F1-KEY-PROTECTED.
+002623         03  AR50F1-PT-ACM-COMPANY          PIC 9(04).
+002624         03  AR50F1-PT-ACM-CUSTOMER         PIC X(09).
+      ******************************************************************
+      *                             AR50WS                             *
+      ******************************************************************
+       01  AR50WS.
+           02  AR50WS-APM-OPEN-AMT     LIKE INTL-AMT   VALUE ZEROS.
+           02  AR50WS-ARA-APPLD-AMT    LIKE INTL-AMT   COMP-3 VALUE
+                                       ZEROES.
+           02  AR50WS-SV-COMPANY       PIC 9(04)       VALUE ZEROS.
+           02  AR50WS-SV-TRANS-TYPE    PIC X(01)       VALUE SPACES.
+           02  AR50WS-SV-INVOICE       PIC X(22)       VALUE SPACES.
+           02  AR50WS-SV-SUM-LINE      PIC X(01)       VALUE SPACES.
+           02  AR50WS-ARA-ADJ-AMT      LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-ADP-DISPUTE-AMT  LIKE INTL-AMT   COMP-3 VALUE
+                                       ZEROS.
+           02  AR50WS-ARO-OPEN-AMT     LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-APM-TRAN-AMT     LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-TOPEN-AMT        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-CURR-IPA         LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-YTD-IPA          LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-LIMIT-PCT        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-UNAPPLIED        LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-UNRELAPPLD       LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-PER-TOT          LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-UNRELPAYMNT      LIKE INTL-AMT VALUE
+                                       ZEROES.
+           02  AR50WS-OPEN-AMT         LIKE INTL-AMT 
+P3FX22*                                OCCURS 7 TIMES.
+P3FX22                                 OCCURS 9 TIMES.
+           02  AR50WS-ACM-HIGH-BAL     PIC S9(13) COMP-3 VALUE ZEROS.
+
+           02  AR50WS-CREDIT-LIM       PIC S9(13) COMP-3 VALUE ZEROS.
+
+           02  AR50WS-CURR-BAL         LIKE INTL-AMT VALUE
+                                       ZEROS.
+           02  AR50WS-GAINLOS-AMT      LIKE INTL-AMT VALUE
+                                       ZEROS.
+           02  AR50WS-ARO-GAINLOS      LIKE INTL-AMT VALUE
+                                       ZEROS.
+
+           02  AR50WS-PERCENT          PIC S9(03)V9(2) COMP-3 VALUE
+                                       ZEROES.
+
+           02  AR50WS-AGE-PERIODS      PIC  9(03)        
+*********                              OCCURS 4 TIMES.
+P3FX22                                 OCCURS 6 TIMES.
+           02  AR50WS-AGE-TYPE         PIC  X            VALUE SPACES.
+           02  AR50WS-AGE-CURRENT      PIC  9(03)        VALUE ZEROS.
+           02  AR50WS-AGE-CREDITS      PIC  X            VALUE SPACES.
+           02  AR50WS-AGE-PYMNT        PIC  X            VALUE SPACES.
+           02  AR50WS-AGE-DISPUTES     PIC  X            VALUE SPACES.
+           02  AR50WS-APMSET-NBR       PIC  9(02)        VALUE ZEROES.
+           02  AR50WS-CUST-GROUP       PIC  X(05)        VALUE SPACES.
+           02  AR50WS-COMPANY          PIC  9(04)        VALUE ZEROS.
+           02  AR50WS-CUSTOMER         PIC  X(10)        VALUE SPACES.
+           02  AR50WS-CURRENCY-CD      PIC  X(06)        VALUE SPACES.
+           
+           02  AR50WS-AGEDT            PIC  9(08)        VALUE ZEROS.
+           02  AR50WS-J-AGEDT          PIC S9(06) COMP-3 VALUE ZEROS.
+           02  AR50WS-EAGDT            PIC  9(08)        VALUE ZEROS.
+           02  AR50WS-J-ASOFD          PIC S9(06) COMP-3 VALUE ZEROS.
+           
+           02  AR50WS-DISPUTE-FLAG     PIC  X            VALUE "N".
+           
+           02  AR50WS-P                PIC  9(02)        VALUE ZEROS.
+           02  AR50WS-DP               PIC S9(04)        VALUE ZEROS.
+           02  AR50WS-DP1              PIC  9(04)        VALUE ZEROS.
+           02  AR50WS-COLLECT-DAYS     PIC S9(6) COMP-3 VALUE ZEROES.
+           02  AR50WS-IPA-COUNT        PIC S9(2) COMP-3 VALUE ZEROES.
+           02  AR50WS-IPA-AVG          PIC S9(13) COMP-3 VALUE ZEROES.
+
+           02  AR50WS-PARAM-PRD-HEAD   PIC  X(07)        VALUE SPACES.
+           02  AR50WS-PARAM-PRD-HEAD-R REDEFINES AR50WS-PARAM-PRD-HEAD.
+               04  AR50WS-SPRDH        PIC  Z(03).
+               04  AR50WS-PRDH-HYPH    PIC  X.
+               04  AR50WS-EPRDH        PIC  Z(03).
+           02  AR50WS-PART-APPL        LIKE INTL-AMT   COMP-3 VALUE
+                                       ZEROES.
+           02  AR50WS-INVOICE.
+               03  AR50WS-INVC-PREFIX      PIC X(02)  VALUE SPACE.
+               03  AR50WS-INVC-NUMBERA     PIC X(08)  VALUE SPACES.
+               03  AR50WS-INVC-NUMBER REDEFINES AR50WS-INVC-NUMBERA
+                                           PIC 9(08).
+           02  WS-AR50A-NAME            PIC X(50) VALUE SPACES.
+           02  ARWS-AR50A-SW            PIC 9(01) VALUE ZEROS.
+               88  AR50A-FOUND                    VALUE 0.
+               88  AR50A-NOTFOUND                 VALUE 1.
+           02  ARWS-AR50A-CREATED-SW    PIC 9(01) VALUE ZEROS.
+               88  AR50A-CREATED                  VALUE 1.
+           02  WS-AR50B-NAME            PIC X(50) VALUE SPACES.
+           02  ARWS-AR50B-SW            PIC 9(01) VALUE ZEROS.
+               88  AR50B-FOUND                    VALUE 0.
+               88  AR50B-NOTFOUND                 VALUE 1.
+           02  ARWS-AR50B-CREATED-SW    PIC 9(01) VALUE ZEROS.
+               88  AR50B-CREATED                  VALUE 1.
+          
+
+

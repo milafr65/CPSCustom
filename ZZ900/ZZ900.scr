@@ -1,0 +1,72 @@
+******* ZZ900.scr 8.1.14 <2017330379>
+*CHECKED
+$RELEASE   08.0
+*******************************************************************************
+*                           SCREEN   ZZ900
+*******************************************************************************
+$FORM      ZZ900    R
+$MENU      ARMN0
+$SECURITY  NO
+$DECIMALS  NO
+$NOLFCOK
+$KEYFCS    CD
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZZ900    R
+[ARRP[ ]              ?*** Lifeworks IF10 Load        ***          +N]
+                             ?;                                        ;
+   Report          [ZZ900]     Priority    [ ]     Save Params (Y,N) [ ]
+   User Name  [          ]
+   Job Name   [          ] --- This will be the name on your report
+   Run After  [          ] --- NOW, HOLD, Time (1230 pm), Job Name
+   Frequency           [ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\  Comments   [                                                  ]\
+
+   This will delete all lvl1=LIFEOWRKS IF10 entries and reload  
+   Input file is $LAWDIR/lsapps/work/lifeworks/IF10Files/INFILE.csv
+
+    Job run notes
+    1 IF10 level one is specifed in ZZ900WS
+    2 INFILE.csv must be sorted (use sort in LID)
+          A - cat monthly files together(will be more files in list 
+              after 1/1/2023
+           cat INFILE_202112-202211.csv INFILE_202212-202301.csv > t1
+          B - sort (e.g. Sort t1 > t2)
+          C - rename (mv t2 INFILE.csv) 
+
+
+$END-SCR   ZZ900    R
+*                            ELEMENT NAME
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZZ900    R
+  2     TC                    AL    06          SB
+  2     FC                    A     01          SF
+  2     UPDATE-SW             A     01          SB
+  2     SCREEN-MSG            O     40          SB
+  2     TRANCODE              A     05          RP
+  2     HEADER                G     00
+   3    Q-PRIORITY            N     01          SB
+   3    SAVE-PARAMS           A     01          SB
+   3    USER-NAME             A     10          SK
+   3    JOB-NAME              A     10          SK
+   3    RUN-AFTER             A     10          SB
+   3    FREQUENCY             A     01          SB
+   3    COMMENTS              A     50          SB
+$END-TRANS ZZ900    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     ZZ900    R
+  FC                                          A,C,D,I
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  JOB-NAME                                    R.00000000:R.ZZZZZZZZ
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+$END-EDITS ZZ900    R
+

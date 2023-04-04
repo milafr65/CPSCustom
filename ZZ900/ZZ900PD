@@ -1,0 +1,562 @@
+      ******************************************************************
+       050-EDIT-PARAMETERS             SECTION 10.
+      ******************************************************************
+       050-START.
+      *--- Verify input file present
+           MOVE WS-INFILE             TO SYSCMD-FILENAME.
+           PERFORM 900-FILEEXISTS.
+           IF (SYSCMD-ERROR           NOT = ZEROES)
+000330             MOVE 165                TO CRT-ERROR-NBR
+000340             MOVE WS-TRUE            TO WS-PARAMETER-ERROR
+000350             PERFORM 780-PRINT-ERROR-MSG
+000360             GO TO 050-END.
+
+       050-END.
+
+      ******************************************************************
+       100-PROGRAM-CONTROL             SECTION 10.
+      ******************************************************************
+       100-START.
+             PERFORM 910-AUDIT-BEGIN.
+debug***      GO TO 100-TEMP.
+           PERFORM 900-CLEAR-TABLES.
+      *---Create BILL-ITEM LUPTBLHDR records
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO DB-LVL-2-KEY.
+             PERFORM 840-FIND-IF2SET1.
+             IF (LUPTBLHDR-NOTFOUND)
+                 PERFORM 800-CREATE-LUPTBLHDR
+                 MOVE WS-LEVEL1          TO IF2-LVL-1-KEY
+                 MOVE "BILLING-ITEM"      TO IF2-LVL-2-KEY
+                 PERFORM 820-STORE-LUPTBLHDR.
+      *---Create INV-TO-PBHST LUPTBLHDR records
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO DB-LVL-2-KEY.
+             PERFORM 840-FIND-IF2SET1.
+             IF (LUPTBLHDR-NOTFOUND)
+                 PERFORM 800-CREATE-LUPTBLHDR
+                 MOVE WS-LEVEL1          TO IF2-LVL-1-KEY
+                 MOVE "INV-TO-PBHST"      TO IF2-LVL-2-KEY
+                 PERFORM 820-STORE-LUPTBLHDR.
+
+           PERFORM 800-OPENINPUTCSV-INFILE.
+           PERFORM 800-READCSV-INFILE.
+           PERFORM 1000-LOAD-IF10
+               UNTIL (INFILE-NOTFOUND).
+           PERFORM 1020-PROCESS-EMP-ID.
+      *--- Create LUPTBLDTL for INV-TO-PBHST CRP records                    
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PAE"              TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PAN"              TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PAV"              TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PFS"              TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PRS"              TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PRS1"             TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DL^DOF"              TO IF1-DTL-KEY.    
+             MOVE "CDSP"                TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "HL^AGOD"             TO IF1-DTL-KEY.    
+             MOVE "CHP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DL^PRM1"             TO IF1-DTL-KEY.    
+             MOVE "CRP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "HL^CDM2"             TO IF1-DTL-KEY.    
+             MOVE "CHP"                 TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+
+           
+      *--- Create LUPTBLDTL for BILLING ITEM CRP records                    
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PAE^"              TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PAN^"              TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PAV^"              TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PFS^"              TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PRS^"              TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DI^PRS1^"              TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DL^DOF^"              TO IF1-DTL-KEY.    
+             MOVE "DISABILITY^conversiondisability"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "HL^AGOD^"              TO IF1-DTL-KEY.    
+             MOVE "MEDICAL^conversionmedical"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "DL^PRM1^"             TO IF1-DTL-KEY.    
+             MOVE "PENSION^conversionretirement"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE "HL^CDM2^"              TO IF1-DTL-KEY.    
+             MOVE "MEDICAL^conversionmedical"   TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.     
+                  
+P3FX01       PERFORM 925-AUDIT-END.
+P3FX01       PERFORM 910-AUDIT-BEGIN.
+       100-TEMP.
+P3FX01          PERFORM 4000-FIX-END-DATES.
+
+             PERFORM 925-AUDIT-END.
+                         
+  
+       100-END.
+      ******************************************************************
+       1000-LOAD-IF10                  SECTION 10.
+      ******************************************************************
+       1000-START.
+
+           IF (IN-EE-ID NOT = WS-EMP-ID)
+           AND (WS-EMP-ID NOT = SPACES)
+               PERFORM 1020-PROCESS-EMP-ID
+               MOVE IN-EE-ID            TO WS-EMP-ID
+               PERFORM VARYING I9 FROM 1 BY 1
+               UNTIL (I9 > 99)
+                   INITIALIZE           WS-TBL-EE-ID(I9)
+                   INITIALIZE           WS-TBL-START-COVERAGE(I9)
+                   INITIALIZE           WS-TBL-END-COVERAGE(I9)
+                   INITIALIZE           WS-TBL-LAW-PLAN-TYPE(I9)
+                   INITIALIZE           WS-TBL-LAW-BENEFIT(I9)
+                   INITIALIZE           WS-TBL-LAW-PLAN-CD(I9)
+                   INITIALIZE           WS-TBL-LW-BILL-ITEM(I9)
+                   INITIALIZE           WS-TBL-LW-BEN-CODE(I9)
+                   INITIALIZE           WS-TBL-LW-PLAN-CODE(I9)
+                   INITIALIZE           WS-TBL-LW-OPTION(I9)
+                   INITIALIZE           WS-TBL-EMPYREAN-CODE(I9)
+               END-PERFORM
+               MOVE ZERO                TO I9.
+           PERFORM 1010-LOAD-EMP-ID.
+        
+           PERFORM 800-READCSV-INFILE.
+
+       1000-END.
+      ******************************************************************
+       1010-LOAD-EMP-ID                SECTION 10.
+      ******************************************************************
+       1010-START.
+
+      *--- reformat dates
+             UNSTRING IN-START-COVERAGE DELIMITED BY "/" INTO
+                                      WS-START-MM
+                                      WS-START-DD
+                                      WS-START-CCYY.
+             MOVE WS-START-MM         TO JSTWS-STR.
+AI0000       MOVE 2                  TO JSTWS-STR-LEN.
+AI0000       MOVE 2                  TO JSTWS-STR-OUT-LEN.
+             SET JSTWS-RIGHT               TO TRUE.
+AI0000       PERFORM 2000-JUSTIFY-OBJECT.
+AI0000       MOVE JSTWS-STR-OUT      TO WS-START-MM.
+             INSPECT WS-START-MM REPLACING LEADING " " BY "0".
+             MOVE WS-START-DD         TO JSTWS-STR.
+AI0000       MOVE 2                  TO JSTWS-STR-LEN.
+AI0000       MOVE 2                  TO JSTWS-STR-OUT-LEN.
+             SET JSTWS-RIGHT               TO TRUE.
+AI0000       PERFORM 2000-JUSTIFY-OBJECT.
+AI0000       MOVE JSTWS-STR-OUT      TO WS-START-DD.
+             INSPECT WS-START-DD REPLACING LEADING " " BY "0".
+             STRING WS-START-CCYY     DELIMITED BY SIZE
+                    WS-START-MM       DELIMITED BY SIZE
+                    WS-START-DD       DELIMITED BY SIZE
+                                       INTO WS-START-COVERAGE.
+
+             UNSTRING IN-END-COVERAGE DELIMITED BY "/" INTO
+                                      WS-END-MM
+                                      WS-END-DD
+                                      WS-END-CCYY.
+             MOVE WS-END-MM         TO JSTWS-STR.
+AI0000       MOVE 2                  TO JSTWS-STR-LEN.
+AI0000       MOVE 2                  TO JSTWS-STR-OUT-LEN.
+             SET JSTWS-RIGHT               TO TRUE.
+AI0000       PERFORM 2000-JUSTIFY-OBJECT.
+AI0000       MOVE JSTWS-STR-OUT      TO WS-END-MM.
+             INSPECT WS-END-MM REPLACING LEADING " " BY "0".
+             MOVE WS-END-DD         TO JSTWS-STR.
+AI0000       MOVE 2                  TO JSTWS-STR-LEN.
+AI0000       MOVE 2                  TO JSTWS-STR-OUT-LEN.
+             SET JSTWS-RIGHT               TO TRUE.
+AI0000       PERFORM 2000-JUSTIFY-OBJECT.
+AI0000       MOVE JSTWS-STR-OUT      TO WS-END-DD.
+             INSPECT WS-END-DD REPLACING LEADING " " BY "0".
+             STRING WS-END-CCYY       DELIMITED BY SIZE
+                    WS-END-MM        DELIMITED BY SIZE
+                    WS-END-DD        DELIMITED BY SIZE
+                                       INTO WS-END-COVERAGE.
+                                                        
+             MOVE IN-EE-ID            TO WS-EMP-ID.
+
+             PERFORM VARYING I9 FROM 1 BY 1
+             UNTIL (I9 > 99)
+             OR (WS-TBL-EE-ID(I9) = SPACES)
+             OR ((WS-TBL-EE-ID(I9) = IN-EE-ID)
+             AND (WS-TBL-LAW-PLAN-TYPE(I9) = IN-LAW-PLAN-TYPE)
+             AND (WS-TBL-LAW-PLAN-CD(I9) = IN-LAW-PLAN-CD)
+             AND (WS-TBL-LW-BEN-CODE(I9) = IN-LW-BEN-CODE) 
+             AND (WS-TBL-LW-PLAN-CODE(I9) = IN-LW-PLAN-CODE)
+P3FX01*      AND (WS-TBL-LW-OPTION  (I9) = IN-LW-OPTION)).
+P3FX01       AND (WS-TBL-LW-OPTION  (I9) = IN-LW-OPTION)  
+P3FX01       AND (WS-TBL-START-COVERAGE(I9) = WS-START-COVERAGE)).
+      *        DISPLAY "IN:"IN-EE-ID IN-LAW-PLAN-TYPE IN-LAW-PLAN-CD
+      *                     IN-LW-BEN-CODE IN-LW-PLAN-CODE IN-LW-OPTION
+      *        DISPLAY "WS:"WS-TBL-EE-ID(I9) WS-TBL-LAW-PLAN-TYPE(I9)
+      *        WS-TBL-LAW-PLAN-CD(I9) WS-TBL-LW-BEN-CODE(I9)
+      *        WS-TBL-LW-PLAN-CODE(I9) WS-TBL-LW-OPTION(I9).
+             IF (I9 NOT > 99)  
+               MOVE IN-EE-ID              TO WS-TBL-EE-ID(I9)              
+               MOVE WS-START-COVERAGE       TO WS-TBL-START-COVERAGE(I9) 
+               MOVE WS-END-COVERAGE         TO WS-TBL-END-COVERAGE(I9)   
+               MOVE IN-LAW-BENEFIT          TO WS-TBL-LAW-BENEFIT  (I9) 
+               MOVE IN-LAW-PLAN-TYPE        TO WS-TBL-LAW-PLAN-TYPE(I9) 
+               MOVE IN-LAW-PLAN-CD          TO WS-TBL-LAW-PLAN-CD(I9)    
+               MOVE IN-LW-BILL-ITEM         TO WS-TBL-LW-BILL-ITEM(I9)   
+               MOVE IN-LW-BEN-CODE          TO WS-TBL-LW-BEN-CODE(I9)   
+               MOVE IN-LW-PLAN-CODE         TO WS-TBL-LW-PLAN-CODE(I9)   
+               MOVE IN-LW-OPTION            TO WS-TBL-LW-OPTION(I9)      
+               MOVE IN-EMPYR-CODE           TO WS-TBL-EMPYREAN-CODE(I9)  
+            END-IF.
+
+       1010-END.
+      ******************************************************************
+       1020-PROCESS-EMP-ID             SECTION 10.
+      ******************************************************************
+       1020-START.
+             PERFORM VARYING I9 FROM 1 BY 1
+             UNTIL (I9 > 99)
+             OR (WS-TBL-EE-ID(I9) = SPACES)
+      *          DISPLAY "Rec: " WS-TBL-EE-ID(I9) " " 
+      *                   WS-TBL-LAW-PLAN-TYPE(I9) " " 
+      *                   WS-TBL-LAW-PLAN-CD(I9) " " 
+      *                   WS-TBL-LW-BEN-CODE(I9) " "
+      *                   WS-TBL-LW-PLAN-CODE(I9) " "
+      *                   WS-TBL-LW-OPTION(I9) " "  
+      *                   WS-TBL-START-COVERAGE(I9) " " 
+      *                   WS-TBL-END-COVERAGE(I9)
+                 PERFORM 1030-BEN-PLAN-OPT.
+
+       1020-END.
+
+      ******************************************************************
+       1030-BEN-PLAN-OPT               SECTION 10.
+      ******************************************************************
+       1030-START.
+
+             MOVE SPACES                TO WS-LEVEL3.
+             STRING WS-TBL-LAW-PLAN-TYPE(I9)  DELIMITED BY SPACE
+                    "^"                       DELIMITED BY SIZE
+                    WS-TBL-LAW-PLAN-CD(I9)    DELIMITED BY SPACE
+                                       INTO WS-LEVEL3.
+      *--- Create LUPTBLHDR if it doesn't exist
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "BEN-PLAN-OPT"        TO DB-LVL-2-KEY.
+             MOVE WS-LEVEL3             TO DB-LVL-3-KEY.
+             PERFORM 840-FIND-IF2SET1.
+             IF (LUPTBLHDR-NOTFOUND)
+                 PERFORM 800-CREATE-LUPTBLHDR
+                 MOVE WS-LEVEL1          TO IF2-LVL-1-KEY
+                 MOVE "BEN-PLAN-OPT"     TO IF2-LVL-2-KEY
+                 MOVE WS-LEVEL3          TO IF2-LVL-3-KEY
+                 PERFORM 820-STORE-LUPTBLHDR.
+
+             MOVE WS-TBL-EE-ID(I9)     TO JSTWS-STR.
+AI0000       MOVE 6                  TO JSTWS-STR-LEN.
+AI0000       MOVE 9                  TO JSTWS-STR-OUT-LEN.
+             SET JSTWS-RIGHT               TO TRUE.
+AI0000       PERFORM 2000-JUSTIFY-OBJECT.
+AI0000       MOVE JSTWS-STR-OUT      TO WS-EMP-ID9.
+             INSPECT WS-EMP-ID9 REPLACING LEADING " " BY "0".
+             MOVE SPACES               TO WS-DTL-KEY.
+             STRING WS-EMP-ID9          DELIMITED BY SIZE
+                    "-"                 DELIMITED BY SIZE
+                    WS-TBL-START-COVERAGE(I9) DELIMITED BY SIZE
+                    "-"                 DELIMITED BY SIZE
+                    WS-TBL-END-COVERAGE(I9) DELIMITED BY SIZE
+                                     INTO WS-DTL-KEY.
+             MOVE SPACES               TO WS-DTL-VAL.
+      *       STRING WS-TBL-LW-BEN-CODE(I9)  DELIMITED BY SPACE
+             STRING WS-TBL-LW-PLAN-CODE(I9)  DELIMITED BY SPACE
+                    "-"                 DELIMITED BY SIZE
+                    WS-TBL-LW-OPTION(I9) DELIMITED BY SPACE
+                                     INTO WS-DTL-VAL.
+      *--- Create LUPTBLDTL for BEN PLAN OPT                      
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "BEN-PLAN-OPT"        TO DB-LVL-2-KEY.
+             MOVE WS-LEVEL3             TO DB-LVL-3-KEY.
+             MOVE WS-DTL-KEY            TO DB-DTL-KEY.    
+             PERFORM 840-FIND-IF1SET1.
+             IF (LUPTBLDTL-FOUND)
+                DISPLAY "Duplicate BEN PLAN OPT " WS-LEVEL3 " "
+                         WS-DTL-KEY
+                GO TO 1030-CONTINUE.
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BEN-PLAN-OPT"        TO IF1-LVL-2-KEY.
+             MOVE WS-LEVEL3             TO IF1-LVL-3-KEY.
+             MOVE WS-DTL-KEY            TO IF1-DTL-KEY.    
+             MOVE WS-DTL-VAL            TO IF1-DTL-VALUE.    
+             PERFORM 820-STORE-LUPTBLDTL.                        
+                         
+       1030-CONTINUE.
+             MOVE SPACES                TO WS-DTL-KEY.
+             IF (WS-TBL-EMPYREAN-CODE(I9)(8:3) = "U65")
+               STRING WS-TBL-LAW-PLAN-TYPE(I9)  DELIMITED BY SPACE
+                      "^"                       DELIMITED BY SIZE
+                      WS-TBL-LAW-PLAN-CD(I9)    DELIMITED BY SPACE
+                      "^"                       DELIMITED BY SIZE
+                      WS-EMP-ID9                DELIMITED BY SIZE 
+                                         INTO WS-DTL-KEY 
+             ELSE
+               STRING WS-TBL-LAW-PLAN-TYPE(I9)  DELIMITED BY SPACE
+                      "^"                       DELIMITED BY SIZE
+                      WS-TBL-LAW-PLAN-CD(I9)    DELIMITED BY SPACE
+                      "^"                       DELIMITED BY SIZE
+                                         INTO WS-DTL-KEY.
+
+              MOVE SPACES                   TO WS-DTL-VAL. 
+              STRING WS-TBL-LW-BEN-CODE(I9) DELIMITED BY SPACE
+                     "^"                    DELIMITED BY SIZE
+                     WS-TBL-LW-BILL-ITEM(I9) DELIMITED BY SIZE
+                                         INTO WS-DTL-VAL. 
+
+      *--- Create LUPTBLDTL for BBILLING ITEM                     
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO DB-LVL-2-KEY.
+             MOVE SPACES                TO DB-LVL-3-KEY.
+             MOVE WS-DTL-KEY            TO DB-DTL-KEY.    
+             PERFORM 840-FIND-IF1SET1.
+             IF (LUPTBLDTL-FOUND)
+      *           DISPLAY "Duplicate BILLING ITEM " WS-LEVEL3 " "
+      *                    WS-DTL-KEY
+                GO TO 1030-END. 
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "BILLING-ITEM"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE WS-DTL-KEY            TO IF1-DTL-KEY.    
+             MOVE WS-DTL-VAL            TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+                         
+      *--- Dont create the INV-TO-PBHST at teh employee level
+             IF (WS-TBL-EMPYREAN-CODE(I9)(8:3) = "U65")
+                 GO TO 1030-END.
+
+             MOVE SPACES                   TO WS-DTL-KEY. 
+             STRING WS-TBL-LAW-PLAN-TYPE(I9)  DELIMITED BY SPACE
+                    "^"                       DELIMITED BY SIZE
+                    WS-TBL-LAW-PLAN-CD(I9)    DELIMITED BY SPACE
+                                       INTO WS-DTL-KEY.
+
+      *--- Create LUPTBLDTL for INV-TO-PBHST                     
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO DB-LVL-2-KEY.
+             MOVE SPACES                TO DB-LVL-3-KEY.
+             MOVE WS-DTL-KEY            TO DB-DTL-KEY.    
+             PERFORM 840-FIND-IF1SET1.
+             IF (LUPTBLDTL-FOUND)
+      *           DISPLAY "Duplicate BILLING ITEM " WS-LEVEL3 " "
+      *                    WS-DTL-KEY
+                GO TO 1030-END. 
+             PERFORM 800-CREATE-LUPTBLDTL.
+             MOVE WS-LEVEL1             TO IF1-LVL-1-KEY.
+             MOVE "INV-TO-PBHST"        TO IF1-LVL-2-KEY.
+             MOVE SPACES                TO IF1-LVL-3-KEY.
+             MOVE WS-DTL-KEY            TO IF1-DTL-KEY.    
+             MOVE WS-TBL-LAW-BENEFIT(I9) TO IF1-DTL-VALUE.
+             PERFORM 820-STORE-LUPTBLDTL.                        
+                         
+
+
+       1030-END.
+
+P3FX01******************************************************************
+       4000-FIX-END-DATES              SECTION 10.
+      ******************************************************************
+       4000-START.
+
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             MOVE "BENZZZZZZZZZ"        TO DB-LVL-2-KEY.
+             MOVE SPACES                TO DB-LVL-3-KEY.
+             MOVE SPACES                TO DB-DTL-KEY.       
+             PERFORM 850-MODIFY-NLT-IF1SET1.
+             PERFORM 870-MODIFY-PREV-IF1SET1.
+             PERFORM 4010-END-DATES 
+             UNTIL (LUPTBLDTL-NOTFOUND)
+             OR    (IF1-LVL-1-KEY NOT = WS-LEVEL1) 
+             OR    (IF1-LVL-2-KEY NOT = "BEN-PLAN-OPT").
+
+
+
+       4000-END.
+
+      ******************************************************************
+       4010-END-DATES                  SECTION 10.
+      ******************************************************************
+       4010-START.
+
+            MOVE IF1-LVL-3-KEY       TO WS-SV-LVL-3-KEY.
+            MOVE IF1-DTL-VALUE       TO WS-SV-DTL-VALUE. 
+            UNSTRING IF1-DTL-VALUE DELIMITED BY "-"
+                                     INTO WS-PLAN
+                                          WS-OPTION.
+            MOVE WS-PLAN             TO WS-SV-PLAN.  
+            MOVE IF1-DTL-KEY         TO WS-SV-DTL-KEY.
+            PERFORM 870-MODIFY-PREV-IF1SET1.
+            IF (IF1-LVL-2-KEY = "BEN-PLAN-OPT")
+      **    AND (IF1-DTL-VALUE   = WS-SV-DTL-VALUE)    
+            AND (WS-PLAN         = WS-SV-PLAN)         
+            AND (IF1-LVL-3-KEY = WS-SV-LVL-3-KEY)
+            AND (WS-SV-DTL-KEY(1:9) = IF1-DTL-KEY(1:9))
+                MOVE WS-SV-DTL-KEY(11:8)   TO WS-DATE-A
+                MOVE WS-DATE-N             TO WSDR-FR-DATE
+                MOVE -1                    TO WSDR-DAY-INCR
+                PERFORM 900-INCREMENT-DATE
+                PERFORM 830-DELETE-LUPTBLDTL
+                PERFORM 810-RECREATE-LUPTBLDTL
+                MOVE  WSDR-TO-DATE     TO IF1-DTL-KEY(20:8)
+                PERFORM 820-STORE-LUPTBLDTL
+                MOVE IF1-DTL-KEY         TO WS-SV-DTL-KEY
+                MOVE WS-LEVEL1             TO DB-LVL-1-KEY 
+                MOVE IF1-LVL-2-KEY         TO DB-LVL-2-KEY 
+                MOVE IF1-LVL-3-KEY         TO DB-LVL-3-KEY 
+                MOVE IF1-DTL-KEY           TO DB-DTL-KEY    
+                PERFORM 850-MODIFY-NLT-IF1SET1.
+
+
+       4010-END.
+P3FX01
+
+      ******************************************************************
+       900-CLEAR-TABLES                SECTION 10.
+      ******************************************************************
+       900-START.
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             PERFORM 850-MODIFY-NLT-IF2SET1.
+             PERFORM 901-REMOVE-HDR
+             UNTIL (LUPTBLHDR-NOTFOUND)
+             OR    (IF2-LVL-1-KEY NOT = WS-LEVEL1).
+
+             MOVE WS-LEVEL1             TO DB-LVL-1-KEY.
+             PERFORM 850-MODIFY-NLT-IF1SET1.
+             PERFORM 902-REMOVE-DTL
+             UNTIL (LUPTBLDTL-NOTFOUND)
+             OR    (IF1-LVL-1-KEY NOT = WS-LEVEL1).
+
+       900-END.
+
+      ******************************************************************
+       901-REMOVE-HDR                       SECTION 50.
+      ******************************************************************
+       901-START.
+
+********     DISPLAY "hdr: " LUPTBLHDR.
+             PERFORM 830-DELETE-LUPTBLHDR.
+             PERFORM 860-MODIFY-NEXT-IF2SET1.
+
+       901-END.
+
+      ******************************************************************
+       902-REMOVE-DTL                       SECTION 50.
+      ******************************************************************
+       902-START.
+
+*********    DISPLAY "dtl: " LUPTBLDTL.
+             PERFORM 830-DELETE-LUPTBLDTL.
+             PERFORM 860-MODIFY-NEXT-IF1SET1.
+
+       902-END.
+
