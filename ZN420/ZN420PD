@@ -28,6 +28,10 @@ AI0002*                  Spouse codes only.
 AI0002*                - Beneficiary Sub Plan: use most recent Plan Code
 AI0002*                  if plan is currently inactive for all processed
 AI0002*                  relation codes.
+US3978* 07/27/2022  MLF  Only IC process level now is 07405
+US4053* 10/04/2022  MLF  Delimiter character will be set in
+US4053*                   working storage
+US4052* 04/14/2023  MLF  Supplemental/foreign addresses
       ******************************************************************
 000040 050-START.
 000050
@@ -209,13 +213,21 @@ N02230******************************************************************
             MOVE "WHOAMI" TO WS-COMMAND-STRING.
             CALL "SYSTEM"               USING WS-COMMAND.
 
+US4053* ! IS A PLACEHOLDER IN THE INITIALIZED COMMAND STRING AND
+US4053*  WILL BE REPLACED BY THE DELIMITER VALUE SET IN 
+US4053*  WORKING STORAGE. I COULD NOT WORK OUT HOW TO GET ALL
+US4053*  THE DOUBLE QUOTES IN THE STRING CORRECTLY SO I USED
+US4053*  AN INSPECT STATEMENT TO EDIT IN THE DELIMITER CHAR
+
            INITIALIZE                         WS-COMMAND-STRING.
-           STRING "gawk '{gsub(""#"""         DELIMITED BY SIZE
-                 ","""");print}'"             DELIMITED BY SPACES
+US4053     STRING "gawk '{gsub(""!"""         DELIMITED BY SIZE
+                  ","""");print}'"            DELIMITED BY SPACES
                   "  "                        DELIMITED BY SIZE
                   WS-PERS-DTL-FILE            DELIMITED BY SPACES
                   " > temp1 "                 DELIMITED BY SIZE
-                                         INTO WS-COMMAND-STRING.
+                                         INTO WS-COMMAND-STRING.    
+US4053      INSPECT WS-COMMAND-STRING
+US4053      REPLACING ALL "!" BY WS-DELIM.
             DISPLAY WS-COMMAND-STRING.
             CALL "system"               USING WS-COMMAND.
 004180
@@ -233,12 +245,14 @@ N02230******************************************************************
             CALL "system"               USING WS-COMMAND.
 
            INITIALIZE                         WS-COMMAND-STRING.
-           STRING "gawk '{gsub(""#"""         DELIMITED BY SIZE
+US4053     STRING "gawk '{gsub(""!"""         DELIMITED BY SIZE
                  ","""");print}'"             DELIMITED BY SPACES
                   "  "                        DELIMITED BY SIZE
                   WS-BENE-DTL-FILE            DELIMITED BY SPACES
                   " > temp2 "                 DELIMITED BY SIZE
                                          INTO WS-COMMAND-STRING.
+US4053      INSPECT WS-COMMAND-STRING
+US4053      REPLACING ALL "!" BY WS-DELIM.
             DISPLAY WS-COMMAND-STRING.
             CALL "system"               USING WS-COMMAND.
 004180
@@ -333,7 +347,7 @@ WO5483     END-IF.
 004630     MOVE EMP-FICA-NBR(5:2)          TO CSV-SSN(4:2).  
 004630     MOVE EMP-FICA-NBR(8:4)          TO CSV-SSN(6:4).
            IF (CSV-SSN = "999999999")
-               MOVE "#"                    TO CSV-SSN.
+US3978         MOVE WS-DELIM               TO CSV-SSN.
 004630     MOVE EMP-EMPLOYEE               TO CSV-EMPLOYEE.   
            INSPECT CSV-EMPLOYEE REPLACING LEADING ZEROES BY SPACES.
            MOVE CSV-EMPLOYEE               TO HRWS-VALUE.
@@ -343,16 +357,16 @@ WO5483     END-IF.
 004670     MOVE EMP-FIRST-NAME             TO CSV-FIRST-NAME.
 004680     MOVE EMP-MIDDLE-NAME            TO CSV-MIDDLE-NAME.
 004680     IF (EMP-MIDDLE-NAME = SPACES)                           
-              MOVE "#"                     TO CSV-MIDDLE-NAME.
+US3978        MOVE WS-DELIM                TO CSV-MIDDLE-NAME.
 004660     MOVE EMP-LAST-NAME              TO CSV-LAST-NAME.
            IF (EMP-NAME-SUFFIX NOT = SPACES)
 004660         MOVE EMP-NAME-SUFFIX        TO CSV-NAME-SUFFIX 
            ELSE                                  
-004660         MOVE "#"                    TO CSV-NAME-SUFFIX.
+US3978         MOVE WS-DELIM               TO CSV-NAME-SUFFIX.
            IF (EMP-NAME-PREFIX NOT = SPACES)
 004660         MOVE EMP-NAME-PREFIX        TO CSV-TITLE        
            ELSE                                
-004660         MOVE "#"                    TO CSV-TITLE.      
+US3978        MOVE WS-DELIM               TO CSV-TITLE.      
 004660     MOVE PEM-SEX                    TO CSV-GENDER.    
            IF (PEM-TRUE-MAR-STAT = "M" OR "C" OR "R")
 004660         MOVE "M"                    TO CSV-MARITAL-STATUS
@@ -361,7 +375,7 @@ WO5483     END-IF.
                                    "O" OR "P" OR "U")
 004660         MOVE "S"                    TO CSV-MARITAL-STATUS
            ELSE
-004660         MOVE "#"                    TO CSV-MARITAL-STATUS.
+US3978         MOVE WS-DELIM               TO CSV-MARITAL-STATUS.
 004660     MOVE ZEROES                     TO CSV-MS-EFFECT-DATE.
            IF (CSV-MARITAL-STATUS = "M")
                MOVE EMP-COMPANY            TO DB-COMPANY
@@ -381,44 +395,44 @@ WO5483     END-IF.
                    IF (WBPDEPEND-FOUND)
 004660                 MOVE WBD-MARRIAGE-DATE  TO CSV-MS-EFFECT-DATE.
            IF (CSV-MS-EFFECT-DATE = SPACES OR ZEROES)
-               MOVE "#"                    TO CSV-MS-EFFECT-DATE.
+US3978         MOVE WS-DELIM               TO CSV-MS-EFFECT-DATE.
 004660     MOVE PEM-BIRTHDATE              TO CSV-BIRTH-DATE.
            IF (EMP-DEATH-DATE NOT = ZEROES) 
 004660         MOVE EMP-DEATH-DATE         TO CSV-DEATH-DATE   
            ELSE                                   
-004660         MOVE "#"                    TO CSV-DEATH-DATE. 
+US3978        MOVE WS-DELIM                TO CSV-DEATH-DATE. 
 004660     MOVE EMP-EMAIL-ADDRESS          TO CSV-EMAIL.      
            INSPECT CSV-EMAIL   
                    CONVERTING LOWER-CASE TO UPPER-CASE.
 004660     IF (EMP-EMAIL-ADDRESS = SPACES)                   
-004660         MOVE "#"                    TO CSV-EMAIL.      
-004660     MOVE "#"                        TO CSV-ALT-EMAIL.
-           IF (EMP-PROCESS-LEVEL = "07215" OR "07240" OR "07405"
-                                OR "07406" OR "07788")  
+US3978         MOVE WS-DELIM               TO CSV-EMAIL.      
+US3978     MOVE WS-DELIM                   TO CSV-ALT-EMAIL.
+US3978     IF (EMP-PROCESS-LEVEL = "07405")  
                MOVE "IC"                   TO CSV-PERSONAL-CD1
            ELSE
 004660         MOVE "9"                    TO CSV-PERSONAL-CD1.
 004660     MOVE EMP-EMPLOYEE               TO CSV-PERSONAL-CD2.   
 004660     MOVE "00"                       TO CSV-PERSONAL-CD2(10:2).
-004660     MOVE "#"                        TO CSV-PERSONAL-CD3   
+US3978     MOVE WS-DELIM                   TO CSV-PERSONAL-CD3   
 004660                                        CSV-PERSONAL-CD4.
 004690     MOVE EMP-ADDR1                  TO CSV-ADDR1.
            IF (EMP-ADDR2 NOT = SPACES)
 004660         MOVE EMP-ADDR2              TO CSV-ADDR2            
            ELSE                                 
-004660         MOVE "#"                    TO CSV-ADDR2.            
+US3978         MOVE WS-DELIM               TO CSV-ADDR2.            
            IF (EMP-ADDR3 NOT = SPACES)
 004660         MOVE EMP-ADDR3              TO CSV-ADDR3            
            ELSE                                 
-004660         MOVE "#"                    TO CSV-ADDR3.            
+US3978         MOVE WS-DELIM               TO CSV-ADDR3.            
 004710     MOVE EMP-CITY                   TO CSV-CITY.
 004720     MOVE EMP-STATE                  TO CSV-STATE.
 004730     MOVE EMP-ZIP                    TO CSV-ZIP.
-004740     MOVE "#"                        TO CSV-COUNTY.
-004740     MOVE EMP-COUNTRY-CODE           TO CSV-COUNTRY.
-004690     IF (EMP-COUNTRY-CODE = "US")
-               MOVE "USA"                  TO CSV-COUNTRY.
-004690     MOVE "#"                        TO CSV-WORK-ADDR1 
+US3978     MOVE WS-DELIM                   TO CSV-COUNTY.
+US4052     MOVE EMP-COUNTRY-CODE           TO WS-COUNTRY-CODE-2.
+US4052     PERFORM 3500-COUNTRY-CODE-LOOKUP
+US4052     THRU 3500-END.
+US4052     MOVE WS-COUNTRY-CODE-3          TO CSV-COUNTRY.
+US3978     MOVE WS-DELIM                   TO CSV-WORK-ADDR1 
 004700                                        CSV-WORK-ADDR2 
 004700                                        CSV-WORK-ADDR3 
 004710                                        CSV-WORK-CITY 
@@ -434,43 +448,78 @@ WO5483     END-IF.
 004730                                        CSV-ALT-ZIP 
 004740                                        CSV-ALT-COUNTY 
 004740                                        CSV-ALT-COUNTRY.
+
+US4052* DETECT FOREIGN ADDRESS AND MOVE TO ALT ADDR FIELDS
+US4052* IF FOUND. THIS IS THE SAME METHOD FOR FOREIGN ADDR
+US4052* USED ON FIDELITY FILE / ZH211
+
+US4052* THIS WAS CHANGED TO MOVE OUT SUPP ADDRESS TO ALL RECORDS.
+US4052* WTW WILL SCREEN FOR 1333 S KIRKWOOD RD AND VARIATIONS
+US4052* IN MAIN ADDR AND USE SUPP ADDR ON MATCHES.
+
+US4052     IF  (PEM-SUPP-CNTRY-CD NOT = SPACES)
+US4052     AND (PEM-SUPP-CNTRY-CD NOT = "US")
+US4052         MOVE PEM-SUPP-CNTRY-CD      TO WS-COUNTRY-CODE-2
+US4052         PERFORM 3500-COUNTRY-CODE-LOOKUP
+US4052         THRU 3500-END
+US4052         MOVE WS-COUNTRY-CODE-3      TO CSV-ALT-COUNTRY
+US4052     END-IF.
+US4052     IF (PEM-SUPP-ADDR1 NOT = SPACES)
+US4052         MOVE PEM-SUPP-ADDR1     TO CSV-ALT-ADDR1
+US4052     END-IF.
+US4052     IF (PEM-SUPP-ADDR2 NOT = SPACES)
+US4052         MOVE PEM-SUPP-ADDR2     TO CSV-ALT-ADDR2
+US4052     END-IF.
+US4052     IF (PEM-SUPP-ADDR3 NOT = SPACES)
+US4052         MOVE PEM-SUPP-ADDR3     TO CSV-ALT-ADDR3
+US4052     END-IF.
+US4052     IF (PEM-SUPP-CITY NOT = SPACES)
+US4052         MOVE PEM-SUPP-CITY      TO CSV-ALT-CITY
+US4052     END-IF.
+US4052     IF (PEM-SUPP-STATE NOT = SPACES)
+US4052         MOVE PEM-SUPP-STATE     TO CSV-ALT-STATE
+US4052     END-IF.
+US4052     IF (PEM-SUPP-ZIP NOT = SPACES)
+US4052         MOVE PEM-SUPP-ZIP       TO CSV-ALT-ZIP
+US4052     END-IF.
+
 004750     MOVE PEM-HM-PHONE-NBR           TO CSV-HOME-PHONE.     
 004750     IF (PEM-HM-PHONE-NBR = SPACES)                  
-004750         MOVE "#"                    TO CSV-HOME-PHONE.      
-004760     MOVE "#"                        TO CSV-HOME-PHONE-INSTR.
+US3978         MOVE WS-DELIM               TO CSV-HOME-PHONE.      
+US3978     MOVE WS-DELIM                   TO CSV-HOME-PHONE-INSTR.
 004750     MOVE PEM-WK-PHONE-NBR           TO CSV-WORK-PHONE.     
 004750     IF (PEM-WK-PHONE-NBR = SPACES)                  
-004750         MOVE "#"                    TO CSV-WORK-PHONE.      
+US3978        MOVE WS-DELIM                TO CSV-WORK-PHONE.      
 004760     MOVE PEM-WK-PHONE-EXT           TO CSV-WORK-PHONE-INSTR.
 004750     IF (PEM-WK-PHONE-EXT = SPACES)                  
-004750         MOVE "#"                    TO CSV-WORK-PHONE-INSTR.
+US3978         MOVE WS-DELIM               TO CSV-WORK-PHONE-INSTR.
            
 SR4177     PERFORM 3000-MOBILE-PHONE-LOOKUP
 SR4177        THRU 3000-END.
 SR4177     MOVE WS-HCN-PHONE               TO CSV-MOBILE-PHONE.
 SR1177     IF (WS-HCN-PHONE = SPACES)
-SR4177         MOVE "#"                    TO CSV-MOBILE-PHONE.
+US3978         MOVE WS-DELIM               TO CSV-MOBILE-PHONE.
 SR4177     MOVE WS-HCN-PHONE-EXT           TO CSV-MOBILE-PHONE-INSTR.
 SR4177     IF (WS-HCN-PHONE-EXT = SPACES)
-SR4177         MOVE "#"                    TO CSV-MOBILE-PHONE-INSTR.
+US3978         MOVE WS-DELIM               TO CSV-MOBILE-PHONE-INSTR.
 
 005120     MOVE EMP-DATE-HIRED             TO CSV-HIRE-DATE.
            IF (EMP-ADJ-HIRE-DATE NOT = ZEROES)
 004660         MOVE EMP-ADJ-HIRE-DATE      TO CSV-ADJ-HIRE-DATE    
            ELSE                                 
-004660         MOVE "#"                    TO CSV-ADJ-HIRE-DATE.    
-008000     MOVE "#"                        TO CSV-LATEST-HIRE-DATE.
+US3978         MOVE WS-DELIM               TO CSV-ADJ-HIRE-DATE.    
+US3978     MOVE WS-DELIM                   TO CSV-LATEST-HIRE-DATE.
            IF (EMP-TERM-DATE NOT = ZEROES)
 004660         MOVE EMP-TERM-DATE          TO CSV-TERM-DATE        
            ELSE                                 
-004660         MOVE "#"                    TO CSV-TERM-DATE.        
-008000     MOVE "#"                        TO CSV-SEV-BEGIN-DATE 
+US3978         MOVE WS-DELIM               TO CSV-TERM-DATE.        
+US3978     MOVE WS-DELIM                   TO CSV-SEV-BEGIN-DATE 
 008000                                        CSV-SEV-END-DATE
 008000                                        CSV-JOB-TITLE 
                                               CSV-JOB-CODE
                                               CSV-JOB-QUALIFIER
                                               CSV-JOB-REGION.
-008000     MOVE "#"                        TO CSV-EMPLOYMENT-CD1.
+US3978     MOVE WS-DELIM                   TO CSV-EMPLOYMENT-CD1.
 008000     MOVE "NO"                       TO CSV-EMPLOYMENT-CD2.
 
            MOVE EMP-COMPANY                TO DB-COMPANY.
@@ -538,10 +587,10 @@ SR4177         MOVE "#"                    TO CSV-MOBILE-PHONE-INSTR.
                        MOVE "YES"          TO CSV-EMPLOYMENT-CD2.
                    
 004210 1040-SKIP-PARTBEN.   
-008000     MOVE "#"                        TO CSV-EMPLOYMENT-CD3 
+US3978     MOVE WS-DELIM                   TO CSV-EMPLOYMENT-CD3 
 008000                                        CSV-EMPLOYMENT-CD4.
 008000     MOVE "EMPLOYEE"                 TO CSV-PERSON-TYPE.
-008000     MOVE "#"                        TO CSV-MEDICARE-FLAG
+US3978     MOVE WS-DELIM                   TO CSV-MEDICARE-FLAG
 008000                                        CSV-HR-REP-ID  
 008000                                        CSV-MANAGER-ID.
 008010
@@ -648,7 +697,7 @@ AI0001*        IF  (WBPBENTAG-FOUND)
 AI0001*        AND (WEN-PLAN-CODE(1:2) = "PA")
 AI0001         IF (WS-WEN-PLAN-CODE-PFX = "PA")
 004670             MOVE "ACCOUNT"          TO BEN-SUB-PLAN-NAME.
-           MOVE "#"                        TO BEN-NON-QUAL-JT-ANN.
+US3978     MOVE WS-DELIM                   TO BEN-NON-QUAL-JT-ANN.
 
 004630     MOVE EMD-FICA-NBR(1:3)          TO BEN-BENE-SSN(1:3).  
 004630     MOVE EMD-FICA-NBR(5:2)          TO BEN-BENE-SSN(4:2).  
@@ -659,40 +708,20 @@ AI0001     END-IF.
 004670     MOVE EMD-FIRST-NAME             TO BEN-BENE-FIRST-NAME.
 004680     MOVE EMD-MIDDLE-INIT            TO BEN-BENE-MIDDLE-NAME.
 004680     IF (EMD-MIDDLE-INIT = SPACES)                           
-              MOVE "#"                     TO BEN-BENE-MIDDLE-NAME.
+US3978        MOVE WS-DELIM                TO BEN-BENE-MIDDLE-NAME.
 004660     MOVE EMD-LAST-NAME              TO BEN-BENE-LAST-NAME.
            IF (EMD-NAME-SUFFIX NOT = SPACES)
 004660         MOVE EMD-NAME-SUFFIX        TO BEN-BENE-NAME-SUFFIX 
            ELSE                                  
-004660         MOVE "#"                    TO BEN-BENE-NAME-SUFFIX.
-004660     MOVE "#"                        TO BEN-BENE-TITLE.      
+US3978         MOVE WS-DELIM               TO BEN-BENE-NAME-SUFFIX.
+US3978     MOVE WS-DELIM                   TO BEN-BENE-TITLE.      
 004660     MOVE EMD-SEX                    TO BEN-BENE-GENDER.    
 004660     MOVE EMD-BIRTHDATE              TO BEN-BENE-BIRTHDATE.
            IF (EMD-DEATH-DATE NOT = ZEROES) 
 004660         MOVE EMD-DEATH-DATE         TO BEN-BENE-DEATH-DATE   
            ELSE                                   
-004660         MOVE "#"                    TO BEN-BENE-DEATH-DATE. 
+US3978         MOVE WS-DELIM               TO BEN-BENE-DEATH-DATE. 
 
-004690     MOVE EMP-ADDR1                  TO BEN-ADDR1.
-           IF (EMP-ADDR2 NOT = SPACES)
-004660         MOVE EMP-ADDR2              TO BEN-ADDR2            
-           ELSE                                 
-004660         MOVE "#"                    TO BEN-ADDR2.            
-           IF (EMP-ADDR3 NOT = SPACES)
-004660         MOVE EMP-ADDR3              TO BEN-ADDR3            
-           ELSE                                 
-004660         MOVE "#"                    TO BEN-ADDR3.            
-004710     MOVE EMP-CITY                   TO BEN-CITY.
-004720     MOVE EMP-STATE                  TO BEN-STATE.
-004730     MOVE EMP-ZIP                    TO BEN-ZIP.
-004740     MOVE "#"                        TO BEN-COUNTY.
-004740     MOVE EMP-COUNTRY-CODE           TO BEN-COUNTRY.
-004690     IF (EMP-COUNTRY-CODE = "US")
-               MOVE "USA"                  TO BEN-COUNTRY.
-004750     MOVE PEM-HM-PHONE-NBR           TO BEN-HOME-PHONE.     
-004750     IF (PEM-HM-PHONE-NBR = SPACES)                  
-004750         MOVE "#"                    TO BEN-HOME-PHONE.      
-004760     MOVE "#"                        TO BEN-HOME-PHONE-INSTR.
            IF (EMD-REL-CODE = "SPOUSE CUR" OR "MIL SPOUSE")
            AND (EMP-EMP-STATUS(1:1) = "R")
                MOVE "YES"                  TO BEN-BENE-CD3 
@@ -703,7 +732,7 @@ AI0001     END-IF.
            ELSE
                MOVE 0                      TO BEN-QUAL-PRIM-PCT.
            MOVE 0                          TO BEN-QUAL-CONT-PCT.
-           MOVE "#"                        TO BEN-NON-QUAL-PRIM-PCT
+US3978     MOVE WS-DELIM                   TO BEN-NON-QUAL-PRIM-PCT
                                               BEN-NON-QUAL-CONT-PCT
                                               BEN-QUAL-DEF-BENE-AMT
                                               BEN-QUAL-DEF-BENE-STAT
@@ -740,12 +769,12 @@ AI0001     END-IF.
 004400     MOVE EMD-SEQ-NBR                TO DB-SEQ-NBR.    
 004400     PERFORM 840-FIND-WBDSET1.
            IF (WBPDEPEND-NOTFOUND)
-               MOVE "#"                    TO BEN-BENE-CD1     
+US3978         MOVE WS-DELIM               TO BEN-BENE-CD1     
                                               BEN-BENE-CD2 
 SR4177                                        BEN-BENE-CD4         
            ELSE
              IF (WBD-MARRIAGE-DATE = ZEROES)
-               MOVE "#"                    TO BEN-BENE-CD1
+US3978         MOVE WS-DELIM               TO BEN-BENE-CD1
              ELSE
                MOVE WBD-MARRIAGE-DATE(5:2) TO BEN-BENE-CD1(1:2)
                MOVE "/"                    TO BEN-BENE-CD1(3:1)
@@ -754,7 +783,7 @@ SR4177                                        BEN-BENE-CD4
                MOVE WBD-MARRIAGE-DATE(1:4) TO BEN-BENE-CD1(7:4)
              END-IF
              IF (WBD-DIVORCE-DATE = ZEROES)
-               MOVE "#"                    TO BEN-BENE-CD2
+US3978         MOVE WS-DELIM               TO BEN-BENE-CD2
              ELSE
                MOVE WBD-DIVORCE-DATE (5:2) TO BEN-BENE-CD2(1:2) 
                MOVE "/"                    TO BEN-BENE-CD2(3:1)
@@ -765,7 +794,7 @@ SR4177* WBPDEPEND HIC NUMBER IS USED TO ASSOCIATE A DECEASED
 SR4177* DEPENDENT TO AN EMPLOYEE
 SR4177       END-IF
 SR4177       IF (WBD-HIC-NUMBER = SPACES) 
-SR4177         MOVE "#"                    TO BEN-BENE-CD4
+US3978         MOVE WS-DELIM               TO BEN-BENE-CD4
 SR4177       ELSE 
 SR4177         MOVE WBD-HIC-NUMBER         TO BEN-BENE-CD4
 SR4177         INSPECT BEN-BENE-CD4 REPLACING  LEADING ZEROES BY SPACES
@@ -919,6 +948,32 @@ SR4177*  NEW PARAGRAPH
                 PERFORM 860-FIND-NEXT-HCNSET1.            
       
        3050-END.
+
+      ******************************************************************
+       3500-COUNTRY-CODE-LOOKUP.
+      ******************************************************************
+US4052*ADDED PARAGRAPH
+
+            MOVE "ZZZ"                 TO WS-COUNTRY-CODE-3.
+
+            IF (WS-COUNTRY-CODE-2 = SPACES)
+                MOVE "US" TO WS-COUNTRY-CODE-2
+            END-IF.
+
+            PERFORM 
+            VARYING SUB1 FROM 1 BY 1
+            UNTIL (SUB1 > WS-CNTRY-TBL-MAX)
+               IF (WS-COUNTRY-CODE-2 = WS-LAW-CNTRY-CODE (SUB1))   
+                   MOVE WS-WTW-CNTRY-CODE (SUB1) TO WS-COUNTRY-CODE-3
+               END-IF
+            END-PERFORM.
+
+            IF (WS-COUNTRY-CODE-3 = "ZZZ")
+                DISPLAY "COUNTRY CODE LOOKUP ERROR:",
+                         WS-COUNTRY-CODE-2
+            END-IF.    
+
+       3500-END.
 
 015150******************************************************************
 015160 1000-END.

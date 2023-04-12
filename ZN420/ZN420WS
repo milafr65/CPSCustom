@@ -12,6 +12,10 @@ SR4177*                  - GENERATE BENEFICIARY RECORD IF EMDEPEND -OR-*
 SR4177*                    WBPDEPEND WAS UPDATED DURING RPT DATE RANGE *
 SR4177*                  - TO CORRECT ISSUE WITH DECEASED DEPENDENTS,  *
 SR4177*                    BENE-CD4 WILL BE THE HIC# FROM WBPDEPEND    *
+US4053*              MLF   USER STORY 4053                             *
+US4053*                    ALLOWS DELIMITER CHAR TO BE SET HERE IN     *
+US4053*                     WORKING STORAGE                            *
+US4052* 10/11/2022   MLF   SUPPLEMENTAL/FOREIGN ADDRESSES              *
       ******************************************************************
 000040 01  ZN420WS.
            02  WS-RECORD-COUNT                 PIC 9(13) VALUE ZEROES. 
@@ -24,11 +28,14 @@ SR4177*                    BENE-CD4 WILL BE THE HIC# FROM WBPDEPEND    *
            02  WS-BENE-DTL-FILE                PIC X(90) VALUE SPACES. 
            02  WS-BENE-TRLR-FILE               PIC X(90) VALUE SPACES. 
            02  WS-BENEFIC-OUT                  PIC X(90) VALUE SPACES. 
+           02  WS-DELIM                        PIC X(01) VALUE "#".
            02  WS-COMMAND.
                03  WS-COMMAND-STRING           PIC X(600) VALUE SPACES.
                03  FILLER                      PIC X(01)  VALUE X"00".
+           02  WS-TEMP-FILE                    PIC X(80)
+               VALUE "/lsenv/law/lsapps/work/ZN420WRK/temp".
                
-SR4177     02  WS-DB-NULL-DATE                 PIC 9(08) VALUE 17530101.
+SR4177     02  WS-DB-NULL-DATE                 PIC 9(08) VALUE 17530101. 
 
            02  WS-EMPLOYEE-ID.
                03 WS-EMPLOYEE-NBR              PIC 9(09) VALUE ZEROES. 
@@ -70,3 +77,66 @@ WO5483     02 WS-OVERRIDE-TABLE.
 WO5483        03  WS-OVERRIDE-EMP              PIC 9(09)
 WO5483                                         OCCURS 1000 TIMES.
 AI0001     02 WS-WEN-PLAN-CODE-PFX             PIC X(02) VALUE SPACES.
+
+US4052* INCLUDES COUNTRY CODE TABLE
+US4052* KP IS ACTUALLY NORTH KOREA, ADDRESS IS WRONG IN LAWSON
+
+           02  WS-COUNTRY-CODE-2               PIC X(02) VALUE SPACES.
+           02  WS-COUNTRY-CODE-3               PIC X(03) VALUE SPACES.
+
+           02  WS-CNTRY-TBL-MAX                PIC 99    VALUE 45.
+           02  WS-COUNTRY-CODE-TABLE.
+             03  WS-COUNTRY-CODE-VALUES.
+
+             04  FILLER     PIC X(25) VALUE "USUSAUNITED STATES       ".
+             04  FILLER     PIC X(25) VALUE "CACANCANADA              ".
+             04  FILLER     PIC X(25) VALUE "AEAREUNITED ARAB EMIRATES".
+             04  FILLER     PIC X(25) VALUE "AUAUSAUSTRALIA           ".
+             04  FILLER     PIC X(25) VALUE "BEBELBELGIUM             ".
+             04  FILLER     PIC X(25) VALUE "BRBRABRAZIL              ".
+             04  FILLER     PIC X(25) VALUE "CHCHESWITZERLAND         ".
+             04  FILLER     PIC X(25) VALUE "CNCHNCHINA               ".
+             04  FILLER     PIC X(25) VALUE "COCOLCOLOMBIA            ".
+             04  FILLER     PIC X(25) VALUE "CRCRICOSTA RICA          ".
+             04  FILLER     PIC X(25) VALUE "CZCZECZECH REPUBLIC      ".
+             04  FILLER     PIC X(25) VALUE "DEDEUGERMANY             ".
+             04  FILLER     PIC X(25) VALUE "DMDMADOMINICA            ".    
+             04  FILLER     PIC X(25) VALUE "ESESPSPAIN               ".
+             04  FILLER     PIC X(25) VALUE "FIFINFINLAND             ".
+             04  FILLER     PIC X(25) VALUE "FRFRAFRANCE              ".
+             04  FILLER     PIC X(25) VALUE "GBGBRUNITED KINGDOM      ".
+             04  FILLER     PIC X(25) VALUE "GHGHAGHANA               ".
+             04  FILLER     PIC X(25) VALUE "HKHKGHONG KONG           ".
+             04  FILLER     PIC X(25) VALUE "IDIDNINDONESIA           ".
+             04  FILLER     PIC X(25) VALUE "IEIRLIRELAND             ".
+             04  FILLER     PIC X(25) VALUE "ILISRISRAEL              ".
+             04  FILLER     PIC X(25) VALUE "ININDINDIA               ".
+             04  FILLER     PIC X(25) VALUE "ITITAITALY               ".
+             04  FILLER     PIC X(25) VALUE "JPJPNJAPAN               ".
+             04  FILLER     PIC X(25) VALUE "KEKENKENYA               ".
+             04  FILLER     PIC X(25) VALUE "KPKORREPUBLIC OF KOREA   ".
+             04  FILLER     PIC X(25) VALUE "KRKORREPIBLIC OF KOREA   ".
+             04  FILLER     PIC X(25) VALUE "MXMEXMEXICO              ".
+             04  FILLER     PIC X(25) VALUE "MYMYSMALAYSIA            ".
+             04  FILLER     PIC X(25) VALUE "NONORNORWAY              ".
+             04  FILLER     PIC X(25) VALUE "NZNZLNEW ZEALAND         ".
+             04  FILLER     PIC X(25) VALUE "PGPNGPAPUA NEW GUINEA    ".
+             04  FILLER     PIC X(25) VALUE "PHPHLPHILIPPINES         ".
+             04  FILLER     PIC X(25) VALUE "PLPOLPOLAND              ".
+             04  FILLER     PIC X(25) VALUE "PRPRIPUERTO RICO         ".
+             04  FILLER     PIC X(25) VALUE "SESWESWEDEN              ".
+             04  FILLER     PIC X(25) VALUE "SGSGPSINGAPORE           ".
+             04  FILLER     PIC X(25) VALUE "SKSVKSLOVAKIA            ".
+             04  FILLER     PIC X(25) VALUE "SVSLVEL SALVADOR         ".
+             04  FILLER     PIC X(25) VALUE "THTHATHAILAND            ".
+             04  FILLER     PIC X(25) VALUE "TWTWNTAIWAN              ".
+             04  FILLER     PIC X(25) VALUE "UMUMIUS MINOR OUTLY ISL  ".   
+             04  FILLER     PIC X(25) VALUE "VNVNMVIET NAM            ".
+             04  FILLER     PIC X(25) VALUE "ZAZAFSOUTH AFRICA        ".
+             03  FILLER     REDEFINES WS-COUNTRY-CODE-VALUES
+                            OCCURS 45 TIMES.
+                 04  WS-LAW-CNTRY-CODE        PIC X(02).
+                 04  WS-WTW-CNTRY-CODE        PIC X(03).
+                 04  WS-COUNTRY-NAME          PIC X(20).
+
+US4052* END OF COUNTRY CODE TABLE BLOCK
