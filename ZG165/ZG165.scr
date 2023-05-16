@@ -1,0 +1,71 @@
+******* ZG165.scr 4 <1444747176>
+$RELEASE   08.0
+*******************************************************************************
+*                           SCREEN   ZG165
+*******************************************************************************
+$FORM      ZG165    R
+$SECURITY  NO
+$DECIMALS  NO
+$KEYFCS    CD
+$DATAFCS   AC
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    ZG165    R
+[GLRP[ ]             ?*** Transaction Conversion ***            +Y]
+                             ? ;                                        ;
+  |          Report:[ZG165]    |   Priority:[ ]    |Save Params (Y/N):[ ]
+  |  User Name:[          ]
+  |   Job Name:[          ] --- This will be the name on your report
+  |  Run After:[          ] --- NOW, HOLD, Time (1230 pm), Job Name
+  |           Frequency:[ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\ |   Comments:[                                                  ]\
+
+  |    Run Group:[               ]
+  |       Update:[ ] ;              ;
+  |   Delete CSV:[ ] ;               ;
+
+  |   Input File:[                                                            ]
+
+$END-SCR   ZG165    R
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     ZG165    R
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     UPDATE-SW             P     01          SR 
+  2     SCREEN-MSG            A     40        
+  2     TRANCODE              A     05          RP 
+  2     HEADER                G     00        
+   3    Q-PRIORITY            N     01          SR 
+   3    SAVE-PARAMS           A     01          SR 
+   3    USER-NAME             A     10          SK 
+   3    JOB-NAME              A     10          SK 
+   3    RUN-AFTER             A     10          SR 
+   3    FREQUENCY             A     01          SR 
+   3    COMMENTS              A     50          SB 
+  2     RUN-PARAMS            G     00        
+   3    RUN-GROUP             A     15          SR    RGT 
+   3    UPDATE-OPTION         A     01          SB
+   3    UPDATE-OPTION         X     15          SB
+   3    DELETE-CSV            A     01          SB
+   3    DELETE-CSV            X     16          SB
+   3    INP-FILE              AL    80          SR
+$END-TRANS ZG165    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     ZG165    R
+  FC                                          A,C,D,I,F
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  JOB-NAME
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+  UPDATE-OPTION         N                     N=No Report Only
+                                              Y=Update
+  DELETE-CSV            N                     N=No                 
+                                              Y=Delete CSV file
+$END-EDITS ZG165    R
+

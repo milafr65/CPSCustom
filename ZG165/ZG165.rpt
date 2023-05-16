@@ -1,0 +1,166 @@
+******* ZG165.rpt 4 <924599206>
+******************************************************************
+$PROGRAM   ZG165
+******************************************************************
+****************************************************
+$REPORT    ZG165-R1
+****************************************************
+**************************************
+$GROUP     PAGE-HEADING
+**************************************
+$PREFIX    PH-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+ZG165 Date ZZ/ZZ/ZZ                          Lifeworks AR to GL Upload                                                  Page   ZZZZ
+      |  ; A1                           ;    |                          ;                                               |  ;   B1
+      Time 99:99                             Run Group:XXXXXXXXXXXXXXX                                  XXXXXXXXXXX
+      |  ; C1                                |        ;D1                                               E1
+%
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD    
+ B1    PAGE                                   PN    
+ C1    TIME                                   CT    
+ D1    RUN-GROUP                        
+ *     UPDATE-OPTION                          XV               Y=Update
+                                                               N=Report Only
+ E1    UPDATE-OPTION                          X
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+$ENDDTL
+$ENDGRP
+
+**************************************
+$GROUP     DETAIL-HEADING
+**************************************
+$PREFIX    DH-
+$LEVEL     B
+$DELAY
+$FORMAT
+ Entry                  Conversion   G/L Post                 
+ |   ;                  |        ;   |      ;             
+ Date      Sys  Curr    Rate         Date          Trx Amount             Base Amount       Activity
+ |  ;      | ;  |  ;    |  ;         |  ;          |        ;             |         ;       |      ;
+ --------  --- -----  ------------   --------  -------------------  -------------------  ---------------
+ |      ;  | ; |   ;  |          ;   |      ;  |                 ;  |                 ;
+$ENDFMT                                                                            
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+$ENDDTL
+$ENDGRP
+
+**************************************
+$GROUP     DETAIL-LINE-BY-CODE
+**************************************
+$PREFIX    DLC-
+$LEVEL     C
+$FORMAT
+%
+  Organization Code: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  Account Code: XXXXXXXXXXXXXXXXXXXXXXXXX
+  |                ; A1                                   |           ; B1                       
+%
+ ZZ/ZZ/ZZ  XX  XXXXX  ZZZZ.9999999-  ZZ/ZZ/ZZ  ZZZ,ZZZ,ZZZ,ZZZ.99-  ZZZ,ZZZ,ZZZ,ZZZ.99-  XXXXXXXXXXXXXXX
+ C1        D1  E1     F1             G1        H1                   I1                   J1
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    WK1-ORG-CODE
+ B1    WK1-ACCT-CODE
+ C1    WK1-DATE                               CD
+ D1    WK1-SYSTEM
+ E1    WK1-CURR-CODE
+ F1    WK1-BASERATE
+ G1    WK1-POST-DATE                          CD
+ H1    WK1-TRAN-AMOUNT                        DV
+ I1    WK1-BASE-AMOUNT                        DV
+ J1    WK1-ACTIVITY
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+$ENDDTL
+$ENDGRP
+
+**************************************
+$GROUP     DETAIL-LINE-BY-ACCOUNT
+**************************************
+$PREFIX    DLA-
+$LEVEL     C
+$FORMAT
+%
+G/L ACCOUNT NUMBER    (COMPANY)  (ACCOUNTING UNIT)  (ACCOUNT)
+|                ;    |       ;  |               ;  |         ;
+                           XXXX  XXXXXXXXXXXXXXX    XXXXXX XXXX
+                           A1    B1                 C1     D1
+%
+XXXXXXXX    XXXXXXXX XXXXX      ZZZZZZZ.9999999-   XXXXXXXX      Z,ZZZ,ZZZ,ZZZ,ZZZ.99-   Z,ZZZ,ZZZ,ZZZ,ZZZ.99-
+E1          F1       G1         H1                 I1            J1                      K1   
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    WK1-COMPANY
+ B1    WK1-ACCT-UNIT
+ C1    WK1-ACCOUNT  
+ D1    WK1-SUB-ACCT
+ E1    WK1-DATE
+ F1    WK1-SYSTEM
+ G1    WK1-CURR-CODE
+ H1    WK1-BASERATE
+ I1    WK1-POST-DATE                            
+ J1    WK1-TRAN-AMOUNT
+ K1    WK1-BASE-AMOUNT
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+$ENDDTL
+$ENDGRP
+
+**************************************
+$GROUP     MESSAGE-LINE  
+**************************************
+$PREFIX    ML-
+$LEVEL     D
+$FORMAT
+%
+%
+      XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      A1
+$ENDFMT
+
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES                   
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    MESSAGE
+$ENDFLDS
+
+$DETAIL
+ Name                  KeyNbr  Token  PFC DFC  Special Key Numbers
+ --------------------   ---    ------  -   -   ---------------------------------
+$ENDDTL
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

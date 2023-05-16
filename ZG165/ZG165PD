@@ -1,0 +1,346 @@
+******* ZG165PD 5 <2159077170>
+000010*      ***********************************************************
+000020*      *                                                         *
+000030*      *       ZG165 - Lifeworks AR Details to GL Upload         *
+000040*      *                                                         *
+000050*      *    This program processes a CSV file created by the     *
+000060*      *    Lifeworks billing system.  The program creates       *
+000070*      *    GLTRANSREL records from the input.                   *
+000080*      *                                                         *
+000090*      ***********************************************************
+000100*
+000110******************************************************************
+000120 050-EDIT-PARAMETERS             SECTION.
+000130******************************************************************
+000140 050-START.
+000150
+      *--- cannot delete the CSV file in nonUpdate mode.
+           IF (PRM-UPDATE-OPTION = "N")
+           AND (PRM-DELETE-CSV   = "Y")
+              MOVE  052              TO CRT-ERROR-NBR
+              PERFORM 780-PRINT-ERROR-MSG
+              GO TO 050-END
+           END-IF.
+
+      *--- insert code to validate input file exists.
+           MOVE PRM-INP-FILE         TO SYSCMD-FILENAME.
+           PERFORM 900-FILEEXISTS.
+           IF (SYSCMD-ERROR NOT = ZEROES)
+              MOVE  051              TO CRT-ERROR-NBR
+              PERFORM 780-PRINT-ERROR-MSG
+              GO TO 050-END
+           END-IF.
+000160
+000170 050-END.
+000180
+000190*****************************************************************
+000200 100-PROGRAM-CONTROL             SECTION.
+000210*****************************************************************
+000220 100-START.
+000230
+000240     MOVE 100                        TO CRT-MSG-NBR.
+000250     PERFORM 780-DISPLAY-MSG.
+000260
+           MOVE PRM-INP-FILE               TO WS-LIFEWRKCSV-FILE.
+000270     PERFORM 800-OPENINPUTCSV-LIFEWRKCSV.
+000280     PERFORM 800-ALLUSEDCSV-LIFEWRKCSV.
+000290
+000300     INITIALIZE                         ZG165WS-RECORDS-CREATED
+000310                                        ZG165WS-RECORDS-PROCESSED
+000320                                        ZG165WS-RECORDS-IN-ERROR
+000330                                        ZG165WS-UPDATE-COUNT
+000340                                        ZG165WS-RESTART-INFO
+000350                                        ZG165WS-SEQ-NUMBER.
+000360
+           INITIALIZE                         WS-DOC-NBR.
+005380     MOVE PRM-RUN-GROUP              TO DB-RUN-GROUP.
+005390     MOVE GTRSET1-RUN-GROUP          TO WS-DB-BEG-RNG.
+005400     PERFORM 850-FIND-BEGRNG-GTRSET1.
+           IF (GLTRANSREL-FOUND)
+              MOVE WS-SYSTEM-DATE-YMD      TO WS-DOC-NBR(1:8)
+              MOVE HHMMSS                  TO WS-DOC-NBR(9:6)
+           END-IF.
+           DISPLAY "WsDocNbr: " WS-DOC-NBR.
+
+000370     PERFORM 840-FIND-CKPSET1.
+000380     IF  (CKPOINT-FOUND)
+000390     AND (CKP-RESTART-INFO NOT = SPACES)
+000400          MOVE CKP-RESTART-INFO      TO ZG165WS-RESTART-INFO
+000410          MOVE ZG165WS-RES-RECORDS-CREATED
+000420                                     TO ZG165WS-RECORDS-CREATED
+000430          MOVE ZG165WS-RES-RECORDS-PROCESSED
+000440                                     TO ZG165WS-RECORDS-PROCESSED
+000450          MOVE ZG165WS-RES-RECORDS-IN-ERROR
+000460                                     TO ZG165WS-RECORDS-IN-ERROR
+000470          MOVE ZG165WS-RES-SEQ-NUMBER
+000480                                     TO ZG165WS-SEQ-NUMBER
+000490          PERFORM 800-READCSV-LIFEWRKCSV
+000500          PERFORM 800-READCSV-LIFEWRKCSV
+000510              ZG165WS-RECORDS-PROCESSED TIMES
+000520          PERFORM 200-CSV-CONTROL
+000530          GO TO 100-END.
+000540     
+000550     MOVE PRM-RUN-GROUP              TO PH-RUN-GROUP.
+000560     MOVE PRM-UPDATE-OPTION          TO PH-UPDATE-OPTION.
+000570     MOVE PAGE-HEADING               TO RPT-GROUP-REQUEST.
+000580     PERFORM 700-PRINT-RPT-GRP.
+000590
+000600     MOVE DETAIL-HEADING             TO RPT-GROUP-REQUEST.
+000610     PERFORM 700-PRINT-RPT-GRP.
+000620
+000630     PERFORM 800-READCSV-LIFEWRKCSV.
+000640     PERFORM 800-READCSV-LIFEWRKCSV.
+000650
+000660     IF (LIFEWRKCSV-NOTFOUND)
+000670         MOVE 102                    TO CRT-MSG-NBR
+000680         PERFORM 790-GET-MSG
+000690         MOVE CRT-MESSAGE            TO ML-MESSAGE
+000700         MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+000710         PERFORM 700-PRINT-RPT-GRP
+000720         GO TO 100-END.
+000730
+000740     PERFORM 200-CSV-CONTROL.
+000750
+000760 100-END.
+000770
+000780*****************************************************************
+000790 200-CSV-CONTROL                SECTION.
+000800*****************************************************************
+000810 200-START.
+000820
+000830     IF (PRM-UPDATE-OPTION = "Y")
+000840         PERFORM 910-AUDIT-BEGIN
+000850         IF (DMS-ABORTED)
+000860             GO TO 200-END.
+000870
+000880     PERFORM 210-PROCESS-CSV-FILE 
+000890        THRU 210-END  
+000900       UNTIL (LIFEWRKCSV-NOTFOUND).
+000910
+000920     IF (PRM-UPDATE-OPTION = "Y")
+000930         PERFORM 920-AUDIT-END.
+000940
+000950     MOVE 110                        TO CRT-MSG-NBR.
+000960     MOVE ZG165WS-RECORDS-PROCESSED  TO CRT-ERR-VAR1.
+000970     PERFORM 790-GET-MSG.
+000980     MOVE CRT-MESSAGE                TO ML-MESSAGE.
+000990     MOVE MESSAGE-LINE               TO RPT-GROUP-REQUEST.
+001000     PERFORM 700-PRINT-RPT-GRP.
+001010
+001020     MOVE 111                        TO CRT-MSG-NBR.
+001030     MOVE ZG165WS-RECORDS-CREATED    TO CRT-ERR-VAR1.
+001040     PERFORM 790-GET-MSG.
+001050     MOVE CRT-MESSAGE                TO ML-MESSAGE.
+001060     MOVE MESSAGE-LINE               TO RPT-GROUP-REQUEST.
+001070     PERFORM 700-PRINT-RPT-GRP.
+001080
+001090     MOVE 107                        TO CRT-MSG-NBR.
+001100     MOVE ZG165WS-RECORDS-IN-ERROR   TO CRT-ERR-VAR1.
+001110     PERFORM 790-GET-MSG.
+001120     MOVE CRT-MESSAGE                TO ML-MESSAGE.
+001130     MOVE MESSAGE-LINE               TO RPT-GROUP-REQUEST.
+001140     PERFORM 700-PRINT-RPT-GRP.
+001150
+001160     PERFORM 800-CLOSECSV-LIFEWRKCSV.
+001170
+001180     IF (PRM-DELETE-CSV = "Y")
+001190*        PERFORM 800-OPENOUTPUTCSV-LIFEWRKCSV.
+               DISPLAY "Delete file: " WS-LIFEWRKCSV-FILE
+               MOVE WS-LIFEWRKCSV-FILE     TO WS-TMP-FILE
+               PERFORM 901-REMOVE-TMP-FILE
+           END-IF.
+001200
+001210     GO TO 200-END.
+001220
+001230*****************************************************************
+001240 210-PROCESS-CSV-FILE.
+001250*****************************************************************
+001260
+001270     INITIALIZE                         ZG165WS-DATE-MDY
+001280                                        ZG165WS-DATE-YMD
+001290                                        ZG165WS-POST-DATE-MDY
+001300                                        ZG165WS-POST-DATE-YMD
+001310                                        ZG165WS-STRING-TABLE
+001320                                        ZG165WS-DATE-TABLE
+001330                                        ZG165WS-CPY-TABLE
+001340                                        ZG165WS-35-CHAR-TABLE
+001350                                        ZG165WS-ACCOUNT-TABLE
+001360                                        ZG165WS-SUB-ACCT-TABLE
+001370                                        ZG165WS-MSTR-IDX
+001380                                        ZG165WS-SUB-IDX
+001390                                        ZG165WS-CPY-IDX
+001400                                        ZG165WS-BEG
+001410                                        ZG165WS-END.
+001420
+           ADD 1                           TO ZG165WS-RECORDS-PROCESSED.
+
+           MOVE LIF-COMPANY                TO ZG165WS-ORG-CODE-CPY.
+           MOVE LIF-ACCT-UNIT              TO ZG165WS-ORG-CODE-AU.
+           MOVE LIF-ACCOUNT                TO ZG165WS-ACCT-CODE-MSTR.
+           MOVE LIF-SUB-ACCOUNT            TO ZG165WS-ACCT-CODE-SUB.
+
+001430     PERFORM 223-DO-PRINT-RPT
+001440     THRU    223-END.
+001450
+001460     MOVE WS-FALSE                   TO ZG165WS-ERROR-FLAG.
+001480     PERFORM 230-DATA-EDITS
+001490     THRU    230-END.
+001500
+001510     IF (ZG165WS-ERROR-FOUND)
+001520         ADD 1                       TO ZG165WS-RECORDS-IN-ERROR.
+001530
+001540     IF  (PRM-UPDATE-OPTION = "Y")
+001550     AND (ZG165WS-ERROR-NOTFOUND)
+001560          PERFORM 240-UPDATE-GLTRANSREL
+001570          THRU    240-END.
+001580
+001590     MOVE ZG165WS-RECORDS-PROCESSED
+001600                                 TO ZG165WS-RES-RECORDS-PROCESSED.
+001610     MOVE ZG165WS-RECORDS-CREATED
+001620                                 TO ZG165WS-RES-RECORDS-CREATED.
+001630     MOVE ZG165WS-RECORDS-IN-ERROR
+001640                                 TO ZG165WS-RES-RECORDS-IN-ERROR.
+001650     MOVE ZG165WS-SEQ-NUMBER     TO ZG165WS-RES-SEQ-NUMBER.
+001660
+001670     IF (ZG165WS-UPDATE-COUNT > WS-MAX-OPS-IN-TRAN)
+001680         INITIALIZE                     ZG165WS-UPDATE-COUNT
+001690         PERFORM 840-MODIFY-CKPSET1
+001700         MOVE ZG165WS-RESTART-INFO   TO CKP-RESTART-INFO
+001710         PERFORM 820-STORE-CKPOINT
+001720         PERFORM 920-AUDIT-END
+001730         PERFORM 910-AUDIT-BEGIN
+001740         GO TO 210-END.
+001750
+001760     IF (PRM-UPDATE-OPTION  = "N")
+001770         PERFORM 910-AUDIT-BEGIN.
+001780
+001790     PERFORM 840-MODIFY-CKPSET1.
+001800     MOVE ZG165WS-RESTART-INFO       TO CKP-RESTART-INFO.
+001810     PERFORM 820-STORE-CKPOINT.
+001820
+001830     IF (PRM-UPDATE-OPTION  = "N")
+001840         PERFORM 920-AUDIT-END.
+001850
+001860     PERFORM 800-READCSV-LIFEWRKCSV.
+001870
+001880 210-END.
+001890           
+003310*****************************************************************
+003320 223-DO-PRINT-RPT.
+003330*****************************************************************
+003340
+           MOVE ZG165WS-ORG-CODE           TO DLC-WK1-ORG-CODE.
+           MOVE ZG165WS-ACCT-CODE          TO DLC-WK1-ACCT-CODE.
+           MOVE WS-SYSTEM-DATE-YMD         TO DLC-WK1-DATE.
+002160     MOVE LIF-SYSTEM                 TO DLC-WK1-SYSTEM.
+002170     MOVE "USD"                      TO DLC-WK1-CURR-CODE.
+002180     MOVE 1.0000                     TO DLC-WK1-BASERATE.
+           MOVE LIF-POSTING-DATE           TO DLC-WK1-POST-DATE.
+           MOVE LIF-ACTIVITY               TO DLC-WK1-ACTIVITY.
+002190
+003230     MOVE LIF-TRAN-AMOUNT            TO DLC-WK1-BASE-AMOUNT.
+003240     MOVE LIF-TRAN-AMOUNT            TO DLC-WK1-TRAN-AMOUNT.
+008980     MOVE 2                          TO DLC-WK1-BASE-AMOUNT-ND
+                                              DLC-WK1-TRAN-AMOUNT-ND.
+003250
+003260     MOVE DETAIL-LINE-BY-CODE        TO RPT-GROUP-REQUEST.
+003270     PERFORM 700-PRINT-RPT-GRP.
+003280
+
+       223-END.
+
+004640*****************************************************************
+004650 230-DATA-EDITS.
+004660*****************************************************************
+004670
+           IF  (LIFINFO-ERROR     = "Y")
+           AND (LIFINFO-ERROR-NBR = 203)
+               MOVE WS-TRUE                TO ZG165WS-ERROR-FLAG
+               MOVE 108                    TO CRT-MSG-NBR
+               MOVE LIFINFO-FIELD-NBR      TO CRT-ERR-VAR1
+               MOVE LIFINFO-RECORD-COUNT   TO CRT-ERR-VAR2
+               PERFORM 790-GET-MSG
+               MOVE CRT-MESSAGE            TO ML-MESSAGE
+               MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+               PERFORM 700-PRINT-RPT-GRP.
+
+004680     IF (ZG165WS-ORG-CODE-CPY NOT NUMERIC)
+004690         MOVE WS-TRUE                TO ZG165WS-ERROR-FLAG
+004700         MOVE 104                    TO CRT-MSG-NBR
+004710         PERFORM 790-GET-MSG
+004720         MOVE CRT-MESSAGE            TO ML-MESSAGE
+004730         MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+004740         PERFORM 700-PRINT-RPT-GRP.
+004750
+005270     ADD 1                           TO ZG165WS-SEQ-NUMBER.
+005280
+005290     IF (ZG165WS-SEQ-NUMBER > ZG165WS-MAX-ALLOWED)
+005300         MOVE WS-TRUE                TO ZG165WS-ERROR-FLAG
+005310         MOVE 103                    TO CRT-MSG-NBR
+005320         PERFORM 790-GET-MSG
+005330         MOVE CRT-MESSAGE            TO ML-MESSAGE
+005340         MOVE MESSAGE-LINE           TO RPT-GROUP-REQUEST
+005350         PERFORM 700-PRINT-RPT-GRP
+005360         GO TO 230-END.
+005370
+005380     MOVE PRM-RUN-GROUP              TO DB-RUN-GROUP.
+005390     MOVE ZG165WS-SEQ-NUMBER         TO DB-SEQ-NUMBER.
+005400     PERFORM 840-KFIND-GTRSET1.
+005410     
+005420     PERFORM
+005430       UNTIL (GLTRANSREL-KNOTFOUND)
+005440         ADD 1                       TO ZG165WS-SEQ-NUMBER
+005450         IF (ZG165WS-SEQ-NUMBER > ZG165WS-MAX-ALLOWED)
+005460             MOVE WS-TRUE            TO ZG165WS-ERROR-FLAG
+005470             MOVE 103                TO CRT-MSG-NBR
+005480             PERFORM 790-GET-MSG
+005490             MOVE CRT-MESSAGE        TO ML-MESSAGE
+005500             MOVE MESSAGE-LINE       TO RPT-GROUP-REQUEST
+005510             PERFORM 700-PRINT-RPT-GRP
+005520             GO TO 230-END
+005530          ELSE
+005540             MOVE ZG165WS-SEQ-NUMBER TO DB-SEQ-NUMBER
+005550             PERFORM 840-KFIND-GTRSET1
+005560          END-IF
+005570     END-PERFORM.
+005580
+005590 230-END.
+005600
+005610*****************************************************************
+005620 240-UPDATE-GLTRANSREL.
+005630*****************************************************************
+005640
+005650     PERFORM 800-CREATE-GLTRANSREL.
+005660
+005910     MOVE PRM-RUN-GROUP              TO GTR-RUN-GROUP.
+005920     MOVE ZG165WS-SEQ-NUMBER         TO GTR-SEQ-NUMBER.
+005860     MOVE ZG165WS-ORG-CODE-CPY-N     TO GTR-COMPANY.
+005870     MOVE ZG165WS-ORG-CODE           TO GTR-OLD-COMPANY.
+005880     MOVE ZG165WS-ACCT-CODE          TO GTR-OLD-ACCT-NBR.
+005930     MOVE LIF-SOURCE-CODE            TO GTR-SOURCE-CODE.
+           MOVE WS-SYSTEM-DATE-YMD         TO GTR-DATE.
+           MOVE LIF-REFERENCE              TO GTR-REFERENCE.
+           MOVE LIF-DESCRIPTION            TO GTR-DESCRIPTION.
+005740     MOVE "USD"                      TO GTR-CURRENCY-CODE.
+005900     MOVE LIF-TRAN-AMOUNT            TO GTR-TRAN-AMOUNT.
+005890     MOVE LIF-TRAN-AMOUNT            TO GTR-BASE-AMOUNT.
+005750     MOVE 1.000                      TO GTR-BASERATE.
+005730     MOVE LIF-SYSTEM                 TO GTR-SYSTEM.
+005950     MOVE CRT-PROGRAM-CODE           TO GTR-PROGRAM-CODE.
+005840     MOVE LIF-POSTING-DATE           TO GTR-POSTING-DATE.
+           MOVE LIF-ACTIVITY               TO GTR-ACTIVITY.
+005960     MOVE ZG165WS-DEFAULT-NO         TO GTR-AUTO-REV.
+005960     MOVE ZG165WS-DEFAULT-NO         TO GTR-NEGATIVE-ADJ.
+      *--- is gtr-document-nbr needed to breakup the journal in any
+      *--- preferred way? 
+           MOVE WS-DOC-NBR                 TO GTR-DOCUMENT-NBR.
+005970
+005980     PERFORM 820-STORE-GLTRANSREL.
+005990
+006000     ADD 1                           TO ZG165WS-RECORDS-CREATED.
+006010
+006020 240-END.
+006030           
+006040*****************************************************************
+006050 200-END.
+006060*****************************************************************
