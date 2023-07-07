@@ -1,4 +1,4 @@
-******* HRDEPPD 8.1.26.1.11 <1115873704>
+******* HRDEPPD 8.1.26.1.14 <1332587408>
 000100******************************************************************
 000200* HRDEPPD                                                        *
 000300*                                                                *
@@ -49,6 +49,11 @@
       *  583589 | J83589 | ADDED FIELD NEEDED FOR DEPENDENT(C611.4)    *
       *  ------   ------   ------------------------------------------  *
       *  660925 | J60925 | CHANGED HRLOG CRITERIA FOR STD, HOS FIELDS  *
+      * -------   ------   ------------------------------------------  *
+      * 1368464 | J68464 | EVALULATE FC IF INTERFACED FROM GHR         *
+      * -------   ------   ------------------------------------------  *
+      * 1673640 | J73640 | CHANGE GENDER EDIT                          *
+      * -------   ------   ------------------------------------------  *
       ******************************************************************
       *               M O D I F I C A T I O N   L O G:                 *
       ******************************************************************
@@ -307,7 +312,7 @@ P58410         PERFORM 850-FIND-BEGRNG-CTCSET2
 022600                 MOVE HRDEP-EMD-NAME-SUFFIX-FN TO CRT-FIELD-NBR
 022700                 GO TO 230-END.
 199900
-022900     IF (HRDEP-EMD-SEX NOT = "M" AND "F")
+736685     IF (HRDEP-EMD-SEX NOT = "M" AND "F" AND "X" AND SPACE)
 023000         MOVE WS-TRUE                TO HRDEP-ERROR-SW
 023100         IF (HRDEP-BATCH-PGM)
 023200             MOVE 121                TO CRT-MSG-NBR
@@ -1376,6 +1381,9 @@ HIPAA              GO TO 230-END.
 054000******************************************************************
 054100
            INITIALIZE HRDEP-EFF-DT-XMIT.
+
+J68464     IF  (HRDEP-FC = "A")
+J68464         INITIALIZE EMDEPEND.
 
 054200     IF (HRDEP-FC = "I")
 054300         PERFORM 480-INQUIRE

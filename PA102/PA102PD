@@ -1,4 +1,4 @@
-******* PA102PD 53 <3255981393>
+******* PA102PD 54 <3288473653>
       ******************************************************************
       *                            PA102PD                             *
       ******************************************************************
@@ -40,6 +40,15 @@
       * 1189056 | 189056 | UPDATED PA102WS-NOUPDATES FLAG WHEN CHANGE  *
       *         |        | WAS DONE IN PERSACTION TABLE.               *
       *  ------   ------   ------------------------------------------  *
+      * 1403740 | 403740 | ADDED LOGIC THAT CHECKS IF THE FILES THAT   *
+      *         |        | ARE USED IN THE PROGRAM ARE CLOSED. IF NOT, *
+      *         |        | IT WILL CLOSED BEFORE THE PROGRAM ENDS.     *
+      *         |        | ADDED A LOGIC THAT REMOVES THE TEMP FILES   *
+      *         |        | THAT ARE USED IN THE PROGRAM BEFORE THE     *
+      *         |        | PROGRAM ENDS.                               *
+      *  ------   ------   ------------------------------------------  *
+      
+      
 000010******************************************************************
 000020*                                                                *
 000030*The program is divided into 2 phases                            *
@@ -367,6 +376,20 @@ J17585     END-IF.
            CLOSE ERRORS-FILE.
            CLOSE WARNING-FILE.
 J63836     CLOSE EMPLIST-FILE.
+403740     
+403740     IF (LPPL-LPPLSECWRK-OPEN)
+403740         PERFORM 9900-CLOSE-LPPLSECWRK
+403740     END-IF.
+403740
+403740     MOVE WS-LPPLSECWRK-NAME     TO WS-TMP-FILE.
+403740     PERFORM 901-REMOVE-TMP-FILE.
+403740
+403740     IF (PA102WS-ACTIONS-OPEN)
+403740         PERFORM 9900-CLOSE-ACTIONS
+403740     END-IF.
+403740
+403740     MOVE WS-ACTIONS-FILE-NAME   TO WS-TMP-FILE.
+403740     PERFORM 901-REMOVE-TMP-FILE.
 
 001970 100-END.
 001980      

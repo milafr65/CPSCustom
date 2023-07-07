@@ -1,4 +1,3 @@
-
 000100******************************************************************
 000200*                            ZH510PD                             *
 000300******************************************************************
@@ -16,6 +15,10 @@
       *                         IT ALSO SUPPRESSES MARITAL STATUS AND  *
       *                         EMAIL ADDRESS WARNING MESSAGES         *
       * 201209   MLF 12/09/2020 INCREASE OMITSSN TABLE TO 1000         *
+      * US5099   MLF 05/08/2023 CHANGES FOR LIFEWORKS                  *
+      *                         LAWSON ID IS NOW REQUIRED              *
+      *                         COMMENTED OUT MAILGROUP LOGIC V2       *
+      *                         MOVED OLD LOGIC INTO 2100              *
       ******************************************************************
 000200 050-EDIT-PARAMETERS             SECTION 10.
 000300******************************************************************
@@ -170,15 +173,20 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
             
             IF  (EMPLOYEE-FOUND)
             AND (EMP-FICA-NBR = IN-FICA-NBR)
+US5099           MOVE 216 TO CRT-MSG-NBR
                  PERFORM 3000-EMP-EXISTS
             ELSE
-                 PERFORM 2000-LOAD-EMP
-                    THRU 2000-END
-      * TO BE DONE IN ZH515
-      * EMPLOYEE # HAS TO BE KNOWN TO CREATE USER FIELDS
-      *           IF (WS-LOAD-ERR-FLAG = "N")   
-      *               PERFORM 3000-LOAD-USF
-      *           END-IF
+US5099          MOVE PRM-COMPANY       TO DB-COMPANY
+US5099          MOVE IN-LAWSON-ID      TO DB-EMPLOYEE
+US5099          PERFORM 840-FIND-EMPSET1
+US5099          IF (EMPLOYEE-FOUND)
+US5099          AND (EMP-EMPLOYEE = IN-LAWSON-ID)
+US5099           MOVE 228 TO CRT-MSG-NBR
+US5099           PERFORM 3000-EMP-EXISTS
+US5099          ELSE
+                   PERFORM 2000-LOAD-EMP
+                      THRU 2000-END
+US5099          END-IF
             END-IF.
             
             ADD 1 TO WS-REC-CTR.
@@ -235,6 +243,7 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
       
             MOVE "A"                   TO OUT-EMP-FC.
             MOVE PRM-COMPANY           TO OUT-EMP-COMPANY.
+US5099      MOVE IN-LAWSON-ID          TO OUT-EMP-EMPLOYEE.
             
             INSPECT IN-LAST-NAME
             CONVERTING "abcdefghijklmnopqrstuvwxyz"
@@ -277,18 +286,10 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
             IF (IN-EMP-STATUS = "S")
                 MOVE "SB"              TO OUT-EMP-EMP-STATUS
             ELSE
-            IF (IN-EMP-STATUS = "A")
-                IF (WS-WKLY-HRS <= 20)
-                    MOVE "AW"          TO OUT-EMP-EMP-STATUS
-                ELSE
-                    MOVE "AF"          TO OUT-EMP-EMP-STATUS
-                END-IF
-200623* STATUS OVERRIDE FOR SEM STUDENTS          
-200623          IF (WS-POS-PROCESS-LEVEL = "SEMSL")
-200623          OR (WS-POS-PROCESS-LEVEL = "SEMFW")
-200623              MOVE "2A"          TO OUT-EMP-EMP-STATUS
-                END-IF
-200623      END-IF
+               IF (IN-EMP-STATUS = "A")
+US5099             PERFORM 2500-ACTIVE-STATUS
+US5099                THRU 2500-END
+               END-IF
             END-IF.            
             
             MOVE IN-FICA-NBR           TO OUT-EMP-FICA-NBR.
@@ -410,6 +411,18 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
             MOVE IN-BENEFIT-SALARY-3   TO OUT-PEM-BEN-SALARY-C.
             MOVE IN-BENEFIT-SALARY-4   TO OUT-PEM-BEN-SALARY-D.
 
+US5099      PERFORM 2100-MAIL-GROUP    THRU 2100-END.
+            
+            PERFORM 800-WRITECSV-EMPLOADCSV.
+            
+            PERFORM 3030-EMPLOAD-REPORT.
+            
+       2000-END.
+
+      ******************************************************************
+       2100-MAIL-GROUP.
+      ******************************************************************
+
 200623      MOVE SPACES                TO OUT-PEM-MAIL-GROUP.
 200623      IF (IN-HRLYSAL-STATUS = "H")
 200623          MOVE "HOURLY"          TO OUT-PEM-MAIL-GROUP
@@ -418,12 +431,73 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
 200623             MOVE "SALARIED"     TO OUT-PEM-MAIL-GROUP
 200623          END-IF
 200623      END-IF.
-            
-            PERFORM 800-WRITECSV-EMPLOADCSV.
-            
-            PERFORM 3030-EMPLOAD-REPORT.
-            
-       2000-END.
+  
+
+
+
+      * V2 - IF NEW MAIL GROUP VALUES ARE IMPLEMENTED 9/2021
+
+      * I BELIEVE V2 IS MEANT TO BE INDEPENDENT OF THE
+      * UNION CODES IN PAPOSITION SO THIS IS JUST A
+      * CHAIN OF IF-STATEMENTS
+
+      * I EXPECT HOURLY AND SALARIED TO BE RETAINED AS VALID VALUES
+      * FOR OUT-PEM-MAIL-GROUP
+      * HOWEVER, ADJUNCT, HRLY-NON, HRLY-FAC, SALR-NON AND SALR-FAC
+      * ARE ONLY TEST VALUES AS OF 9/21/2021
+
+      *      MOVE SPACES                TO OUT-PEM-MAIL-GROUP.
+ 
+      *      IF (IN-EE-DESIGNATION = "ADJUNCT")
+      *          MOVE IN-EE-DESIGNATION     TO OUT-PEM-MAIL-GROUP
+      *          GO TO 2100-END
+      *      END-IF.
+
+      *      IF (IN-HRLYSAL-STATUS = "H")
+      *          IF (IN-EE-DESIGNATION = "FACULTY")
+      *              MOVE "HRLY-FAC" TO OUT-PEM-MAIL-GROUP
+      *          ELSE
+      *             IF (IN-EE-DESIGNATION = "NONFACULTY")
+      *                 MOVE "HRLY-NON" TO OUT-PEM-MAIL-GROUP
+      *             ELSE
+      *                 MOVE "HOURLY"   TO OUT-PEM-MAIL-GROUP
+      *             END-IF
+      *          END-IF
+      *      ELSE
+      *      IF (IN-HRLYSAL-STATUS = "S")
+      *          IF (IN-EE-DESIGNATION = "FACULTY")
+      *              MOVE "SALR-FAC" TO OUT-PEM-MAIL-GROUP
+      *          ELSE
+      *             IF (IN-EE-DESIGNATION = "NONFACULTY")
+      *                 MOVE "SALR-NON" TO OUT-PEM-MAIL-GROUP
+      *             ELSE
+      *                 MOVE "SALARIED"   TO OUT-PEM-MAIL-GROUP
+      *             END-IF
+      *          END-IF
+      *      END-IF
+      *      END-IF.        
+
+       2100-END.
+
+
+      ******************************************************************
+       2500-ACTIVE-STATUS.
+      ******************************************************************
+US5099* NEW PARAGRAPH TO CLEAN UP CODE IN 2000-
+
+            IF (WS-WKLY-HRS <= 20)
+                MOVE "AW"          TO OUT-EMP-EMP-STATUS
+            ELSE
+                MOVE "AF"          TO OUT-EMP-EMP-STATUS
+            END-IF.
+200623* STATUS OVERRIDE FOR SEM STUDENTS          
+200623      IF (WS-POS-PROCESS-LEVEL = "SEMSL")
+200623      OR (WS-POS-PROCESS-LEVEL = "SEMFW")
+200623          MOVE "2A"          TO OUT-EMP-EMP-STATUS
+            END-IF.
+
+       2500-END.
+ 
        
       ******************************************************************
        3000-EMP-EXISTS.
@@ -433,39 +507,10 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
       * EMPLOYEE ALREADY ON EMPLOYEE TABLE WILL ALWAYS BE
       * TREATED AS AN ERROR
       
-             MOVE 216                  TO CRT-MSG-NBR.
              MOVE IN-LAWSON-ID         TO WS-EMP-FIELD.
              MOVE "Y"                  TO WS-LOAD-ERR-FLAG.
              PERFORM 4000-PRINT-LOAD-ERROR.            
        
-      *      DISPLAY "3000:", EMP-EMPLOYEE,"/", EMP-FICA-NBR.
-      *      MOVE EMP-EMPLOYEE          TO WS-EMPLOYEE.
-            
-      *      IF (PRM-UPD-FLAG = "Y")
-      *          PERFORM 910-AUDIT-BEGIN
-      *      END-IF.
-            
-      ** NOTE WE ARE DEALING WITH POSITION FROM THE EMPLOYEE TABLE
-      ** HERE, NOT THE POSITION FROM THE ERPTEMP INPUT RECORD      
-      *      IF (EMP-POSITION = "DISW")
-      *      OR (EMP-POSITION = "DISCW")
-      *      OR (EMP-POSITION (1:1) = "0")
-      *          MOVE 300               TO CRT-MSG-NBR
-      *          MOVE EMP-POSITION      TO WS-EMP-FIELD
-      *          MOVE "Y"               TO WS-LOAD-ERR-FLAG
-      *          PERFORM 4000-PRINT-LOAD-ERROR
-      *          PERFORM 3020-ACTIVE-PT-REPORT
-      *      ELSE
-      *          PERFORM 3500-UPDATE-EMPLOYEE
-      *             THRU 3500-END
-      *          PERFORM 3010-INDIV-FOUND-REPORT
-      *       END-IF.
-             
-      *       IF (PRM-UPD-FLAG = "Y")
-      **             PERFORM 3600-UPDATE-HRHISTORY
-      *           PERFORM 3700-UPDATE-EMPCODES
-      *           PERFORM 920-AUDIT-END
-      *       END-IF.
 
       ******************************************************************
        3010-INDIV-FOUND-REPORT.
@@ -833,7 +878,7 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
                 PERFORM 4000-PRINT-LOAD-ERROR
             END-IF.
             
-            IF (IN-LAWSON-ID NOT = " ")
+US5099      IF (IN-LAWSON-ID = 0)
                 MOVE 225               TO CRT-MSG-NBR
                 MOVE IN-LAWSON-ID      TO WS-EMP-FIELD
                 MOVE "Y"               TO WS-LOAD-ERR-FLAG
@@ -1027,8 +1072,7 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
       
            MOVE PRM-COMPANY            TO DB-COMPANY.
            MOVE IN-EMPLOYER-ID        TO DB-POSITION.
-      *     MOVE WS-RUN-DATE           TO DB-EFFECT-DATE.
-           MOVE 99999999              TO DB-EFFECT-DATE.
+           MOVE WS-RUN-DATE           TO DB-EFFECT-DATE.
            PERFORM 850-FIND-NLT-POSSET2.
            IF  (PAPOSITION-FOUND)
            AND (POS-COMPANY = PRM-COMPANY)
@@ -1042,10 +1086,6 @@ WO3742*     PERFORM 800-CLOSECSV-USFCSV.
                MOVE 052                TO CRT-MSG-NBR
                PERFORM 780-DISPLAY-MSG
            ELSE
-                DISPLAY "219 ERROR:", POS-PROCESS-LEVEL,
-                IN-EMPLOYER-ID,
-                POS-EFFECT-DATE, WS-RUN-DATE,
-                POS-END-DATE, WS-DB-NULL-DATE
                 MOVE 219               TO CRT-MSG-NBR
                 MOVE IN-EMPLOYER-ID    TO WS-EMP-FIELD
                 MOVE "Y"               TO WS-LOAD-ERR-FLAG

@@ -1,4 +1,4 @@
-******* PR197WS 4.2.2.1.19.1.9 <1587326335>
+******* PR197WS 4.2.2.1.19.1.14 <1937927587>
 MG0825*  Modified by DIXIE PATTON  DP0718                              *
 MH1113*  MODIFIED BY MARTIN HUNTER MH1113                              *
 MG0825******************************************************************
@@ -28,6 +28,16 @@ SB0830*   08/30/14 - INCREASED OCCURS FROM 1500 TO 9000 DUE TO NEW PLANS
       *  954027 | J54027 | ADDED ADDITIONAL VARIABLES FOR USE IN GM    *
       *         |        | REPORT WRITING AND GMTRANEFRT POSTING       *
       *  ------ | ------ | ------------------------------------------- *
+      * 1307422 | 307422 | Changed level 02 variables under a lvl 02   *
+      *         |        | mother variable                             *
+      *  ------ | ------ | ------------------------------------------- *
+      * 1482465 | 482465 | ADDED VARIABLE FOR PROPER CLOSING OF TMP    *
+      *         |        | FILES.                                      *
+      *  ------   ------   ------------------------------------------- *
+      * 1371703 | J71703 | Increase PRDED-DED-TABLE to 999             *
+      * -------   ------   ------------------------------------------- *
+      * 1659520 | 659520 | NEW VARIABLE TO SAVE GHR PLAN DESCRIPTION   *
+      * -------   ------   ------------------------------------------- *
       ******************************************************************
 000200 01  PR197WS.
 000300******************************************************************
@@ -219,6 +229,7 @@ SB0830         03  WS-PLN-TBL-1-GRP        OCCURS 9000 TIMES.
                    04  WS-PLN-DED-CODEG       OCCURS 15 TIMES.
                        05  WS-PLN-DED-CODE    LIKE DED-CODE.
 P81387             04  WS-PLN-CODA-CONTRIB PIC X(01).
+659520             04  WS-GHR-PLAN-DESC    PIC X(60).
 
            02  WS-PLN-TBL-2.
                03  WS-BEN-EDM-SEQ-NBR      LIKE SEQ-NBR.
@@ -398,29 +409,29 @@ J54027         03  WS-GM3-DIST-AMT        PIC S9(11)V9(2) COMP-3
 J54027                                                   VALUE ZEROS.
 J54027         03  WS-GM3-WAGE-AMOUNT     PIC S9(11)V9(2) COMP-3        
 J54027                                                   VALUE ZEROS.
-J54027         02  WS-GM3-GM-JOB-CODE     PIC X(09)      VALUE ZEROS.
-J54027         02  WS-GM3-GM-POSITION     PIC X(12)      VALUE SPACES.
-J54027         02  WS-GM3-GM-PAY-CODE     PIC X(04)      VALUE SPACES.
-J54027         02  WS-GM3-TR-JOB-CODE     PIC X(9)       VALUE SPACES.
-J54027         02  WS-GM3-TR-POSITION     PIC X(12)      VALUE SPACES.
-J54027         02  WS-GM3-TR-PAY-CODE     PIC X(4)       VALUE SPACES.
-J54027         02  WS-GM3-TR-PCD-SEQ-NBR  PIC 9(4)       VALUE ZEROS.
-J54027         02  WS-GM3-CHECK-ID        PIC 9(12)      VALUE ZEROS.
-J54027         02  WS-GM3-CURRENCY-CODE   PIC X(5)       VALUE SPACES.
-J54027         02  WS-GM3-DED-CODE        PIC X(4)       VALUE SPACES.
-J54027         02  WS-GM3-ERROR-NBR       PIC 9(3)       VALUE ZEROS.
-J54027         02  WS-GM3-ERR-MESSAGE     PIC X(60)      VALUE SPACES.
-J54027         02  WS-GM3-GML-OBJ-ID      PIC 9(12)      VALUE ZEROS.
-J54027         02  WS-GM3-OT-PLAN-CODE    PIC X(4)       VALUE SPACES.
-J54027         02  WS-GM3-GM-LINE-NBR     PIC 9(12)      VALUE ZEROS.
-J54027         02  WS-GM3-UPDATE-EFFORT   PIC X(1)       VALUE SPACES.
-J54027         02  WS-GM3-EFFORT-AMT      PIC S9(14)V9(2) COMP-3
+307422         03  WS-GM3-GM-JOB-CODE     PIC X(09)      VALUE ZEROS.
+307422         03  WS-GM3-GM-POSITION     PIC X(12)      VALUE SPACES.
+307422         03  WS-GM3-GM-PAY-CODE     PIC X(04)      VALUE SPACES.
+307422         03  WS-GM3-TR-JOB-CODE     PIC X(9)       VALUE SPACES.
+307422         03  WS-GM3-TR-POSITION     PIC X(12)      VALUE SPACES.
+307422         03  WS-GM3-TR-PAY-CODE     PIC X(4)       VALUE SPACES.
+307422         03  WS-GM3-TR-PCD-SEQ-NBR  PIC 9(4)       VALUE ZEROS.
+307422         03  WS-GM3-CHECK-ID        PIC 9(12)      VALUE ZEROS.
+307422         03  WS-GM3-CURRENCY-CODE   PIC X(5)       VALUE SPACES.
+307422         03  WS-GM3-DED-CODE        PIC X(4)       VALUE SPACES.
+307422         03  WS-GM3-ERROR-NBR       PIC 9(3)       VALUE ZEROS.
+307422         03  WS-GM3-ERR-MESSAGE     PIC X(60)      VALUE SPACES.
+307422         03  WS-GM3-GML-OBJ-ID      PIC 9(12)      VALUE ZEROS.
+307422         03  WS-GM3-OT-PLAN-CODE    PIC X(4)       VALUE SPACES.
+307422         03  WS-GM3-GM-LINE-NBR     PIC 9(12)      VALUE ZEROS.
+307422         03  WS-GM3-UPDATE-EFFORT   PIC X(1)       VALUE SPACES.
+307422         03  WS-GM3-EFFORT-AMT      PIC S9(14)V9(2) COMP-3
 J54027                                                   VALUE ZEROS.
 
-           02  WS-EMP-OTD-TABLE-SIZE           PIC 9(04) VALUE 250.
+J71703     02  WS-EMP-OTD-TABLE-SIZE           PIC 9(04) VALUE 999.
 
            02  WS-EMP-OTD-TABLE.
-               03  WS-EMP-OTD-TABLE-GRP        OCCURS 250 TIMES.
+J71703         03  WS-EMP-OTD-TABLE-GRP        OCCURS 999 TIMES.
                    04  WS-OTD-DED-CODE         LIKE DED-CODE.
                    04  WS-OTD-EDM-SEQ-NBR      LIKE EDM-SEQ-NBR.
                    04  WS-OTD-SEQ-NBR          LIKE SEQ-NBR.
@@ -480,5 +491,18 @@ J11414         05  WS-IPR-START-DATE-YEAR     PIC 9(4).
 J11414         05  WS-IPR-START-DATE-MONTH    PIC 9(2).
 J11414         05  WS-IPR-START-DATE-DAY      PIC 9(2).
 J11414*** CHANGES FOR INDIA PAYROLL END  HERE                     ***
-
-
+402689     02  PR197WS-GLERR-FILE-SW   PIC 9(01) VALUE 0.
+402689         88  PR197WS-GLERR-OPEN            VALUE 1.
+402689         88  PR197WS-GLERR-CLOSE            VALUE 0.
+482465     02  PR197WS-ERRORS-FILE-SW  PIC 9(01) VALUE 0.
+482465         88  PR197WS-ERRORS-OPEN           VALUE 1.
+482465         88  PR197WS-ERRORS-CLOSE          VALUE 0.
+482465     02  PR197WS-GMWORK-FILE-SW  PIC 9(01) VALUE 0.
+482465         88  PR197WS-GMWORK-OPEN           VALUE 1.
+482465         88  PR197WS-GMWORK-CLOSE          VALUE 0.
+482465     02  PR197WS-WORK3-FILE-SW   PIC 9(01) VALUE 0.
+482465         88  PR197WS-WORK3-OPEN            VALUE 1.
+482465         88  PR197WS-WORK3-CLOSE           VALUE 0.
+482465     02  PR197WS-BENWORK-FILE-SW PIC 9(01) VALUE 0.
+482465         88  PR197WS-BENWORK-OPEN          VALUE 1.
+482465         88  PR197WS-BENWORK-CLOSE         VALUE 0.

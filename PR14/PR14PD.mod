@@ -1,4 +1,4 @@
-******* PR14PD 25 <3270905633>
+******* PR14PD 27 <220360080>
 000100******************************************************************
 000200*                             PR14PD                             *
 000300******************************************************************
@@ -6,7 +6,11 @@
       *  ------   ------   ------------------------------------------  *
       *  345883 | J45883 | DEFINE DESCRIPTION ON MESSAGE MAINTENANCE   *
       *         |        | FOR CALC TYPE 1 TO 7 FOR PR14 FORM.         *
-      ******************************************************************
+      * -------   ------   ------------------------------------------  *
+      * 1366801 | J66801 | 2020 W-4 UPDATES: PHASE TWO                 *
+      * -------   ------   ------------------------------------------  *
+      * 1406129 | J06129 | REFINE EDIT FOR W4 MARITAL STATUS           *
+     ******************************************************************
       *               M O D I F I C A T I O N   L O G:                 *
       ******************************************************************
       *  MG0304  03/04/04  RESTRICT ENTERING TAX WITHHOLDING FOR       *
@@ -524,6 +528,8 @@ J45883
 001900 200-EDIT-TRAN.
 002000******************************************************************
 002100
+J06129     MOVE WS-TRUE                    TO PREDM-W4-MARITAL-SW.
+
            PERFORM 210-EDIT-ACCESS
            THRU    210-END.
 
@@ -565,6 +571,11 @@ J45883
                                              PR14F2-EDM-ADDL-RATE
                                              PR14F2-EDM-ADDL-AMOUNT
                                              PR14F2-EDM-FORMULA-NUMBER
+J66801                                       PR14F2-RGP-FORM-YEAR
+J66801                                       PR14F2-RGP-MULT-JOBS
+J66801                                       PR14F2-RGP-DEPENDENTS
+J66801                                       PR14F2-RGP-OTHER-AMOUNT
+J66801                                       PR14F2-RGP-DEDUCTIONS
            END-IF.
 
            IF (PR14F2-FC = "N" OR "P")
@@ -612,6 +623,11 @@ J45883
                                              PR14F2-EDM-ADDL-RATE
                                              PR14F2-EDM-ADDL-AMOUNT
                                              PR14F2-EDM-FORMULA-NUMBER
+J66801                                       PR14F2-RGP-FORM-YEAR
+J66801                                       PR14F2-RGP-MULT-JOBS
+J66801                                       PR14F2-RGP-DEPENDENTS
+J66801                                       PR14F2-RGP-OTHER-AMOUNT
+J66801                                       PR14F2-RGP-DEDUCTIONS
                END-IF.
 
            IF (EMPLOYEE-NOTFOUND)
@@ -851,6 +867,16 @@ P58549         END-IF
            MOVE PR14F2-EDM-MARITAL-STATUS-FN TO PREDM-MARITAL-STATUS-FN.
            MOVE PR14F2-EDM-EXEMPTIONS        TO PREDM-EXEMPTIONS.
            MOVE PR14F2-EDM-EXEMPTIONS-FN     TO PREDM-EXEMPTIONS-FN.
+J66801     MOVE PR14F2-RGP-FORM-YEAR         TO PREDM-FORM-YEAR.
+J66801     MOVE PR14F2-RGP-FORM-YEAR-FN      TO PREDM-FORM-YEAR-FN.
+J66801     MOVE PR14F2-RGP-MULT-JOBS         TO PREDM-MULT-JOBS.
+J66801     MOVE PR14F2-RGP-MULT-JOBS-FN      TO PREDM-MULT-JOBS-FN.
+J66801     MOVE PR14F2-RGP-DEPENDENTS        TO PREDM-DEPENDENTS.
+J66801     MOVE PR14F2-RGP-DEPENDENTS-FN     TO PREDM-DEPENDENTS-FN.
+J66801     MOVE PR14F2-RGP-OTHER-AMOUNT      TO PREDM-OTHER-AMOUNT.
+J66801     MOVE PR14F2-RGP-OTHER-AMOUNT-FN   TO PREDM-OTHER-AMOUNT-FN.
+J66801     MOVE PR14F2-RGP-DEDUCTIONS        TO PREDM-DEDUCTIONS.
+J66801     MOVE PR14F2-RGP-DEDUCTIONS-FN     TO PREDM-DEDUCTIONS-FN.
 
            MOVE PR14F2-EDM-EXEMPT-AMOUNT     TO PREDM-EXEMPT-AMOUNT.
            MOVE PR14F2-EDM-TAX-EXEMPT-FLG    TO PREDM-TAX-EXEMPT-FLG.
@@ -884,6 +910,68 @@ P58549         END-IF
            MOVE PREDM-ADDL-AMOUNT     TO PR14F2-EDM-ADDL-AMOUNT.
            MOVE PREDM-FORMULA-NUMBER  TO PR14F2-EDM-FORMULA-NUMBER.
            MOVE PREDM-DFLT-TCA-FLAG   TO PR14F2-EDM-DFLT-TCA-FLAG.
+J66801     MOVE PREDM-FORM-YEAR       TO PR14F2-RGP-FORM-YEAR.
+J66801     MOVE PREDM-MULT-JOBS       TO PR14F2-RGP-MULT-JOBS.
+J66801     MOVE PREDM-DEPENDENTS      TO PR14F2-RGP-DEPENDENTS.
+J66801     MOVE PREDM-OTHER-AMOUNT    TO PR14F2-RGP-OTHER-AMOUNT.
+J66801     MOVE PREDM-DEDUCTIONS      TO PR14F2-RGP-DEDUCTIONS.
+           
+J66801     IF  (DDC-TAX-AUTH-TYPE = "FD" OR "ST")
+J66801     AND (DDC-TAX-CATEGORY  = 01)
+J66801     AND (DDC-COUNTRY-CODE  = "US")
+J66801         MOVE EDM-COMPANY                TO DB-COMPANY
+J66801         MOVE EDM-EMPLOYEE               TO DB-EMPLOYEE
+J66801         MOVE "US"                       TO DB-COUNTRY-CODE
+J66801         MOVE "E"                        TO DB-RECORD-TYPE
+J66801         MOVE SPACES                     TO DB-REPORT-ENTITY
+J66801         MOVE PR14F2-EDM-DED-CODE        TO DB-TAX-ID-CODE
+J66801         MOVE ZEROS                      TO DB-PAYROLL-YEAR
+J66801         MOVE "E6"                       TO DB-TOPIC
+J66801         MOVE 6001                       TO DB-FLD-NBR
+J66801         MOVE ZEROS                      TO DB-SEQ-NBR
+J66801         PERFORM 850-FIND-NLT-RGPSET1
+J66801         PERFORM
+J66801           UNTIL (PRREGPARM-NOTFOUND)
+J66801           OR    (RGP-COMPANY     NOT = EDM-COMPANY)
+J66801           OR    (RGP-EMPLOYEE    NOT = EDM-EMPLOYEE)
+J66801           OR    (RGP-TAX-ID-CODE NOT = PR14F2-EDM-DED-CODE)
+J66801           OR    (RGP-TOPIC       NOT = "E6")
+J66801           OR    (RGP-FLD-NBR > 6005)
+J66801             IF  (RGP-FLD-NBR = 6001)
+J66801                 MOVE RGP-S-VALUE    TO PR14F2-RGP-FORM-YEAR
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6002)
+J66801               IF  (PREDM-MULT-JOBS = ZEROES)
+J66801                 MOVE RGP-S-VALUE    TO PR14F2-RGP-MULT-JOBS
+J66801               ELSE
+J66801                 MOVE PREDM-MULT-JOBS TO PR14F2-RGP-MULT-JOBS
+J66801               END-IF
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6003)
+J66801               IF  (PREDM-DEPENDENTS = ZEROES)
+J66801                 MOVE RGP-S-VALUE   TO PR14F2-RGP-DEPENDENTS
+J66801               ELSE
+J66801                 MOVE PREDM-DEPENDENTS TO PR14F2-RGP-DEPENDENTS
+J66801               END-IF
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6004)
+J66801               IF  (PREDM-OTHER-AMOUNT = ZEROES)
+J66801                 MOVE RGP-S-VALUE  TO PR14F2-RGP-OTHER-AMOUNT
+J66801               ELSE
+J66801                 MOVE PREDM-OTHER-AMOUNT 
+J66801                                   TO PR14F2-RGP-OTHER-AMOUNT
+J66801               END-IF
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6005)
+J66801               IF  (PREDM-DEDUCTIONS = ZEROES)
+J66801                 MOVE RGP-S-VALUE   TO PR14F2-RGP-DEDUCTIONS
+J66801               ELSE
+J66801                 MOVE PREDM-DEDUCTIONS TO PR14F2-RGP-DEDUCTIONS
+J66801               END-IF
+J66801             END-IF
+J66801             PERFORM 860-FIND-NEXT-RGPSET1
+J66801         END-PERFORM
+J66801     END-IF.
            
        530-END.
 
@@ -925,6 +1013,63 @@ P58549         END-IF
            MOVE EDM-ADDL-AMOUNT        TO PR14F2-EDM-ADDL-AMOUNT.
            MOVE EDM-FORMULA-NUMBER     TO PR14F2-EDM-FORMULA-NUMBER.
            MOVE EDM-DFLT-TCA-FLAG      TO PR14F2-EDM-DFLT-TCA-FLAG.
+
+J66801     IF  (DDC-TAX-AUTH-TYPE = "FD" OR "ST")
+J66801     AND (DDC-TAX-CATEGORY  = 01)
+J66801     AND (DDC-COUNTRY-CODE  = "US")
+J66801         MOVE EDM-COMPANY                TO DB-COMPANY
+J66801         MOVE EDM-EMPLOYEE               TO DB-EMPLOYEE
+J66801         MOVE "US"                       TO DB-COUNTRY-CODE
+J66801         MOVE "E"                        TO DB-RECORD-TYPE
+J66801         MOVE SPACES                     TO DB-REPORT-ENTITY
+J66801         MOVE PR14F2-EDM-DED-CODE        TO DB-TAX-ID-CODE
+J66801         MOVE ZEROS                      TO DB-PAYROLL-YEAR
+J66801         MOVE "E6"                       TO DB-TOPIC
+J66801         MOVE 6001                       TO DB-FLD-NBR
+J66801         MOVE ZEROS                      TO DB-SEQ-NBR
+J66801         PERFORM 850-FIND-NLT-RGPSET1
+J66801         PERFORM
+J66801           UNTIL (PRREGPARM-NOTFOUND)
+J66801           OR    (RGP-COMPANY     NOT = EDM-COMPANY)
+J66801           OR    (RGP-EMPLOYEE    NOT = EDM-EMPLOYEE)
+J66801           OR    (RGP-TAX-ID-CODE NOT = PR14F2-EDM-DED-CODE)
+J66801           OR    (RGP-TOPIC       NOT = "E6")
+J66801           OR    (RGP-FLD-NBR > 6005)
+J66801             IF  (RGP-FLD-NBR = 6001)
+J66801                 MOVE RGP-S-VALUE    TO PR14F2-RGP-FORM-YEAR
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6002)
+J66801               IF  (PREDM-MULT-JOBS = ZEROES)
+J66801                 MOVE RGP-S-VALUE    TO PR14F2-RGP-MULT-JOBS
+J66801               ELSE
+J66801                 MOVE PREDM-MULT-JOBS TO PR14F2-RGP-MULT-JOBS
+J66801               END-IF
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6003)
+J66801               IF  (PREDM-DEPENDENTS = ZEROES)
+J66801                 MOVE RGP-S-VALUE   TO PR14F2-RGP-DEPENDENTS
+J66801               ELSE
+J66801                 MOVE PREDM-DEPENDENTS TO PR14F2-RGP-DEPENDENTS
+J66801               END-IF
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6004)
+J66801               IF  (PREDM-OTHER-AMOUNT = ZEROES)
+J66801                 MOVE RGP-S-VALUE  TO PR14F2-RGP-OTHER-AMOUNT
+J66801               ELSE
+J66801                 MOVE PREDM-OTHER-AMOUNT 
+J66801                                   TO PR14F2-RGP-OTHER-AMOUNT
+J66801               END-IF
+J66801             END-IF
+J66801             IF  (RGP-FLD-NBR = 6005)
+J66801               IF  (PREDM-DEDUCTIONS = ZEROES)
+J66801                 MOVE RGP-S-VALUE   TO PR14F2-RGP-DEDUCTIONS
+J66801               ELSE
+J66801                 MOVE PREDM-DEDUCTIONS TO PR14F2-RGP-DEDUCTIONS
+J66801               END-IF
+J66801             END-IF
+J66801             PERFORM 860-FIND-NEXT-RGPSET1
+J66801         END-PERFORM
+J66801     END-IF.
 
 031000 600-END.
 031100

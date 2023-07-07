@@ -1,4 +1,4 @@
-******* HR13PD 34.1.8 <109255631>
+******* HR13PD 34.1.13 <3915624771>
 000100******************************************************************
 000200*                             HR13PD                             *
 000300******************************************************************
@@ -9,7 +9,23 @@
       *  ------   ------   ------------------------------------------- *
       *  316547 | J16547 | SEPARATE RELATIONSHIP CODES TO DEPENDENTS   *
       *         |        | AND BENEFICIARY.                            *
-      ******************************************************************
+      *  ------   ------   ------------------------------------------  *
+      *  845689 |J45689  | FIXED BENEFIT ELIGIBILITY CRITERIA FOR      *
+      *         |        | DEPENDENTS FOR OPTION B,S,P AND C           *
+      * -------   ------   ------------------------------------------  *
+      * 1044921 | 044921 | REMOVED COMMENTED CODE TO MOVE HR13F4-PTB-  *
+      *         |        | PARTICIPNT-FN TO HRHDB-PARTICIPNT-FN        *
+      * -------   ------   ------------------------------------------  *
+      * 1306202 | J06202 | DO NOT DISPLAY INACTIVE DEPENDENTS ON HR13.4*
+      * -------   ------   ------------------------------------------  *
+      * 1587700 | 587700 | NEW HR13.5 SCREEN LOGIC/CODE                *
+      * MLF       06/22/2023                                           *
+      * DUE TO ISSUES SUPPORTING CPS CUSTOM FIELDS PREVIOUSLY ADDED    *
+      * TO HR13 SCREENS, THIS PATCH AND THE RELATED SCREEN             *
+      * MODIFICATIONS WILL NOT BE APPLIED                              *
+      * -------   ------   ------------------------------------------  *
+      * 1673640 | (.SCR) | CHANGE GENDER EDIT                          *
+      * -------   ------   ------------------------------------------  *
       ******************************************************************
       *               M O D I F I C A T I O N   L O G:                 *
       ******************************************************************
@@ -35,6 +51,7 @@
       *          08/25/11  REAPPLIED CUSTOM CODE AFTER 9.0.1 APPS      *
       *          ACS       UPGRADE.                                    *
       ******************************************************************
+
 000400******************************************************************
 000500 HR13S1-TRANSACTION              SECTION 41.
 000600******************************************************************
@@ -1570,10 +1587,28 @@ J07540     AND (HR13WS-COV-DEPENDENTS      = "E" OR "N" OR "S" OR
 J07540          "P" OR "O")
 119600         GO TO 490-NEXT-BENEFIT.
 119700
+J45689* SEPERATING SPOUSE AND DOM PARTNER ELIGIBILITY CRITERIA
+J45689*
 J07540* (E)MPLOYEE, (N)ONE, (D)EPENDENTS, PA(R)TNER DEPS
-J07540     IF  (EMD-DEP-TYPE               = "S" OR "P") 
-J07540     AND (HR13WS-COV-DEPENDENTS      = "E" OR "N" OR "D" OR "R")
-120000         GO TO 490-NEXT-BENEFIT.
+J07540*    IF  (EMD-DEP-TYPE               = "S" OR "P") 
+J07540*    AND (HR13WS-COV-DEPENDENTS      = "E" OR "N" OR "D" OR "R")
+120000*        GO TO 490-NEXT-BENEFIT.
+J45689*
+J45689* (E)MPLOYEE, (N)ONE, (D)EPENDENTS, PA(R)TNER DEPS, (P)ARTNER, 
+J45689* (C)PARTNER AND DEPENDENTS
+J45689     IF  (EMD-DEP-TYPE               = "S")
+J45689     AND (HR13WS-COV-DEPENDENTS      = "E" OR "N" OR "D" OR "R"
+J45689                                    OR "P" OR "C")
+J45689         GO TO 490-NEXT-BENEFIT
+J45689     END-IF.
+J45689*
+J45689* (E)MPLOYEE, (N)ONE, (D)EPENDENTS, PA(R)TNER DEPS, (S)POUSE, 
+J45689* (B)SPOUSE AND DEPENDENTS
+J45689     IF  (EMD-DEP-TYPE               = "P")
+J45689     AND (HR13WS-COV-DEPENDENTS      = "E" OR "N" OR "D" OR "R"
+J45689                                    OR "B" OR "S")
+J45689         GO TO 490-NEXT-BENEFIT
+J45689     END-IF.
 120100
 P96883     IF (PLN-COVERAGE-TYPE       NOT = "0")
 120200         PERFORM 610-MOVE-BEN-TO-SCREEN
@@ -2640,10 +2675,28 @@ J07540* (E)MPLOYEE, (S)POUSE, (P)ARTNER, SPOUSE (O)R PARTNER
 J07540     AND (HR13WS-COV-DEPENDENTS      = "E" OR "S" OR "P" OR "O")
 218200         GO TO 610-FIND-NEXT-EMDEPEND.
 218300
+J45689* SEPERATING SPOUSE AND DOM PARTNER ELIGIBILITY CRITERIA
+J45689*
 J07540* (E)MPLOYEE, (D)EPENDENTS, PA(R)TNER DEPS
-J07540     IF  (EMD-DEP-TYPE               = "S" OR "P") 
-J07540     AND (HR13WS-COV-DEPENDENTS      = "E" OR "D" OR "R")
-218600         GO TO 610-FIND-NEXT-EMDEPEND.
+J07540*    IF  (EMD-DEP-TYPE               = "S" OR "P") 
+J07540*    AND (HR13WS-COV-DEPENDENTS      = "E" OR "D" OR "R")
+218600*        GO TO 610-FIND-NEXT-EMDEPEND.
+J45689*
+J45689* (E)MPLOYEE, (D)EPENDENTS, PA(R)TNER DEPS, (P)ARTNER,
+J45689* (C)PARTNER AND DEPENDENTS
+J45689     IF  (EMD-DEP-TYPE               = "S")
+J45689     AND (HR13WS-COV-DEPENDENTS      = "E" OR "D" OR "R"
+J45689                                    OR "P" OR "C")
+J45689         GO TO 610-FIND-NEXT-EMDEPEND
+J45689     END-IF.
+J45689*
+J45689* (E)MPLOYEE, (D)EPENDENTS, PA(R)TNER DEPS, (B)SPOUSE & DEPENDENTS
+J45689* (S)POUSE
+J45689     IF  (EMD-DEP-TYPE               = "P")
+J45689     AND (HR13WS-COV-DEPENDENTS      = "E" OR "D" OR "R"
+J45689                                    OR "B" OR "S")
+J45689         GO TO 610-FIND-NEXT-EMDEPEND
+J45689     END-IF.
 218700
 218800     IF (HR13F3-FC = "-")
 218900         SUBTRACT 1              FROM I1
@@ -3400,7 +3453,7 @@ J10377     END-IF.
 287800     MOVE HR13F4-PTB-COMPANY         TO HRHDB-COMPANY.   
 287900     MOVE HR13F4-PTB-COMPANY-FN      TO HRHDB-COMPANY-FN. 
 288000     MOVE HR13F4-PTB-PARTICIPNT      TO HRHDB-PARTICIPNT. 
-J10377*     MOVE HR13F4-PTB-PARTICIPNT-FN   TO HRHDB-PARTICIPNT-FN.
+044921     MOVE HR13F4-PTB-PARTICIPNT-FN   TO HRHDB-PARTICIPNT-FN.
 288200     MOVE HR13F4-PTB-EMPLOYEE        TO HRHDB-EMPLOYEE. 
 288300     MOVE HR13F4-PTB-EMPLOYEE-FN     TO HRHDB-EMPLOYEE-FN.
 288400     MOVE HR13F4-PTB-PLAN-TYPE       TO HRHDB-PLAN-TYPE. 
@@ -3546,6 +3599,9 @@ J10377     MOVE HDB-PARTICIPNT         TO HR13F4-HDB-PARTICIPNT (I1).
 299400 610-MOVE-EMD-TO-SCREEN.
 299500******************************************************************
 299600
+J06202     IF (EMD-ACTIVE-FLAG             = "I")
+J06202         GO TO 610-FIND-NEXT-EMDEPEND.
+
 299700     MOVE HR13F4-PTB-COMPANY         TO DB-COMPANY.
 299800     MOVE HR13F4-PTB-PLAN-TYPE       TO DB-PLAN-TYPE.
 299900     MOVE HR13F4-PTB-PLAN-CODE       TO DB-PLAN-CODE.

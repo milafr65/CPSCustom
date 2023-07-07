@@ -1,4 +1,4 @@
-******* PA100PD 97.1.1.1.1.1.44 <2089204881>
+******* PA100PD 97.1.1.1.1.1.47 <554338928>
       ******************************************************************
       *                            PA100PD                             *
       ******************************************************************
@@ -74,6 +74,12 @@ CRP001*         |        | recalc benefit information                  *
       * 1101470 | 101470 | Personnel Action History shows incorrect    *
       *         |        | reason code and "updated user" for a PA02   *
       *         |        | change that was captured by PA100           *
+      * -------   ------   ------------------------------------------  *
+      * 1385747 | J85747 | PERSONNEL ACTION UPDATES FOR 2020 W-4       *
+      * -------   ------   ------------------------------------------  *
+      * 1645437 | 645437 | Add the ID of last user to report           *
+      * -------   ------   ------------------------------------------  *
+      * 1679585 | 679585 | Last User ID reflecting NTID not username   *
       ******************************************************************
 MG0808*****************************************************************
 MG0808* Modified by MARK GLISSEN - MG0808                             *
@@ -1401,6 +1407,9 @@ P58564             MOVE CRT-MESSAGE        TO WS-HREMP-MSG-50
 P58564             MOVE SPACES             TO CRT-MESSAGE
 P58564             MOVE ZEROES             TO CRT-MSG-NBR
 P58564         END-IF
+J85747         MOVE WS-EDM-EFFECT-DT   TO PA100WS-DATE
+J85747         MOVE PA100WS-YEAR       TO PRRQC-FORM-YEAR
+J85747                                    PREDM-FORM-YEAR
                PERFORM 1430-CHECK-REQ-FIELDS
            END-IF.
 
@@ -1708,6 +1717,9 @@ J67329                                            BNH-USER-ID
 096700         INITIALIZE PRRQC-DFT-MAR-STAT
 096900                    PRRQC-DFT-EXEMPTS
                MOVE WS-EDM-EFFECT-DT   TO PRRQC-EFFECT-DATE
+J85747                                    PA100WS-DATE
+J85747         MOVE PA100WS-YEAR       TO PRRQC-FORM-YEAR
+J85747                                    PREDM-FORM-YEAR
                MOVE ZEROES             TO PRRQC-END-DATE
                MOVE PRM-UPDATE-OPTION  TO PRRQC-UPDATE-OPTION
 097000         PERFORM 500-REQ-DED-CREATION
@@ -2359,6 +2371,10 @@ P50750         MOVE PAT-LAST-CMT-SEQ   TO PA100WS-CMT-SEQ-NBR
 110300
 110400     MOVE PCT-ACTION-NBR         TO R1G3-PCT-ACTION-NBR.
 P51871*    MOVE PCT-USER-ID            TO R1G3-PCT-USER-ID.
+679585     MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY.
+679585     PERFORM 900-GET-USER-DISPLAY-NAME.
+679585     PERFORM 5300-NAME-CHECK.
+679585     MOVE WS-CHECK-NAME-OUTPUT   TO R1G3-PCT-LAST-USER-ID.
 101470*    MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY.
 101470     MOVE CRT-USER-NAME          TO WS-USER-DBUIDKEY.
 J21860     PERFORM 900-GET-USER-DISPLAY-NAME.
@@ -2377,7 +2393,9 @@ J21860     MOVE WS-CHECK-NAME-OUTPUT   TO R1G3-PCT-CREATE-USER-ID.
 110600     MOVE PCT-UPDATE-BENEFIT     TO R1G3-PCT-UPDATE-BENEFIT.
            MOVE PCT-UPD-ABS-MGMT       TO R1G3-PCT-UPD-ABS-MGMT.
 110600     MOVE PCT-UPDATE-REQ-DED     TO R1G3-PCT-UPDATE-REQ-DED.
-110700     MOVE PCT-EFFECT-DATE        TO R1G3-PCT-EFFECT-DATE.
+J85747     MOVE PCT-EFFECT-DATE        TO R1G3-PCT-EFFECT-DATE
+J85747                                    PA100WS-DATE.
+J85747     MOVE PA100WS-YEAR           TO R1G3-PCT-TAX-FORM-YEAR.
 110800     MOVE PCT-ANT-END-DATE       TO R1G3-PCT-ANT-END-DATE.
 110900
 111000     IF (PCT-REASON (1) NOT = SPACES)
@@ -2401,6 +2419,10 @@ J21860     MOVE WS-CHECK-NAME-OUTPUT   TO R1G3-PCT-CREATE-USER-ID.
                MOVE PCT-ACTION-NBR         TO R6G3-PCT-ACTION-NBR
                MOVE PCT-EFFECT-DATE        TO R6G3-PCT-EFFECT-DATE
 P51871*        MOVE PCT-USER-ID            TO R6G3-PCT-USER-ID
+679585         MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY
+679585         PERFORM 900-GET-USER-DISPLAY-NAME
+679585         PERFORM 5300-NAME-CHECK
+679585         MOVE WS-CHECK-NAME-OUTPUT   TO R6G3-PCT-LAST-USER-ID
 101470*        MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY
 101470         MOVE CRT-USER-NAME          TO WS-USER-DBUIDKEY
 J21860         PERFORM 900-GET-USER-DISPLAY-NAME
@@ -6034,6 +6056,7 @@ INTL       ELSE
                MOVE "SP"                   TO R1G3-SPECIAL
                MOVE SPACES                 TO R1G3-PCT-USER-ID
 J08104                                        R1G3-PCT-CREATE-USER-ID
+645437                                        R1G3-PCT-LAST-USER-ID
            ELSE
 205300         MOVE PCT-ACTION-NBR         TO R1G3-PCT-ACTION-NBR
 205300                                        R6G3-PCT-ACTION-NBR
@@ -6041,11 +6064,19 @@ J08104                                        R1G3-PCT-CREATE-USER-ID
 205400                                        R6G3-PCT-EFFECT-DATE
                MOVE SPACES                 TO R1G3-SPECIAL
       *        MOVE PCT-USER-ID            TO R1G3-PCT-USER-ID
+679585         MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY
+679585         PERFORM 900-GET-USER-DISPLAY-NAME
+679585         PERFORM 5300-NAME-CHECK
+679585         MOVE WS-CHECK-NAME-OUTPUT   TO R1G3-PCT-LAST-USER-ID
 101470*        MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY
 101470         MOVE CRT-USER-NAME          TO WS-USER-DBUIDKEY
 J21860         PERFORM 900-GET-USER-DISPLAY-NAME
 J21860         PERFORM 5300-NAME-CHECK
 J21860         MOVE WS-CHECK-NAME-OUTPUT   TO R1G3-PCT-USER-ID
+679585         MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY
+679585         PERFORM 900-GET-USER-DISPLAY-NAME
+679585         PERFORM 5300-NAME-CHECK
+679585         MOVE WS-CHECK-NAME-OUTPUT   TO R1G3-PCT-LAST-USER-ID
 J08104*        MOVE PCT-CREATE-USER-ID     TO R1G3-PCT-CREATE-USER-ID
 J21860         MOVE PCT-CREATE-USER-ID     TO WS-USER-DBUIDKEY
 J21860         PERFORM 900-GET-USER-DISPLAY-NAME
@@ -6891,6 +6922,10 @@ P58444     END-IF.
 255700     MOVE WSPCT-UNION-CODE         TO R2G2-PCT-UNION-CODE.
 255800     MOVE WSPCT-PERS-GROUP         TO R2G2-PCT-PERS-GROUP.
       *    MOVE WSPCT-USER-ID            TO R2G2-PCT-USER-ID.
+679585     MOVE WSPCT-USER-ID            TO WS-USER-DBUIDKEY.
+679585     PERFORM 900-GET-USER-DISPLAY-NAME.
+679585     PERFORM 5300-NAME-CHECK.
+679585     MOVE WS-CHECK-NAME-OUTPUT     TO R2G2-PCT-LAST-USER-ID.
 J21860     MOVE WSPCT-USER-ID            TO WS-USER-DBUIDKEY.
 J21860     PERFORM 900-GET-USER-DISPLAY-NAME.
 J21860     PERFORM 5300-NAME-CHECK.
@@ -8183,6 +8218,10 @@ P58564         PERFORM 840-FIND-PATSET1
 361100     MOVE PCT-UNION-CODE         TO R3G2-PCT-UNION-CODE.
 361200     MOVE PCT-PERS-GROUP         TO R3G2-PCT-PERS-GROUP.
       *    MOVE PCT-USER-ID            TO R3G2-PCT-USER-ID.
+679585     MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY.
+679585     PERFORM 900-GET-USER-DISPLAY-NAME.
+679585     PERFORM 5300-NAME-CHECK.
+679585     MOVE WS-CHECK-NAME-OUTPUT   TO R3G2-PCT-LAST-USER-ID.
 101470*    MOVE PCT-USER-ID            TO WS-USER-DBUIDKEY.
 101470     MOVE CRT-USER-NAME          TO WS-USER-DBUIDKEY.
 J21860     PERFORM 900-GET-USER-DISPLAY-NAME.

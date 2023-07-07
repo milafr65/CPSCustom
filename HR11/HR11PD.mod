@@ -1,4 +1,4 @@
-******* HR11PD 97.1.15.1.11 <453118188>
+******* HR11PD 97.1.15.1.15 <4109620652>
 000100******************************************************************
 000200*                             HR11PD                             *
 000300******************************************************************
@@ -62,6 +62,19 @@
       *  ------   ------   ------------------------------------------- *
       * 1277456 | 277456 | Added code to call HR23.1 from HR11         *
       *  ------   ------   ------------------------------------------- *
+      * 1612221 |        | CHANGED DESCRIPTION OF VALUE 0 (NOT REMOTE) *
+      *         |        | FOR THE REMOTE FIELD TO INCLUDE '/HYBRID'   *
+      *         |        | CHANGE WAS MADE ON HR11.SCR                 *
+      *         |        |                                             *
+      * 1612221 | 612221 | '**HYBRID EMPLOYEE'  WILL DISPLAY NEXT TO   *
+      *         |        | THE REMOTE FIELD FOR EMPLOYEES THAT HAVE A  *
+      *         |        | REMOTE VALUE OF 0 AND A LOCATION OF '*HOME' *
+      *  ------   ------   --------------------------------------------*
+      * 1739190 | 739190 | Added call to HR23.2                        *
+      *  ------   ------   --------------------------------------------*
+      * 1761284 | 761284 | Add Tax Cat 112 for Kansas Boone County     *
+      *         |        | Flight Crew                                 *
+      *  ------   ------   --------------------------------------------*
       *         |        |                                             *
 ACS001******************************************************************
 ACS001*CHANGE LOG                                                      *
@@ -102,6 +115,12 @@ P60986
 J73217     IF  (HR11F1-FC NOT = "A" AND "C" AND "D")
 J73217         INITIALIZE HR11F1-PEM-GENDER-IDENTITY
 J73217                    HR11F1-PEM-SEX-ORIENTATION.
+
+J97465     IF  (HR11F1-FC NOT = "A" AND "C" AND "D")
+J97465         INITIALIZE HR11F1-PEM-RETURN-ALL-STATES.
+
+761284     IF (HR11F1-FC NOT = "A" AND "C" AND "D")
+761284         INITIALIZE HR11F1-PEM-EMPLOYMENT-TYPE.
 
 001300     PERFORM 850-FIND-NLT-PPRSET1.
 001400     IF (PAPOSRULE-FOUND)
@@ -974,9 +993,15 @@ J12776     MOVE HR11F1-EMP-HICN-FN           TO HREMP-EMP-HICN-FN.
            MOVE HR11F1-EMP-SNDCERT-ID        TO HREMP-SNDCERT-ID.
            MOVE HR11F1-EMP-SNDCERT-ID-FN     TO HREMP-SNDCERT-ID-FN.
            MOVE HR11F1-XMIT-HREMP-BLOCK      TO HREMP-XMIT-BLOCK.
+J97465     MOVE HR11F1-PEM-RETURN-ALL-STATES TO HRPEM-RETURN-ALL-STATES.
+J97465     MOVE HR11F1-PEM-RETURN-ALL-STATES-FN TO
+J97465                                       HRPEM-RETURN-ALL-STATES-FN.
            MOVE HR11F1-USER-ID               TO HREMP-USER-ID.
 023100     MOVE HR11F1-EMP-EMAIL-PERSONAL    TO HREMP-EMAIL-PERSONAL.
-023200     MOVE HR11F1-EMP-EMAIL-PERSONAL-FN TO HREMP-EMAIL-PERSONAL-FN.           
+023200     MOVE HR11F1-EMP-EMAIL-PERSONAL-FN TO HREMP-EMAIL-PERSONAL-FN.
+761284     MOVE HR11F1-PEM-EMPLOYMENT-TYPE   TO HRPEM-EMPLOYMENT-TYPE.
+761284     MOVE HR11F1-PEM-EMPLOYMENT-TYPE-FN TO 
+761284                                       HRPEM-EMPLOYMENT-TYPE-FN.
 043200
 043800     IF (HR11F1-FC = "A")
 043900         MOVE WS-SYSTEM-DATE-YMD       TO HREMP-CREATION-DATE
@@ -1803,6 +1828,12 @@ J19305     MOVE 1                      TO HR11F1-POS-LEVEL.
            MOVE HREMP-RAILROAD-CODE    TO HR11F1-RAILROAD-CODE.
            MOVE HREMP-TAX-FILTER       TO HR11F1-EMP-TAX-FILTER.
            MOVE HREMP-REMOTE           TO HR11F1-EMP-REMOTE.
+612221     IF  (HR11F1-EMP-REMOTE = 0)
+612221     AND (HR11F1-PEM-LOCAT-CODE = PRPXL-HYBRID-LOCAT-CODE)
+612221         MOVE HR11WS-HYBRID-DESC TO HR11F1-EMP-HYBRID-EE
+612221     ELSE
+612221         MOVE SPACES             TO HR11F1-EMP-HYBRID-EE
+612221     END-IF.
            MOVE HREMP-PUB-SEC-RETIRE   TO HR11F1-EMP-PUB-SEC-RETIRE.
            MOVE HREMP-TAX-CITY         TO HR11F1-EMP-TAX-CITY.
            MOVE HREMP-TAX-COUNTY       TO HR11F1-EMP-TAX-COUNTY.
@@ -2020,6 +2051,8 @@ J81460     MOVE HREMP-EMAIL-PERSONAL   TO HR11F1-EMP-EMAIL-PERSONAL.
            MOVE HREMP-PRMCERT-ID       TO HR11F1-EMP-PRMCERT-ID.
            MOVE HREMP-SNDCERT-COMP     TO HR11F1-EMP-SNDCERT-COMP.
            MOVE HREMP-SNDCERT-ID       TO HR11F1-EMP-SNDCERT-ID.
+J97465     MOVE HRPEM-RETURN-ALL-STATES TO HR11F1-PEM-RETURN-ALL-STATES.
+761284     MOVE HRPEM-EMPLOYMENT-TYPE  TO HR11F1-PEM-EMPLOYMENT-TYPE.
 061300
            MOVE HREMP-XMIT-BLOCK       TO HR11F1-XMIT-HREMP-BLOCK.
 061600
@@ -3082,6 +3115,11 @@ J66361     END-IF.
 277456         MOVE "HR231"            TO CRT-SCREEN-CODE
 277456         GO TO 700-END
 277456     END-IF.
+
+739190     IF (DB-STATE = "WA")
+739190         MOVE "HR232"            TO CRT-SCREEN-CODE
+739190         GO TO 700-END
+739190     END-IF.
 
            MOVE DB-STATE                   TO CRT-ERR-VAR1.
            MOVE 107                        TO CRT-ERROR-NBR.

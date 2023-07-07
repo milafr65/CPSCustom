@@ -1,4 +1,4 @@
-******* AR137PD 50.1.11.1.24.1.3 <2815379555>
+******* AR137PD 50.1.11.1.24.1.13 <1155907203>
       ******************************************************************
       * WORKER BENEFIT PLAN MODIFICATIONS
       * 04/05/27 HERWECK - ONLY PROCESS EMPLOYERS, SKIP DIRECT BILL
@@ -18,6 +18,12 @@
       * JT-1167804  *  167804 * ISSUE W/SUPPRESS=N FOR CUSTOMER WITH   *
       *                       * FINANCE AMNT BELOW CUSTOMER MIN CHARGE *
       * JT-1257937  *         * AR137 FAILS & IS CREATING CORRUPT DATA *
+      * JT-1258200  *  258200 * ISSUE W/SUPPRESS=N FOR CUSTOMER WITH   *
+      *                       * FINANCE AMNT BELOW CUSTOMER MIN CHARGE *
+      * JT-1336027  *  336027 * INTEREST BY DATE CREATES INVOICE FOR   *
+      *                       * WRONG AMOUNT WITH SUPPRESS ZEROS = Y   *
+      * JT-1433224  *  433224 * AR137 CALCULATING FINANCE CHARGES PRIOR*
+      *                       * TO ASSESSMENT DATE                     *
       ******************************************************************
        050-EDIT-PARAMETERS             SECTION 10.
       ******************************************************************
@@ -841,6 +847,16 @@ J14371         IF (PRM-PMT-CR-OPTION  NOT = "P")
                    GO TO 1010-NEXT-ARCUSTOMER
                END-IF.
 
+258200     IF (ACM-LATE-PAY-FL  = "B")
+258200        IF (PRM-SUPPRESS-ZEROS = "Y")
+258200            CONTINUE
+258200        ELSE
+258200            PERFORM 1046-FINANCE-NET
+258200            THRU    1046-END
+258200            GO TO 1010-NEXT-ARCUSTOMER
+258200        END-IF
+258200     END-IF.
+
       **** PRINT FINANCE CHARGE CODE ERROR AND READ NEXT ARCUSTOMER
       **** ELSE COMPUTE NET FINANCE CHARGE FOR ARCUSTOMER.
            IF (ACM-FIN-CALC-TYPE                = "N")
@@ -1080,6 +1096,9 @@ RAY   *--- 04/05/27 HERWECK - ONLY PROCESS EMPLOYERS, SKIP DIRECT BILL -
                PERFORM 850-FIND-BEGRNG-ARASET1
                PERFORM
                    UNTIL (ARAPPLIED-NOTFOUND)
+433224             IF (ARO-LAST-FC-DATE > ARA-GL-DATE)
+433224                 GO TO 1015-FIND-NEXT-AROITEMS
+433224             END-IF
                    IF (ARAPPLIED-FOUND)
                        ADD ARA-ADJ-AMT     TO AR137WS-ADJ-AMT
                    END-IF
@@ -3926,6 +3945,7 @@ J66145         MOVE 1                       TO WF-PRINT-FL
                IF (AR137WS-CALC-INVOICE-LATE-CHG < ACM-I-FIN-MIN-CHRG)
                    MOVE "*"    TO AR137WS-MEMO-FINCHG-REC-FLG
                END-IF
+336027         MOVE AR137WS-CALC-INVOICE-LATE-CHG TO WF-TOT-INV-LATE-CHG
            END-IF.
 
        1060-END.
@@ -5352,6 +5372,10 @@ J66145     MOVE 1                           TO WF-PRINT-FL .
       **** ERROR MESSAGE 104 - NO CHARGE
       ****
 
+258200     MOVE PRM-COMPANY                TO DB-COMPANY.
+258200     MOVE AR137WS-CUSTOMER           TO DB-CUSTOMER.
+258200     PERFORM 840-FIND-ACMSET1.
+
            IF (AR137WS-CFINC                   < ACM-FIN-MIN-CHRG)
                IF (ACM-MINIMUM                 = "Y")
                    IF  (AR137WS-CFINC          <= ZERO)
@@ -5631,13 +5655,6 @@ J66145     MOVE 1                           TO WF-PRINT-FL .
                      THRU    2064-END.
 
        2060-CONT.
-       
-116658     IF (WF-FINANCE-AMOUNT           < ZEROES)
-116658         COMPUTE AR137WS-FIN-ABSOL-VAL
-116658               = WF-FINANCE-AMOUNT * -1
-116658     ELSE
-116658         MOVE WF-FINANCE-AMOUNT      TO AR137WS-FIN-ABSOL-VAL
-116658     END-IF.
 
 020435*--- JT-1020435 
 020435     IF  (ACO-INT-BY-DATE-FL = "Y")
@@ -5719,7 +5736,7 @@ J66145     MOVE 1                           TO WF-PRINT-FL .
 
            IF   (ACO-INT-BY-DATE-FL        = "Y")
            AND  (ACM-I-FIN-MIN-CHRG        NOT = ZEROS)
-095971     AND  (AR137WS-FIN-ABSOL-VAL     < ACM-I-FIN-MIN-CHRG)
+336027     AND  (WF-TOT-INV-LATE-CHG < ACM-I-FIN-MIN-CHRG)
                MOVE GN3D-INV-MINIMUM       TO RPT-GROUP-REQUEST
                PERFORM 700-PRINT-RPT-GRP.
 

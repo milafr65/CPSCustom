@@ -1,10 +1,13 @@
-******* HR04PD 25 <2704568678>
+******* HR04PD 26 <1266117667>
 000100******************************************************************
 000200*                             HR04PD                             *
 000300******************************************************************
       *  JT#      TAG      DESCRIPTION                                 *
       *  ------   ------   ------------------------------------------  *
       *  833061 | J33061 | ADD NEW FUNCTIONALITY FOR KEY FIELD CHANGE  *
+      *  ------   ------   ------------------------------------------  *
+      *  953995 | J53995 | PROPERLY POPULATED STATE/PROV DESCRIPTION   *
+      *         |        | IN MAILING ADDRESS TAB OF HR04.9.           *
       ******************************************************************
       *               M O D I F I C A T I O N   L O G:                 *
       ******************************************************************
@@ -3228,15 +3231,17 @@ J33061         END-IF.
            IF  (HR04F9-PDD-SUPP-CNTRY-CODE   NOT = SPACES)
            AND (HR04F9-PDD-SUPP-STATE        NOT = SPACES)
                IF (HR04F9-PDD-SUPP-CNTRY-CODE = HRWS-US-WORK-COUNTRY)
-                   MOVE HR04F9-PDD-STATE       TO DB-STATE
-                   PERFORM 840-FIND-PSASET1
+J53995*            MOVE HR04F9-PDD-STATE       TO DB-STATE
+J53995             MOVE HR04F9-PDD-SUPP-STATE  TO DB-STATE
+                    PERFORM 840-FIND-PSASET1
                    IF  (PRSTATE-FOUND)
                        MOVE PSA-DESCRIPTION    TO
                                                HR04F9-PDD-DESCRIPTION2
                    END-IF
                ELSE
                IF (HR04F9-PDD-COUNTRY-CODE = HRWS-CA-WORK-COUNTRY)
-                   MOVE HR04F9-PDD-STATE       TO DB-PROVINCE
+J53995*            MOVE HR04F9-PDD-STATE       TO DB-PROVINCE
+J53995             MOVE HR04F9-PDD-SUPP-STATE  TO DB-PROVINCE
                    PERFORM 840-FIND-PPVSET1
                    IF (PRPROVINCE-FOUND)
                        MOVE PPV-DESCRIPTION    TO

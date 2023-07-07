@@ -1,4 +1,4 @@
-******* BNENTPD 123.1.64 <4159075680>
+******* BNENTPD 123.1.73 <1443894123>
       ******************************************************************
       *                            BNENTPD                             *
       ******************************************************************
@@ -88,7 +88,10 @@
       *  ------   ------  -------------------------------------------- *
       *  857497 | J57497 | Enhance to populate Entry-Date with the BN35*
       *         |        | effective date instead of plan Entry Rule Dt*
-      *  ------   ------  -------------------------------------------- *
+      * -------   ------  -------------------------------------------- *
+      * 1285772 | 285772 | MOVED PRE-MATCH-OPTION TO BNWS-COMP-CONT-SW *
+      *         |        | REVERT CHANGES MADE BY JT-912251            *
+      * -------   ------  -------------------------------------------- *
 000100******************************************************************
 000100*Use Range operators wherever possible                           *
 000100******************************************************************
@@ -114,6 +117,30 @@
       * -------   ------  -------------------------------------------- *
       * 1248335 | 248335 | REMOVED CHANGES MADE UNDER JT-1164175       *
       * -------   ------  -------------------------------------------- *
+      * 1319338 | 319338 | POPULATE HRHDB-HIPAA-REASON TO BE USED WHEN *
+      *         |        | STOPPING DEPENDENT ENROLLMENT.              *
+      * -------   ------   ------------------------------------------- *
+      * 1310755 | 310755 | MOVE BNBEN VALUES TO NEW BNCTWS VARIABLES   *
+      *         |        | THAT ARE BASIS FOR BENEFIT RECOMPUTATIONS   *
+      * -------   ------   ------------------------------------------- *
+      * 1434493 | 434493 | Added YYYY when comparing months during ADD *
+      * -------   ------   ------------------------------------------- *
+      * 1448885 | 448885 | Fixed inaccurate flagging of error 124 on   *
+      *         |        | BN32 multiple entries.                      *
+      * -------   ------   ------------------------------------------- *
+      * 1495265 | 495265 | ADDED CONDITION IN 2400-EDIT-DTL-DATA THAT  *
+      *         |        | SKIPS REMOVAL OF SIGNIFICANT VALUES IN THE  *
+      *         |        | 3RD AND 4TH DECIMAL PLACES IF THE CONTRIB   *
+      *         |        | TYPE IS 6 OR 7.                             *
+      * -------   ------   ------------------------------------------- *
+      * 1586181 | 586181 | ALLOW DEDUCTION STOP DATE OVERRIDE ON BN531 *
+      *         |        | AND OTHER PROGRAMS WHEN DEFINED/ENTERED     *
+      * -------   ------   ------------------------------------------- *
+      * 1770148 | 770148 | REMOVED COMPARISON OF INPUT DED-STOP-DATE   *
+      *         |        | VS BEN-DED-STOP-DATE ADDED BY JT-1586181    *
+      * -------   ------   ------------------------------------------- *
+      * 1770930 | 770930 | REMOVED CHANGES MADE FOR JT-1310755         *
+      * -------   ------   ------------------------------------------- *
       ******************************************************************
       ******************************************************************
       *               M O D I F I C A T I O N   L O G:                 *
@@ -1631,6 +1658,7 @@ P42111
            MOVE BNBEN-COVER-AMT (I1)       TO BNCVWS-IN-COVER-AMT.
            MOVE BNBEN-MULT-SALARY (I1)     TO BNCVWS-MULT-OF-SALARY.
            MOVE BNBEN-PAY-RATE (I1)        TO BNCVWS-IN-ANNUAL-SALARY.
+770930*                                       BNCTWS-BNBEN-PAY-RATE.
            MOVE BNBEN-LINE-FC (I1)         TO BNCVWS-FC.
            IF (BNBEN-LINE-FC (I1)          = "C")
                MOVE BEN-COV-UPD-DT         TO BNCVWS-COV-UPD-DT
@@ -1691,9 +1719,12 @@ P55140     END-IF.
            MOVE BNBEN-EMP-PRE-CONT (I1)    TO BNCTWS-IN-EMP-PT-CONT.
            MOVE BNBEN-EMP-AFT-CONT (I1)    TO BNCTWS-IN-EMP-AT-CONT.
            MOVE BNBEN-COVER-OPT (I1)       TO BNCTWS-CONTRIB-OPT.
+770930*                                       BNCTWS-BNBEN-COV-OPTION.
            MOVE BNBEN-COVER-AMT (I1)       TO BNCTWS-COVER-AMT.
+770930*                                       BNCTWS-BNBEN-COVER-AMT.
            IF (PLN-CONTRIB-TYPE            = "5" OR "6" OR "7")
                MOVE BNBEN-COVER-AMT (I1)   TO BNCTWS-IN-PAY-PER-AMT
+770930*                                       BNCTWS-BNBEN-COVER-AMT
                IF (BNBEN-LINE-FC (I1)      = "C")
 P83236             IF  (BNBEN-PLAN-TYPE (I1) = "RS") 
 P83236             AND (BNBEN-FLEX-FLAG (I1) = "Y")
@@ -1706,6 +1737,7 @@ P63803*             MOVE BEN-EMP-YTD-CONT   TO BNCTWS-YTD-CONT.
 P83236         END-IF    
 P83236     END-IF.
            MOVE BNBEN-PAY-RATE (I1)        TO BNCTWS-ANNUAL-SALARY.
+770930*                                       BNCTWS-BNBEN-PAY-RATE.
            MOVE BNBEN-PAY-RATE (I1)        TO BNCTWS-IN-ANNUAL-AMT.
            MOVE BNBEN-PCT-AMT-FLAG (I1)    TO BNCTWS-IN-PCT-AMT-FLAG.
            MOVE BNBEN-PRE-AFT-FLAG (I1)    TO BNCTWS-IN-PRE-AFT-FLAG.
@@ -1718,6 +1750,7 @@ P59213     AND (CRT-PROGRAM-CODE     = "BN31")
 P59213         INITIALIZE BNCTWS-CYC-REMAIN
 P59213     ELSE
            MOVE BNBEN-COVER-OPT (I1)       TO BNCTWS-CYC-REMAIN.
+770930*                                       BNCTWS-BNBEN-COV-OPTION.
            MOVE BNBEN-START-DATE (I1)      TO BNCTWS-START-DATE.
            MOVE BNBEN-STOP-DATE (I1)       TO BNCTWS-STOP-DATE.
            MOVE BNBEN-LINE-FC (I1)         TO BNCTWS-FC.
@@ -1727,6 +1760,7 @@ P59213     ELSE
 
            IF (BNBEN-PLAN-TYPE (I1)        = "VA")
                MOVE BNBEN-MULT-SALARY (I1) TO BNCTWS-NBR-OF-HOURS.
+770930*                                       BNCTWS-BNBEN-MULTIPLE.
 
 FAK        IF (PLN-CONTRIB-TYPE            NOT = "0")
                PERFORM 5000-DO-CONTRIBUTION-70 
@@ -2050,6 +2084,8 @@ J07169*        IF (PLN-CONTRIB-TYPE NOT = "3" AND "5")
 J71747*J66130      IF (BNBEN-COMP-CONT-Y)
 J66130                 IF ((BNBEN-PCT-AMT-FLAG (I1) = "A")
 J66130                 AND (PRE-ROUND-METH = "N" OR SPACES))
+495265                 AND (PLN-CONTRIB-TYPE  NOT  = "6")
+495265                 AND (PLN-CONTRIB-TYPE  NOT  = "7")
 J66130                     MOVE ZEROES         TO BNBEN-DEC-3-4
 J66130                     MOVE BNBEN-TEMP-NBR TO BNBEN-COMP-CONT (I1)
 J66130                 END-IF
@@ -2297,7 +2333,10 @@ P54229         MOVE WS-FALSE           TO BNBEN-NEG-PREMIUM-SW (I1)
       * deduction, when the enrollment is added mid-year.
            MOVE BNBEN-START-DATE (I1)      TO BNBEN-START-DATE-CALC
                                               BNWS-DATE.
-           IF (BNWS-PRE-START-CALC-MMDD NOT = BNBEN-START-DATE-MMDD)
+           IF  (BNWS-PRE-START-CALC-MMDD NOT = BNBEN-START-DATE-MMDD)
+434493     OR ((BNWS-PRE-START-CALC-MMDD     = BNBEN-START-DATE-MMDD)
+434493     AND (BNWS-PRE-START-CALC-YYYY NOT = BNBEN-START-YYYY)
+434493     AND (CRT-PROGRAM-CODE             = "BN531"))
       * Calculate the plan-year start date.
                IF (BNBEN-LINE-FC (I1) = "A")
                    MOVE BNWS-PRE-START-CALC-MMDD  
@@ -2574,26 +2613,31 @@ P85709     AND (PLN-FLEX-PLAN              = SPACES)
 076700     THRU    2452-END
 076800         VARYING I2 FROM 1 BY 1
 076900         UNTIL  (BNBEN-DELETING-BEN)
-077000         OR     (I2 > BNBEN-NBR-LINES).
+077000         OR     (I2 > BNBEN-NBR-LINES)
+448885         OR     (ERROR-FOUND).
 077100
-077200     IF (BNBEN-DELETING-BEN)
-077300         GO TO 2450-FIND-NEXT-BENSET4.
-077400
-077500     IF (BNBEN-NOT-DELETING-BEN)
-077600         IF (BNBEN-STOP-DATE (I1)    = ZEROES)
-077700             MOVE WS-TRUE            TO BNBEN-STOP-DFLT-SW
-077800             MOVE BEN-START-DATE     TO WSDR-FR-DATE
-077900             PERFORM 900-DATE-TO-JULIAN
-078000             SUBTRACT 1              FROM WSDR-JULIAN-DAYS
-078100             PERFORM 900-JULIAN-TO-DATE   
-078200             MOVE WSDR-FR-DATE       TO BNBEN-STOP-DATE (I1)
-078300         ELSE
-078400         IF (BNBEN-STOP-DATE (I1)    >= BEN-START-DATE)
-      ************ Already enrolled for specified time period
-078500             MOVE 124                    TO CRT-ERROR-NBR
-078600             MOVE BNBEN-LINE-FC-FN (I1)  TO CRT-FIELD-NBR
-078700             GO TO 2450-END.
+448885*     IF (BNBEN-DELETING-BEN)
+448885*         GO TO 2450-FIND-NEXT-BENSET4.
+448885*
+448885*     IF (BNBEN-NOT-DELETING-BEN)
+448885*         IF (BNBEN-STOP-DATE (I1)    = ZEROES)
+448885*             MOVE WS-TRUE            TO BNBEN-STOP-DFLT-SW
+448885*             MOVE BEN-START-DATE     TO WSDR-FR-DATE
+448885*             PERFORM 900-DATE-TO-JULIAN
+448885*             SUBTRACT 1              FROM WSDR-JULIAN-DAYS
+448885*             PERFORM 900-JULIAN-TO-DATE   
+448885*             MOVE WSDR-FR-DATE       TO BNBEN-STOP-DATE (I1)
+448885*         ELSE
+448885*         IF (BNBEN-STOP-DATE (I1)    >= BEN-START-DATE)
+448885************* Already enrolled for specified time period
+448885*             MOVE 124                    TO CRT-ERROR-NBR
+448885*             MOVE BNBEN-LINE-FC-FN (I1)  TO CRT-FIELD-NBR
+448885*             GO TO 2450-END.
 078800
+448885     IF (ERROR-FOUND)
+448885         GO TO 2450-END
+448885     END-IF.
+448885
 078900 2450-FIND-NEXT-BENSET4.
 P64135     IF (BNBEN-LINE-FC (I1)         = "A")
 P64135         PERFORM 860-FIND-NXTRNG-BENSET4
@@ -2609,7 +2653,25 @@ P64135         PERFORM 860-FIND-NEXT-BENSET4.
 080100     IF  (BNBEN-LINE-FC (I2)         = "D")
 079900     AND (BNBEN-PLAN-CODE (I2)       = BEN-PLAN-CODE)
 080000     AND (BNBEN-START-DATE (I2)      = BEN-START-DATE)
-080200         MOVE WS-TRUE                TO BNBEN-DEL-BEN-SW.
+080200         MOVE WS-TRUE                TO BNBEN-DEL-BEN-SW
+448885     ELSE
+448885     IF (BNBEN-NOT-DELETING-BEN)
+448885         IF (BNBEN-STOP-DATE (I1)    = ZEROES)
+448885             MOVE WS-TRUE            TO BNBEN-STOP-DFLT-SW
+448885             MOVE BEN-START-DATE     TO WSDR-FR-DATE
+448885             PERFORM 900-DATE-TO-JULIAN
+448885             SUBTRACT 1              FROM WSDR-JULIAN-DAYS
+448885             PERFORM 900-JULIAN-TO-DATE
+448885             MOVE WSDR-FR-DATE       TO BNBEN-STOP-DATE (I1)
+448885         ELSE
+448885         IF (BNBEN-STOP-DATE (I1)    >= BEN-START-DATE)
+448885************ Already enrolled for specified time period
+448885             MOVE 124                    TO CRT-ERROR-NBR
+448885             MOVE BNBEN-LINE-FC-FN (I1)  TO CRT-FIELD-NBR
+448885         END-IF
+448885         END-IF
+448885     END-IF
+448885     END-IF.
 080300
 080400 2452-END.
 
@@ -3921,7 +3983,8 @@ J07540                AND "P" AND "O" AND "R" AND "C" AND "A")))
 153200******************************************************************
 
 J27636* Enable error message 216 which was commented out in JT-664828
-J64828      IF (BNBEN-STOP-DATE (I1)        = BEN-STOP-DATE)
+J64828      IF  (BNBEN-STOP-DATE (I1)        = BEN-STOP-DATE)
+770148*     AND (BNBEN-DED-STOP-DATE (I1)    = BEN-DED-STOP-DATE)) 
 J64828******** Must change stop date with stop function code
 J64828          MOVE 216                        TO CRT-ERROR-NBR
 J64828          MOVE BNBEN-STOP-DATE-FN (I1)    TO CRT-FIELD-NBR
@@ -5486,8 +5549,9 @@ J17193
 P85709     IF  (PLN-COVERAGE-TYPE              NOT = "0")
 P85709     AND (PLN-FLEX-PLAN                  = SPACES)
 P85709         IF (BNBEN-DED-STOP-DATE (I1)   NOT = ZEROES)
-P85709             IF (BNBEN-START-DATE (I1 + 1) <
+P85709             IF ((BNBEN-START-DATE (I1 + 1) <
 P85709                                         BNBEN-DED-STOP-DATE (I1))
+586181             AND (BNBEN-START-DATE (I1 + 1) NOT= ZEROES))
 P85709                 MOVE BNBEN-STOP-DATE (I1)
 P85709                                     TO BNWS-SCR-STOP-DATE
 O85709             ELSE
@@ -6653,7 +6717,8 @@ P85709     END-IF.
            MOVE "E"                        TO HRHDB-COVER-TYPE.
 
            MOVE BNBEN-CREATE-TRANS (I1)    TO HRHDB-CREATE-TRANS.
-           MOVE BNBEN-REASON (I1)          TO HRHDB-REASON.
+           MOVE BNBEN-REASON (I1)          TO HRHDB-REASON
+319338                                        HRHDB-HIPAA-REASON.
            MOVE BNBEN-MEMBER-ID (I1)       TO HRHDB-MEMBER-ID.
 
            MOVE BNBEN-BATCH-FC (I1)        TO HRHDBWS-BATCH-FC.
@@ -6932,7 +6997,8 @@ J46581         ELSE
 J46581         IF (PLN-CONTRIB-TYPE   = "6" OR "7")
 J04191             IF (PLN-PLAN-TYPE  = "RS" OR "DC")
 J12251*                MOVE PRE-MATCH-OPTION TO BNWS-COMP-CONT-SW
-J12251                 MOVE PRE-EMP-CONT-TYPE TO BNWS-COMP-CONT-SW
+285772*                MOVE PRE-EMP-CONT-TYPE TO BNWS-COMP-CONT-SW
+285772                 MOVE PRE-MATCH-OPTION  TO BNWS-COMP-CONT-SW
 J46581             END-IF
 J46581         END-IF
 J46581     END-IF.

@@ -1,4 +1,4 @@
-******* HRHDBPD 1.28.1.7 <3385749046>
+******* HRHDBPD 1.28.1.8 <184707185>
       ******************************************************************
       *                            HRHDBPD                             *
       ******************************************************************
@@ -12,7 +12,9 @@
       *  ------  -------   ------------------------------------------  *
       * 1257096 | 257096 | Populate USER-ID from HRHDB-CREATE-USER-ID  *
       *         |        | when data was loaded in BNBATCH only.       *
-      *  ------  -------   ------------------------------------------  *
+      * -------  -------   ------------------------------------------  *
+      * 1587700 | 587700 | SKIP READ TO BENEFIT TABLE FOR HR13.5       *
+      * -------  -------   ------------------------------------------  *
 ACS002******************************************************************
 ACS002*CHANGE LOG:
 ACS001*
@@ -179,7 +181,10 @@ P45271
 012000         END-IF
 012100         PERFORM 840-FIND-PTBSET1
 012200     ELSE
-012300         PERFORM 840-FIND-BENSET1.
+587700         IF (CRT-SCREEN-CODE NOT= "HR135")
+012300             PERFORM 840-FIND-BENSET1
+587700         END-IF
+587700     END-IF.
 012400
            IF  (HRHDB-COVER-TYPE           = "C" OR "R")
                IF (PARTBEN-NOTFOUND)
@@ -227,7 +232,9 @@ P45271
            SET WS-EDITS-ON              TO TRUE.
 
            PERFORM 6000-CALC-DEP-AGE-DATE.
-           IF (ERROR-FOUND)
+           IF ((ERROR-FOUND)
+587700     AND (CRT-SCREEN-CODE NOT= "HR135")
+587700     AND (CRT-ERROR-NBR   NOT= 114 AND 116))
                GO TO 2300-END.
 
            PERFORM 2310-EDIT-HIPAA

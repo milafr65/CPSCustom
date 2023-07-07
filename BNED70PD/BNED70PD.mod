@@ -1,4 +1,4 @@
-******* BNED70PD 3.1.4.1.9 <1649065516>
+******* BNED70PD 3.1.4.1.10 <1346044086>
 000100******************************************************************
 000200*                         (BNED70PD)                   NOV 16-95 *
 000300*                                                                *
@@ -46,13 +46,15 @@
       *  HERWECK| HERWECK| CHANGES DUE TO UPGRADEX; TAKEN FROM         *
       *         |        | CPSPRD9 VERSION; SEE 5100-FIND-BENEFITS     *
       *  ------   ------   ------------------------------------------  *
-            *  717193 | J17193 | ACA REGULATORY REPORTING                    *
+      *  717193 | J17193 | ACA REGULATORY REPORTING                    *
       *  ------   ------   ------------------------------------------- *
       *  841123 | J41123 | BN100 using Entry rules insted of add rules *
       * -------   ------   ------------------------------------------- *
       * 1031132 | 031132 | INCLUDED PLAN-CODE WHEN FINDING BENEFITS    *
       * -------   ------  -------------------------------------------- *
       * 1036190 | 036190 | REVERT CHANGES MADE FOR JT-1031132          *
+      * -------   ------  -------------------------------------------- *
+      * 1371717 | 371717 | Fixed eligibility defaulting for Plan       *
       * -------   ------  -------------------------------------------- *
 003600******************************************************************
 003700 5000-ELIGIBILITY-DATE-CALC      SECTION.
@@ -554,13 +556,18 @@ J19616         IF (PSGRELATE-FOUND)
 049300         COMPUTE BNEDWS-WD-YEAR   = BNEDWS-WD-YEAR
 049400                                  - 1.
 049500
+371717     SET BNEDWS-MO-12-NO             TO TRUE.
 049600     PERFORM
 049700         VARYING BNEDWS-I1 FROM 1 BY 1
 049800         UNTIL   (BNEDWS-I1      > BNEDWS-LAST-EP-INDEX)
 049900         OR      (BNEDWS-ENTRY-MMDD (BNEDWS-I1)
 050000                                 >= BNEDWS-WD-MMDD)
+371717         OR      (BNEDWS-MO-12-YES)
 050100
-050200         CONTINUE
+371717         IF  ((BNEDWS-ENTRY-MMDD (BNEDWS-I1) > 1200)
+371717         AND  (BNEDWS-ENTRY-MMDD (BNEDWS-I1) < BNEDWS-WD-MMDD))
+371717             SET BNEDWS-MO-12-YES    TO TRUE
+371717         END-IF
 050300     END-PERFORM.
 050400
 050500*
@@ -594,7 +601,12 @@ J63486     AND (BNEDWS-I1                   > 1)
 053200     ELSE
 053300         MOVE BNEDWS-ENTRY-MMDD (BNEDWS-I1)
 053400                                     TO BNEDWS-ED-MMDD
-053500         MOVE BNEDWS-WD-YEAR         TO BNEDWS-ED-YEAR.
+371717         IF  (BNEDWS-MO-12-YES)
+371717         AND (BNEDWS-I1           NOT > BNEDWS-LAST-EP-INDEX)
+371717             ADD 1                   TO BNEDWS-WD-YEAR
+371717         END-IF 
+053500         MOVE BNEDWS-WD-YEAR         TO BNEDWS-ED-YEAR
+371717     END-IF.
 053600
 053700 7100-END.
 053800

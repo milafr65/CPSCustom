@@ -1,4 +1,4 @@
-******* PR134PD 69 <1588222291>
+******* PR134PD 72 <3973552014>
 000100*    ********************************************************
 000200*    *                                                      *
 000300*    *             AUTO TIME RECORD CREATION                *
@@ -58,6 +58,19 @@
       *         |        | replace with STM-END-DATE in order for the  *
       *         |        | program to consider the PR30 end date when  *
       *         |        | creating daily time records.                *
+      * -------   ------   ------------------------------------------  *
+      * 1617501 | 617501 | ADDED END-IF ON 231-GENERATE-TIMERECORDS    *
+      *         |        | AFTER VALIDATION ON PRTRD-PARTIAL/MID-PERIOD*
+      * -------   ------   ------------------------------------------  *
+      * 1725370 | 725370 | BYPASS THE CONDITIONS THAT CHECKS THE STNDRD*
+      *         |        | TIME RECORD EFFECTIVE AND END DATES WHEN THE*
+      *         |        | EE BEING PROCESSED IS FROM ME COUNTRIES     *
+      * -------   ------   ------------------------------------------  *
+      * 1753953 | 753953 | Changed the condition introduced by JT-1725370
+      *         |        | to still allow middle east companies to     *
+      *         |        | undergo the STM date range validation but   *
+      *         |        | only when creating non-daily time records.  *
+      * -------   ------   ------------------------------------------  *
       ******************************************************************
       ******************************************************************
       *               M O D I F I C A T I O N   L O G:                 *
@@ -1208,13 +1221,18 @@ P60416                           OR "D" OR "E" )
 051200             GO TO 230-NEXT
 051300         END-IF
 051400     ELSE
-051500         IF  (STM-EFFECT-DATE NOT = ZEROS)
-051600         AND (STM-EFFECT-DATE > PRM-TR-DATE)
-051700             GO TO 230-NEXT
-051800         END-IF
-051900         IF  (STM-END-DATE NOT = ZEROS)
-052000         AND (STM-END-DATE < PRM-TR-DATE)
-052100             GO TO 230-NEXT.
+753953*        IF  (PRS-WORK-COUNTRY NOT = "SA" AND "AE" AND "QA")
+753953         IF  (STM-DAILY-TR-FLG = 0)
+051500             IF  (STM-EFFECT-DATE NOT = ZEROS)
+051600             AND (STM-EFFECT-DATE > PRM-TR-DATE)
+051700                 GO TO 230-NEXT
+051800             END-IF
+051900             IF  (STM-END-DATE NOT = ZEROS)
+052000             AND (STM-END-DATE < PRM-TR-DATE)
+052100                 GO TO 230-NEXT  
+725370             END-IF
+725370          END-IF 
+725370     END-IF.
 052200
 052300     IF (STM-DED-CYCLE (PRM-DED-CYCLE) = SPACE)
 052400         GO TO 230-NEXT.
@@ -1454,6 +1472,8 @@ J63759     AND (PRTRD-PARTIAL)))
 J69732         OR ((PRM-MID-PERIOD = 1 OR 2)
 J63759         AND (PRTRD-PARTIAL)))
                    GO TO 231-CONTINUE
+617501         END-IF
+617501     END-IF.
 
 J69732     IF (PRM-MID-PERIOD NOT = 0)
 J63759     AND (PRTRD-PARTIAL)
@@ -1563,13 +1583,18 @@ P60416                      OR "D" OR "E")
 066800     AND (EMP-PAY-FREQUENCY NOT = PRM-PAY-FREQUENCY)
 066900         GO TO 242-NEXT.
 067000
-067100     IF  (STM-EFFECT-DATE NOT = ZEROS)
-067200     AND (STM-EFFECT-DATE > PRM-TR-DATE)
-067300         GO TO 242-NEXT.
+753953*    IF  (PRS-WORK-COUNTRY NOT = "SA" AND "AE" AND "QA")
+753953     IF  (STM-DAILY-TR-FLG = 0)
+067100         IF  (STM-EFFECT-DATE NOT = ZEROS)
+067200         AND (STM-EFFECT-DATE > PRM-TR-DATE)
+067300             GO TO 242-NEXT 
+725370         END-IF
 067400
-067500     IF  (STM-END-DATE NOT = ZEROS)
-067600     AND (STM-END-DATE < PRM-TR-DATE)
-067700         GO TO 242-NEXT.
+067500         IF  (STM-END-DATE NOT = ZEROS)
+067600         AND (STM-END-DATE < PRM-TR-DATE)
+067700             GO TO 242-NEXT 
+725370         END-IF
+725370     END-IF.
 067800
 067900     IF (STM-DED-CYCLE (PRM-DED-CYCLE) = SPACE)
 068000         GO TO 242-NEXT.

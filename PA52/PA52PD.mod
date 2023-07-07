@@ -1,4 +1,4 @@
-******* PA52PD 192 <609199664>
+******* PA52PD 196 <3830413509>
       ******************************************************************
       *                            PA52PD                              *
       ******************************************************************
@@ -55,7 +55,9 @@
       *  ------   ------   ------------------------------------------  *
       *  809538 | J09538 | Added initialize of entered screen values   *
       *         |        | after a successful ADD that is Immediate.   *
-      *  ------   ------   ------------------------------------------  *
+      * -------   ------   ------------------------------------------  *
+      * 1385747 | J85747 | PERSONNEL ACTION UPDATES FOR 2020 W-4       *
+      * -------   ------   ------------------------------------------  *
       * 1102321 | 102321 | Fixed inconsistent display of message for   *
       *         |        | multiple action entries.                    *
       * -------   ------   ------------------------------------------  *
@@ -70,6 +72,15 @@
       *         |        | Corrected validation for PA52:169 error msg *
       *  ------   ------   ------------------------------------------  *
       * 1199885 | 199885 | CHANGE CALLED-FROM TO PA52.4                *
+      * -------   ------   ------------------------------------------  *
+      * 1312387 | 312387 | Logic that throws message PA52: 169 should  *
+      *         |        | not be applied when MOVE LEVEL was done.    *
+      * -------   ------   ------------------------------------------  *
+      * 1313903 | 313903 | ADDED LOGIC THAT CHECKS IF THE BASE PAY RATE*
+      *         |        | FIELD IS REQUIRED BEFORE PASSING THE VALUE  *
+      *         |        | TO THE SCREEN. THIS APPLIES TO ADD FUNCTION.*
+      * -------   ------   ------------------------------------------  *
+      * 1736685 | 736685 | Add Gender Value of X                       *
       * -------   ------   ------------------------------------------  *
       ******************************************************************
 AA0626*   N/A   | AA0626 | ADDED VARIABLE FOR STORING TERM-WORKUNIT    *
@@ -10065,6 +10076,18 @@ J31809     AND (PAT-WORKFLOW-FLAG = "Y")
 J31809         PERFORM 1000-OPEN-WORKFLOW-DB
 J31809     END-IF.
 
+J85747     IF  (PA52F4-FC = "I" OR "N" OR "P")
+J85747         MOVE ZEROES                 TO PA52F4-FORM-YEAR
+J85747     END-IF.
+J85747     IF  (PA52F4-FORM-YEAR           = ZEROES)
+J85747         IF  (PA52F4-PCT-EFFECT-DATE NOT = ZEROES)
+J85747             MOVE PA52F4-PCT-EFFECT-DATE TO PA52WS-DATE
+J85747             IF  (PA52WS-YEAR        NOT < 2020)
+J85747                 MOVE PA52WS-YEAR    TO PA52F4-FORM-YEAR
+J85747             END-IF
+J85747         END-IF
+J85747     END-IF.
+J85747
 J31809*    IF (PA52F4-FC = "A" OR "C")
 J31809*        PERFORM 1000-OPEN-WORKFLOW-DB.
 
@@ -10179,6 +10202,15 @@ P49898     OR   (PA52F4-PCT-EFFECT-DATE NOT = PA52F4-ORIG-EFFECT-DATE))
 366300         GO TO 210-END
            ELSE
 368100         MOVE PRS-NAME               TO PA52WS-PRS-NAME.
+
+J85747     IF  (PA52F4-FC = "A" OR "C" OR "I")
+J85747     AND (PA52F4-FORM-YEAR NOT = ZEROES)
+J85747         IF  (PA52F4-FORM-YEAR < 2020)
+J85747             MOVE 429                    TO CRT-ERROR-NBR
+J85747             MOVE PA52F4-FORM-YEAR-FN    TO CRT-FIELD-NBR
+J85747             GO TO 210-END
+J85747         END-IF
+J85747     END-IF.
 
 008100     IF (PA52F4-FC = "A" OR "C" OR "I")
 008200         MOVE PA52F4-PCT-COMPANY             TO DB-COMPANY
@@ -10866,9 +10898,9 @@ J42080                                    PA52WS-COUNTRY-SW.
            MOVE APL-NAME-SUFFIX        TO HREMP-NAME-SUFFIX.
            MOVE APL-LANGUAGE-CODE      TO HRPEM-LANGUAGE-CODE.
            MOVE APL-DISABILITY         TO HRPEM-DISABILITY.
-400300     IF (APL-SEX = "X")
-400400         MOVE SPACES             TO HRPEM-SEX
-400500     ELSE
+736685*    IF (APL-SEX = "X")
+736685*        MOVE SPACES             TO HRPEM-SEX
+736685*    ELSE
 400600         MOVE APL-SEX            TO HRPEM-SEX.
 401000     MOVE APL-EEO-CLASS          TO HRPEM-EEO-CLASS.
            MOVE APL-CONSENT            TO HRPEM-CONSENT.
@@ -14060,6 +14092,8 @@ P85139*    THRU    620-END.
                MOVE PA52F4-PCT-EDM-EFFECT-DT TO PRRQC-EFFECT-DATE
                INITIALIZE PRRQC-END-DATE
                           PRRQC-UPDATE-OPTION
+J85747         MOVE PA52F4-FORM-YEAR         TO PRRQC-FORM-YEAR
+J85747                                          PREDM-FORM-YEAR
 467800         PERFORM 500-REQ-DED-CREATION.
 467900
 468000     PERFORM 5000-HREMP-CREATE-ETM.
@@ -15902,16 +15936,15 @@ J13588*        END-IF.
 573200         ELSE
 573300             MOVE OCC-MONTHS-EXT     TO PA52WS-OCC-MONTHS-EXT.
 573400
-198255*    IF   (PA52F5-PCT-MOVE-FROM-LEVEL = ZEROES)
-198255*    AND ((PA52F5-PCT-NEW-POSITION    NOT = SPACES)
-198255     IF   (PA52F5-PCT-NEW-POSITION    NOT = SPACES)
+312387     IF   (PA52F5-PCT-MOVE-FROM-LEVEL     = ZEROES)
+312387     AND ((PA52F5-PCT-NEW-POSITION    NOT = SPACES)
 574600     OR   (PA52F5-PCT-NEW-JOBCODE     NOT = SPACES)
 574700     OR   (PA52F5-PCT-NEW-PL          NOT = SPACES)
 574800     OR   (PA52F5-PCT-NEW-DEPARTMENT  NOT = SPACES)
 574900     OR   (PA52F5-PCT-NEW-POSITION    = "*BLANK")
 575000     OR   (PA52F5-PCT-NEW-JOBCODE     = "*BLANK")
 575100     OR   (PA52F5-PCT-NEW-PL          = "*BLANK")
-575200     OR   (PA52F5-PCT-NEW-DEPARTMENT  = "*BLANK")
+575200     OR   (PA52F5-PCT-NEW-DEPARTMENT  = "*BLANK"))
 575300         MOVE PA52F5-PCT-COMPANY         TO DB-COMPANY
 575400         MOVE PA52F5-PCT-EMPLOYEE        TO DB-EMPLOYEE
 575500         MOVE SPACES                     TO DB-POSITION
@@ -19913,7 +19946,10 @@ P51466     MOVE PA52F5-PCT-NEW-DATE-ASSIGN TO PCT-NEW-VALUE (2).
 141726     MOVE PAPEP-BASE-CURRENCY        TO PCT-BASE-CURRENCY.
            MOVE PA52F5-PCT-NEW-BASE-ND     TO PCT-BASE-ND.
 141726*    MOVE PA52F5-PCT-NEW-BASE-RATE   TO PCT-BASE-PAY-RATE.
-141726     MOVE PAPEP-BASE-PAY-RATE        TO PCT-BASE-PAY-RATE.
+313903*    MOVE PAPEP-BASE-PAY-RATE        TO PCT-BASE-PAY-RATE.
+313903     IF (PA52F5-BASE-RATE-STAR = "*")
+313903         MOVE PAPEP-BASE-PAY-RATE    TO PCT-BASE-PAY-RATE
+313903     END-IF.
            MOVE PA52F5-PCT-MERGE-ACTN-NBR  TO PCT-MERGE-ACTN-NBR.
            MOVE PA52F5-PCT-HIST-CORR-FLAG  TO PCT-HIST-CORR-FLAG.
            MOVE PA52F5-PCT-PROCESS-TYPE    TO PCT-PROCESS-TYPE.

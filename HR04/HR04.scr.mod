@@ -1,4 +1,4 @@
-******* HR04.scr 31 <1778693839>
+******* HR04.scr 32 <3030309995>
 $RELEASE   02.1
 *
 *
@@ -656,7 +656,7 @@ $END-SCR   HR049    S
 $TRANS     HR049    S
   2    *TC                    A     06          SR
   2     FC                    A     01          SF
-  2     PCO-TYPE              A     02          SR    Jpo
+  2     PCO-TYPE              A     02          SK    Jpo
   2     PCO-TYPE              X     23          SB    
   2     PCO-CODE              A     10          SN    Jpq
   2     PCO-DESCRIPTION       AL    30          SB    Jpr

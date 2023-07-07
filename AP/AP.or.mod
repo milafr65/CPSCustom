@@ -1,4 +1,4 @@
-******* AP.or 58.1.5.1.25 <3906047375>
+******* AP.or 58.1.5.1.26 <35836844>
 *** APVENCLASS
 
 DEFINE OBJWIN    "Vendor Class"
@@ -2417,6 +2417,11 @@ DEFINE OBJVIEW    "Distributions"
                   DIS-ACCT-UNIT:"Account",DIS-ACCOUNT,DIS-SUB-ACCT,
                   ORIG-TRAN-AMT:"Amount",TAX-CODE:"Tax Code",TAX-INDICATOR
 
-
-
+DEFINE OBJWIN    "Non-AP Transaction Comments"
+   ID             AP-RIC-W-0001
+   FILENAME       APRPTBLINC
+   COMMENT        TYPE=A
+   WINFLDS        SOURCE      :"         Source:"
+                  PAYEE-NAME  :"     Payee Name:"
+                  TRANS-NBR   :" Payment Number:"
 

@@ -1,4 +1,4 @@
-******* BN531PD 46 <4087047069>
+******* BN531PD 49 <245383546>
 *******================================================================
       * 7/2015 SDB MOVE BNB-START-DATE TO BNPEWS-START-DATE SO THAT THE
       *            DATE FROM THE SPREADSHEET IS USED
@@ -25,6 +25,14 @@
       *  ------   ------   ------------------------------------------- *
       * 1189098 | 189098 | Mitigate Path Traversal Vulnerabilities     *
       *  ------   ------   ------------------------------------------- * 
+      * 1434493 | 434493 | Fixed values on the generated report.       *
+      *  ------   ------   ------------------------------------------- * 
+      * 1505182 | 505182 | Fixed unknown value issue in report.        *
+      * -------   ------   ------------------------------------------- *
+      * 1658949 | 658949 | FIX ISSUE ON MISSING COMPANY AMOUNT CAUSED  *
+      *         |        | BY JT-1434493 AND JT-1505182 AND REMOVED    *
+      *         |        | PRINTING OF DEDUCTION AMOUNT ON REPORT MODE *
+      * -------   ------   ------------------------------------------- *
 000100******************************************************************
 000200 050-EDIT-PARAMETERS             SECTION 10.
 000300******************************************************************
@@ -1003,7 +1011,18 @@ J17193         MOVE "Y"                TO BNBEN-UPDATE-ACA.
 028800     MOVE BNBEN-EMP-PRE-CONT (1) TO G2-EMP-PRE-CONT.
 028900     MOVE BNBEN-EMP-AFT-CONT (1) TO G2-EMP-AFT-CONT.
 029000     MOVE BNBEN-CMP-FLX-CONT (1) TO G2-CMP-FLX-CONT.
-029100     MOVE BNBEN-COMP-CONT (1)    TO G2-COMP-CONT.
+434493*    MOVE BNBEN-COMP-CONT (1)    TO G2-COMP-CONT.
+505182     INITIALIZE G2-COMP-CONT.
+434493     IF (BNBEN-MAX-MATCH (1)  NOT = ZEROES)
+434493        MOVE BNBEN-MAX-MATCH (1)     TO G2-COMP-CONT
+434493     ELSE
+505182        IF ((BENEFIT-FOUND)
+658949        AND (BNBEN-FC = "S"))
+434493            MOVE BEN-COMP-CONT       TO G2-COMP-CONT
+658949        ELSE
+658949            MOVE BNBEN-COMP-CONT (1) TO G2-COMP-CONT
+505182        END-IF
+434493     END-IF.
 029200     MOVE BNBEN-STOP-DATE (1)    TO G3-STOP-DATE.
 029400     MOVE BNBEN-YTD-CONT (1)     TO G2-YTD-CONT.
 029500     MOVE GN2-BENEFIT            TO RPT-GROUP-REQUEST.
@@ -1019,9 +1038,30 @@ J17193         MOVE "Y"                TO BNBEN-UPDATE-ACA.
 004600             MOVE 116                    TO CRT-MSG-NBR
 004700             PERFORM 790-GET-MSG
                    MOVE CRT-MESSAGE            TO G3-STOP-TITLE
-036000             MOVE GN3-DEDUCTION          TO RPT-GROUP-REQUEST
-036100             PERFORM 700-PRINT-RPT-GRP
+434493         ELSE
+434493             INITIALIZE G3-STOP-TITLE
                END-IF
+658949*        MOVE BNBEN-CMP-FLX-CONT (1)     TO G3-DED-CMP-FLX-CONT
+658949*        MOVE BNBEN-EMP-PRE-CONT (1)     TO G3-DED-EMP-PRE-CONT
+658949*        MOVE BNBEN-EMP-AFT-CONT (1)     TO G3-DED-EMP-AFT-CONT
+658949*        INITIALIZE G3-DED-COMP-CONT
+658949*        IF (BNBEN-MAX-MATCH (1)  NOT = ZEROES)
+658949*            MOVE BNCTWS-COMP-CONT       TO G3-DED-COMP-CONT
+658949*        ELSE
+658949*            IF (BENEFIT-FOUND)
+658949*                MOVE BEN-COMP-MATCH     TO G3-DED-COMP-CONT
+658949*            END-IF
+658949*        END-IF
+658949*        IF (G3-DED-CMP-FLX-CONT         NOT = ZEROES)
+658949*        OR (G3-DED-EMP-PRE-CONT         NOT = ZEROES)
+658949*        OR (G3-DED-EMP-AFT-CONT         NOT = ZEROES)
+658949*        OR (G3-DED-COMP-CONT            NOT = ZEROES)
+658949*            MOVE 117                    TO CRT-MSG-NBR
+658949*            PERFORM 790-GET-MSG         
+658949*            MOVE CRT-MESSAGE            TO G3-DED-TITLE
+658949*        END-IF                          
+036000         MOVE GN3-DEDUCTION          TO RPT-GROUP-REQUEST
+036100         PERFORM 700-PRINT-RPT-GRP
            ELSE
 P43617         IF  (BNB-FC NOT = "D")
 P43617             PERFORM 4000-BNBEN-PROCESS-TRAN
@@ -1982,7 +2022,18 @@ J83320     MOVE BNBEN-SMOKER-FLAG (1)  TO G2-SMOKER-FLAG.
 J83320     MOVE BNBEN-EMP-PRE-CONT (1) TO G2-EMP-PRE-CONT.
 J83320     MOVE BNBEN-EMP-AFT-CONT (1) TO G2-EMP-AFT-CONT.
 J83320     MOVE BNBEN-CMP-FLX-CONT (1) TO G2-CMP-FLX-CONT.
-J83320     MOVE BNBEN-COMP-CONT (1)    TO G2-COMP-CONT.
+434493*    MOVE BNBEN-COMP-CONT (1)    TO G2-COMP-CONT.
+505182     INITIALIZE G2-COMP-CONT.
+434493     IF (BNBEN-MAX-MATCH (1)  NOT = ZEROES)
+434493        MOVE BNBEN-MAX-MATCH (1)     TO G2-COMP-CONT
+434493     ELSE
+505182        IF ((BENEFIT-FOUND)
+658949        AND (BNBEN-FC = "S"))
+434493            MOVE BEN-COMP-CONT       TO G2-COMP-CONT
+658949        ELSE
+658949            MOVE BNBEN-COMP-CONT (1) TO G2-COMP-CONT
+505182        END-IF
+434493     END-IF.
 J83320     MOVE BNBEN-STOP-DATE (1)    TO G3-STOP-DATE.
 J83320     MOVE BNBEN-YTD-CONT (1)     TO G2-YTD-CONT.
 J83320     MOVE GN2-BENEFIT            TO RPT-GROUP-REQUEST.
@@ -1998,9 +2049,30 @@ J83320         IF (G3-STOP-DATE                NOT = ZEROES)
 J83320             MOVE 116                    TO CRT-MSG-NBR
 J83320             PERFORM 790-GET-MSG
 J83320             MOVE CRT-MESSAGE            TO G3-STOP-TITLE
-J83320             MOVE GN3-DEDUCTION          TO RPT-GROUP-REQUEST
-J83320             PERFORM 700-PRINT-RPT-GRP
-J83320         END-IF
+434493         ELSE
+434493             INITIALIZE G3-STOP-TITLE
+               END-IF
+658949*        MOVE BNBEN-CMP-FLX-CONT (1)     TO G3-DED-CMP-FLX-CONT
+658949*        MOVE BNBEN-EMP-PRE-CONT (1)     TO G3-DED-EMP-PRE-CONT
+658949*        MOVE BNBEN-EMP-AFT-CONT (1)     TO G3-DED-EMP-AFT-CONT
+658949*        INITIALIZE G3-DED-COMP-CONT
+658949*        IF (BNBEN-MAX-MATCH (1)  NOT = ZEROES)
+658949*            MOVE BNCTWS-COMP-CONT       TO G3-DED-COMP-CONT
+658949*        ELSE
+658949*            IF (BENEFIT-FOUND)
+658949*                MOVE BEN-COMP-MATCH     TO G3-DED-COMP-CONT
+658949*            END-IF
+658949*        END-IF
+658949*        IF (G3-DED-CMP-FLX-CONT         NOT = ZEROES)
+658949*        OR (G3-DED-EMP-PRE-CONT         NOT = ZEROES)
+658949*        OR (G3-DED-EMP-AFT-CONT         NOT = ZEROES)
+658949*        OR (G3-DED-COMP-CONT            NOT = ZEROES)
+658949*            MOVE 117                    TO CRT-MSG-NBR
+658949*            PERFORM 790-GET-MSG         
+658949*            MOVE CRT-MESSAGE            TO G3-DED-TITLE
+658949*        END-IF 
+J83320         MOVE GN3-DEDUCTION          TO RPT-GROUP-REQUEST
+J83320         PERFORM 700-PRINT-RPT-GRP
 J83320     ELSE
 J83320         IF  (BN1-FC NOT = "D")
 J83320             PERFORM 4000-BNBEN-PROCESS-TRAN
