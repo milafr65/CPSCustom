@@ -375,8 +375,12 @@ US5099                THRU 2500-END
             MOVE WS-POS-SUPERVISOR-IND TO OUT-EMP-SUPERVISOR-IND.
             MOVE WS-POS-WORK-SCHED     TO OUT-EMP-WORK-SCHED.
             MOVE 2080                  TO OUT-EMP-ANNUAL-HOURS.
-            MOVE IN-TITLE              TO OUT-EMP-NAME-TITLE.
             
+            INSPECT IN-TITLE
+            CONVERTING "abcdefghijklmnopqrstuvwxyz."
+                    TO "ABCDEFGHIJKLMNOPQRSTUVWXYZ ".
+            MOVE IN-TITLE              TO OUT-EMP-NAME-TITLE.
+
       *      INSPECT IN-SUFFIX
       *      CONVERTING "abcdefghijklmnopqrstuvwxyz."
       *              TO "ABCDEFGHIJKLMNOPQRSTUVWXYZ ".
@@ -776,9 +780,13 @@ US5099* NEW PARAGRAPH TO CLEAN UP CODE IN 2000-
             END-IF.
 
       * TITLE IS A NON-FATAL ERROR; DO NOT SET ERROR FLAG      
+            INSPECT IN-TITLE
+            CONVERTING "abcdefghijklmnopqrstuvwxyz."
+                    TO "ABCDEFGHIJKLMNOPQRSTUVWXYZ ".
             MOVE IN-TITLE TO WS-TITLE.
             IF  (NOT WS-VALID-TITLE)
             AND (IN-TITLE NOT = SPACES)
+                DISPLAY "202:", IN-TITLE, "/", WS-TITLE
                 MOVE 202           TO CRT-MSG-NBR
                 MOVE IN-TITLE      TO WS-EMP-FIELD
                 PERFORM 4000-PRINT-LOAD-ERROR
