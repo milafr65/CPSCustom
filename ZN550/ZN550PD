@@ -3,8 +3,10 @@
       * OUTPUT FILE, ZN550WRK.  THE JOB CAN BE RUN IN REPORT ONLY OR IN 
       * UPDATE.  IF UPDATE IS SELECTED, A PERSONAL ACTION IS WRITTEN TO
       * UPDATE THE TERM DATE AND THE STATUS.
-200319*
+200319******************************************************************
 200319* 200319  MLF  ERROR TRAPPING FOR ZERO EMPLOYEE NUMBER
+US5608******************************************************************
+US5608* US5608  MLF  VALIDATE EMPLOYEE NUMBER, THROW ERROR IF NOT FOUND
 000100******************************************************************
 000200 050-EDIT-PARAMETERS             SECTION 10.
 000300******************************************************************
@@ -82,7 +84,8 @@
            END-IF.
            
 200319     IF (INP-EMPLOYEE = 0)
-200319       MOVE "MISSING EMPLOYEE NUMBER" TO G1-EMP-COMMENTS
+200319       MOVE "MISSING EMPLOYEE NUMBER" TO G1-EMP-COMMENTS,
+                                               INP-PERSONAL-ACTION
 200319       MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST 
 200319       MOVE SPACES                TO G1-1-EMP-EMP-STATUS
 210319       PERFORM 700-PRINT-RPT-GRP 
@@ -93,6 +96,24 @@
 200319       PERFORM 800-WRITECSV-ZN550WRK 
 200319       GO TO 1120-NEXT-INPUT
 200319     END-IF.
+
+US5608* VALIDATE EMPLOYEE NUMBER
+US5608     MOVE 1000                   TO DB-COMPANY.
+US5608     MOVE INP-EMPLOYEE           TO DB-EMPLOYEE.
+US5608     PERFORM 840-FIND-EMPSET1.
+US5608     IF (EMPLOYEE-NOTFOUND)
+US5608       MOVE "EMPLOYEE NOT FOUND" TO G1-EMP-COMMENTS,
+                                          INP-PERSONAL-ACTION
+US5608       MOVE GN1D-WBP-START-DATE    TO RPT-GROUP-REQUEST 
+US5608       MOVE SPACES                TO G1-1-EMP-EMP-STATUS
+US5608       PERFORM 700-PRINT-RPT-GRP 
+US5608       MOVE SPACES TO G1-EMP-COMMENTS
+US5608       MOVE SPACES             TO WRK-EMP-STATUS             
+US5608       PERFORM 1130-MOVE-TO-WRK
+US5608          THRU 1130-END
+US5608       PERFORM 800-WRITECSV-ZN550WRK 
+US5608       GO TO 1120-NEXT-INPUT
+US5608     END-IF.
            
            MOVE "TP"               TO WRK-EMP-STATUS.
            MOVE "TP"               TO G1-1-EMP-EMP-STATUS. 
@@ -103,8 +124,8 @@
            END-IF.
                       
            PERFORM 1130-MOVE-TO-WRK
-              THRU 1130-END.
-              
+              THRU 1130-END.              
+
 
            IF (PRM-WARN-FLAG = "U")
               PERFORM 1140-CREATE-PERSONAL-ACTION
