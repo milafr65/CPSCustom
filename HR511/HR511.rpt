@@ -1,0 +1,320 @@
+******* HR511.rpt 15 <1124479688>
+******************************************************************
+$PROGRAM   HR511
+******************************************************************
+
+****************************************************
+$REPORT    HR511
+****************************************************
+
+**************************************
+$GROUP     GN1-PAGE-HEADING
+**************************************
+$PREFIX    G1A-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+HR511 Date Z9/99/99                        Employee Load Error/Message Listing                                            Page ZZZZ
+      |  ; A1                              |                                 ;                                            |  ; B1
+      Time 99.99
+      |  ; C1
+%
+    Except as noted, the following employees were not updated due to the listed error(s).
+    |               ;|                     ; |               ;|                                 ;
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD
+ B1    PAGE                                   PN
+ C1    TIME                                   CT
+$ENDFLDS
+
+$ENDGRP
+
+
+**************************************
+$GROUP     GN1-PAGE-EMPLOYEE
+**************************************
+$PREFIX    G1B-
+$LEVEL     B
+$DELAY
+$LINECNT   GN1-PAGE-EMPLOYEE
+$LINECNT   GN2-ERROR-LINE
+$FORMAT
+%
+ Co      Employer  Employee      Name
+| ;       |    ;   |      ;      |  ;
+----     --------  ---------     ------------------------------------------------------
+                       
+ZZZZ      XXXXX    ZZZZZZZZZ     XXXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX X
+A1        F1       B1            C1                        D1                         E1
+%
+       Lvl         Field Value Entered             Error Message 
+       | ;         |                 ;             |           ;
+       ---         -----------------------------   -------------------------------------------------------------------
+       
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    COMPANY                                     NOKEYDUPS
+ B1    EMPLOYEE                                    NOKEYDUPS
+ C1    LAST-NAME
+ D1    FIRST-NAME
+ E1    MIDDLE-INIT
+ F1    PROCESS-LEVEL
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2-ERROR-LINE 
+**************************************
+$PREFIX    G2-
+$LEVEL     C
+$FORMAT
+        Z9         XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        A1         B1                              C1
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    POS-LVL
+ B1    FIELD-VALUE
+ C1    ERROR-MESSAGE
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2-BLANK-LINE
+**************************************
+$PREFIX    G2-
+$LEVEL     B
+$FORMAT
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+$ENDFLDS
+
+$ENDGRP
+
+**************************************
+$GROUP     GN2T-ERROR-TOT
+**************************************
+$PREFIX    G2T-
+$LEVEL     B
+$FORMAT
+%
+  Total employees with errors: ZZZZZZ
+  |                         ;  A
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     EMP-ERROR-COUNT
+$ENDFLDS
+
+$ENDGRP
+
+
+**************************************
+$GROUP     GN3-COMPANY
+**************************************
+$PREFIX    G3-
+$PGBRK
+$LEVEL     A
+$FORMAT
+HR511 Date Z9/99/99                        Updated Employee Listing                                                       Page ZZZZ
+      |  ; A1                              |                                 ;                                            |  ; B1
+      Time 99.99                           XXXXXXXXXXXXXXXXXX XXXXXXXXXXXXX
+      |  ; C1                              C2                 C3
+%
+    Total Number of Records Updated (All Companies) : ZZZZZZ
+    |                             ;|               ;  D1
+                                                                                            Employee  Required    XXXXXXX
+                                                                                            ^       ; ^         ; E1
+ Co  Employer  Employee                                                 Effective      Lvl  Groups    Deductions  XXXXXXXX Warnings
+|   ;|      ;  |        ;                                         |                  ; |  ; |       ; |         ; E2       |       ;
+---- --------- ------------------------------------------------   -------------------  ---  --------  ----------  -------- --------
+
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD
+ B1    PAGE                                   PN
+ C1    TIME                                   CT
+ *     REPORT-OPTION                          XV   Alpha 1     Y=Update Option
+                                                               N=Report Only Option
+ C2    REPORT-OPTION                          X
+ *     REPORT-SEQUENCE                        XV               1=Alpha Order
+                                                               2=Numeric Order
+                                                               3=File Order
+ C3    REPORT-SEQUENCE                        X
+ D1    TOTAL-EMPLOYEES
+ E1    PLAN-HEADING1
+ E2    PLAN-HEADING2
+$ENDFLDS
+
+$ENDGRP
+
+
+**************************************
+$GROUP     GN4-EMPLOYEE
+**************************************
+$PREFIX    G4-
+$LEVEL     B
+$FORMAT
+ZZZZ XXXXX  ZZZZZZZZZ XXXXXXXXXXXXXXXXXXXXXXXX XXXXXXXXXXXXXXX X  ZZ/ZZ/ZZ - ZZ/ZZ/ZZ  ZZZ  ZZZ       ZZZ         ZZZ      ZZZ
+A    M      B         C                        D               E  I          J         K    F         G           H        L
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     COMPANY
+ B     EMPLOYEE
+ C     LAST-NAME
+ D     FIRST-NAME
+ E     MIDDLE-INIT
+ I     EFFECT-DATE                            CD
+ J     END-DATE                               CD
+ K     POS-LEVEL
+ F     NBR-EMP-GROUPS
+ G     NBR-DEDUCTIONS
+ H     NBR-TA-PLANS
+ L     NBR-WARNINGS
+ M     PROCESS-LEVEL
+$ENDFLDS
+
+$ENDGRP
+
+
+**************************************
+$GROUP     GN5-TOTAL
+**************************************
+$PREFIX    G5-
+$LEVEL     B
+$FORMAT
+%
+Total Number of Records Added:   ZZZZZZ
+|                              ; A
+%
+Total Number of Records Changed: ZZZZZZ
+|                              ; B
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A     TOTAL-EMPLOYEES-A
+ B     TOTAL-EMPLOYEES-C
+$ENDFLDS
+
+$ENDGRP
+
+$ENDRPT
+
+****************************************************
+$REPORT    HR511-R2
+**************************************
+$PRINTFILE TAXLOCATOR
+****************************************************
+
+**************************************
+$GROUP     R2GN1-PCT-COMPANY
+**************************************
+$PREFIX    R2G1-
+$PGBRK
+$LEVEL     A
+$DELAY
+$FORMAT
+HR511  Date ZZ/ZZ/ZZ                               Company   ZZZ9 - XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX                      Page ZZZZ
+       |  ; A1                                     |       ; B1     C1                                                  |  ; D1
+       Time 99.99                                  US Tax Deduction Update                             XXXXXXXXXXXXXX
+       |  ; E1                                     |                                 ;                 F1
+%
+                                                   Home       Time Record          Location    Ded  Ded         Effect    End
+                                                   ^         ;^          ;         ^          ;^   ;^          ;^       ;^      ; 
+Employee  Name                                     Location   Location    Source   Maintenance Code Maintenance  Date     Date   Res
+|        ;|                                       ;|         ;|          ;|       ;|          ;|   ;|          ;|       ;|      ;| ;
+--------- ---------------------------------------- ---------- ----------- -------- ----------- ---- ----------- -------- -------- -
+
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ A1    DATE                                   TD
+ B1    PCT-COMPANY
+ C1    PRS-NAME
+ D1    PAGE                                   PN
+ E1    TIME                                   CT
+ *     UPDATE-OPTION                          XV               N=(Report Only)
+                                                               Y=(Update)
+ F1    UPDATE-OPTION                          X
+$ENDFLDS
+$ENDGRP
+
+
+**************************************
+$GROUP     R2GN2-EMPLOYEE
+**************************************
+$PREFIX    R2G2-
+$LEVEL     B
+$DELAY
+$FORMAT
+%
+Employee    ZZZZZZZZZ   XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+|          ;B1          C1
+%
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ B1    EMP-EMPLOYEE
+ C1    EMP-NAME
+$ENDFLDS
+$ENDGRP
+
+**************************************
+$GROUP     R2GN3-PXL-DETAIL
+**************************************
+$PREFIX    R2G3-
+$LEVEL     C
+$FORMAT
+                                                   XXXXXXXXXX XXXXXXXXXX  XXXXXXXX XXXXXXXXXX  XXXX XXXXXXXXXX  ZZ/ZZ/ZZ ZZ/ZZ/ZZ X
+                                                   C          D           E        F           G    H           I        J        K
+$ENDFMT
+$FIELDS
+FIELD  NAME                   ELEMENT        TYPE  PRTCNTL     VALUES
+ ---   --------------------   --------------  --   ----------  -------------------------
+ C     HOME-LOCATION
+ D     TR-LOCATION
+ *     SOURCE                                 XV               S=System
+                                                               U=User
+                                                               D=Disabled
+ E     SOURCE                                 X
+ *     LOC-MAINT                              XV               A=Add
+                                                               D=Delete
+                                                               R=Reactivate
+                                                               I=Inactivate
+                                                               C=Change
+ F     LOC-MAINT                              X
+ G     DED-CODE
+ *     DED-MAINT                              XV               A=Add
+                                                               E=End
+                                                               R=ReOpen
+                                                               C=Change
+ H     DED-MAINT                              X
+ I     EFFECT-DATE                            CD
+ J     END-DATE                               CD
+ K     RES-CODE
+$ENDFLDS
+$ENDGRP
+
+$ENDRPT
+
+$ENDPGM

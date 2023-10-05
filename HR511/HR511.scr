@@ -1,0 +1,89 @@
+******* HR511.scr 7 <3794686268>
+*******************************************************************************
+*                           SCREEN   HR511
+*******************************************************************************
+$FORM      HR511    R
+$NOLFCOK
+$KEYFCS
+$DATAFCS   AC
+$LDATAFCS
+$FCPAIRS
+*        1    1    2    2    3    3    4    4    5    5    6    6    7    7   7
+*...5....0....5....0....5....0....5....0....5....0....5....0....5....0....5...9
+*------------------------------------------------------------------------------
+$SCREEN    HR511    R
+[HRRP[ ]              ?    Employee Master File Load CSV          +Y]
+                             ? ;                                        ;
+   Report           [HR511]     Priority    [ ]     Save Params (Y/N) [ ]
+   User Name   [          ]
+   Job Name    [          ] --- This will be the name on your report
+   Run After   [          ] --- NOW, HOLD, Time (1230 pm), Job Name
+   Frequency            [ ] --- (D)aily, (W)eekly, (M)onthly, (O)n Demand
+\  Comments    [                                                  ]\
+
+ |                         Company:&    ] ;                                   ;
+ |                  Update History:[ ]    ;          ;
+ |          Update Employee Groups:[ ]    ;          ;
+ |  Create Required/Tax Deductions:[ ]    ;          ;
+ | Update TA Accrual/Absence Plans:[ ]    ;          ;
+ |                 Report Sequence:[ ]    ;                    ;
+ |                          Update:[ ]    ;           ;
+ 
+ |            Mass Load Processing:[ ]    ;                         ;
+$END-SCR   HR511    R
+*                            ELEMENT NAME                                          
+* LEVEL       NAME           TYPE LENGTH    DEC REQ OC KN SC      PICTURE          
+* ----- --------------------- --  ----        - -- -- --- - -----------------------
+$TRANS     HR511    R
+  2     TC                    AL    06          SB 
+  2     FC                    A     01          SF 
+  2     UPDATE-SW             P     01          SB 
+  2     SCREEN-MSG            O     40        
+  2     TRANCODE              A     05          RP 
+  2     HEADER                G     00        
+   3    Q-PRIORITY            N     01          SR 
+   3    SAVE-PARAMS           A     01          SR 
+   3    USER-NAME             A     10          SK 
+   3    JOB-NAME              A     10          SK 
+   3    RUN-AFTER             A     10          SR 
+   3    FREQUENCY             A     01          SR 
+   3    COMMENTS              A     50          SB 
+  2     RUN-PARAMS            G     00        
+   3    COMPANY               N     04          SR    01  C
+   3    NAME                  AL    35          SB    CN
+   3    UPDATE-HISTORY        A     01          SR
+   3    UPDATE-HISTORY        X     10          SB  
+   3    UPDATE-EMP-GROUPS     A     01          SR
+   3    UPDATE-EMP-GROUPS     X     10          SB
+   3    CREATE-REQ-DEDS       A     01          SR
+   3    CREATE-REQ-DEDS       X     10          SB
+   3    UPDATE-TA-PLANS       A     01          SR
+   3    UPDATE-TA-PLANS       X     10          SB
+   3    REPORT-SEQUENCE       N     01          SR
+   3    REPORT-SEQUENCE       X     20          SB
+   3    UPDATE-OPTION         A     01          SR
+   3    UPDATE-OPTION         X     11          SB
+   3    MASS-LOAD             A     01          SR
+   3    MASS-LOAD             X     25          SB
+$END-TRANS HR511    R
+*
+*        NAME               DEFAULT VALUE            EDIT LIST
+* --------------------  --------------------  -------------------------
+$EDITS     HR511    R
+  FC                                          I,C,A,D
+  Q-PRIORITY            2                     1,2,3
+  SAVE-PARAMS           N                     Y,N
+  RUN-AFTER             HOLD
+  FREQUENCY             O                     D,W,M,O
+  UPDATE-HISTORY        N                     N=No,Y=Yes
+  UPDATE-EMP-GROUPS     N                     N=No,Y=Yes
+  CREATE-REQ-DEDS       N                     N=No,Y=Yes
+  UPDATE-TA-PLANS       N                     N=No,Y=Yes
+  REPORT-SEQUENCE       1                     1=Alpha
+                                              2=Numeric
+                                              3=File Order
+  UPDATE-OPTION         N                     N=Report Only
+                                              Y=Update
+  MASS-LOAD             N                     N=Regular Processing
+                                              Y=Mass Loading of Employees
+$END-EDITS HR511    R
